@@ -1,0 +1,13 @@
+{
+  "name": "sdd-kit",
+  "owner": { "name": "Zelu" },
+  "description": "Spec-Driven Development: zbieranie i analiza wymagan biznesowych z AI",
+  "plugins": [
+    {
+      "name": "sdd",
+      "source": "./plugins/sdd",
+      "description": "Proces SDD: intake -> interview -> domain -> spec -> validate -> handover",
+      "version": "0.1.0"
+    }
+  ]
+}

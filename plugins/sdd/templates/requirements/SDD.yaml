@@ -1,0 +1,10 @@
+# Konfiguracja procesu SDD dla tego projektu
+project: "<nazwa projektu>"
+level: full            # full | light
+owners:                # role biznesowe, ktore zatwierdzaja (rola, nie osoba)
+  - role: "wlasciciel procesu"
+    approves: [R, D, GLOSSARY]
+  - role: "ksiegowosc"
+    approves: [BR]
+gate_blocking_status: "blokuje go-live"   # etykieta pytan blokujacych
+backlog: none          # none | linear | jira | file

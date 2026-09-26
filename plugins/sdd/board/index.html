@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablica warsztatu</title>
+<style>
+:root{
+  --bg:#e9e6df; --board:#f6f4ee; --ink:#26241f; --muted:#6b675c; --line:#cfcabd; --panel:#fff;
+  --ev:#f5a13a; --cmd:#5aa0e6; --act:#f7e36b; --pol:#c79ae3; --rm:#8fd18f; --hot:#e8503f;
+  --shadow:0 2px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,0,0,.10);
+}
+@media (prefers-color-scheme: dark){:root{--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
+header{padding:16px 20px 6px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline}
+h1{margin:0;font-size:24px;font-weight:700}
+header p{margin:0;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;padding:4px 20px 10px;font-size:13px;color:var(--muted);align-items:center}
+.bar span{display:inline-flex;align-items:center;gap:6px}
+.bar i{width:14px;height:14px;display:inline-block;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
+.bar .st{margin-left:auto}
+.bar .st b{color:var(--ink);font-weight:600}
+.wrap{display:grid;grid-template-columns:1fr 300px;gap:14px;padding:0 20px 24px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.board{background:var(--board);border:1px solid var(--line);border-radius:6px;overflow-x:auto;background-image:radial-gradient(var(--line) .7px,transparent .8px);background-size:22px 22px}
+.lane{display:grid;grid-template-columns:150px 1fr;border-bottom:1px dashed var(--line);min-width:860px}
+.lane:last-child{border-bottom:0}
+.lane-title{padding:14px 12px;font-weight:700;font-size:17px;border-right:1px dashed var(--line)}
+.cols{display:flex;gap:10px;padding:14px 14px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:8px;min-width:130px;min-height:100px;padding:4px;border-radius:4px}
+.col.over{outline:2px dashed var(--muted)}
+.note{width:128px;min-height:92px;padding:9px 9px 8px;font-size:13.5px;line-height:1.25;box-shadow:var(--shadow);color:#26241f;cursor:grab;position:relative;border:0;text-align:left;font-family:inherit}
+.note.ev{background:var(--ev)}.note.cmd{background:var(--cmd)}.note.act{background:var(--act);min-height:62px}
+.note.pol{background:var(--pol)}.note.rm{background:var(--rm)}.note.hot{background:var(--hot);color:#fff}
+.note .id{position:absolute;right:7px;bottom:4px;font-size:10px;opacity:.75}
+.note:nth-child(odd){transform:rotate(-1deg)}.note:nth-child(even){transform:rotate(.8deg)}
+.note.fresh{animation:drop .5s cubic-bezier(.2,.8,.3,1.1) both}
+@keyframes drop{from{transform:translateY(-16px) rotate(-6deg);opacity:0}to{opacity:1}}
+.note.sel{outline:2px solid var(--ink);outline-offset:2px}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;position:sticky;top:10px;align-self:start;font-size:14px}
+aside h2{margin:0 0 8px;font-size:15px}
+label{display:block;color:var(--muted);font-size:12px;margin:8px 0 2px}
+input,select,textarea{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+.row{display:flex;gap:8px;margin-top:10px}
+button.b{font:inherit;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hint{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+.src{font-size:12.5px;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg);padding:1px 4px;border-radius:3px}
+</style>
+</head>
+<body>
+<header><h1 id="title">Tablica</h1><p id="subtitle"></p></header>
+<div class="bar">
+  <span><i style="background:var(--ev)"></i>zdarzenie</span>
+  <span><i style="background:var(--cmd)"></i>komenda</span>
+  <span><i style="background:var(--act)"></i>kto</span>
+  <span><i style="background:var(--pol)"></i>reguła</span>
+  <span><i style="background:var(--rm)"></i>widok</span>
+  <span><i style="background:var(--hot)"></i>nie wiemy</span>
+  <span class="st">połączenie: <b id="conn">…</b></span>
+</div>
+<div class="wrap">
+  <div class="board" id="board"></div>
+  <aside>
+    <h2 id="ph">Karteczka</h2>
+    <p class="hint">Kliknij karteczkę, żeby edytować. Przeciągnij, żeby przenieść. Zmiany zapisują się do pliku, agent je widzi.</p>
+    <label>Treść</label><textarea id="f-text"></textarea>
+    <label>Typ</label>
+    <select id="f-type">
+      <option value="ev">zdarzenie (coś się stało)</option>
+      <option value="cmd">komenda (ktoś coś robi)</option>
+      <option value="act">kto (rola)</option>
+      <option value="pol">reguła (jeżeli… to…)</option>
+      <option value="rm">widok (co ktoś ogląda)</option>
+      <option value="hot">nie wiemy (pytanie)</option>
+    </select>
+    <label>Pas</label><select id="f-lane"></select>
+    <label>ID (R/Q/A/D/BR, opcjonalne)</label><input id="f-ref">
+    <div class="row">
+      <button class="b p" id="save">Zapisz</button>
+      <button class="b" id="new">Nowa</button>
+      <button class="b" id="del">Usuń</button>
+    </div>
+    <div class="src" id="src"></div>
+  </aside>
+</div>
+<script>
+(function(){
+  var board=null, sel=null, seen=new Set(), first=true;
+  var $=function(s){return document.querySelector(s)};
+  var TYPES=['ev','cmd','act','pol','rm','hot'];
+
+  function render(){
+    $('#title').textContent=board.title||'Tablica';
+    $('#subtitle').textContent=board.subtitle||'';
+    var laneSel=$('#f-lane'); laneSel.innerHTML='';
+    (board.lanes||[]).forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;laneSel.appendChild(o)});
+    var b=$('#board'); b.innerHTML='';
+    (board.lanes||[]).forEach(function(lane){
+      var L=document.createElement('div');L.className='lane';
+      var t=document.createElement('div');t.className='lane-title';t.textContent=lane;L.appendChild(t);
+      var cols=document.createElement('div');cols.className='cols';
+      var notes=board.notes.filter(function(n){return n.lane===lane});
+      var maxCol=Math.max(0, notes.reduce(function(m,n){return Math.max(m,n.col||0)},0));
+      for(var c=0;c<=maxCol+1;c++){
+        var col=document.createElement('div');col.className='col';col.dataset.lane=lane;col.dataset.col=c;
+        notes.filter(function(n){return (n.col||0)===c}).forEach(function(n){col.appendChild(noteEl(n))});
+        col.addEventListener('dragover',function(e){e.preventDefault();this.classList.add('over')});
+        col.addEventListener('dragleave',function(){this.classList.remove('over')});
+        col.addEventListener('drop',function(e){e.preventDefault();this.classList.remove('over');
+          var n=byId(e.dataTransfer.getData('text/plain'));if(!n)return;
+          n.lane=this.dataset.lane;n.col=parseInt(this.dataset.col,10);save();});
+        cols.appendChild(col);
+      }
+      L.appendChild(cols);b.appendChild(L);
+    });
+    if(sel) fill(byId(sel));
+  }
+  function noteEl(n){
+    var el=document.createElement('button');el.className='note '+(TYPES.indexOf(n.type)>=0?n.type:'ev');
+    if(!first && !seen.has(n.id)) el.classList.add('fresh');
+    seen.add(n.id);
+    if(sel===n.id) el.classList.add('sel');
+    el.draggable=true;el.textContent=n.text;
+    if(n.ref){var s=document.createElement('span');s.className='id';s.textContent=n.ref;el.appendChild(s)}
+    el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id)});
+    el.addEventListener('click',function(){sel=n.id;render()});
+    return el;
+  }
+  function byId(id){return board.notes.find(function(n){return n.id===id})}
+  function fill(n){
+    if(!n){$('#ph').textContent='Karteczka';$('#f-text').value='';$('#f-ref').value='';$('#src').textContent='';return}
+    $('#ph').textContent='Karteczka '+(n.ref||'');
+    $('#f-text').value=n.text||'';$('#f-type').value=n.type||'ev';$('#f-lane').value=n.lane;$('#f-ref').value=n.ref||'';
+    $('#src').innerHTML=(n.source?'Skąd: '+esc(n.source)+'<br>':'')+(n.file?'Trafia do: <code>'+esc(n.file)+'</code>':'')+(n.by?'<br>Dodał: '+esc(n.by):'');
+  }
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+  function save(){
+    fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(board)});
+  }
+  $('#save').onclick=function(){
+    var n=sel?byId(sel):null;
+    if(!n){n={id:'n'+Date.now(),col:0};board.notes.push(n);sel=n.id}
+    n.text=$('#f-text').value;n.type=$('#f-type').value;n.lane=$('#f-lane').value;n.ref=$('#f-ref').value||undefined;
+    if(!n.source){n.source='warsztat, dopisane w przeglądarce [B]';n.by='człowiek'}
+    save();
+  };
+  $('#new').onclick=function(){sel=null;fill(null);$('#f-text').focus()};
+  $('#del').onclick=function(){if(!sel)return;board.notes=board.notes.filter(function(n){return n.id!==sel});sel=null;save()};
+
+  function connect(){
+    var es=new EventSource('/events');
+    es.onopen=function(){$('#conn').textContent='na żywo'};
+    es.onmessage=function(e){board=JSON.parse(e.data);board.notes=board.notes||[];render();first=false};
+    es.onerror=function(){$('#conn').textContent='przerwane, łączę…';es.close();setTimeout(connect,1500)};
+  }
+  connect();
+})();
+</script>
+</body>
+</html>
