@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.1] - 2026-09-26
+- Motyw: bez opcji "Auto"; zamiast tekstu ikony slonce / ksiezyc (nazwa w dymku i dla czytnikow ekranu).
+  Dopoki nic nie wybrano - motyw systemu i on jest zaznaczony; wybor wspolny dla panelu i tablicy.
+- `pickTheme` zamiast `normTheme`, test AC-U1 (35/35).
+
 ## [0.6.0] - 2026-09-26
 - Panel i tablica: wspolny pasek na gorze - zakladki "Panel modułu" | "Tablica warsztatowa" (na telefonie "Panel" | "Tablica")
   zamiast linkow "← Panel modułu" / "Tablica warsztatowa →".

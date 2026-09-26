@@ -10,11 +10,13 @@ const http = require('http');
 const { spawn } = require('child_process');
 const ui = require('../ui');
 
-test('AC-U1: normTheme - auto, light, dark; reszta -> auto', () => {
-  assert.strictEqual(ui.normTheme('light'), 'light');
-  assert.strictEqual(ui.normTheme('dark'), 'dark');
-  assert.strictEqual(ui.normTheme('auto'), 'auto');
-  [null, undefined, '', 'blue', 'DARK'].forEach(v => assert.strictEqual(ui.normTheme(v), 'auto'));
+test('AC-U1: pickTheme - zapisany wybor albo motyw systemu', () => {
+  assert.strictEqual(ui.pickTheme('light', true), 'light');
+  assert.strictEqual(ui.pickTheme('dark', false), 'dark');
+  [null, undefined, '', 'auto', 'blue', 'DARK'].forEach(v => {
+    assert.strictEqual(ui.pickTheme(v, true), 'dark');
+    assert.strictEqual(ui.pickTheme(v, false), 'light');
+  });
 });
 
 test('AC-U2: tabs - Panel i Tablica, biezaca zaznaczona', () => {
@@ -44,7 +46,7 @@ test('AC-U3: serwer zwraca /ui.js i /ui.css', async () => {
     const js = await get(port, '/ui.js');
     assert.strictEqual(js.status, 200);
     assert.match(js.type, /javascript/);
-    assert.match(js.body, /normTheme/);
+    assert.match(js.body, /pickTheme/);
     const css = await get(port, '/ui.css');
     assert.strictEqual(css.status, 200);
     assert.match(css.type, /text\/css/);

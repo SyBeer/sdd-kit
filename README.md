@@ -66,7 +66,7 @@ W osobnym oknie terminala, w folderze projektu:
 Otworz http://localhost:4242/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
 Ty mozesz przesuwac i dopisywac karteczki w przegladarce, agent to widzi.
 Po warsztacie: /sdd:board sync przenosi karteczki do plikow. Przyklad: plugins/sdd/board/example-zlecenia.json
-Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik motywu Auto / Jasny / Ciemny.
+Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik motywu jasny / ciemny (slonce / ksiezyc), wspolny dla obu zakladek.
 
 ## Pliki w projekcie
 
