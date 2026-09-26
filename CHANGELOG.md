@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2] - 2026-09-26
+- Tablica: stan synchronizacji z plikami na karteczce - ✓ w plikach, ↻ zmieniona po synchronizacji, ! brak ID w pliku
+  (bez znaczka = tylko na tablicy); podsumowanie liczb w pasku, wiersz "Pliki" w panelu.
+- Stan liczy serwer: pole `synced` (ustawia agent przy `/sdd:board sync`) + sprawdzenie, czy `ref` jest w pliku `file`;
+  odswiezany przy kazdej zmianie w requirements/, nie trafia do board.json.
+- `syncState`, `syncMap` w board-ops.js + testy AC-B14, AC-B15 (28/28).
+
 ## [0.5.1] - 2026-09-26
 - Tablica: karteczka pokazuje ID i zrodlo (jedna linia, pelne w dymku) oraz autora i date zmiany (RRRR-MM-DD HH:MM).
 - Panel karteczki: Utworzono, Zmieniono, Autor, Skad, Trafia do; odswiezane na zywo.

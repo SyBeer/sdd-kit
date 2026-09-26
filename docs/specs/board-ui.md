@@ -38,6 +38,14 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
      nie zmienia dat karteczek nietknietych. Agent ustawia `created`/`updated` sam (skill board).
    - Autor: `agent` pokazywany jako "AI", `człowiek` jako "człowiek".
 
+8. Stan synchronizacji z plikami (uwaga usera: "pokaz na karteczce co juz zsynchronizowane z plikami"):
+   - board.json: opcjonalne pole karteczki `synced` (ISO) - agent ustawia je przy `/sdd:board sync` dla karteczek przeniesionych do plikow.
+   - Stan liczy serwer (nie ufa samemu polu):
+     `board` - brak `synced` (tylko na tablicy); `changed` - `updated` pozniej niz `synced` (zmieniona po synchronizacji);
+     `missing` - `synced` jest, ale `ref` nie wystepuje w pliku `file` (sciezka wzgledem requirements/); `synced` - w pozostalych przypadkach.
+   - Karteczka: znaczek w rogu (✓ / ↻ / ! / ●) z dymkiem. Pasek: podsumowanie liczb w kazdym stanie. Panel: wiersz "Pliki" ze stanem i data synchronizacji.
+   - Stan jest wyliczany przy kazdej zmianie tablicy albo plikow w requirements/; nie jest zapisywany do board.json.
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module, cofanie zmian (undo).
 - Synchronizacja tablicy do plikow z przegladarki - dalej `/sdd:board sync` w Claude Code.
@@ -54,6 +62,9 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B11: `stampNotes(prev, next, now)`: nowa karteczka -> created=updated=now; zmieniona tresc/typ/proces/kolumna/ID -> updated=now, created bez zmian; nietknieta -> daty bez zmian; daty podane przez agenta w `next` nie sa nadpisywane.
 - AC-B12: `fmtDate(iso)` -> "RRRR-MM-DD HH:MM" w czasie lokalnym; pusta/zla data -> "".
 - AC-B13 (reczne): karteczka pokazuje zrodlo, autora i date zmiany; panel pokazuje date utworzenia i zmiany; edycja w przegladarce zmienia date zmiany.
+- AC-B14: `syncState(note, inFile)`: brak synced -> board; updated > synced -> changed; inFile === false -> missing; inaczej synced (takze gdy brak ref/file).
+- AC-B15: `syncMap(board, readFile)`: dla kazdej karteczki stan; `ref` szukany w tresci pliku jako cale slowo (Q-02 nie pasuje do Q-024); plik czytany raz; brak pliku -> missing.
+- AC-B16 (reczne): karteczki pokazuja znaczek stanu; dopisanie ID do pliku zmienia ! na ✓ bez przeladowania; edycja zsynchronizowanej karteczki -> ↻.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera panel z prawej, Escape zamyka; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

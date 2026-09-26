@@ -49,6 +49,8 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
    - `pol` -> `RULES.md` jako BR-xxx (+ A niepotwierdzone, jesli zrodlo nie [B])
    - `cmd`, `rm` -> kandydaci R do `PRD.md` (sekcja robocza) albo notatka w `session-YYYY-MM-DD.md`
 3. Wpisz `ref` z powrotem do karteczek, zeby tablica i pliki mialy te same numery.
+   Kazdej karteczce przeniesionej do plikow ustaw `synced` = teraz (ISO, `date -Iseconds`) i `file` = plik, do ktorego trafila.
+   Nie zmieniaj przy tym `updated`. Panel pokazuje wtedy ✓; jesli `ref` nie ma w `file` - ! (popraw plik albo ref).
 4. `CHANGELOG.md` + 5 linijek podsumowania.
 
 ## Odtworzenie tablicy z plikow (`/sdd:board rebuild`)

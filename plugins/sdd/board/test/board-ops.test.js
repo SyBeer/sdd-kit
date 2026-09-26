@@ -137,3 +137,31 @@ test('AC-B12: fmtDate - RRRR-MM-DD HH:MM czas lokalny', () => {
   assert.strictEqual(ops.fmtDate(undefined), '');
   assert.strictEqual(ops.fmtDate('bzdura'), '');
 });
+
+test('AC-B14: syncState - stan synchronizacji karteczki', () => {
+  const S = '2026-09-26T12:00:00Z';
+  assert.strictEqual(ops.syncState({ ref: 'Q-1' }, null), 'board');
+  assert.strictEqual(ops.syncState({ synced: S, updated: '2026-09-26T13:00:00Z' }, true), 'changed');
+  assert.strictEqual(ops.syncState({ synced: S, updated: '2026-09-26T11:00:00Z' }, false), 'missing');
+  assert.strictEqual(ops.syncState({ synced: S, updated: S }, true), 'synced');
+  assert.strictEqual(ops.syncState({ synced: S }, null), 'synced');
+  // strefy czasowe porownywane jako czas, nie tekst
+  assert.strictEqual(ops.syncState({ synced: '2026-09-26T14:00:00+02:00', updated: '2026-09-26T12:30:00Z' }, true), 'changed');
+});
+
+test('AC-B15: syncMap - ref w pliku jako cale slowo, plik czytany raz', () => {
+  const reads = [];
+  const files = { '01-interview/QUESTIONS.md': '| Q-024 | pytanie |\n| Q-1000 | x |', '02-domain/ACTORS.md': 'Spedytor' };
+  const read = f => { reads.push(f); return f in files ? files[f] : null; };
+  const S = '2026-09-26T12:00:00Z';
+  const b = { notes: [
+    { id: 'a', ref: 'Q-024', file: '01-interview/QUESTIONS.md', synced: S },
+    { id: 'b', ref: 'Q-02', file: '01-interview/QUESTIONS.md', synced: S },
+    { id: 'c', ref: 'Q-100', file: '01-interview/QUESTIONS.md', synced: S },
+    { id: 'd', ref: 'BR-01', file: '02-domain/RULES.md', synced: S },
+    { id: 'e', file: '02-domain/ACTORS.md', synced: S },
+    { id: 'f', ref: 'Q-024' },
+  ] };
+  assert.deepStrictEqual(ops.syncMap(b, read), { a: 'synced', b: 'missing', c: 'missing', d: 'missing', e: 'synced', f: 'board' });
+  assert.strictEqual(reads.filter(f => f === '01-interview/QUESTIONS.md').length, 1);
+});

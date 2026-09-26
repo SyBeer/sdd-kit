@@ -112,5 +112,32 @@
     return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes());
   }
 
-  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate };
+  // Stan synchronizacji z plikami: board (tylko na tablicy), changed (zmieniona po sync), missing (ID nie ma w pliku), synced.
+  function syncState(n, inFile) {
+    if (!n.synced) return 'board';
+    const s = new Date(n.synced).getTime(), u = n.updated ? new Date(n.updated).getTime() : NaN;
+    if (!isNaN(u) && !isNaN(s) && u > s) return 'changed';
+    if (inFile === false) return 'missing';
+    return 'synced';
+  }
+
+  // readFile(sciezka wzgledem requirements/) -> tresc albo null. Kazdy plik czytany raz.
+  function syncMap(b, readFile) {
+    const cache = {}, out = {};
+    const text = function (f) { if (!(f in cache)) cache[f] = readFile(f); return cache[f]; };
+    notes(b).forEach(function (n) {
+      let inFile = null;
+      if (n.synced && n.ref && n.file) {
+        const t = text(n.file);
+        const re = new RegExp('(^|[^A-Za-z0-9-])' + String(n.ref).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z0-9-])');
+        inFile = t == null ? false : re.test(t);
+      } else if (n.synced && n.file) {
+        inFile = text(n.file) == null ? false : null;
+      }
+      out[n.id] = syncState(n, inFile);
+    });
+    return out;
+  }
+
+  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap };
 });

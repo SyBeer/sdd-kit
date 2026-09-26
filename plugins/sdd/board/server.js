@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake } = require('./modules');
-const { stampNotes } = require('./board-ops');
+const { stampNotes, syncMap } = require('./board-ops');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -40,7 +40,18 @@ function readBoard() {
   try { return JSON.parse(fs.readFileSync(state.board, 'utf8')); }
   catch (e) { return emptyBoard(); }
 }
+// Tablica dla przegladarki: z wyliczonym stanem synchronizacji z plikami (_sync, nie trafia do board.json).
+function boardView() {
+  const b = readBoard();
+  b._sync = syncMap(b, rel => {
+    const f = path.resolve(state.req, String(rel));
+    if (!f.startsWith(state.req + path.sep)) return null;
+    try { return fs.readFileSync(f, 'utf8'); } catch (e) { return null; }
+  });
+  return b;
+}
 function writeBoard(b) {
+  delete b._sync;
   b.updated = new Date().toISOString();
   fs.mkdirSync(path.dirname(state.board), { recursive: true });
   fs.writeFileSync(state.board, JSON.stringify(b, null, 2));
@@ -58,7 +69,7 @@ function progressPayload() {
 }
 const send = (set, obj) => { const d = `data: ${JSON.stringify(obj)}\n\n`; for (const r of set) r.write(d); };
 let btimer = null, ptimer = null;
-const broadcastBoard = () => { clearTimeout(btimer); btimer = setTimeout(() => send(boardClients, readBoard()), 120); };
+const broadcastBoard = () => { clearTimeout(btimer); btimer = setTimeout(() => send(boardClients, boardView()), 120); };
 const broadcastProgress = () => { clearTimeout(ptimer); ptimer = setTimeout(() => send(progressClients, progressPayload()), 150); };
 
 // ---------------------------------------------------------------- watchery (przepinane przy zmianie modulu)
@@ -68,7 +79,7 @@ function watch() {
   try {
     watchers.push(fs.watch(state.req, { recursive: true }, (ev, file) => {
       broadcastProgress();
-      if (!CUSTOM_BOARD && file && path.basename(file) === path.basename(state.board)) broadcastBoard();
+      broadcastBoard(); // stan synchronizacji zalezy tez od plikow w requirements/
     }));
   } catch (e) {
     retry = setTimeout(watch, 3000); // requirements/ jeszcze nie ma
@@ -86,7 +97,7 @@ function selectModule(req) {
   state.board = CUSTOM_BOARD || path.join(req, '01-interview', 'board.json');
   watch();
   send(progressClients, progressPayload());
-  send(boardClients, readBoard());
+  send(boardClients, boardView());
 }
 selectModule(process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements')));
 
@@ -171,14 +182,14 @@ const server = http.createServer((req, res) => {
     });
   }
 
-  if (url === '/api/board' && req.method === 'GET') return json(res, 200, readBoard());
+  if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView());
   if (url === '/api/board' && req.method === 'PUT') {
     return readBody(req, 5 * 1024 * 1024, buf => {
       try { writeBoard(stampNotes(readBoard(), JSON.parse(String(buf)), new Date().toISOString())); res.writeHead(204); res.end(); }
       catch (e) { res.writeHead(400); res.end('zly JSON'); }
     });
   }
-  if (url === '/events') return sse(req, res, boardClients, readBoard());
+  if (url === '/events') return sse(req, res, boardClients, boardView());
   res.writeHead(404); res.end();
 });
 

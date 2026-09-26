@@ -70,6 +70,17 @@ main{padding:0 20px 24px}
 .note .meta .l1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .note .meta b{font-weight:700}
 .note .meta .l2{font-variant-numeric:tabular-nums}
+.sync{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;font-style:normal;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sync.synced{background:var(--ink);color:var(--bg)}
+.sync.changed{background:var(--panel);color:var(--ink);border:1px solid var(--ink)}
+.sync.missing{background:var(--hot);color:#fff}
+.sync.board{background:none;box-shadow:none;border:1px dashed var(--muted)}
+.syncbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:12.5px}
+.syncbar:empty{display:none}
+.syncbar .lbl{color:var(--ink);font-weight:600}
+.syncbar .si{display:inline-flex;align-items:center;gap:6px}
+.syncbar .sync{position:static;width:16px;height:16px;font-size:10px}
+.syncbar .hint2{color:var(--muted)}
 .note.ev{background:var(--ev)}.note.cmd{background:var(--cmd)}.note.act{background:var(--act);min-height:62px}
 .note.pol{background:var(--pol)}.note.rm{background:var(--rm)}.note.hot{background:var(--hot);color:#fff}
 .note:nth-child(odd){transform:rotate(-1deg)}.note:nth-child(even){transform:rotate(.8deg)}
@@ -145,6 +156,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     </span>
     <span class="st">połączenie: <b id="conn">…</b></span>
   </div>
+  <div class="syncbar" id="syncbar"></div>
   <div class="msg" id="msg" role="status"></div>
 </div>
 <main><div class="board" id="board"><div class="inner" id="inner"></div></div></main>
@@ -179,6 +191,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   var $=function(s){return document.querySelector(s)};
   var TYPES=['ev','cmd','act','pol','rm','hot'];
   var ops=window.BoardOps;
+  var SYNC={synced:['✓','w plikach'],changed:['↻','zmienione po synchronizacji'],missing:['!','brak w pliku'],board:['','tylko na tablicy']};
+  function syncOf(n){ return (board._sync&&board._sync[n.id])||'board'; }
 
   // ------------------------------------------------------------ render
   function render(){
@@ -190,6 +204,11 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     board.lanes.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;laneSel.appendChild(o)});
     if(keep&&board.lanes.indexOf(keep)>=0) laneSel.value=keep;
 
+    var cnt={synced:0,changed:0,missing:0,board:0};
+    board.notes.forEach(function(n){ cnt[syncOf(n)]++; });
+    $('#syncbar').innerHTML=board.notes.length?'<span class="lbl">Pliki:</span>'+['synced','changed','missing','board'].filter(function(k){return cnt[k]||k==='board'||k==='synced'}).map(function(k){
+      return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join('')+
+      '<span class="hint2">przenosi <code>/sdd:board sync</code> w Claude Code</span>':'';
     var inner=$('#inner'); inner.innerHTML=''; inner.classList.toggle('blank',!board.lanes.length);
     if(!board.lanes.length){
       inner.innerHTML='<div class="empty"><h2>Tablica jest pusta</h2><p>Zacznij od procesu, np. „Przyjęcie zlecenia”. W jednym procesie karteczki idą od lewej do prawej.</p>'+
@@ -280,7 +299,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       if(who||when){var l2=document.createElement('span');l2.className='l2';l2.textContent=[who,when].filter(Boolean).join(' · ');m.appendChild(l2)}
       el.appendChild(m);
     }
-    el.title=[n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
+    var st=syncOf(n);
+    if(st!=='board'){ var sb=document.createElement('span'); sb.className='sync '+st; sb.textContent=SYNC[st][0]; el.appendChild(sb); }
+    el.title=['Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
     el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id)});
     el.addEventListener('click',function(){ openNote(n.id); });
     return el;
@@ -297,7 +318,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(t&&!saveErr) sayT=setTimeout(function(){ $('#msg').textContent=''; },6000);
   }
   function save(){
-    return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board)})
+    return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return k==='_sync'?undefined:v})})
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); if(saveErr){ saveErr=false; say(''); } })
       .catch(function(e){ saveErr=true; say('Nie zapisałem tablicy: '+e.message+'. Sprawdź, czy serwer działa.'); });
   }
@@ -365,7 +386,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   // Informacje o karteczce (daty, autor, zrodlo) - odswiezane po kazdej zmianie pliku, bez ruszania pol formularza.
   function fillMeta(n){
     if(!n){ $('#src').innerHTML=''; return; }
-    var rows=[['Utworzono',ops.fmtDate(n.created)],['Zmieniono',ops.fmtDate(n.updated)],['Autor',author(n)],['Skąd',n.source||''],['Trafia do',n.file?'<code>'+esc(n.file)+'</code>':'']];
+    var st=syncOf(n), pl={
+      synced:'w plikach'+(n.synced?' od '+ops.fmtDate(n.synced):''),
+      changed:'zmieniona po synchronizacji'+(n.synced?' ('+ops.fmtDate(n.synced)+')':'')+' – przenieś ponownie',
+      missing:'oznaczona jako przeniesiona, ale '+(n.ref||'jej')+' nie ma w pliku',
+      board:'tylko na tablicy – przeniesie ją /sdd:board sync'}[st];
+    var rows=[['Pliki',pl],['Utworzono',ops.fmtDate(n.created)],['Zmieniono',ops.fmtDate(n.updated)],['Autor',author(n)],['Skąd',n.source||''],['Trafia do',n.file?'<code>'+esc(n.file)+'</code>':'']];
     $('#src').innerHTML=rows.filter(function(r){return r[1]}).map(function(r){return '<div><span>'+r[0]+':</span> '+(r[0]==='Trafia do'?r[1]:esc(r[1]))+'</div>'}).join('');
   }
   $('#save').onclick=function(){
