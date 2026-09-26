@@ -64,6 +64,31 @@ test('AC-3: liczniki Q i blokery', () => {
   assert.deepStrictEqual(p.blockers.map(b => b.id).sort(), ['Q-001', 'Q-002']);
 });
 
+test('AC-26b: zwykle otwarte pytanie nie cofa procesu do Interview', () => {
+  const req = freshProject();
+  append(req, '01-interview/QUESTIONS.md', '| Q-001 | Format? | otwarte | wlasciciel procesu | test spojnosci domeny | | |\n');
+  append(req, '01-interview/DECISIONS.md', '\n## D-001 | 2026-09-27 | Cos ustalone\n');
+  const p = readProgress(req);
+  const iv = stage(p, 'interview');
+  assert.strictEqual(iv.status, 'done');
+  assert.strictEqual(iv.counts.open, 1);
+  assert.notStrictEqual(p.next.key, 'interview');
+});
+
+test('AC-27b: etykieta blokujaca liczy sie, zaprzeczona nie', () => {
+  let req = freshProject();
+  append(req, '01-interview/QUESTIONS.md', '| Q-001 | Kto? | otwarte | sponsor | luka | blokuje go-live | |\n');
+  let p = readProgress(req);
+  assert.strictEqual(stage(p, 'interview').status, 'active');
+  assert.deepStrictEqual(p.blockers.map(b => b.id), ['Q-001']);
+
+  req = freshProject();
+  append(req, '01-interview/QUESTIONS.md', '| Q-001 | Kto? | otwarte | sponsor | luka | nie blokuje go-live | |\n');
+  p = readProgress(req);
+  assert.strictEqual(stage(p, 'interview').status, 'done');
+  assert.deepStrictEqual(p.blockers, []);
+});
+
 test('AC-4: czeka na biznes pogrupowane po roli', () => {
   const req = freshProject();
   append(req, '01-interview/QUESTIONS.md',

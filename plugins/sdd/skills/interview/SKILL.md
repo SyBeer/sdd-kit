@@ -50,7 +50,10 @@ JEDNO pytanie naraz. Nigdy partia pytan - prowadzacy zbiera odpowiedzi na zywo i
    i nie zakladaj tego Q.
 8. Odpowiedz sprzeczna z wczesniejsza D -> nie zapisuj, pokaz obie odpowiedzi obok siebie i dopytaj.
    Rozstrzygniecie = nowa D, a stara dostaje linie `Zmieniona przez: D-xxx`.
-9. Cel warsztatu to mapa procesu i aktorzy, nie szczegoly regul. Gdy masz aktorow i glowne encje, zaproponuj przejscie do `/sdd:domain`.
+9. "Przerwij" / "stop" / "koniec" -> konczysz od razu. Niezatwierdzonej propozycji NIE zapisujesz; w sesji notka,
+   co zostalo w toku (odpowiedz zostaje w sesji, Q zostaje otwarte). Podsumowanie jak "Na koniec" i nastepny krok
+   z panelu - zwykle otwarte pytania nie trzymaja procesu w Interview, tylko sprzeczne i blokujace go-live.
+10. Cel warsztatu to mapa procesu i aktorzy, nie szczegoly regul. Gdy masz aktorow i glowne encje, zaproponuj przejscie do `/sdd:domain`.
 
 ## Krok 2b: tryb `async` (rundy)
 - Wygeneruj `01-interview/Q-round-N-<rola>.md`: naglowek z prosba i terminem (zapytaj usera o termin), potem kazde pytanie z pustym polem "Odpowiedz:" i "Kto udzielil odpowiedzi:". Prosty format, biznes czyta bez IT.

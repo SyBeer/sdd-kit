@@ -106,6 +106,16 @@ function intake(req) {
   return { status, counts: { sources: rows.length, files: files.length, unindexed }, files: list };
 }
 
+// Etykieta blokujaca w wierszu pytania, ale nie zaprzeczona ("nie blokuje go-live").
+function hasGate(raw, gate) {
+  if (!gate) return false;
+  const text = raw.toLowerCase(), g = gate.toLowerCase();
+  for (let i = text.indexOf(g); i >= 0; i = text.indexOf(g, i + 1)) {
+    if (!/(^|[^a-ząćęłńóśźż])nie\s+$/.test(text.slice(Math.max(0, i - 8), i))) return true;
+  }
+  return false;
+}
+
 function interview(req, gate) {
   const qs = parseTable(read(path.join(req, '01-interview', 'QUESTIONS.md')));
   const as = parseTable(read(path.join(req, '01-interview', 'ASSUMPTIONS.md')));
@@ -118,14 +128,14 @@ function interview(req, gate) {
     unconfirmed: as.filter(a => /niepotwierdzone/i.test(a.status || '')).length,
     refuted: as.filter(a => /obalone/i.test(a.status || '')).length,
   };
-  const pending = counts.open + counts.asked + counts.conflicting;
-  const status = counts.questions === 0 && decisions === 0 ? 'todo' : pending > 0 ? 'active' : 'done';
-
   const blockers = qs.filter(q => {
     const k = qKind(q.status || '');
     if (k === 'conflicting') return true;
-    return gate && (k === 'open' || k === 'asked') && q._raw.toLowerCase().includes(gate.toLowerCase());
+    return (k === 'open' || k === 'asked') && hasGate(q._raw, gate);
   }).map(q => ({ id: q.id, text: q.pytanie || '', reason: qKind(q.status) === 'conflicting' ? 'sprzeczne' : gate }));
+  // Tylko blokery trzymaja etap w toku - zwykle otwarte pytania powstaja na kazdym etapie
+  // i nie cofaja procesu (zmiana 0.9.0); widac je w licznikach i w "Czeka na biznes".
+  const status = counts.questions === 0 && decisions === 0 ? 'todo' : blockers.length > 0 ? 'active' : 'done';
 
   const roles = new Map();
   qs.filter(q => qKind(q.status || '') === 'asked').forEach(q => {

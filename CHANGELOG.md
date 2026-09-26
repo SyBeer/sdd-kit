@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.0] - 2026-09-27
+Otwarte pytania nie cofaja procesu. /sdd:domain (test spojnosci) i krok 1 /sdd:interview dopisuja pytania,
+wiec panel cofal "Aktualny krok" z Domain do Interview i nie dalo sie przerwac wywiadu (uwaga z horizon-zlecenia).
+- Interview jest `done`, gdy nie ma blokerow: pytan `sprzeczne` ani `otwarte`/`zadane` z etykieta `gate_blocking_status`.
+  Zwykle otwarte pytania widac w licznikach karty i w "Czeka na biznes".
+- Etykieta zaprzeczona ("nie blokuje go-live") nie robi z pytania blokera.
+- `/sdd:interview` live: "przerwij" / "stop" / "koniec" konczy warsztat bez zapisu niezatwierdzonej propozycji.
+- Spec: `docs/specs/progress-ui.md`, zmiana 0.9.0 (AC-26b..AC-28b), testy 44/44.
+
 ## [0.8.0] - 2026-09-26
 Katalog produktow wskazuje uzytkownik. sdd-kit to tylko aplikacja: moduly (`requirements/`) nie powstaja
 w jej folderze ani obok niego. Wczesniej serwer uruchomiony w folderze kitu liczyl katalog modulow

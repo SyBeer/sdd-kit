@@ -208,3 +208,26 @@ okna wyboru folderu, wiec przegladanie robi serwer (lokalny), a panel pokazuje w
   folder aplikacji ma `kit: true`, folder z modulami w srodku `module: true`; nieistniejaca sciezka -> blad; `inKit` gdy biezacy lezy w aplikacji.
 - AC-32: `GET /api/dirs` bez X-SDD -> 403; z naglowkiem -> 200 z lista.
 - AC-33 (reczne): Przeglądaj -> wejscie w folder, wyzej, wybor -> sciezka w polu -> Zapisz.
+
+---
+
+# Zmiana 0.9.0 (2026-09-27): otwarte pytania nie cofaja procesu
+
+Uwaga usera (projekt horizon-zlecenia): "dlaczego z DOMAIN wrocilem do INTERVIEW. Musze miec mozliwosc
+przerwania wywiadu". /sdd:domain (test spojnosci) i krok 1 /sdd:interview dopisuja pytania, wiec kazdy etap
+cofal "Aktualny krok" do Interview. Proces nie jest liniowy - pytania powstaja na kazdym etapie.
+Decyzja usera: blokuja tylko blokery.
+
+## Zakres
+1. Interview: `todo` = 0 Q i 0 D; `active` = sa blokery (Q `sprzeczne` albo `otwarte`/`zadane` z etykieta
+   `gate_blocking_status`); `done` = sa Q lub D i nie ma blokerow. Zwykle otwarte i zadane pytania nie cofaja
+   aktualnego kroku - widac je w licznikach karty ("otwarte", "zadane biznesowi") i w "Czeka na biznes".
+2. Etykieta blokujaca liczy sie tylko wtedy, gdy nie jest zaprzeczona: "nie blokuje go-live" to nie bloker.
+3. `/sdd:interview` live: "przerwij" / "stop" / "koniec" konczy warsztat od razu - bez zapisu niezatwierdzonej
+   propozycji, z notka w sesji, podsumowaniem i nastepnym krokiem z panelu (moze to byc etap dalszy niz Interview).
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
+- AC-26b: otwarte pytanie bez etykiety blokujacej + decyzja -> Interview `done`, aktualny krok przechodzi dalej;
+  licznik `open` dalej pokazuje to pytanie.
+- AC-27b: pytanie `otwarte` z "blokuje go-live" -> Interview `active` i bloker; to samo z "nie blokuje go-live" -> nie bloker, `done`.
+- AC-28b: pytanie `sprzeczne` -> Interview `active` (bez zmian wzgledem AC-3).
