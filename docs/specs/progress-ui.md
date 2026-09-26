@@ -108,3 +108,20 @@ Komendy wymagajace rozmowy zostaja w Claude Code - panel ich nie uruchamia.
 - AC-17: kazdy etap w `STAGES` ma `howto` - 2-4 kroki instrukcji dla prowadzacego; Intake mowi, zeby najpierw wrzucic wszystkie pliki, potem skopiowac komende.
 - AC-18 (reczne): baner pokazuje instrukcje krokow i "Uruchom w Claude Code:" przed komenda; karty etapow tez maja ten dopisek.
 - AC-16 (reczne): baner "Aktualny krok"; upload 3 plikow, w tym 1 duplikatu -> podsumowanie "zapisano 2, pominięto 1", lista plikow w karcie odswieza sie sama.
+
+---
+
+# Zmiana 0.4.1 (2026-09-26): przelacznik modulu w tytule
+
+Uwaga usera: lista rozwijana "horizon (full)" + "+ Nowy moduł" po prawej dublowala nazwe z tytulu,
+"(full)" to zargon z SDD.yaml, a kontrolki wisialy bez podpisu daleko od tytulu.
+
+## Zakres
+1. Nazwa modulu w tytule "Wymagania do modułu: <nazwa> ▾" jest przyciskiem przelacznika. Osobna lista i przycisk w naglowku znikaja.
+2. Menu: lista modulow ze znacznikiem biezacego i poziomem po polsku ("pełny" / "lekki"), na dole "+ Nowy moduł…" (otwiera formularz jak dotad).
+3. Zamykanie: klik poza menu, Escape. Strzalki gora/dol przechodza po pozycjach.
+4. Meta pod tytulem: "poziom pełny" zamiast "poziom full".
+
+## Kryteria akceptacji (reczne)
+- AC-19: w naglowku nazwa modulu wystepuje raz; klik w nia otwiera menu z modulami i "Nowy moduł…"; wybor innego modulu przelacza panel.
+- AC-20: w panelu nie ma slow "full"/"light" - tylko "pełny"/"lekki". Na telefonie menu miesci sie w ekranie.

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1] - 2026-09-26
+- Panel: przelacznik modulu w tytule ("Wymagania do modułu: <nazwa> ▾") zamiast listy i przycisku po prawej.
+  Menu: moduly z poziomem "pełny"/"lekki", na dole "+ Nowy moduł…"; Escape, klik poza menu, strzalki.
+- Poziom pokazywany po polsku ("poziom pełny" zamiast "poziom full").
+
 ## [0.4.0] - 2026-09-26
 - Panel: baner "Aktualny krok" zamiast "Nastepny krok".
 - Intake: lista wrzuconych plikow (nazwa, rozmiar, "dodane" / "czeka na spis"), najnowsze na gorze,

@@ -76,7 +76,7 @@ W folderze projektu wpisz w terminalu `sdd-board` i otworz http://localhost:4242
 Zobaczysz 6 etapow, co jest gotowe, co w toku i jaka komende wpisac dalej w Claude Code.
 Strona odswieza sie sama, gdy agent zmienia pliki.
 Materialy (maile, PDF, zrzuty) wrzucasz przeciagajac je na karte Intake, potem w Claude Code `/sdd:intake`.
-Nowy modul (kolejny obszar wymagan) zakladasz przyciskiem "+ Nowy moduł" u gory.
+Nowy modul (kolejny obszar wymagan) zakladasz, klikajac nazwe modulu w tytule i wybierajac "+ Nowy moduł…".
 
 ## 5. Trzy zasady, ktore trzeba pamietac
 
