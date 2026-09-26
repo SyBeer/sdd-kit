@@ -8,6 +8,8 @@ z biezacego folderu, wiec "Nowy moduł" zakladalby foldery obok aplikacji.
 - Katalog modulow: `SDD_MODULES_ROOT` -> wybor z panelu w `~/.sdd-kit/config.json` (`SDD_CONFIG` zmienia sciezke)
   -> rodzic istniejacego `requirements/` projektu. Nic z tego = panel pyta "Gdzie trzymać wymagania?".
 - Folder aplikacji (i wszystko w nim) jest odrzucany - z configu, ze zmiennej i jako projekt startowy.
+- Tekst wyboru: "Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit." 404 od serwera
+  starszego niz strona -> komunikat "zatrzymaj go (Ctrl+C) i uruchom ponownie" zamiast "HTTP 404".
 - Panel: ekran wyboru katalogu, "Brak modułów" z przyciskiem "Nowy moduł…", w menu modulow "Zmień katalog modułów…".
 - "Przeglądaj…" przy polu katalogu: okno z podfolderami (serwer listuje, `GET /api/dirs`, chronione jak zapisy),
   wejscie w folder, "↑ wyżej", znaczniki "moduł" i wyszarzona "aplikacja"; "Wybierz ten folder" wpisuje sciezke do pola.
