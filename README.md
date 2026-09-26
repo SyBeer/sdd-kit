@@ -50,7 +50,7 @@ W folderze projektu uruchom `sdd-board` i otworz http://localhost:8012. Strona p
 z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Odswieza sie sama.
 Naglowek "Wymagania do modułu: <nazwa> ▾" - klik w nazwe przelacza modul (modul = podfolder katalogu modulow z `requirements/SDD.yaml`),
 a "+ Nowy moduł…" na dole menu zaklada folder w katalogu modulow jak `/sdd:init`, z `git init`.
-Katalog modulow wskazujesz sam: przy pierwszym uruchomieniu (poza folderem projektu) panel pyta "Gdzie trzymać wymagania?",
+Katalog modulow wskazujesz sam: przy pierwszym uruchomieniu (poza folderem projektu) panel pyta "Gdzie trzymać wymagania?" (sciezka recznie albo "Przeglądaj…"),
 wybor trafia do `~/.sdd-kit/config.json`, zmiana: "Zmień katalog modułów…" w menu. Folder aplikacji sdd-kit jest odrzucany -
 kit to tylko aplikacja, wymagania leza poza nim. `SDD_MODULES_ROOT` nadpisuje wybor.
 Karta Intake przyjmuje zalaczniki (przycisk lub przeciagnij-upusc, do 25 MB) i zapisuje je do `requirements/00-intake/`, pomija pliki o identycznej tresci i pokazuje liste wrzuconych plikow (dodane / czeka na spis); ✕ przy pliku czekajacym na spis kasuje go (ostatecznie).

@@ -191,3 +191,20 @@ aplikacji = odmowa z komunikatem.
   `modulesRoot: null`, nie zaklada zadnego folderu; `POST /api/root` z folderem aplikacji -> 400;
   z folderem tymczasowym -> 200, config zapisany, `/api/progress` ma ten `modulesRoot`; `POST /api/modules` bez katalogu -> 409.
 - AC-30 (reczne): ekran wyboru w przegladarce, zapis, "Zmień katalog modułów…" w menu.
+
+## Dopisane przed wydaniem 0.8.0: "Przeglądaj…"
+Uwaga usera: "dodaj browse do wskazywania katalogu". Przegladarka nie zwraca sciezki bezwzglednej z systemowego
+okna wyboru folderu, wiec przegladanie robi serwer (lokalny), a panel pokazuje wynik.
+
+1. Obok pola "Katalog modułów" przycisk "Przeglądaj…". Otwiera okno z lista podfolderow: start w folderze z pola,
+   a gdy go nie ma - w katalogu domowym. Klik w folder wchodzi do niego, "↑ wyżej" wraca, sciezka u gory.
+2. Ukryte foldery (z kropka) pominiete. Folder aplikacji i jego podfoldery widoczne, ale wyszarzone z dopiskiem "aplikacja" -
+   nie da sie ich wybrac ani do nich wejsc. Folder z `requirements/SDD.yaml` w srodku ma znacznik "moduł"
+   (podpowiedz: wybierasz katalog NAD modulami).
+3. "Wybierz ten folder" wpisuje biezaca sciezke do pola; zapis dalej przyciskiem "Zapisz" (ta sama walidacja co wyzej).
+4. `GET /api/dirs?path=...` - tylko odczyt nazw folderow, ale chronione jak zapisy (X-SDD, Host lokalny), bo zdradza strukture dysku.
+
+- AC-31: `listDirs(dir)`: tylko foldery, bez ukrytych, alfabetycznie; `parent` (dla `/` = null); `~` i pusta sciezka = katalog domowy;
+  folder aplikacji ma `kit: true`, folder z modulami w srodku `module: true`; nieistniejaca sciezka -> blad; `inKit` gdy biezacy lezy w aplikacji.
+- AC-32: `GET /api/dirs` bez X-SDD -> 403; z naglowkiem -> 200 z lista.
+- AC-33 (reczne): Przeglądaj -> wejscie w folder, wyzej, wybor -> sciezka w polu -> Zapisz.

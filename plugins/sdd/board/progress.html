@@ -85,6 +85,7 @@ aside{display:flex;flex-direction:column;gap:12px}
 .log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
 
 button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.b:disabled{opacity:.45;cursor:not-allowed}
 dialog{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);padding:20px;width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog h2{margin:0 0 4px;font-size:18px}
@@ -124,6 +125,17 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .missing .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .missing .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .missing .hint{color:var(--muted);font-size:13px}
+.missing .pick{display:flex;gap:8px}
+.missing .pick input{flex:1;min-width:0}
+#browse .cur{font:12px ui-monospace,monospace;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;margin:8px 0}
+#browse ul{list-style:none;margin:0;padding:0;max-height:min(360px,50vh);overflow:auto;border:1px solid var(--line);border-radius:4px}
+#browse li button{display:flex;gap:8px;align-items:center;width:100%;text-align:left;font:inherit;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 10px;color:var(--ink);cursor:pointer}
+#browse li:last-child button{border-bottom:0}
+#browse li button:hover:not(:disabled),#browse li button:focus-visible{background:var(--bg)}
+#browse li button:disabled{color:var(--muted);cursor:not-allowed}
+#browse .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#browse .tg{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 5px}
+#browse .empty{color:var(--muted);font-size:13px;padding:10px}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 @media(max-width:640px){
   header,main{padding-left:16px;padding-right:16px}
@@ -150,6 +162,17 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 </header>
 <main id="app"></main>
 <input type="file" id="files" multiple hidden>
+<dialog id="browse" aria-labelledby="browseh">
+  <h2 id="browseh">Wybierz katalog modułów</h2>
+  <p class="hint">Wybierasz folder NAD modułami - każdy moduł będzie w nim podfolderem. Folder aplikacji sdd-kit jest zablokowany.</p>
+  <div class="cur" id="browsecur"></div>
+  <ul id="browselist"></ul>
+  <p class="err" id="browseerr"></p>
+  <div class="row">
+    <button class="b" type="button" id="browsecancel">Anuluj</button>
+    <button class="b p" type="button" id="browseok">Wybierz ten folder</button>
+  </div>
+</dialog>
 <dialog id="dlg">
   <form id="modform" method="dialog">
     <h2>Nowy moduł</h2>
@@ -211,12 +234,14 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     $('#app').innerHTML='<div class="missing"><h2>Gdzie trzymać wymagania?</h2>'+
       '<p>sdd-kit to tylko aplikacja. Wymagania (moduły) trzymasz w swoim folderze: każdy moduł to podfolder z <code>requirements/</code>.</p>'+
       '<form id="rootform"><label for="rootpath">Katalog modułów</label>'+
-      '<input id="rootpath" name="path" required autocomplete="off" placeholder="~/wymagania" value="'+esc(p.modulesRoot||'')+'">'+
+      '<div class="pick"><input id="rootpath" name="path" required autocomplete="off" placeholder="~/wymagania" value="'+esc(p.modulesRoot||'')+'">'+
+      '<button class="b" type="button" id="rootbrowse">Przeglądaj…</button></div>'+
       '<p class="hint">Ścieżka bezwzględna albo zaczynająca się od <code>~/</code>. Brakujący folder założę. Nie może leżeć w folderze aplikacji ('+esc(p.kitDir||'')+').</p>'+
       '<p class="err" id="rooterr"></p><div class="row">'+(cancel?'<button class="b" type="button" id="rootcancel">Anuluj</button>':'')+
       '<button class="b p" type="submit">Zapisz</button></div></form></div>';
     var f=$('#rootform'); f.elements.path.focus();
     if(cancel) $('#rootcancel').onclick=function(){ askRoot=false; render(last); };
+    $('#rootbrowse').onclick=function(){ browse(f.elements.path.value, true); $('#browse').showModal(); };
     f.onsubmit=function(e){
       e.preventDefault();
       api('/api/root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:f.elements.path.value})})
@@ -224,6 +249,36 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
         .catch(function(err){ $('#rooterr').textContent=err.message; });
     };
   }
+  // Okno "Przeglądaj…": serwer listuje podfoldery, panel tylko pokazuje (przegladarka nie zna sciezek dysku).
+  var browsing=null;
+  function browse(dir, fallback){
+    $('#browseerr').textContent='';
+    api('/api/dirs?path='+encodeURIComponent(dir||'')).then(function(d){
+      browsing=d;
+      $('#browsecur').textContent=d.path;
+      $('#browseok').disabled=d.inKit;
+      $('#browseerr').textContent=d.inKit?'To folder aplikacji sdd-kit - wybierz folder poza nim.':'';
+      var h=d.parent?'<li><button type="button" data-dir="'+esc(d.parent)+'"><span class="nm">↑ wyżej</span></button></li>':'';
+      h+=d.dirs.map(function(x){
+        return '<li><button type="button" data-dir="'+esc(x.path)+'"'+(x.kit?' disabled':'')+'><span class="nm">📁 '+esc(x.name)+'</span>'+
+          (x.kit?'<span class="tg">aplikacja</span>':x.module?'<span class="tg">moduł</span>':'')+'</button></li>';
+      }).join('');
+      if(!d.dirs.length) h+='<li class="empty">Brak podfolderów.</li>';
+      $('#browselist').innerHTML=h;
+      var first=$('#browselist button:not(:disabled)'); if(first) first.focus();
+    }).catch(function(e){
+      if(fallback) return browse('', false); // nieistniejaca sciezka z pola -> katalog domowy
+      $('#browseerr').textContent=e.message;
+    });
+  }
+  $('#browselist').onclick=function(e){ var b=e.target.closest('button'); if(b&&!b.disabled) browse(b.getAttribute('data-dir')); };
+  $('#browsecancel').onclick=function(){ $('#browse').close(); };
+  $('#browseok').onclick=function(){
+    if(!browsing||browsing.inKit) return;
+    var i=$('#rootpath'); if(i){ i.value=browsing.path; i.focus(); }
+    $('#browse').close();
+  };
+
   function render(p){
     var app=$('#app');
     // ekran juz stoi - nie kasuj tego, co user wpisuje, przy kazdym odswiezeniu z serwera

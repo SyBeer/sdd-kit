@@ -8,7 +8,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
-const { KIT_DIR, checkRoot, readRoot, saveRoot, resolveRoot } = require('../root');
+const { KIT_DIR, checkRoot, readRoot, saveRoot, resolveRoot, listDirs } = require('../root');
 const { createModule } = require('../modules');
 
 const tmp = () => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-root-')));
@@ -76,6 +76,32 @@ test('AC-28: resolveRoot - env > config > rodzic istniejacego projektu; aplikacj
   assert.strictEqual(r2.rejected, KIT_DIR);
 });
 
+test('AC-31: listDirs - tylko foldery, bez ukrytych, parent, ~, znaczniki aplikacji i modulu', () => {
+  const home = tmp();
+  ['b', 'a', '.ukryty', 'sdd-kit/plugins'].forEach(d => fs.mkdirSync(path.join(home, d), { recursive: true }));
+  fs.writeFileSync(path.join(home, 'plik.txt'), 'x');
+  createModule(path.join(home, 'a'), { name: 'horizon', level: 'full' }, { git: false });
+  const kitDir = path.join(home, 'sdd-kit');
+
+  const l = listDirs('', { home, kitDir });
+  assert.strictEqual(l.path, home);
+  assert.strictEqual(l.parent, path.dirname(home));
+  assert.strictEqual(l.inKit, false);
+  assert.deepStrictEqual(l.dirs.map(d => d.name), ['a', 'b', 'sdd-kit']);
+  assert.strictEqual(l.dirs.find(d => d.name === 'sdd-kit').kit, true);
+  assert.strictEqual(l.dirs.find(d => d.name === 'b').kit, false);
+  assert.strictEqual(l.dirs.find(d => d.name === 'b').path, path.join(home, 'b'));
+
+  const a = listDirs('~/a', { home, kitDir });
+  assert.strictEqual(a.path, path.join(home, 'a'));
+  assert.deepStrictEqual(a.dirs.map(d => [d.name, d.module]), [['horizon', true]]);
+
+  assert.strictEqual(listDirs(kitDir, { home, kitDir }).inKit, true);
+  assert.strictEqual(listDirs('/', { home, kitDir }).parent, null);
+  assert.throws(() => listDirs(path.join(home, 'brak'), { home, kitDir }), /Nie ma folderu/);
+  assert.throws(() => listDirs(path.join(home, 'plik.txt'), { home, kitDir }), /Nie ma folderu/);
+});
+
 function call(port, method, p, body) {
   return new Promise((ok, err) => {
     const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'X-SDD': '1', 'Content-Type': 'application/json' } }, res => {
@@ -114,6 +140,13 @@ test('AC-29: serwer bez katalogu pyta o niego i niczego nie zaklada; POST /api/r
     assert.strictEqual(p.modulesRoot, target);
     assert.strictEqual(p.module.name, 'horizon');
     assert.strictEqual(p.exists, true);
+
+    // AC-32: przegladanie folderow tylko z panelu
+    const bare = await new Promise((ok, err) => http.get({ host: '127.0.0.1', port, path: '/api/dirs' }, r => { r.resume(); ok(r.statusCode); }).on('error', err));
+    assert.strictEqual(bare, 403);
+    const d = await call(port, 'GET', '/api/dirs?path=' + encodeURIComponent(target));
+    assert.strictEqual(d.status, 200);
+    assert.deepStrictEqual(JSON.parse(d.body).dirs.map(x => x.name), ['horizon']);
   } finally {
     srv.kill();
   }

@@ -9,9 +9,11 @@ z biezacego folderu, wiec "Nowy moduł" zakladalby foldery obok aplikacji.
   -> rodzic istniejacego `requirements/` projektu. Nic z tego = panel pyta "Gdzie trzymać wymagania?".
 - Folder aplikacji (i wszystko w nim) jest odrzucany - z configu, ze zmiennej i jako projekt startowy.
 - Panel: ekran wyboru katalogu, "Brak modułów" z przyciskiem "Nowy moduł…", w menu modulow "Zmień katalog modułów…".
+- "Przeglądaj…" przy polu katalogu: okno z podfolderami (serwer listuje, `GET /api/dirs`, chronione jak zapisy),
+  wejscie w folder, "↑ wyżej", znaczniki "moduł" i wyszarzona "aplikacja"; "Wybierz ten folder" wpisuje sciezke do pola.
 - Serwer: `POST /api/root`; bez katalogu `POST /api/modules` -> 409; konsola mowi, gdzie sa moduly albo ze nie wybrano.
 - Zmiana zachowania: `sdd-board` w folderze bez `requirements/` przy zapisanym katalogu otwiera pierwszy modul z katalogu.
-- Nowy `board/root.js`, kryteria AC-26..AC-30 w `docs/specs/progress-ui.md`, testy `test/root.test.js` (41/41).
+- Nowy `board/root.js`, kryteria AC-26..AC-33 w `docs/specs/progress-ui.md`, testy `test/root.test.js` (42/42).
 
 ## [0.7.2] - 2026-09-26
 - Port panelu i tablicy: **4242 -> 8012**. Konwencja workspace rezerwuje dla uslug dev zakres

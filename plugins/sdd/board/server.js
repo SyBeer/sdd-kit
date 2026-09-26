@@ -13,7 +13,7 @@ const path = require('path');
 const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
-const { KIT_DIR, configPath, inside, saveRoot, checkRoot, resolveRoot } = require('./root');
+const { KIT_DIR, configPath, inside, saveRoot, checkRoot, resolveRoot, listDirs } = require('./root');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -185,6 +185,12 @@ const server = http.createServer((req, res) => {
     catch (e) { return json(res, /w spisie/.test(e.message) ? 409 : 404, { error: e.message }); }
   }
 
+  // Tylko odczyt, ale zdradza strukture dysku - ta sama ochrona co zapisy.
+  if (url === '/api/dirs' && req.method === 'GET') {
+    if (!allowedWrite(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+    try { return json(res, 200, listDirs(u.searchParams.get('path') || '')); }
+    catch (e) { return json(res, 404, { error: e.message }); }
+  }
   if (url === '/api/root' && req.method === 'POST') {
     return readBody(req, 64 * 1024, buf => {
       try {
