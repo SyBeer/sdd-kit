@@ -13,7 +13,7 @@ const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake } = require('./modules');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
-const UI = path.join(__dirname, 'index.html');
+const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
 const MAX_UPLOAD = 25 * 1024 * 1024;
 
@@ -33,7 +33,7 @@ const ROOT = process.env.SDD_MODULES_ROOT
 
 // ---------------------------------------------------------------- tablica
 function emptyBoard() {
-  return { title: 'Warsztat', subtitle: '', lanes: ['Proces 1'], notes: [], updated: new Date().toISOString() };
+  return { title: 'Warsztat', subtitle: '', lanes: [], notes: [], updated: new Date().toISOString() };
 }
 function readBoard() {
   try { return JSON.parse(fs.readFileSync(state.board, 'utf8')); }
@@ -128,6 +128,10 @@ const server = http.createServer((req, res) => {
 
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
+  if (url === '/board-ops.js') {
+    res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' });
+    return fs.createReadStream(path.join(__dirname, 'board-ops.js')).pipe(res);
+  }
 
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload());
   if (url === '/progress-events') return sse(req, res, progressClients, progressPayload());

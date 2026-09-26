@@ -1,0 +1,86 @@
+// Operacje na procesach (pasach) tablicy. Wspolne dla przegladarki (window.BoardOps) i testow (require).
+// Kryteria: docs/specs/board-ui.md. Proces identyfikuje nazwa, karteczka wskazuje go polem `lane`.
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.BoardOps = factory();
+})(this, function () {
+  'use strict';
+
+  function lanes(b) { if (!Array.isArray(b.lanes)) b.lanes = []; return b.lanes; }
+  function notes(b) { if (!Array.isArray(b.notes)) b.notes = []; return b.notes; }
+  function clean(name) { return String(name == null ? '' : name).replace(/\s+/g, ' ').trim(); }
+
+  function addLane(b, name) {
+    const l = lanes(b);
+    let n = clean(name);
+    if (n) {
+      if (l.indexOf(n) >= 0) throw new Error('Proces „' + n + '” już jest.');
+    } else {
+      n = 'Nowy proces';
+      for (let i = 2; l.indexOf(n) >= 0; i++) n = 'Nowy proces ' + i;
+    }
+    l.push(n);
+    return n;
+  }
+
+  function renameLane(b, from, to) {
+    const l = lanes(b), i = l.indexOf(from), n = clean(to);
+    if (i < 0) throw new Error('Nie ma procesu „' + from + '”.');
+    if (!n) throw new Error('Nazwa procesu nie może być pusta.');
+    if (n === from) return n;
+    if (l.indexOf(n) >= 0) throw new Error('Proces „' + n + '” już jest.');
+    l[i] = n;
+    notes(b).forEach(function (x) { if (x.lane === from) x.lane = n; });
+    return n;
+  }
+
+  function moveLane(b, name, dir) {
+    const l = lanes(b), i = l.indexOf(name), j = i + (dir < 0 ? -1 : 1);
+    if (i < 0 || j < 0 || j >= l.length) return;
+    l[i] = l[j]; l[j] = name;
+  }
+
+  function countNotes(b, name) {
+    return notes(b).filter(function (x) { return x.lane === name; }).length;
+  }
+
+  function deleteLane(b, name) {
+    const removed = countNotes(b, name);
+    b.lanes = lanes(b).filter(function (x) { return x !== name; });
+    b.notes = notes(b).filter(function (x) { return x.lane !== name; });
+    return removed;
+  }
+
+  function nextCol(b, name) {
+    const cols = notes(b).filter(function (x) { return x.lane === name; }).map(function (x) { return x.col || 0; });
+    return cols.length ? Math.max.apply(null, cols) + 1 : 0;
+  }
+
+  // Kolejnosc karteczek w kolumnie = kolejnosc w notes[].
+  function sameCol(n, lane, col) { return n.lane === lane && (n.col || 0) === col; }
+
+  function moveNote(b, id, lane, col, beforeId) {
+    const list = notes(b), i = list.findIndex(function (x) { return x.id === id; });
+    if (i < 0 || beforeId === id) return;
+    const n = list.splice(i, 1)[0];
+    n.lane = lane; n.col = col;
+    let at = beforeId ? list.findIndex(function (x) { return x.id === beforeId; }) : -1;
+    if (at < 0) {
+      at = list.length;
+      for (let k = list.length - 1; k >= 0; k--) if (sameCol(list[k], lane, col)) { at = k + 1; break; }
+    }
+    list.splice(at, 0, n);
+  }
+
+  function stepNote(b, id, dir) {
+    const list = notes(b), n = list.find(function (x) { return x.id === id; });
+    if (!n) return;
+    const idx = [];
+    list.forEach(function (x, k) { if (sameCol(x, n.lane, n.col || 0)) idx.push(k); });
+    const p = idx.indexOf(list.indexOf(n)), q = p + (dir < 0 ? -1 : 1);
+    if (q < 0 || q >= idx.length) return;
+    const a = idx[p], c = idx[q], t = list[a]; list[a] = list[c]; list[c] = t;
+  }
+
+  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote };
+});

@@ -51,6 +51,8 @@ z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Ods
 Naglowek "Wymagania do modułu: <nazwa> ▾" - klik w nazwe przelacza modul (modul = folder obok z `requirements/SDD.yaml`),
 a "+ Nowy moduł…" na dole menu zaklada folder obok jak `/sdd:init`, z `git init`.
 Karta Intake przyjmuje zalaczniki (przycisk lub przeciagnij-upusc, do 25 MB) i zapisuje je do `requirements/00-intake/`, pomija pliki o identycznej tresci i pokazuje liste wrzuconych plikow (dodane / czeka na spis).
+Tablica (`/board`): procesy zakladasz, nazywasz, przesuwasz i usuwasz w przegladarce; karteczke edytujesz w panelu z prawej;
+powiekszenie z "Dopasuj" miesci cala tablice w oknie.
 Poza tym tylko podglad. Spec: `docs/specs/progress-ui.md`.
 Testy: `node --test plugins/sdd/board/test/*.test.js`
 

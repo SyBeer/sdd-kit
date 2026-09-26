@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0] - 2026-09-26
+- Tablica: zakladanie procesow ("+ Proces", pusta tablica z "Dodaj pierwszy proces"), zmiana nazwy klikiem w nazwe
+  (karteczki ida za nazwa, pusta/zajeta odrzucona), przesuwanie gora/dol, usuwanie z potwierdzeniem przy karteczkach.
+- Tablica: panel edycji karteczki wysuwany z prawej (na telefonie od dolu), Escape zamyka, Cmd/Ctrl+Enter zapisuje;
+  "+" w ostatniej kolumnie procesu i "+ Karteczka" w pasku; "Pas" -> "Proces".
+- Tablica: na cala szerokosc, powiekszenie 50-150% z "Dopasuj" (zapamietane), nazwy procesow przyklejone przy przewijaniu.
+- Tablica: kolejnosc karteczek w kolumnie - upuszczenie przed/za karteczka (kreska pokazuje miejsce),
+  w panelu "↑ wyżej" / "↓ niżej" (dziala tez na telefonie).
+- Tablica: typ karteczki w panelu jako przyciski jak legenda (kolor + nazwa + podpowiedz) zamiast listy rozwijanej.
+- Pusta tablica bez procesow (wczesniej "Proces 1"), zeby bylo widac "Dodaj pierwszy proces".
+- `board/board-ops.js` (wspolny dla przegladarki i testow) + testy AC-B1..AC-B5, AC-B8, AC-B9, spec `docs/specs/board-ui.md` (24/24).
+- Skill board: czytaj board.json tuz przed edycja, nie cofaj zmian usera z przegladarki.
+
 ## [0.4.1] - 2026-09-26
 - Panel: przelacznik modulu w tytule ("Wymagania do modułu: <nazwa> ▾") zamiast listy i przycisku po prawej.
   Menu: moduly z poziomem "pełny"/"lekki", na dole "+ Nowy moduł…"; Escape, klik poza menu, strzalki.

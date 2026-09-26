@@ -35,6 +35,8 @@ Po KAZDEJ wypowiedzi usera:
 5. Pomylka w interpretacji: popraw lub usun karteczke, nie dopisuj obok.
 
 Piszesz do board.json sam, bez pytania (odtwarzalne).
+User tez edytuje tablice w przegladarce: zaklada procesy (pasy), zmienia ich nazwy i kolejnosc, dopisuje karteczki.
+Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych nazw procesow ani usunietych karteczek.
 
 ## Synchronizacja po warsztacie (`/sdd:board sync`)
 1. Przeczytaj `board.json`. Karteczki z `by: "czlowiek"` lub zmienione recznie (brak `by`, `source` zaczynajace sie od "warsztat, dopisane w przegladarce") to slowa biznesu `[B]` o najwyzszej wiarygodnosci.
