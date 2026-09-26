@@ -1,4 +1,6 @@
 # Aktorzy (role, nie osoby)
 
-| Rola | Co robi | Czego nie wolno | Zrodlo |
-|------|---------|-----------------|--------|
+Status: robocze | zakwestionowane (Q-xxx) | zatwierdzone
+
+| Rola | Co robi | Czego nie wolno | Zrodlo | Status |
+|------|---------|-----------------|--------|--------|

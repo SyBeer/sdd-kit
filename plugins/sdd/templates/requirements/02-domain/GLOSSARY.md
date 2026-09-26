@@ -1,7 +1,12 @@
 # Slownik pojec
 
 Jedno pojecie = jedna definicja. Synonimy uzywane przez biznes wpisuj, nie usuwaj.
-Status: robocze | zatwierdzone (bramka przed /sdd:spec)
+Jedno pojecie = jeden zbior rekordow: jesli dwa zrodla nazywaja ta sama nazwa inny zbior
+obiektow, to homonim do rozbicia na dwa hasla albo sprzecznosc - nie jedno haslo.
+Status: robocze | zakwestionowane (Q-xxx) | zatwierdzone (bramka przed /sdd:spec)
+
+Zrodlo: `[B]/[P]/[D]/[AI] <plik z INDEX.md>[, sekcja/wiersz]` - nazwa pliku obowiazkowa,
+bo na niej stoi kontrola pokrycia zrodel w /sdd:validate.
 
 | Pojecie | Definicja | Synonimy | Przyklad | Zrodlo | Status |
 |---------|-----------|----------|----------|--------|--------|

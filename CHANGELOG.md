@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.7.0] - 2026-09-26
+Kolejne zrodlo w intake porownuje sie z MODELEM, nie ze starymi zrodlami. `00-intake/` to surowiec,
+`02-domain/` jest prawda. Powod: intake wykrywal tylko sprzecznosci wartosci (ta sama rzecz, inna
+wartosc). Nie widzial sprzecznosci struktury (zrodla inaczej dziela domene) ani milczacych pominiec
+(zrodlo mowi o czyms, czego model nie ma - znika bez sladu, bo nie zostawia ani pytania, ani konfliktu).
+
+- `intake`: podzial na przebieg pierwszy (zrodla miedzy soba) i kolejny (zrodlo kontra model).
+  Przebieg kolejny ma obowiazkowa kolejnosc: najpierw czytanie "na zimno" do `00-intake/porownanie-YYYY-MM-DD.md`,
+  dopiero potem model - inaczej agent dopasowuje nowe zrodlo do tego, co juz wie.
+  Piec klas trafienia: `potwierdza`, `zamyka Q`, `uzupelnia`, `sprzeczne`, `podmywa model`.
+  Trafienie w `D-xxx` = wniosek o ponowne otwarcie decyzji. Trafienie w strukture encji lub maszyne
+  stanow = zgloszenie przebudowy modelu, nie dwadziescia pytan o szczegoly.
+- Nowy status elementu modelu `zakwestionowane (Q-xxx)` w GLOSSARY, RULES, ACTORS, ENTITIES: nowe
+  zrodlo wyzsze w hierarchii podmywa model. Nic nie jest kasowane, ale wszystko podmyte jest widoczne.
+- Kaskada wplywu (`CLAUDE.md` §6) ma trzeci wyzwalacz: oznaczenie elementu jako `zakwestionowane`
+  (dotad tylko zmiana `A` i nowa `D`). Sciezka: `RULES.Wymagania` -> `R` -> sekcja 6 PRD.
+- `validate`: BLOCK 6 - `R` stojace na elemencie `zakwestionowane` (rownolegle do `A obalone`).
+  WARN 10 - zrodlo `aktualne` z `INDEX.md`, ktorego nazwa nie wystepuje w zadnym `Zrodlo`
+  ("zrodlo przeczytane i nieuzyte") - jedyna kontrola na wymaganie, ktore zniknelo bez sladu.
+  INFO 15 - pojecie lub `BR` nieuzywane przez zadne `R`.
+- `domain`: czwarta kontrola w tescie spojnosci - jedno pojecie = jeden zbior rekordow (sprawdza
+  zakres, nie brzmienie definicji); piata - czy kazde zrodlo `aktualne` zostawilo slad w modelu.
+  Nowa sekcja "Przebudowa modelu" jako wejscie po zgloszeniu z intake.
+- `INDEX.md`: kolumny `Kierunek` (`intencja` / `as-built` / `potwierdzenie`) i `Status zrodla`
+  (`aktualne` / `zastapione przez <plik>` / `dotyczy innej wersji <X>` / `wycofane`). Kierunek
+  rozstrzyga tam, gdzie hierarchia nie wystarcza - dwa dokumenty `[D]` roznia sie zwykle tym,
+  ze jeden opisuje zamiar, drugi stan faktyczny. Status pozwala uniewaznic cale zrodlo jedna
+  decyzja i odsiewa falszywe sprzecznosci miedzy wersjami produktu.
+- Zapis zrodla ujednolicony na `[B]/[P]/[D]/[AI] <plik z INDEX.md>[, sekcja/wiersz]` - nazwa pliku
+  obowiazkowa, bo na niej stoi kontrola pokrycia zrodel.
+- `CLAUDE.md`: zasada "zgodnosc dwoch zrodel `[D]` NIE jest potwierdzeniem" - dwa dokumenty spisane
+  z tej samej aplikacji powtarzaja ten sam blad.
+- `spec`: nie tworzy `R` na elemencie `zakwestionowane` (jak dotad na `A obalone`).
+- Testy panelu bez zmian w kodzie: 36/36.
+
 ## [0.6.4] - 2026-09-26
 - Przejscie Panel <-> Tablica bez skakania: staly pasek (47 px) i naglowek w ui.css niezalezne od CSS strony
   (inna wysokosc linii, odstepy naglowka, style `label` tablicy), `scrollbar-gutter: stable`.

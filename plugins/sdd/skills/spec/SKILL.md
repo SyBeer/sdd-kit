@@ -21,8 +21,13 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
    - kryteria AC-xxx-n Given/When/Then; kazde testowalne (konkretny stan, zdarzenie, wynik obserwowalny)
    - status `robocze`, wlasciciel (rola)
    Mozesz proponowac paczkami po 3-5 R, user zatwierdza paczke.
-4. R stojace na A `obalone` lub Q z etykieta blokujaca: NIE tworz, wpisz do sekcji 7 PRD.
-5. Sekcja 6 "Do przegladu": przepisz z tego, co wygenerowaly kaskady w interview.
+4. R stojace na A `obalone`, na elemencie modelu `zakwestionowane` albo na Q z etykieta
+   blokujaca: NIE tworz, wpisz do sekcji 7 PRD. Element `zakwestionowane` to podstawa
+   podmyta przez zrodlo wyzsze w hierarchii - wymaganie na niej byloby zbudowane na piasku.
+5. Sekcja 6 "Do przegladu": przepisz z tego, co wygenerowaly kaskady w interview i z intake
+   (elementy modelu oznaczone `zakwestionowane`).
+6. Zrodlo kazdego R zapisuj z nazwa pliku z `INDEX.md`: `[B] <plik>[, sekcja/wiersz]`.
+   Bez nazwy pliku kontrola pokrycia zrodel w /sdd:validate nie ma czego szukac.
 
 ## Tryb `--agent`
 1. Wymaga PRD z co najmniej jednym R `zatwierdzone`. Generuj tylko z zatwierdzonych.

@@ -34,7 +34,7 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 
 | Skill          | Etap | Autonomia |
 |----------------|------|-----------|
-| /sdd:intake    | 1 katalogowanie surowca | pisze sam (odtwarzalne) |
+| /sdd:intake    | 1 katalogowanie surowca; kolejne zrodla porownywane z modelem | pisze sam (odtwarzalne) |
 | /sdd:interview | 2 pytania i odpowiedzi (live / async) | pyta przed D i zmiana A |
 | /sdd:domain    | 3 slownik, aktorzy, encje, reguly | pyta przed zmiana slownika |
 | /sdd:spec      | 4 PRD; --agent pliki dla agenta; --light SPEC.md | pyta przed nowym R |
@@ -73,7 +73,8 @@ Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik
     requirements/
       SDD.yaml              konfiguracja: poziom, role zatwierdzajace, backlog
       CHANGELOG.md          jedna linia na kazdy zapis automatyczny
-      00-intake/INDEX.md    katalog surowca z wiarygodnoscia [B]/[P]/[D]/[AI]
+      00-intake/INDEX.md    katalog surowca: wiarygodnosc [B]/[P]/[D]/[AI], kierunek, status
+      00-intake/porownanie-*.md  czytanie nowego zrodla "na zimno" przed zajrzeniem do modelu
       01-interview/         QUESTIONS.md, ASSUMPTIONS.md, DECISIONS.md, rundy, sesje
       02-domain/            GLOSSARY.md, ACTORS.md, ENTITIES.md, RULES.md
       03-spec/              PRD.md (zrodlo prawdy) lub SPEC.md; agent/ GENEROWANE
