@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.4] - 2026-09-26
+- Przejscie Panel <-> Tablica bez skakania: staly pasek (47 px) i naglowek w ui.css niezalezne od CSS strony
+  (inna wysokosc linii, odstepy naglowka, style `label` tablicy), `scrollbar-gutter: stable`.
+  Pozycje paska, zakladek, ikon, naglowka i przycisku modulu identyczne na obu stronach (pomiar 1200 i 375 px).
+
 ## [0.6.3] - 2026-09-26
 - Tablica: naglowek jak w panelu - "Wymagania do modułu: <nazwa> ▾" z menu modulow; wybor modulu na tablicy przelacza
   modul na serwerze (tablica i panel). "Nowy moduł…" przechodzi do panelu i otwiera formularz. Tytul tablicy - linia obok.

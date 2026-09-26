@@ -30,6 +30,8 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
    - "+ Nowy moduł…" na tablicy przechodzi do panelu i otwiera tam formularz (`/#nowy-modul`).
    - Tytul i podtytul tablicy (z board.json) zostaja jako mniejsza linia pod naglowkiem.
    - Jeden kod menu dla obu stron: `ui.js` (`modMenu` + obsluga), wyglad w `ui.css`.
+   - Bez skakania (0.6.4, user: "przelaczanie zakladki powoduje skakanie ekranow"): pasek (47 px) i naglowek maja stale wymiary
+     z `ui.css`, niezalezne od CSS strony; `scrollbar-gutter: stable`, zeby pasek przewijania nie przesuwal strony w bok.
    - Serwer dokleja do widoku tablicy `_module` (nazwa) i `_modules` (lista); jak `_sync` - nigdy nie trafiaja do board.json.
 
 ## Poza zakresem
@@ -45,4 +47,5 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - AC-U4 (reczne): na obu stronach pasek w tym samym miejscu; klik zakladki przechodzi na druga strone.
 - AC-U5 (reczne): ksiezyc przy jasnym systemie -> ciemne kolory na obu stronach, po przeladowaniu tez; slonce przy ciemnym -> jasne;
   zmiana w jednej karcie zmienia druga; telefon bez poziomego przewijania.
+- AC-U9 (reczne, pomiar): pasek, zakladki, ikony motywu, h1 i przycisk modulu maja te same wspolrzedne na panelu i tablicy (1200 px i 375 px).
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.
