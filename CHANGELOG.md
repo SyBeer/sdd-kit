@@ -7,7 +7,9 @@ wiec panel cofal "Aktualny krok" z Domain do Interview i nie dalo sie przerwac w
   Zwykle otwarte pytania widac w licznikach karty i w "Czeka na biznes".
 - Etykieta zaprzeczona ("nie blokuje go-live") nie robi z pytania blokera.
 - `/sdd:interview` live: "przerwij" / "stop" / "koniec" konczy warsztat bez zapisu niezatwierdzonej propozycji.
-- Spec: `docs/specs/progress-ui.md`, zmiana 0.9.0 (AC-26b..AC-28b), testy 44/44.
+- Karta Interview: rozwijana lista "Pytania do wyjaśnienia" (otwarte, zadane, sprzeczne) - numer, tresc,
+  znacznik (sprzeczne / blokuje / zadane / otwarte), do kogo, skad; kolejnosc jak priorytet wywiadu.
+- Spec: `docs/specs/progress-ui.md`, zmiana 0.9.0 (AC-26b..AC-30b), testy 45/45.
 
 ## [0.8.0] - 2026-09-26
 Katalog produktow wskazuje uzytkownik. sdd-kit to tylko aplikacja: moduly (`requirements/`) nie powstaja

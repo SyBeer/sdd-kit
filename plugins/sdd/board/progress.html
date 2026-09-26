@@ -118,6 +118,13 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .files .rm-none{width:22px;flex:none}
 .files .rmhint{margin:6px 0 0;font-size:12px;color:var(--muted)}
 .files .rm:hover,.files .rm:focus-visible{border-color:var(--line);color:var(--hot)}
+.qs li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--line)}
+.qs li:last-child{border-bottom:0}
+.qs .qid{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted)}
+.qs .qt{min-width:0;overflow-wrap:anywhere}
+.qs .qm{grid-column:2 / 4;font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.qs .tag.bad{background:var(--hot);color:#fff}
+.qs .tag.ask{background:var(--cmd);color:#26241f}
 .missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
 .missing h2{margin-top:0}
 .missing label{display:block;font-size:13px;font-weight:600;margin:16px 0 4px}
@@ -322,6 +329,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
         '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></h3>'+
         '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
         (s.key==='intake'?intakeBox(s.files||[]):'')+
+        (s.key==='interview'?questionBox(s.questions||[]):'')+
         '<div class="foot"><span class="run">Uruchom w Claude Code:</span> <code>'+esc(s.command)+'</code></div></article>';
     }).join('')+'</div><aside>';
 
@@ -340,6 +348,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     html+='</aside></div>';
     app.innerHTML=html;
     wireDrop();
+    var ql=$('#qlist'); if(ql) ql.querySelector('summary').onclick=function(){qOpen=!ql.open};
     var fl=$('#filelist'); if(fl){
       fl.querySelector('summary').onclick=function(){filesOpen=!fl.open};
       fl.querySelector('ul').onclick=function(e){ var b=e.target.closest('.rm'); if(b) removeFile(b.getAttribute('data-name')); };
@@ -366,7 +375,19 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     $('#rootdir').textContent=p.modulesRoot||'';
   }
   function size(b){return b<1024?b+' B':b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'}
-  var filesOpen=null;
+  var filesOpen=null, qOpen=null;
+  // Pytania do wyjasnienia (zmiana 0.9.0): widac, do czego wracac, choc nie cofaja aktualnego kroku.
+  var QTAG={conflicting:['bad','sprzeczne'],asked:['ask','zadane'],open:['','otwarte']};
+  function questionBox(qs){
+    if(!qs.length) return '<p class="nofiles">Nie ma pytań do wyjaśnienia.</p>';
+    var open=qOpen===null?qs.length<=8:qOpen;
+    return '<details class="files qs" id="qlist"'+(open?' open':'')+'><summary>Pytania do wyjaśnienia: <b>'+qs.length+'</b></summary><ul>'+
+      qs.map(function(q){
+        var t=q.blocking&&q.kind!=='conflicting'?['bad','blokuje']:(QTAG[q.kind]||['',q.kind]);
+        return '<li><span class="qid">'+esc(q.id)+'</span><span class="qt">'+esc(q.text)+'</span><span class="tag '+t[0]+'">'+esc(t[1])+'</span>'+
+          '<span class="qm">'+esc([q.role&&('do: '+q.role),q.source&&('skąd: '+q.source)].filter(Boolean).join(' · '))+'</span></li>';
+      }).join('')+'</ul><p class="rmhint">Wracasz do nich przez <code>/sdd:interview</code> (live albo async). Blokują tylko sprzeczne i oznaczone jako blokujące.</p></details>';
+  }
   function intakeBox(files){
     var h='<div class="drop" id="drop" role="button" tabindex="0"><b>Dołącz pliki</b> albo upuść je tutaj<br>maile, notatki, PDF, zrzuty · do 25 MB</div>';
     if(uplog.length) h+='<ul class="uplog">'+uplog.map(function(l){return '<li class="'+l.cls+'">'+esc(l.text)+'</li>'}).join('')+'</ul>';

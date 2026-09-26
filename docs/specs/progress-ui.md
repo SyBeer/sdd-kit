@@ -225,9 +225,16 @@ Decyzja usera: blokuja tylko blokery.
 2. Etykieta blokujaca liczy sie tylko wtedy, gdy nie jest zaprzeczona: "nie blokuje go-live" to nie bloker.
 3. `/sdd:interview` live: "przerwij" / "stop" / "koniec" konczy warsztat od razu - bez zapisu niezatwierdzonej
    propozycji, z notka w sesji, podsumowaniem i nastepnym krokiem z panelu (moze to byc etap dalszy niz Interview).
+4. Karta Interview: rozwijana lista pytan do wyjasnienia (`otwarte`, `zadane`, `sprzeczne`; bez odpowiedzianych
+   i zaparkowanych) - numer, tresc, znacznik stanu (sprzeczne / blokuje / zadane / otwarte), do kogo, skad.
+   Kolejnosc jak priorytet wywiadu: sprzeczne, blokujace, reszta; w grupie po numerze. Lista zwinieta przy > 8
+   pozycjach, z przewijaniem. Uwaga user: "ale mam mozliwosc powrotu do pytan?" - lista pokazuje, do czego wracac.
 
 ## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
 - AC-26b: otwarte pytanie bez etykiety blokujacej + decyzja -> Interview `done`, aktualny krok przechodzi dalej;
   licznik `open` dalej pokazuje to pytanie.
 - AC-27b: pytanie `otwarte` z "blokuje go-live" -> Interview `active` i bloker; to samo z "nie blokuje go-live" -> nie bloker, `done`.
 - AC-28b: pytanie `sprzeczne` -> Interview `active` (bez zmian wzgledem AC-3).
+- AC-29b: `readProgress` zwraca w etapie interview `questions[]` (id, text, kind, role, source, blocking) tylko dla
+  `otwarte`/`zadane`/`sprzeczne`, w kolejnosci: sprzeczne, blokujace, reszta, w grupie po numerze.
+- AC-30b (reczne): karta Interview pokazuje liste, rozwija sie i zwija; tresc pytania escapowana.

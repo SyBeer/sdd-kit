@@ -137,6 +137,15 @@ function interview(req, gate) {
   // i nie cofaja procesu (zmiana 0.9.0); widac je w licznikach i w "Czeka na biznes".
   const status = counts.questions === 0 && decisions === 0 ? 'todo' : blockers.length > 0 ? 'active' : 'done';
 
+  // Lista do wyjasnienia na karcie Interview (zmiana 0.9.0): kolejnosc jak priorytet wywiadu.
+  const rank = q => q.kind === 'conflicting' ? 0 : q.blocking ? 1 : 2;
+  const questions = qs.map(q => {
+    const kind = qKind(q.status || '');
+    return { id: q.id, text: q.pytanie || '', kind, role: q['do kogo (rola)'] || q['do kogo'] || '',
+      source: q['skad'] || '', blocking: (kind === 'open' || kind === 'asked') && hasGate(q._raw, gate) };
+  }).filter(q => q.kind === 'open' || q.kind === 'asked' || q.kind === 'conflicting')
+    .sort((a, b) => rank(a) - rank(b) || String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+
   const roles = new Map();
   qs.filter(q => qKind(q.status || '') === 'asked').forEach(q => {
     const role = q['do kogo (rola)'] || q['do kogo'] || '?';
@@ -144,7 +153,7 @@ function interview(req, gate) {
     roles.get(role).push(q.id);
   });
   const waiting = [...roles].map(([role, ids]) => ({ role, count: ids.length, ids }));
-  return { status, counts, blockers, waiting };
+  return { status, counts, blockers, waiting, questions };
 }
 
 function domain(req) {
@@ -216,7 +225,8 @@ function readProgress(reqDir) {
     spec: spec(req, level), validate: validate(req), handover: handover(req),
   };
   const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, counts: results[s.key].counts },
-    results[s.key].files ? { files: results[s.key].files } : {}));
+    results[s.key].files ? { files: results[s.key].files } : {},
+    results[s.key].questions ? { questions: results[s.key].questions } : {}));
   const next = stages.find(s => s.status !== 'done')
     || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.',
       howto: ['Skopiuj komendę i wklej ją w Claude Code, żeby zobaczyć podsumowanie.', 'Nowe materiały wrzucasz jak wcześniej, do karty Intake.'] };
