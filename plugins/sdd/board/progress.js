@@ -138,13 +138,16 @@ function interview(req, gate) {
   const status = counts.questions === 0 && decisions === 0 ? 'todo' : blockers.length > 0 ? 'active' : 'done';
 
   // Lista do wyjasnienia na karcie Interview (zmiana 0.9.0): kolejnosc jak priorytet wywiadu.
-  const rank = q => q.kind === 'conflicting' ? 0 : q.blocking ? 1 : 2;
+  // "Wszystkie" tez widac (odpowiedziane, zaparkowane) - po pytaniach do wyjasnienia.
+  const rank = q => !q.pending ? 3 : q.kind === 'conflicting' ? 0 : q.blocking ? 1 : 2;
   const questions = qs.map(q => {
     const kind = qKind(q.status || '');
-    return { id: q.id, text: q.pytanie || '', kind, role: q['do kogo (rola)'] || q['do kogo'] || '',
-      source: q['skad'] || '', blocking: (kind === 'open' || kind === 'asked') && hasGate(q._raw, gate) };
-  }).filter(q => q.kind === 'open' || q.kind === 'asked' || q.kind === 'conflicting')
-    .sort((a, b) => rank(a) - rank(b) || String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+    const pending = kind === 'open' || kind === 'asked' || kind === 'conflicting';
+    return { id: q.id, text: q.pytanie || '', kind, status: (q.status || '').trim(), pending,
+      role: q['do kogo (rola)'] || q['do kogo'] || '', source: q['skad'] || '',
+      closedBy: (q['zamkniete przez'] || '').trim(),
+      blocking: (kind === 'open' || kind === 'asked') && hasGate(q._raw, gate) };
+  }).sort((a, b) => rank(a) - rank(b) || String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
 
   const roles = new Map();
   qs.filter(q => qKind(q.status || '') === 'asked').forEach(q => {

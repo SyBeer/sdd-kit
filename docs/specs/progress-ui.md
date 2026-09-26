@@ -229,12 +229,17 @@ Decyzja usera: blokuja tylko blokery.
    i zaparkowanych) - numer, tresc, znacznik stanu (sprzeczne / blokuje / zadane / otwarte), do kogo, skad.
    Kolejnosc jak priorytet wywiadu: sprzeczne, blokujace, reszta; w grupie po numerze. Lista zwinieta przy > 8
    pozycjach, z przewijaniem. Uwaga user: "ale mam mozliwosc powrotu do pytan?" - lista pokazuje, do czego wracac.
+5. Uwaga user: "musze miec mozliwosc podejrzenia wszystkich pytan". Przelacznik nad lista: "Do wyjaśnienia (N)" |
+   "Wszystkie (M)". "Wszystkie" pokazuje tez odpowiedziane (znacznik "odpowiedziane" + czym zamkniete, np. D-012)
+   i zaparkowane (znacznik "zaparkowane" + warunek). Kolejnosc: najpierw do wyjasnienia (jak wyzej), potem reszta po numerze.
+   Wybor przelacznika pamietany do przeladowania strony.
 
 ## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
 - AC-26b: otwarte pytanie bez etykiety blokujacej + decyzja -> Interview `done`, aktualny krok przechodzi dalej;
   licznik `open` dalej pokazuje to pytanie.
 - AC-27b: pytanie `otwarte` z "blokuje go-live" -> Interview `active` i bloker; to samo z "nie blokuje go-live" -> nie bloker, `done`.
 - AC-28b: pytanie `sprzeczne` -> Interview `active` (bez zmian wzgledem AC-3).
-- AC-29b: `readProgress` zwraca w etapie interview `questions[]` (id, text, kind, role, source, blocking) tylko dla
-  `otwarte`/`zadane`/`sprzeczne`, w kolejnosci: sprzeczne, blokujace, reszta, w grupie po numerze.
+- AC-29b: `readProgress` zwraca w etapie interview `questions[]` - WSZYSTKIE pytania (id, text, kind, status, role, source,
+  blocking, closedBy, pending). `pending` = otwarte/zadane/sprzeczne. Kolejnosc: pending wg priorytetu (sprzeczne, blokujace,
+  reszta), potem pozostale po numerze.
 - AC-30b (reczne): karta Interview pokazuje liste, rozwija sie i zwija; tresc pytania escapowana.

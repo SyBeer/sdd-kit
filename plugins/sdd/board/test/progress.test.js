@@ -89,7 +89,7 @@ test('AC-27b: etykieta blokujaca liczy sie, zaprzeczona nie', () => {
   assert.deepStrictEqual(p.blockers, []);
 });
 
-test('AC-29b: interview.questions - tylko do wyjasnienia, w kolejnosci priorytetu', () => {
+test('AC-29b: interview.questions - wszystkie, do wyjasnienia na poczatku wg priorytetu', () => {
   const req = freshProject();
   append(req, '01-interview/QUESTIONS.md', [
     '| Q-001 | Format? | otwarte | wlasciciel procesu | luka | | |',
@@ -100,11 +100,16 @@ test('AC-29b: interview.questions - tylko do wyjasnienia, w kolejnosci priorytet
     '| Q-006 | Pozniej | zaparkowane (nie blokuje go-live) | sponsor | luka | | |',
   ].join('\n') + '\n');
   const qs = stage(readProgress(req), 'interview').questions;
-  assert.deepStrictEqual(qs.map(q => q.id), ['Q-004', 'Q-003', 'Q-001', 'Q-005']);
+  assert.deepStrictEqual(qs.map(q => q.id), ['Q-004', 'Q-003', 'Q-001', 'Q-005', 'Q-002', 'Q-006']);
+  assert.deepStrictEqual(qs.filter(q => q.pending).map(q => q.id), ['Q-004', 'Q-003', 'Q-001', 'Q-005']);
   const q3 = qs.find(q => q.id === 'Q-003');
   assert.deepStrictEqual([q3.text, q3.kind, q3.role, q3.source, q3.blocking], ['Kto?', 'open', 'sponsor', 'test spojnosci domeny', true]);
   assert.strictEqual(qs.find(q => q.id === 'Q-005').kind, 'asked');
   assert.strictEqual(qs.find(q => q.id === 'Q-001').blocking, false);
+  const q2 = qs.find(q => q.id === 'Q-002');
+  assert.deepStrictEqual([q2.kind, q2.pending, q2.closedBy], ['answered', false, 'D-001']);
+  const q6 = qs.find(q => q.id === 'Q-006');
+  assert.deepStrictEqual([q6.kind, q6.status, q6.blocking], ['parked', 'zaparkowane (nie blokuje go-live)', false]);
 });
 
 test('AC-4: czeka na biznes pogrupowane po roli', () => {

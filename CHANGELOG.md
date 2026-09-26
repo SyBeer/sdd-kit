@@ -9,6 +9,8 @@ wiec panel cofal "Aktualny krok" z Domain do Interview i nie dalo sie przerwac w
 - `/sdd:interview` live: "przerwij" / "stop" / "koniec" konczy warsztat bez zapisu niezatwierdzonej propozycji.
 - Karta Interview: rozwijana lista "Pytania do wyjaśnienia" (otwarte, zadane, sprzeczne) - numer, tresc,
   znacznik (sprzeczne / blokuje / zadane / otwarte), do kogo, skad; kolejnosc jak priorytet wywiadu.
+  Przelacznik "Do wyjaśnienia (N)" / "Wszystkie (M)" - takze odpowiedziane (czym zamkniete, np. D-012)
+  i zaparkowane (z warunkiem).
 - Spec: `docs/specs/progress-ui.md`, zmiana 0.9.0 (AC-26b..AC-30b), testy 45/45.
 
 ## [0.8.0] - 2026-09-26
