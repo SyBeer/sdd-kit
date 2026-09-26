@@ -103,3 +103,37 @@ test('AC-B9: stepNote - zamiana z sasiadem w kolumnie', () => {
   ops.stepNote(b, 'x', 1);                       // sam w kolumnie
   assert.deepStrictEqual(column(b, 'A', 0), ['x']);
 });
+
+test('AC-B11: stampNotes - daty utworzenia i zmiany', () => {
+  const T0 = '2026-09-26T10:00:00.000Z', NOW = '2026-09-26T12:30:00.000Z';
+  const prev = { lanes: ['A'], notes: [
+    { id: 'a', lane: 'A', col: 0, text: 'x', type: 'ev', created: T0, updated: T0 },
+    { id: 'b', lane: 'A', col: 1, text: 'y', type: 'ev', created: T0, updated: T0 },
+    { id: 'c', lane: 'A', col: 2, text: 'z', type: 'ev' },
+  ] };
+  const next = JSON.parse(JSON.stringify(prev));
+  next.notes[1].text = 'y2';                                  // zmieniona tresc
+  next.notes[2].col = 3;                                      // stara bez dat, przesunieta
+  next.notes.push({ id: 'd', lane: 'A', col: 4, text: 'nowa', type: 'hot' });
+  next.notes.push({ id: 'e', lane: 'A', col: 5, text: 'od agenta', created: T0, updated: T0 });
+  ops.stampNotes(prev, next, NOW);
+  const by = id => next.notes.find(n => n.id === id);
+  assert.deepStrictEqual([by('a').created, by('a').updated], [T0, T0]);
+  assert.deepStrictEqual([by('b').created, by('b').updated], [T0, NOW]);
+  assert.deepStrictEqual([by('c').created, by('c').updated], [undefined, NOW]);
+  assert.deepStrictEqual([by('d').created, by('d').updated], [NOW, NOW]);
+  assert.deepStrictEqual([by('e').created, by('e').updated], [T0, T0]);
+  // zmiana, w ktorej klient sam podbil updated - zostaje jego wartosc
+  const n2 = JSON.parse(JSON.stringify(next));
+  n2.notes[0].type = 'hot'; n2.notes[0].updated = '2026-09-26T12:00:00.000Z';
+  ops.stampNotes(next, n2, NOW);
+  assert.strictEqual(n2.notes[0].updated, '2026-09-26T12:00:00.000Z');
+});
+
+test('AC-B12: fmtDate - RRRR-MM-DD HH:MM czas lokalny', () => {
+  const d = new Date(2026, 8, 6, 7, 5);                       // 6 wrzesnia 2026, 07:05 lokalnie
+  assert.strictEqual(ops.fmtDate(d.toISOString()), '2026-09-06 07:05');
+  assert.strictEqual(ops.fmtDate(''), '');
+  assert.strictEqual(ops.fmtDate(undefined), '');
+  assert.strictEqual(ops.fmtDate('bzdura'), '');
+});

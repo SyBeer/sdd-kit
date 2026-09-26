@@ -30,6 +30,14 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 6. Spojnosc z legenda (uwaga usera): typ karteczki w panelu wybierany przyciskami-radio wygladajacymi jak legenda
    (kwadrat koloru + ta sama nazwa + krotka podpowiedz), zamiast listy rozwijanej.
 
+7. Zrodlo, autor i daty (uwaga usera: "pokaz zrodlo i autora na karteczce i date zmiany; po kliknieciu tez data utworzenia; RRRR-MM-DD HH:MM"):
+   - Karteczka na dole: `ref · zrodlo` (jedna linia, obcieta, pelne w dymku) oraz `autor · data zmiany`.
+   - Panel: "Utworzono" i "Zmieniono" (RRRR-MM-DD HH:MM, czas lokalny), zrodlo, "Trafia do", autor.
+   - board.json: nowe opcjonalne pola karteczki `created`, `updated` (ISO 8601). Stare karteczki bez dat dzialaja - daty sie nie pokazuja.
+   - Zapis z przegladarki (PUT): serwer nadaje `created` nowym karteczkom, `updated` zmienionym (tresc, typ, proces, kolumna, ID);
+     nie zmienia dat karteczek nietknietych. Agent ustawia `created`/`updated` sam (skill board).
+   - Autor: `agent` pokazywany jako "AI", `człowiek` jako "człowiek".
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module, cofanie zmian (undo).
 - Synchronizacja tablicy do plikow z przegladarki - dalej `/sdd:board sync` w Claude Code.
@@ -43,6 +51,9 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B8: `moveNote(b, id, lane, col, beforeId)` ustawia karteczke w procesie i kolumnie przed `beforeId`; bez `beforeId` - na koniec kolumny; kolejnosc innych karteczek bez zmian.
 - AC-B9: `stepNote(b, id, -1|1)` zamienia karteczke z sasiadem w tej samej kolumnie; na krawedzi nic nie robi.
 - AC-B10 (reczne): panel karteczki pokazuje 6 typow z kolorami i nazwami jak w legendzie; zaznaczony = typ karteczki; zmiana i Zapisz zmienia kolor karteczki; dziala strzalkami z klawiatury.
+- AC-B11: `stampNotes(prev, next, now)`: nowa karteczka -> created=updated=now; zmieniona tresc/typ/proces/kolumna/ID -> updated=now, created bez zmian; nietknieta -> daty bez zmian; daty podane przez agenta w `next` nie sa nadpisywane.
+- AC-B12: `fmtDate(iso)` -> "RRRR-MM-DD HH:MM" w czasie lokalnym; pusta/zla data -> "".
+- AC-B13 (reczne): karteczka pokazuje zrodlo, autora i date zmiany; panel pokazuje date utworzenia i zmiany; edycja w przegladarce zmienia date zmiany.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera panel z prawej, Escape zamyka; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

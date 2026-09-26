@@ -82,5 +82,35 @@
     const a = idx[p], c = idx[q], t = list[a]; list[a] = list[c]; list[c] = t;
   }
 
-  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote };
+  // Daty karteczek (ISO): nowe dostaja created/updated, zmienione - updated. Daty podane w `next` (agent, klient) zostaja.
+  const TRACKED = ['text', 'type', 'lane', 'col', 'ref'];
+  function changed(a, b) {
+    return TRACKED.some(function (k) {
+      const x = k === 'col' ? (a[k] || 0) : (a[k] == null ? '' : a[k]);
+      const y = k === 'col' ? (b[k] || 0) : (b[k] == null ? '' : b[k]);
+      return x !== y;
+    });
+  }
+  function stampNotes(prev, next, now) {
+    const old = {};
+    notes(prev || {}).forEach(function (n) { old[n.id] = n; });
+    notes(next).forEach(function (n) {
+      const p = old[n.id];
+      if (!p) { n.created = n.created || now; n.updated = n.updated || now; return; }
+      if (!n.created && p.created) n.created = p.created;
+      if (changed(p, n) && n.updated === p.updated) n.updated = now;
+      else if (!n.updated && p.updated) n.updated = p.updated;
+    });
+    return next;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const z = function (v) { return (v < 10 ? '0' : '') + v; };
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes());
+  }
+
+  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate };
 });

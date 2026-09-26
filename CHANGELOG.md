@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1] - 2026-09-26
+- Tablica: karteczka pokazuje ID i zrodlo (jedna linia, pelne w dymku) oraz autora i date zmiany (RRRR-MM-DD HH:MM).
+- Panel karteczki: Utworzono, Zmieniono, Autor, Skad, Trafia do; odswiezane na zywo.
+- board.json: opcjonalne `created` / `updated` (ISO); serwer stempluje zmiany z przegladarki, skill board kaze agentowi je ustawiac.
+- `stampNotes`, `fmtDate` w board-ops.js + testy AC-B11, AC-B12 (26/26).
+
 ## [0.5.0] - 2026-09-26
 - Tablica: zakladanie procesow ("+ Proces", pusta tablica z "Dodaj pierwszy proces"), zmiana nazwy klikiem w nazwe
   (karteczki ida za nazwa, pusta/zajeta odrzucona), przesuwanie gora/dol, usuwanie z potwierdzeniem przy karteczkach.

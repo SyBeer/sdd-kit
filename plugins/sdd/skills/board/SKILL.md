@@ -21,9 +21,11 @@ Tablica to WIDOK. Pliki w `requirements/` sa PRAWDA. Nigdy odwrotnie.
 { "title": "...", "subtitle": "...", "lanes": ["Pas 1", "Pas 2"],
   "notes": [ { "id": "n01", "type": "ev|cmd|act|pol|rm|hot", "text": "...", "lane": "Pas 1",
                "col": 0, "ref": "R-04", "source": "czat Base44, TZ, 2026-09-10 [B]",
-               "file": "03-spec/PRD.md", "by": "agent" } ] }
+               "file": "03-spec/PRD.md", "by": "agent",
+               "created": "2026-09-26T17:40:00+02:00", "updated": "2026-09-26T17:40:00+02:00" } ] }
 ```
 Typy: `ev` zdarzenie (cos sie stalo), `cmd` komenda (ktos cos robi), `act` kto (rola), `pol` regula (jezeli... to...), `rm` widok (co ktos oglada), `hot` nie wiemy (pytanie).
+`created` / `updated`: data i czas ISO 8601 z czasem lokalnym (`date -Iseconds`). Nowa karteczka: oba pola = teraz. Zmiana tresci, typu, pasa, kolumny albo `ref`: `updated` = teraz, `created` bez zmian. Panel pokazuje je jako RRRR-MM-DD HH:MM.
 `col` to kolejnosc w pasie od lewej (0,1,2...). Karteczki z tym samym `col` stoja jedna pod druga (np. zdarzenie i jego hotspot).
 
 ## Tura warsztatu (`/sdd:board` podczas rozmowy)

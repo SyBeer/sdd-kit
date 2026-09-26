@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake } = require('./modules');
+const { stampNotes } = require('./board-ops');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -173,7 +174,7 @@ const server = http.createServer((req, res) => {
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, readBoard());
   if (url === '/api/board' && req.method === 'PUT') {
     return readBody(req, 5 * 1024 * 1024, buf => {
-      try { writeBoard(JSON.parse(String(buf))); res.writeHead(204); res.end(); }
+      try { writeBoard(stampNotes(readBoard(), JSON.parse(String(buf)), new Date().toISOString())); res.writeHead(204); res.end(); }
       catch (e) { res.writeHead(400); res.end('zly JSON'); }
     });
   }
