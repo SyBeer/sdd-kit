@@ -13,7 +13,7 @@ const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
 
-const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
+const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
 const MAX_UPLOAD = 25 * 1024 * 1024;

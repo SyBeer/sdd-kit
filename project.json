@@ -1,0 +1,20 @@
+{
+  "name": "sdd-kit",
+  "title": "SDD Kit — wymagania metodą Spec-Driven Development",
+  "description": "Plugin do Claude Code prowadzący wymagania biznesowe: katalogowanie surowca, wywiad z biznesem, model domeny, PRD z kryteriami akceptacji, walidacja gotowości i przekazanie do backlogu. Do tego lokalny panel postępu i tablica warsztatowa z karteczkami (zamiast Miro). Od 0.7.0 kolejne źródło porównuje się z modelem domeny, a nie ze starymi źródłami.",
+  "status": "wip",
+  "category": "tool",
+  "port": 8012,
+  "url": null,
+  "tags": ["Claude Code plugin", "SDD", "wymagania", "Node.js", "warsztat", "gitea"],
+  "docs": [
+    { "label": "Panel postępu", "url_path": "/" },
+    { "label": "Tablica warsztatowa", "url_path": "/board" }
+  ],
+  "start_cmd": "node plugins/sdd/board/server.js plugins/sdd/board/example-zlecenia.json 8012",
+  "extra_cmds": [
+    { "label": "Panel dla projektu", "cmd": "cd <projekt> && ~/.local/bin/sdd-board" },
+    { "label": "Aktualizacja pluginu po zmianach", "cmd": "/opt/homebrew/bin/claude plugin marketplace update sdd-kit && /opt/homebrew/bin/claude plugin update sdd@sdd-kit" },
+    { "label": "Testy", "cmd": "node --test plugins/sdd/board/test/*.test.js" }
+  ]
+}

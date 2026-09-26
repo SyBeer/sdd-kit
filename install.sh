@@ -125,12 +125,12 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/sdd-board" <<EOF
 #!/usr/bin/env bash
 # Uruchamia tablice warsztatowa dla projektu w biezacym folderze.
-#   sdd-board            -> requirements/01-interview/board.json, port 4242
+#   sdd-board            -> requirements/01-interview/board.json, port 8012
 #   sdd-board plik.json  -> wskazany plik
 #   sdd-board --demo     -> przykladowa tablica Zlecen
 KIT="$KIT_DIR/plugins/$PLUGIN/board"
-if [ "\${1:-}" = "--demo" ]; then exec node "\$KIT/server.js" "\$KIT/example-zlecenia.json" "\${2:-4242}"; fi
-exec node "\$KIT/server.js" "\${1:-requirements/01-interview/board.json}" "\${2:-4242}"
+if [ "\${1:-}" = "--demo" ]; then exec node "\$KIT/server.js" "\$KIT/example-zlecenia.json" "\${2:-8012}"; fi
+exec node "\$KIT/server.js" "\${1:-requirements/01-interview/board.json}" "\${2:-8012}"
 EOF
 chmod +x "$BIN_DIR/sdd-board"
 ok "Zapisano $BIN_DIR/sdd-board"
@@ -166,7 +166,7 @@ say "    /sdd:interview   pytania do biznesu      /sdd:handover   przekaz do zes
 say "    /sdd:domain      slownik i model         /sdd:status     gdzie jestesmy"
 say "    /sdd:board       tablica na zywo (start / sync / rebuild)"
 say "  W terminalu:"
-say "    sdd-board           postep projektu -> http://localhost:4242, tablica -> /board"
+say "    sdd-board           postep projektu -> http://localhost:8012, tablica -> /board"
 say "    sdd-board --demo    przykladowa tablica Zlecen, zobacz jak to wyglada"
 say "    bash install.sh --update      po zmianach w kicie"
 say "    bash install.sh --uninstall   usun"

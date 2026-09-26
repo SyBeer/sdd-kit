@@ -45,7 +45,7 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 
 ## Panel modulu (web)
 
-W folderze projektu uruchom `sdd-board` i otworz http://localhost:4242. Strona pokazuje 6 etapow
+W folderze projektu uruchom `sdd-board` i otworz http://localhost:8012. Strona pokazuje 6 etapow
 (Intake -> Handover) ze statusem liczonym z plikow w `requirements/`, liczniki, "aktualny krok"
 z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Odswieza sie sama.
 Naglowek "Wymagania do modułu: <nazwa> ▾" - klik w nazwe przelacza modul (modul = folder obok z `requirements/SDD.yaml`),
@@ -63,7 +63,7 @@ W osobnym oknie terminala, w folderze projektu:
     node ~/.claude/plugins/... /board/server.js requirements/01-interview/board.json
     (dokladna sciezke podaje /sdd:board start)
 
-Otworz http://localhost:4242/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
+Otworz http://localhost:8012/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
 Ty mozesz przesuwac i dopisywac karteczki w przegladarce, agent to widzi.
 Po warsztacie: /sdd:board sync przenosi karteczki do plikow. Przyklad: plugins/sdd/board/example-zlecenia.json
 Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik motywu jasny / ciemny (slonce / ksiezyc), wspolny dla obu zakladek.

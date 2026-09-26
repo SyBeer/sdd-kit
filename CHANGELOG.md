@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2] - 2026-09-26
+- Port panelu i tablicy: **4242 -> 8012**. Konwencja workspace rezerwuje dla uslug dev zakres
+  8000-8999, a 4242 byl poza nim. Zmiana objela `install.sh`, `install.ps1`, `README.md`,
+  `START-TUTAJ.md`, domyslna wartosc w `board/server.js` i `skills/board/SKILL.md`.
+  Kto ma juz zainstalowanego pomocnika `sdd-board`, powinien przeinstalowac (`install.sh`)
+  albo podac port recznie: `sdd-board <plik.json> 8012`.
+  Testy nie sa zwiazane z portem - biora losowy z zakresu 4300-4800.
+
 ## [0.7.1] - 2026-09-26
 - Panel: `porownanie-*.md` w `00-intake/` nie jest juz liczony jako zrodlo. Wprowadzony w 0.7.0
   artefakt procesu trafial na liste plikow czekajacych na spis i panel w kolko zganialby go do

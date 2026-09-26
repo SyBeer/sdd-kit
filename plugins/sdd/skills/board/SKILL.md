@@ -11,7 +11,7 @@ Tablica to WIDOK. Pliki w `requirements/` sa PRAWDA. Nigdy odwrotnie.
 1. Powiedz userowi, zeby w osobnym oknie terminala, w folderze projektu, uruchomil `sdd-board`
    (komenda z instalatora) albo pelna forme:
    `node "${CLAUDE_PLUGIN_ROOT}/board/server.js" requirements/01-interview/board.json`
-   i otworzyl w przegladarce http://localhost:4242/board (pod / jest widok postepu; port mozna zmienic drugim argumentem).
+   i otworzyl w przegladarce http://localhost:8012/board (pod / jest widok postepu; port mozna zmienic drugim argumentem).
    Ty nie uruchamiasz serwera w tle sam, chyba ze user o to poprosi.
 2. Jesli `board.json` nie istnieje, utworz go: tytul z `SDD.yaml`, pasy = procesy znane z intake (jesli zadnych, jeden pas "Proces glowny"), `notes: []`.
 3. Przyklad gotowej tablicy do nauki: `${CLAUDE_PLUGIN_ROOT}/board/example-zlecenia.json`.
