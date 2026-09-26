@@ -98,5 +98,5 @@ if (-not $Update) {
 
 Hr; Write-Host "GOTOWE"
 Write-Host "  W Claude Code: /sdd:init  /sdd:intake  /sdd:interview  /sdd:domain  /sdd:spec  /sdd:validate  /sdd:handover  /sdd:status  /sdd:board"
-Write-Host "  W PowerShell:  sdd-board   (tablica -> http://localhost:4242)   sdd-board --demo   (przyklad Zlecen)"
+Write-Host "  W PowerShell:  sdd-board   (postep -> http://localhost:4242, tablica -> /board)   sdd-board --demo   (przyklad Zlecen)"
 Write-Host "  Przewodnik po ludzku: $KitDir\START-TUTAJ.md"; Hr

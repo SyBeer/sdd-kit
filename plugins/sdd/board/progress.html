@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Postęp SDD</title>
+<style>
+:root{
+  --bg:#e9e6df; --board:#f6f4ee; --ink:#26241f; --muted:#6b675c; --line:#cfcabd; --panel:#fff;
+  --ev:#f5a13a; --cmd:#5aa0e6; --act:#f7e36b; --pol:#c79ae3; --rm:#8fd18f; --hot:#e8503f;
+  --shadow:0 2px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,0,0,.10);
+  --done:var(--rm); --active:var(--ev); --todo:var(--line);
+}
+@media (prefers-color-scheme: dark){:root{--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.4}
+header{padding:16px 20px 8px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+h1{margin:0;font-size:24px;font-weight:700}
+header .meta{color:var(--muted)}
+header nav{margin-left:auto;display:flex;gap:14px;font-size:14px;align-items:baseline}
+header nav a{color:var(--ink)}
+header nav .conn{color:var(--muted);font-size:13px}
+header nav .conn b{color:var(--ink);font-weight:600}
+main{padding:0 20px 28px;max-width:1200px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg);padding:2px 6px;border-radius:3px}
+
+/* nastepny krok */
+.next{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--active);border-radius:6px;padding:16px 18px;margin:8px 0 18px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center}
+.next.alldone{border-left-color:var(--done)}
+.next .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.next h2{margin:2px 0 4px;font-size:20px}
+.next p{margin:0;color:var(--muted);max-width:60ch}
+.next .cmd{margin-left:auto;display:flex;gap:8px;align-items:center}
+.next .cmd code{font-size:16px;padding:8px 12px;background:var(--bg);border:1px solid var(--line)}
+button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+
+/* os etapow */
+.steps{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:0}
+.steps li{position:relative;text-align:center;padding-top:34px;font-size:13.5px;color:var(--muted)}
+.steps li::before{content:"";position:absolute;top:14px;left:0;right:0;height:3px;background:var(--line)}
+.steps li:first-child::before{left:50%}.steps li:last-child::before{right:50%}
+.steps li.done::before{background:var(--done)}
+.steps .dot{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:var(--panel);border:3px solid var(--todo);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+.steps li.done .dot{background:var(--done);border-color:var(--done);color:#26241f}
+.steps li.active .dot{border-color:var(--active);color:var(--ink)}
+.steps li.current .dot{box-shadow:0 0 0 4px color-mix(in srgb,var(--active) 35%,transparent)}
+.steps li.current{color:var(--ink);font-weight:600}
+
+/* karty */
+.wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-content:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card.current{outline:2px solid var(--active);outline-offset:-1px}
+.card h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.card h3 .n{color:var(--muted);font-weight:500;font-size:13px}
+.pill{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.done{background:var(--done);border-color:var(--done);color:#26241f}
+.pill.active{background:var(--active);border-color:var(--active);color:#26241f}
+.card p{margin:0;color:var(--muted);font-size:13.5px}
+.counts{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
+.counts b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
+.counts .warn b{color:var(--hot)}
+.card .foot{margin-top:auto;padding-top:6px}
+
+/* panele */
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+.panel h2{margin:0 0 8px;font-size:15px}
+.panel ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.panel .empty{color:var(--muted);font-size:13.5px;margin:0}
+.panel .id{font-weight:700;margin-right:4px}
+.panel .why{color:var(--muted);font-size:12px}
+.panel.block{border-top:4px solid var(--hot)}
+.log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
+
+.missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
+.missing h2{margin-top:0}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+@media(max-width:640px){
+  header,main{padding-left:16px;padding-right:16px}
+  header nav{margin-left:0;width:100%}
+  .steps{grid-template-columns:1fr;gap:6px}
+  .steps li{text-align:left;padding:4px 0 4px 40px;min-height:30px}
+  .steps li::before{display:none}
+  .steps .dot{left:0;transform:none;top:2px;width:26px;height:26px}
+  .next .cmd{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Postęp SDD</h1>
+  <span class="meta" id="meta"></span>
+  <nav>
+    <a href="/board">Tablica warsztatowa →</a>
+    <span class="conn">na żywo: <b id="conn">…</b></span>
+  </nav>
+</header>
+<main id="app"></main>
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var STATUS={done:'gotowe',active:'w toku',todo:'nie zaczęte'};
+  // etykiety licznikow: [klucz, etykieta, czy ostrzezenie gdy > 0]
+  var LABELS={
+    intake:[['sources','źródeł w spisie'],['unindexed','czeka na spis',1]],
+    interview:[['questions','pytań'],['open','otwarte'],['asked','zadane biznesowi'],['conflicting','sprzeczne',1],['decisions','decyzji'],['unconfirmed','założeń niepotw.'],['refuted','obalonych',1]],
+    domain:[['terms','haseł'],['approved','zatwierdzonych'],['actors','ról'],['entities','encji'],['rules','reguł']],
+    spec:[['requirements','wymagań'],['approved','zatwierdzonych'],['review','do przeglądu']],
+    validate:[['readiness','% gotowości'],['reports','raportów']],
+    handover:[['traceability','tabela śledzenia'],['backlogs','backlogów']]
+  };
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+  function counts(st){
+    return (LABELS[st.key]||[]).map(function(l){
+      var v=st.counts[l[0]];
+      if(v===null||v===undefined) return '';
+      if(typeof v==='boolean') return '<li>'+esc(l[1])+': <b>'+(v?'jest':'brak')+'</b></li>';
+      var warn=l[2]&&typeof v==='number'&&v>0;
+      return '<li'+(warn?' class="warn"':'')+'><b>'+esc(v)+'</b> '+esc(l[1])+'</li>';
+    }).join('');
+  }
+
+  function render(p){
+    var app=$('#app');
+    if(!p.exists){
+      $('#title').textContent='Postęp SDD'; $('#meta').textContent='';
+      app.innerHTML='<div class="missing"><h2>Brak folderu requirements/</h2>'+
+        '<p>Serwer patrzy na: <code>'+esc(p.dir)+'</code></p>'+
+        '<p>Uruchom <code>sdd-board</code> w folderze projektu albo załóż strukturę w Claude Code: <code>/sdd:init</code>. Strona odświeży się sama.</p></div>';
+      return;
+    }
+    $('#title').textContent=p.project||'Projekt bez nazwy';
+    $('#meta').textContent='poziom '+p.level+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
+    document.title=(p.project||'SDD')+' · postęp';
+
+    var allDone=p.next.key==='done';
+    var html='<section class="next'+(allDone?' alldone':'')+'"><div><div class="lbl">'+(allDone?'Status':'Następny krok')+'</div>'+
+      '<h2>'+esc(p.next.name)+'</h2><p>'+esc(p.next.desc)+'</p></div>'+
+      '<div class="cmd"><code id="nextcmd">'+esc(p.next.command)+'</code><button class="b" id="copy">Kopiuj</button></div></section>';
+
+    html+='<ol class="steps">'+p.stages.map(function(s,i){
+      var cur=s.key===p.next.key?' current':'';
+      return '<li class="'+s.status+cur+'"><span class="dot">'+(s.status==='done'?'✓':i+1)+'</span>'+esc(s.name)+'</li>';
+    }).join('')+'</ol>';
+
+    html+='<div class="wrap"><div class="cards">'+p.stages.map(function(s,i){
+      var cur=s.key===p.next.key?' current':'';
+      return '<article class="card'+cur+'"><h3><span class="n">'+(i+1)+'</span>'+esc(s.name)+
+        '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></h3>'+
+        '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
+        '<div class="foot"><code>'+esc(s.command)+'</code></div></article>';
+    }).join('')+'</div><aside>';
+
+    html+='<section class="panel block"><h2>Blokuje dev</h2>'+(p.blockers.length?
+      '<ul>'+p.blockers.map(function(b){return '<li><span class="id">'+esc(b.id)+'</span>'+esc(b.text)+' <span class="why">('+esc(b.reason)+')</span></li>'}).join('')+'</ul>'
+      :'<p class="empty">Nic nie blokuje.</p>')+'</section>';
+
+    html+='<section class="panel"><h2>Czeka na biznes</h2>'+(p.waiting.length?
+      '<ul>'+p.waiting.map(function(w){return '<li><b>'+esc(w.role)+'</b>: '+w.count+' '+(w.count===1?'pytanie':'pytań')+' <span class="why">'+esc(w.ids.join(', '))+'</span></li>'}).join('')+'</ul>'
+      :'<p class="empty">Brak pytań u biznesu.</p>')+'</section>';
+
+    html+='<section class="panel"><h2>Ostatnie zmiany</h2>'+(p.changelog.length?
+      '<ul class="log">'+p.changelog.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>'
+      :'<p class="empty">Brak wpisów.</p>')+'</section>';
+
+    html+='</aside></div>';
+    app.innerHTML=html;
+    var btn=$('#copy');
+    btn.onclick=function(){
+      try{navigator.clipboard.writeText(p.next.command).then(function(){btn.textContent='Skopiowano'})}catch(e){}
+    };
+  }
+
+  function connect(){
+    var es=new EventSource('/progress-events');
+    es.onopen=function(){$('#conn').textContent='połączono'};
+    es.onmessage=function(e){render(JSON.parse(e.data))};
+    es.onerror=function(){$('#conn').textContent='rozłączono, ponawiam…'};
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

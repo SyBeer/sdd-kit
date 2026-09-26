@@ -43,6 +43,14 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 | /sdd:status    | stan w 20 linijkach | pisze sam |
 | /sdd:board     | lokalna tablica z karteczkami na zywo (bez Miro) | rysuje sam, do plikow po "tak" |
 
+## Widok postepu (web)
+
+W folderze projektu uruchom `sdd-board` i otworz http://localhost:4242. Strona pokazuje 6 etapow
+(Intake -> Handover) ze statusem liczonym z plikow w `requirements/`, liczniki, "nastepny krok"
+z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Odswieza sie sama.
+Tylko podglad, nic nie zapisuje. Spec: `docs/specs/progress-ui.md`.
+Testy: `node --test plugins/sdd/board/test/progress.test.js`
+
 ## Tablica warsztatowa (bez Miro)
 
 W osobnym oknie terminala, w folderze projektu:
@@ -50,7 +58,7 @@ W osobnym oknie terminala, w folderze projektu:
     node ~/.claude/plugins/... /board/server.js requirements/01-interview/board.json
     (dokladna sciezke podaje /sdd:board start)
 
-Otworz http://localhost:4242. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
+Otworz http://localhost:4242/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
 Ty mozesz przesuwac i dopisywac karteczki w przegladarce, agent to widzi.
 Po warsztacie: /sdd:board sync przenosi karteczki do plikow. Przyklad: plugins/sdd/board/example-zlecenia.json
 

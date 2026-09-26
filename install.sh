@@ -166,7 +166,7 @@ say "    /sdd:interview   pytania do biznesu      /sdd:handover   przekaz do zes
 say "    /sdd:domain      slownik i model         /sdd:status     gdzie jestesmy"
 say "    /sdd:board       tablica na zywo (start / sync / rebuild)"
 say "  W terminalu:"
-say "    sdd-board           tablica dla biezacego projektu -> http://localhost:4242"
+say "    sdd-board           postep projektu -> http://localhost:4242, tablica -> /board"
 say "    sdd-board --demo    przykladowa tablica Zlecen, zobacz jak to wyglada"
 say "    bash install.sh --update      po zmianach w kicie"
 say "    bash install.sh --uninstall   usun"

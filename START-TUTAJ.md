@@ -61,14 +61,20 @@ Biznes nie instaluje nic.
 ## 4a. Warsztat z tablica na zywo (bez Miro)
 
 1. W drugim oknie terminala, w folderze projektu, wpisz `sdd-board`. W Claude Code wpisz `/sdd:board start`.
-2. Otworz http://localhost:4242 w przegladarce, najlepiej na rzutniku lub udostepnionym ekranie.
+2. Otworz http://localhost:4242/board w przegladarce, najlepiej na rzutniku lub udostepnionym ekranie.
 3. Rozmawiaj z biznesem, wpisuj do Claude Code, co mowia. Po kazdej wypowiedzi na tablicy pojawiaja sie karteczki:
    pomaranczowe "cos sie stalo", niebieskie "ktos cos robi", zolte "kto", fioletowe "regula", zielone "co oglada",
    czerwone "nie wiemy" (to przyszle pytania).
 4. Biznes moze sam przesuwac i dopisywac karteczki w przegladarce. Agent to widzi.
 5. Po warsztacie wpisz `/sdd:board sync`. Agent zaproponuje, co z karteczek trafia do ktorego pliku, Ty mowisz tak.
 6. Chcesz zobaczyc, jak to wyglada, zanim zaczniesz? Uruchom serwer z plikiem przykladowym:
-   w terminalu: `sdd-board --demo`, potem http://localhost:4242
+   w terminalu: `sdd-board --demo`, potem http://localhost:4242/board
+
+## 4b. Gdzie jestesmy - widok postepu
+
+W folderze projektu wpisz w terminalu `sdd-board` i otworz http://localhost:4242.
+Zobaczysz 6 etapow, co jest gotowe, co w toku i jaka komende wpisac dalej w Claude Code.
+Strona odswieza sie sama, gdy agent zmienia pliki. Nic tam nie edytujesz, to tylko podglad.
 
 ## 5. Trzy zasady, ktore trzeba pamietac
 
