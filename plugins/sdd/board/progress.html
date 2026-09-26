@@ -164,7 +164,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 <input type="file" id="files" multiple hidden>
 <dialog id="browse" aria-labelledby="browseh">
   <h2 id="browseh">Wybierz katalog modułów</h2>
-  <p class="hint">Wybierasz folder NAD modułami - każdy moduł będzie w nim podfolderem. Folder aplikacji sdd-kit jest zablokowany.</p>
+  <p class="hint">Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit.</p>
   <div class="cur" id="browsecur"></div>
   <ul id="browselist"></ul>
   <p class="err" id="browseerr"></p>
@@ -212,7 +212,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var last=null, uplog=[];
   function api(url,opts){
     opts=opts||{}; opts.headers=Object.assign({'X-SDD':'1'},opts.headers||{});
-    return fetch(url,opts).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j})});
+    return fetch(url,opts).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok) throw new Error(j.error||(r.status===404?'Serwer jest starszy niż strona - zatrzymaj go (Ctrl+C) i uruchom ponownie.':'HTTP '+r.status)); return j})});
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
@@ -232,11 +232,11 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     $('#meta').textContent='';
     var cancel=!p.needsRoot;
     $('#app').innerHTML='<div class="missing"><h2>Gdzie trzymać wymagania?</h2>'+
-      '<p>sdd-kit to tylko aplikacja. Wymagania (moduły) trzymasz w swoim folderze: każdy moduł to podfolder z <code>requirements/</code>.</p>'+
+      '<p>Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit.</p>'+
       '<form id="rootform"><label for="rootpath">Katalog modułów</label>'+
       '<div class="pick"><input id="rootpath" name="path" required autocomplete="off" placeholder="~/wymagania" value="'+esc(p.modulesRoot||'')+'">'+
       '<button class="b" type="button" id="rootbrowse">Przeglądaj…</button></div>'+
-      '<p class="hint">Ścieżka bezwzględna albo zaczynająca się od <code>~/</code>. Brakujący folder założę. Nie może leżeć w folderze aplikacji ('+esc(p.kitDir||'')+').</p>'+
+      '<p class="hint">np. <code>~/wymagania</code> · sdd-kit: '+esc(p.kitDir||'')+'</p>'+
       '<p class="err" id="rooterr"></p><div class="row">'+(cancel?'<button class="b" type="button" id="rootcancel">Anuluj</button>':'')+
       '<button class="b p" type="submit">Zapisz</button></div></form></div>';
     var f=$('#rootform'); f.elements.path.focus();
@@ -267,7 +267,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       $('#browselist').innerHTML=h;
       var first=$('#browselist button:not(:disabled)'); if(first) first.focus();
     }).catch(function(e){
-      if(fallback) return browse('', false); // nieistniejaca sciezka z pola -> katalog domowy
+      if(fallback&&dir) return browse('', false); // nieistniejaca sciezka z pola -> katalog domowy
       $('#browseerr').textContent=e.message;
     });
   }
