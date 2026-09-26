@@ -1,0 +1,23 @@
+/* Pasek na gorze panelu i tablicy (ui.js). Tylko tokeny z :root danej strony. */
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;padding:10px 20px 0;border-bottom:1px solid var(--line);font-size:14px}
+.topbar:empty{display:none}
+.topbar .tabs{display:flex;gap:4px}
+.topbar .tab{display:inline-block;padding:7px 14px 8px;margin-bottom:-1px;border:1px solid transparent;border-radius:6px 6px 0 0;color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap}
+.topbar a.tab:hover{color:var(--ink);background:var(--panel)}
+.topbar a.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.topbar .tab[aria-current="page"]{color:var(--ink);background:var(--bg);border-color:var(--line);border-bottom-color:var(--bg)}
+.topbar .short{display:none}
+.topbar .theme{display:inline-flex;margin-bottom:6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);overflow:hidden}
+.topbar .theme label{position:relative;cursor:pointer}
+.topbar .theme input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.topbar .theme span{display:block;padding:4px 10px;font-size:12.5px;color:var(--muted)}
+.topbar .theme label+label span{border-left:1px solid var(--line)}
+.topbar .theme label:hover span{color:var(--ink)}
+.topbar .theme input:checked+span{background:var(--ink);color:var(--bg)}
+.topbar .theme input:focus-visible+span{outline:2px solid var(--ink);outline-offset:-3px}
+@media (max-width:640px){
+  .topbar{padding:8px 12px 0}
+  .topbar .long{display:none}
+  .topbar .short{display:inline}
+  .topbar .tab{padding:6px 12px 7px}
+}

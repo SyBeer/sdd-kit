@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0] - 2026-09-26
+- Panel i tablica: wspolny pasek na gorze - zakladki "Panel modułu" | "Tablica warsztatowa" (na telefonie "Panel" | "Tablica")
+  zamiast linkow "← Panel modułu" / "Tablica warsztatowa →".
+- Przelacznik motywu Auto / Jasny / Ciemny: zapamietany w przegladarce, wspolny dla obu stron, zmiana w jednej karcie
+  przelacza druga; ustawiany przed pierwszym malowaniem. "Auto" = jak system.
+- Nowe pliki `board/ui.js`, `board/ui.css` (serwowane pod /ui.js, /ui.css); spec `docs/specs/ui-switch.md`, testy AC-U1..AC-U3 (35/35).
+
 ## [0.5.4] - 2026-09-26
 - Tablica: wskazowka na pustej tablicy - dwie drogi: "Z AI" (`/sdd:board` z przyciskiem Kopiuj) i "Sam, w przegladarce"
   (4 kroki + przyklad karteczek w kolorach legendy + "Dodaj pierwszy proces"). Procesy bez karteczek: linia pod tablica

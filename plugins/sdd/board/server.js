@@ -132,6 +132,9 @@ function sse(req, res, set, first) {
   req.on('close', () => set.delete(res));
 }
 
+// Wspolne pliki panelu i tablicy (sciezka = nazwa pliku obok server.js).
+const ASSETS = { '/board-ops.js': 'text/javascript', '/ui.js': 'text/javascript', '/ui.css': 'text/css' };
+
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://localhost');
   const url = u.pathname;
@@ -140,9 +143,9 @@ const server = http.createServer((req, res) => {
 
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
-  if (url === '/board-ops.js') {
-    res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' });
-    return fs.createReadStream(path.join(__dirname, 'board-ops.js')).pipe(res);
+  if (ASSETS[url]) {
+    res.writeHead(200, { 'Content-Type': ASSETS[url] + '; charset=utf-8' });
+    return fs.createReadStream(path.join(__dirname, url.slice(1))).pipe(res);
   }
 
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload());

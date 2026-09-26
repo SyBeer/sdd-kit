@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postęp SDD</title>
+<link rel="stylesheet" href="/ui.css">
+<script src="/ui.js"></script>
 <style>
 :root{
   --bg:#e9e6df; --board:#f6f4ee; --ink:#26241f; --muted:#6b675c; --line:#cfcabd; --panel:#fff;
@@ -11,7 +13,10 @@
   --shadow:0 2px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,0,0,.10);
   --done:var(--rm); --active:var(--ev); --todo:var(--line);
 }
-@media (prefers-color-scheme: dark){:root{--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
+:root{color-scheme:light dark}
+:root[data-theme="light"]{color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.4}
 header{padding:16px 20px 8px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
@@ -144,6 +149,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 </style>
 </head>
 <body>
+<nav class="topbar" id="topbar" data-page="panel" aria-label="Widok"></nav>
 <header>
   <h1><span class="lbl">Wymagania do modułu:</span> <span class="modsw">
     <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span id="title">…</span><span class="car" aria-hidden="true">▾</span></button>
@@ -151,7 +157,6 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   </span></h1>
   <span class="meta" id="meta"></span>
   <nav>
-    <a href="/board">Tablica warsztatowa →</a>
     <span class="conn">na żywo: <b id="conn">…</b></span>
   </nav>
 </header>
