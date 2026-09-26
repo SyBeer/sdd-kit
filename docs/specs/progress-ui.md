@@ -105,6 +105,9 @@ Komendy wymagajace rozmowy zostaja w Claude Code - panel ich nie uruchamia.
 ## Kryteria akceptacji
 - AC-14: `readProgress` zwraca w etapie intake `files[]` z `name`, `size`, `indexed`, posortowane od najnowszego; INDEX.md nie ma na liscie.
 - AC-15: `saveIntake` z trescia identyczna jak istniejacy plik zwraca `{ saved: null, duplicate: <nazwa> }` i nie tworzy pliku; inna tresc -> `{ saved: <nazwa> }`.
+- AC-25: pliki `porownanie-*.md` w `00-intake/` to artefakty procesu (zapis porownania nowego
+  zrodla z modelem), nie surowiec: nie sa liczone w `counts.files`, nie ma ich na liscie plikow
+  i nie podnosza `unindexed` - inaczej panel w kolko zganialby je do spisu.
 - AC-17: kazdy etap w `STAGES` ma `howto` - 2-4 kroki instrukcji dla prowadzacego; Intake mowi, zeby najpierw wrzucic wszystkie pliki, potem skopiowac komende.
 - AC-18 (reczne): baner pokazuje instrukcje krokow i "Uruchom w Claude Code:" przed komenda; karty etapow tez maja ten dopisek.
 - AC-16 (reczne): baner "Aktualny krok"; upload 3 plikow, w tym 1 duplikatu -> podsumowanie "zapisano 2, pominięto 1", lista plikow w karcie odswieza sie sama.

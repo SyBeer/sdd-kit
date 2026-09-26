@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.1] - 2026-09-26
+- Panel: `porownanie-*.md` w `00-intake/` nie jest juz liczony jako zrodlo. Wprowadzony w 0.7.0
+  artefakt procesu trafial na liste plikow czekajacych na spis i panel w kolko zganialby go do
+  `INDEX.md`. `isProcessFile` w progress.js, kryterium AC-25, test (37/37).
+  Znalezione na probie na zywym projekcie, nie w przegladzie kodu.
+
 ## [0.7.0] - 2026-09-26
 Kolejne zrodlo w intake porownuje sie z MODELEM, nie ze starymi zrodlami. `00-intake/` to surowiec,
 `02-domain/` jest prawda. Powod: intake wykrywal tylko sprzecznosci wartosci (ta sama rzecz, inna

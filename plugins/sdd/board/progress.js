@@ -85,10 +85,16 @@ function qKind(status) {
   return 'other';
 }
 
+// INDEX.md to spis, porownanie-*.md to zapis porownania nowego zrodla z modelem.
+// Oba sa artefaktami procesu, nie surowcem - nie licz ich i nie zganiaj do spisu.
+function isProcessFile(name) {
+  return name === 'INDEX.md' || /^porownanie-.*\.md$/.test(name);
+}
+
 function intake(req) {
   const index = read(path.join(req, '00-intake', 'INDEX.md'));
   const rows = parseTable(index);
-  const files = listFiles(path.join(req, '00-intake')).filter(f => path.basename(f) !== 'INDEX.md');
+  const files = listFiles(path.join(req, '00-intake')).filter(f => !isProcessFile(path.basename(f)));
   const list = files.map(f => {
     let st = { size: 0, mtimeMs: 0 };
     try { st = fs.statSync(f); } catch (e) { /* plik zniknal */ }
@@ -216,4 +222,4 @@ function readProgress(reqDir) {
   };
 }
 
-module.exports = { readProgress, parseTable, STAGES };
+module.exports = { isProcessFile, readProgress, parseTable, STAGES };

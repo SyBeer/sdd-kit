@@ -131,6 +131,18 @@ test('AC-14: intake.files - nazwa, rozmiar, w spisie, od najnowszego, bez INDEX.
   assert.deepStrictEqual(files.map(f => [f.name, f.size, f.indexed]), [['nowy.pdf', 5, false], ['stary.md', 3, true]]);
 });
 
+test('AC-25: porownanie-*.md to artefakt procesu - nie surowiec, nie zgania do spisu', () => {
+  const req = freshProject();
+  write(req, '00-intake/zrzut.png', 'x');
+  write(req, '00-intake/porownanie-2026-09-26.md', 'czytanie na zimno');
+  append(req, '00-intake/INDEX.md', '| zrzut.png | 2026-09-26 | zrzut ekranu | [P] | as-built | aktualne | x | |\n');
+  const intake = stage(readProgress(req), 'intake');
+  assert.deepStrictEqual(intake.files.map(f => f.name), ['zrzut.png']);
+  assert.strictEqual(intake.counts.files, 1);
+  assert.strictEqual(intake.counts.unindexed, 0);
+  assert.strictEqual(intake.status, 'done');
+});
+
 test('AC-17: kazdy etap ma instrukcje howto, Intake: najpierw pliki, potem komenda', () => {
   const { STAGES } = require('../progress');
   for (const s of STAGES) {
