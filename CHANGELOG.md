@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.10.1] - 2026-09-27
+- Etap "gotowe" z pytaniami do wyjasnienia ma inny status i kolor: pigulka "gotowe · N do wyjaśnienia" (zolta)
+  i zolte kolko na osi czasu. Nie cofa aktualnego kroku (jak w 0.9.0). Pole `partial` w etapie, AC-33, testy 47/47.
+
 ## [0.10.0] - 2026-09-27
 Karty etapow w panelu w jednej kolumnie, zwijane (uwaga usera: "obsluzone tematy zwiniete, a aktualny rozwiniety").
 - Szesc kart jedna pod druga; prawa kolumna (Blokuje dev, Czeka na biznes, Ostatnie zmiany) bez zmian.

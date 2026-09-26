@@ -53,6 +53,7 @@ button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1
 .steps li.done::before{background:var(--done)}
 .steps .dot{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:var(--panel);border:3px solid var(--todo);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
 .steps li.done .dot{background:var(--done);border-color:var(--done);color:#26241f}
+.steps li.partial .dot{background:var(--act);border-color:var(--act)}
 .steps li.active .dot{border-color:var(--active);color:var(--ink)}
 .steps li.current .dot{box-shadow:0 0 0 4px color-mix(in srgb,var(--active) 35%,transparent)}
 .steps li.current{color:var(--ink);font-weight:600}
@@ -77,6 +78,8 @@ button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1
 .pill{margin-left:auto;flex:none;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .pill.done{background:var(--done);border-color:var(--done);color:#26241f}
 .pill.active{background:var(--active);border-color:var(--active);color:#26241f}
+/* gotowe, ale z pytaniami do wyjasnienia (zmiana 0.10.1) */
+.pill.partial{background:var(--act);border-color:var(--act);color:#26241f}
 .card p{margin:0;color:var(--muted);font-size:13.5px}
 .counts{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
 .counts b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
@@ -239,6 +242,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   // Stan kart (zmiana 0.10.0): wybor usera per etap; aktualny krok rozwija sie po zmianie.
   var cardToggled={}, lastCurrent=null;
   // Jedna linia licznikow w naglowku zwinietej karty.
+  function pill(s){
+    if(s.status==='done'&&s.partial) return '<span class="pill partial" title="Etap nie blokuje dalszej pracy, ale zostały pytania">gotowe · '+s.partial+' do wyjaśnienia</span>';
+    return '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span>';
+  }
   function sumline(st){
     return (LABELS[st.key]||[]).map(function(l){
       var v=st.counts[l[0]];
@@ -344,7 +351,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 
     html+='<ol class="steps">'+p.stages.map(function(s,i){
       var cur=s.key===p.next.key?' current':'';
-      return '<li class="'+s.status+cur+'" data-key="'+s.key+'" title="Pokaż kartę etapu"><span class="dot">'+(s.status==='done'?'✓':i+1)+'</span>'+esc(s.name)+'</li>';
+      return '<li class="'+s.status+(s.partial?' partial':'')+cur+'" data-key="'+s.key+'" title="'+(s.partial?'Gotowe, '+s.partial+' do wyjaśnienia':'Pokaż kartę etapu')+'"><span class="dot">'+(s.status==='done'?'✓':i+1)+'</span>'+esc(s.name)+'</li>';
     }).join('')+'</ol>';
 
     if(p.next.key!==lastCurrent){ delete cardToggled[p.next.key]; lastCurrent=p.next.key; }
@@ -354,7 +361,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       return '<details class="card'+cur+'" data-key="'+s.key+'"'+(open?' open':'')+'><summary>'+
         '<span class="chev" aria-hidden="true">›</span><span class="n">'+(i+1)+'</span><span>'+esc(s.name)+'</span>'+
         '<span class="sumline">'+sumline(s)+'</span>'+
-        '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></summary><div class="body">'+
+        pill(s)+'</summary><div class="body">'+
         '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
         (s.key==='intake'?intakeBox(s.files||[]):'')+
         (s.key==='interview'?questionBox(s.questions||[]):'')+

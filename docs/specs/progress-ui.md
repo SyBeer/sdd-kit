@@ -266,3 +266,22 @@ kolumnie. Obsluzone tematy zwiniete, a aktualny rozwiniety."
   (test w `plugins/sdd/board/test/ui.test.js`).
 - AC-32 (reczne): jedna kolumna kart; rozwinieta tylko aktualna; zwinieta pokazuje liczniki w jednej linii;
   klik w naglowek i w kolko osi dziala; lista plikow Intake i pytan Interview dzialaja w rozwinietej karcie.
+
+---
+
+# Zmiana 0.10.1 (2026-09-27): "gotowe, ale z otwartymi pytaniami" ma inny status i kolor
+
+Uwaga usera: "tam gdzie mamy nieskonczone pytania (Interview) Gotowe powinno miec inny status i kolor".
+Od 0.9.0 zwykle otwarte pytania nie cofaja procesu, wiec Interview bywa `done` mimo otwartych pytan - i wygladal
+tak samo jak etap bez zadnych zaleglosci.
+
+## Zakres
+1. Etap moze byc `done` z zaleglosciami: pole `partial` = liczba pytan do wyjasnienia (otwarte + zadane).
+   `partial > 0` nie zmienia `status` (dalej `done`, nie cofa aktualnego kroku).
+2. Pigulka na karcie: "gotowe · N do wyjaśnienia" w innym kolorze niz czyste "gotowe".
+3. Kolko na osi czasu: ten sam kolor co pigulka zamiast zielonego, z ✓.
+
+## Kryteria akceptacji
+- AC-33: Interview `done` z 3 pytaniami otwartymi i 1 zadanym -> `partial` = 4; bez takich pytan -> `partial` = 0
+  (test w `plugins/sdd/board/test/progress.test.js`).
+- AC-34 (reczne): pigulka i kolko osi dla Interview z otwartymi pytaniami maja inny kolor i tekst niz czyste "gotowe".

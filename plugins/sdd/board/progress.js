@@ -156,7 +156,9 @@ function interview(req, gate) {
     roles.get(role).push(q.id);
   });
   const waiting = [...roles].map(([role, ids]) => ({ role, count: ids.length, ids }));
-  return { status, counts, blockers, waiting, questions };
+  // done z zaleglosciami (zmiana 0.10.1): pytania do wyjasnienia, ktore nie blokuja.
+  const partial = status === 'done' ? counts.open + counts.asked : 0;
+  return { status, partial, counts, blockers, waiting, questions };
 }
 
 function domain(req) {
@@ -227,7 +229,7 @@ function readProgress(reqDir) {
     intake: intake(req), interview: iv, domain: domain(req),
     spec: spec(req, level), validate: validate(req), handover: handover(req),
   };
-  const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, counts: results[s.key].counts },
+  const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, partial: results[s.key].partial || 0, counts: results[s.key].counts },
     results[s.key].files ? { files: results[s.key].files } : {},
     results[s.key].questions ? { questions: results[s.key].questions } : {}));
   const next = stages.find(s => s.status !== 'done')

@@ -112,6 +112,26 @@ test('AC-29b: interview.questions - wszystkie, do wyjasnienia na poczatku wg pri
   assert.deepStrictEqual([q6.kind, q6.status, q6.blocking], ['parked', 'zaparkowane (nie blokuje go-live)', false]);
 });
 
+test('AC-33: done z zaleglosciami - partial = otwarte + zadane', () => {
+  let req = freshProject();
+  append(req, '01-interview/QUESTIONS.md', [
+    '| Q-001 | A? | otwarte | sponsor | luka | | |',
+    '| Q-002 | B? | otwarte | sponsor | luka | | |',
+    '| Q-003 | C? | otwarte | sponsor | luka | | |',
+    '| Q-004 | D? | zadane (runda 1, 2026-09-27) | sponsor | luka | | |',
+    '| Q-005 | E? | odpowiedziane | sponsor | luka | | D-001 |',
+  ].join('\n') + '\n');
+  let iv = stage(readProgress(req), 'interview');
+  assert.strictEqual(iv.status, 'done');
+  assert.strictEqual(iv.partial, 4);
+
+  req = freshProject();
+  append(req, '01-interview/QUESTIONS.md', '| Q-001 | A? | odpowiedziane | sponsor | luka | | D-001 |\n');
+  iv = stage(readProgress(req), 'interview');
+  assert.strictEqual(iv.status, 'done');
+  assert.strictEqual(iv.partial, 0);
+});
+
 test('AC-4: czeka na biznes pogrupowane po roli', () => {
   const req = freshProject();
   append(req, '01-interview/QUESTIONS.md',
