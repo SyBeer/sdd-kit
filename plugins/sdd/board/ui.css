@@ -7,14 +7,13 @@
 .topbar a.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
 .topbar .tab[aria-current="page"]{color:var(--ink);background:var(--bg);border-color:var(--line);border-bottom-color:var(--bg)}
 .topbar .short{display:none}
-.topbar .theme{display:inline-flex;margin-bottom:6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);overflow:hidden}
+.topbar .theme{display:inline-flex;gap:2px;margin-bottom:6px}
 .topbar .theme label{position:relative;cursor:pointer}
 .topbar .theme input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
-.topbar .theme span{display:flex;align-items:center;justify-content:center;padding:5px 10px;color:var(--muted)}
-.topbar .theme label+label span{border-left:1px solid var(--line)}
-.topbar .theme label:hover span{color:var(--ink)}
-.topbar .theme input:checked+span{background:var(--ink);color:var(--bg)}
-.topbar .theme input:focus-visible+span{outline:2px solid var(--ink);outline-offset:-3px}
+.topbar .theme span{display:flex;align-items:center;justify-content:center;padding:5px 6px;border-radius:4px;color:var(--muted);opacity:.55}
+.topbar .theme label:hover span{color:var(--ink);opacity:1}
+.topbar .theme input:checked+span{color:var(--ink);opacity:1}
+.topbar .theme input:focus-visible+span{outline:2px solid var(--ink);outline-offset:0}
 @media (max-width:640px){
   .topbar{padding:8px 12px 0}
   .topbar .long{display:none}

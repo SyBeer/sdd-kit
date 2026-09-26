@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.6.2] - 2026-09-26
+- Motyw: same ikony slonce / ksiezyc, bez ramki i tla; wybrana w kolorze tekstu, druga przygaszona.
+
 ## [0.6.1] - 2026-09-26
 - Motyw: bez opcji "Auto"; zamiast tekstu ikony slonce / ksiezyc (nazwa w dymku i dla czytnikow ekranu).
   Dopoki nic nie wybrano - motyw systemu i on jest zaznaczony; wybor wspolny dla panelu i tablicy.

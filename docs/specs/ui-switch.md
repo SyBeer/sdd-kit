@@ -12,6 +12,7 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
    - z lewej zakladki "Panel modułu" | "Tablica warsztatowa"; biezaca strona zaznaczona (`aria-current="page"`), druga jest linkiem;
    - z prawej przelacznik motywu: dwie ikony - slonce (jasny) | ksiezyc (ciemny), bez tekstu; nazwa w `aria-label` i dymku
      (grupa radio, dziala z klawiatury). Zmiana 2026-09-26 (user: "usun AUTO i zamiast tekstu daj sloneczko/ksiezyc").
+     Same ikony, bez ramki i tla (0.6.2): wybrana w kolorze tekstu, druga przygaszona.
    - Znikaja stare linki "← Panel modułu" (tablica) i "Tablica warsztatowa →" (panel).
 2. Motyw:
    - Nie ma opcji "Auto". Dopoki user nic nie wybral, strona ma motyw systemu (`prefers-color-scheme`) i ten motyw jest zaznaczony
