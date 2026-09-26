@@ -13,6 +13,10 @@ z biezacego folderu, wiec "Nowy moduł" zakladalby foldery obok aplikacji.
   wejscie w folder, "↑ wyżej", znaczniki "moduł" i wyszarzona "aplikacja"; "Wybierz ten folder" wpisuje sciezke do pola.
 - Serwer: `POST /api/root`; bez katalogu `POST /api/modules` -> 409; konsola mowi, gdzie sa moduly albo ze nie wybrano.
 - Zmiana zachowania: `sdd-board` w folderze bez `requirements/` przy zapisanym katalogu otwiera pierwszy modul z katalogu.
+- `/sdd:interview` tryb live: JEDNO pytanie naraz zamiast partii 5-7 (uwaga z warsztatu horizon-zlecenia:
+  "jak ja mam zbierac odpowiedzi?"). Staly uklad pytania "Pytanie X z N (Q-xxx)" konczony zdaniem
+  "Zarejestruj kto udzielił odpowiedzi na pytanie.", zapis do sesji od razu, jedno dopytanie, parkowanie tylko
+  z warunkiem go-live, odpowiedz sprzeczna z D -> nowa D + "Zmieniona przez", powod `[AI]` = pusty powod.
 - Nowy `board/root.js`, kryteria AC-26..AC-33 w `docs/specs/progress-ui.md`, testy `test/root.test.js` (42/42).
 
 ## [0.7.2] - 2026-09-26
