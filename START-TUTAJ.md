@@ -77,6 +77,8 @@ Zobaczysz 6 etapow, co jest gotowe, co w toku i jaka komende wpisac dalej w Clau
 Strona odswieza sie sama, gdy agent zmienia pliki.
 Materialy (maile, PDF, zrzuty) wrzucasz przeciagajac je na karte Intake, potem w Claude Code `/sdd:intake`.
 Nowy modul (kolejny obszar wymagan) zakladasz, klikajac nazwe modulu w tytule i wybierajac "+ Nowy moduł…".
+Moduly leza w katalogu, ktory wskazujesz w panelu przy pierwszym uruchomieniu (np. `~/wymagania`) - nigdy w folderze sdd-kit.
+Zmienisz go w tym samym menu: "Zmień katalog modułów…".
 
 ## 5. Trzy zasady, ktore trzeba pamietac
 

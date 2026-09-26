@@ -4,7 +4,8 @@
 // Strony:  /  panel postepu (+ zalaczniki do Intake, nowy modul),  /board  tablica warsztatowa.
 // Agent (Claude Code) pisze do plikow, przegladarka odswieza sie sama (SSE).
 // Katalog wymagan: SDD_REQ albo nadrzedny 'requirements/' pliku tablicy, albo ./requirements.
-// Katalog modulow: SDD_MODULES_ROOT albo folder nadrzedny biezacego projektu.
+// Katalog modulow: SDD_MODULES_ROOT, wybor z panelu (~/.sdd-kit/config.json) albo folder nadrzedny
+// istniejacego projektu. Nigdy folder aplikacji - wtedy panel pyta o katalog (zmiana 0.8.0).
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -12,6 +13,7 @@ const path = require('path');
 const { readProgress } = require('./progress');
 const { listModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
+const { KIT_DIR, configPath, inside, saveRoot, checkRoot, resolveRoot } = require('./root');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -28,9 +30,9 @@ function reqOf(file) {
 const CUSTOM_BOARD = reqOf(boardArg) ? null : boardArg;
 
 const state = { req: null, board: null };
-const ROOT = process.env.SDD_MODULES_ROOT
-  ? path.resolve(process.env.SDD_MODULES_ROOT)
-  : path.dirname(path.dirname(process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'))));
+const START_REQ = process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'));
+const resolved = resolveRoot({ project: START_REQ });
+let ROOT = resolved.root;
 
 // ---------------------------------------------------------------- tablica
 function emptyBoard() {
@@ -44,12 +46,13 @@ function readBoard() {
 function boardView() {
   const b = readBoard();
   b._sync = syncMap(b, rel => {
+    if (!state.req) return null;
     const f = path.resolve(state.req, String(rel));
     if (!f.startsWith(state.req + path.sep)) return null;
     try { return fs.readFileSync(f, 'utf8'); } catch (e) { return null; }
   });
   // naglowek "Wymagania do modulu" na tablicy; jak _sync - nie trafia do board.json
-  b._module = { name: path.basename(path.dirname(state.req)) };
+  b._module = { name: state.req ? path.basename(path.dirname(state.req)) : '' };
   b._modules = listModules(ROOT).map(m => ({ name: m.name, level: m.level }));
   return b;
 }
@@ -65,10 +68,12 @@ function writeBoard(b) {
 const boardClients = new Set();
 const progressClients = new Set();
 function progressPayload() {
-  const p = readProgress(state.req);
-  p.module = { name: path.basename(path.dirname(state.req)), dir: path.dirname(state.req) };
-  p.modules = listModules(ROOT).map(m => ({ name: m.name, project: m.project, level: m.level }));
+  const p = state.req ? readProgress(state.req) : { exists: false };
+  p.module = state.req ? { name: path.basename(path.dirname(state.req)), dir: path.dirname(state.req) } : null;
+  p.modules = ROOT ? listModules(ROOT).map(m => ({ name: m.name, project: m.project, level: m.level })) : [];
   p.modulesRoot = ROOT;
+  p.needsRoot = !ROOT;
+  p.kitDir = KIT_DIR;
   return p;
 }
 const send = (set, obj) => { const d = `data: ${JSON.stringify(obj)}\n\n`; for (const r of set) r.write(d); };
@@ -80,7 +85,7 @@ const broadcastProgress = () => { clearTimeout(ptimer); ptimer = setTimeout(() =
 let watchers = [], retry = null;
 function watch() {
   watchers.forEach(w => w.close()); watchers = []; clearTimeout(retry);
-  try {
+  if (state.req) try {
     watchers.push(fs.watch(state.req, { recursive: true }, (ev, file) => {
       broadcastProgress();
       broadcastBoard(); // stan synchronizacji zalezy tez od plikow w requirements/
@@ -98,12 +103,18 @@ function watch() {
 }
 function selectModule(req) {
   state.req = req;
-  state.board = CUSTOM_BOARD || path.join(req, '01-interview', 'board.json');
+  state.board = CUSTOM_BOARD || (req ? path.join(req, '01-interview', 'board.json') : null);
   watch();
   send(progressClients, progressPayload());
   send(boardClients, boardView());
 }
-selectModule(process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements')));
+// Modul startowy: wskazany projekt (jesli nie lezy w aplikacji), inaczej pierwszy z katalogu, inaczej zaden.
+function firstModule() {
+  const m = ROOT ? listModules(ROOT)[0] : null;
+  return m ? path.join(m.dir, 'requirements') : null;
+}
+const startInKit = inside(path.dirname(START_REQ), KIT_DIR);
+selectModule(!startInKit && fs.existsSync(START_REQ) ? START_REQ : firstModule());
 
 // ---------------------------------------------------------------- HTTP
 function sendHtml(res, file) {
@@ -157,7 +168,7 @@ const server = http.createServer((req, res) => {
 
   if (url === '/api/intake' && req.method === 'POST') {
     const name = u.searchParams.get('name') || '';
-    if (!fs.existsSync(state.req)) return json(res, 409, { error: 'Brak requirements/ w tym module.' });
+    if (!state.req || !fs.existsSync(state.req)) return json(res, 409, { error: 'Brak requirements/ w tym module.' });
     return readBody(req, MAX_UPLOAD, buf => {
       if (!buf) return json(res, 413, { error: 'Plik wiekszy niz 25 MB.' });
       try {
@@ -169,11 +180,24 @@ const server = http.createServer((req, res) => {
   }
 
   if (url === '/api/intake' && req.method === 'DELETE') {
+    if (!state.req) return json(res, 409, { error: 'Nie wybrano modułu.' });
     try { return json(res, 200, { removed: removeIntake(state.req, u.searchParams.get('name') || '') }); }
     catch (e) { return json(res, /w spisie/.test(e.message) ? 409 : 404, { error: e.message }); }
   }
 
+  if (url === '/api/root' && req.method === 'POST') {
+    return readBody(req, 64 * 1024, buf => {
+      try {
+        const dir = checkRoot(JSON.parse(String(buf || '{}')).path);
+        saveRoot(configPath(), dir);
+        ROOT = dir;
+        selectModule(state.req && inside(state.req, dir) ? state.req : firstModule());
+        json(res, 200, { modulesRoot: dir, module: state.req ? path.basename(path.dirname(state.req)) : null });
+      } catch (e) { json(res, 400, { error: e.message }); }
+    });
+  }
   if (url === '/api/modules' && req.method === 'POST') {
+    if (!ROOT) return json(res, 409, { error: 'Najpierw wskaż katalog modułów.' });
     return readBody(req, 64 * 1024, buf => {
       try {
         const body = JSON.parse(String(buf || '{}'));
@@ -196,6 +220,7 @@ const server = http.createServer((req, res) => {
 
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView());
   if (url === '/api/board' && req.method === 'PUT') {
+    if (!state.board) return json(res, 409, { error: 'Nie wybrano modułu.' });
     return readBody(req, 5 * 1024 * 1024, buf => {
       try { writeBoard(stampNotes(readBoard(), JSON.parse(String(buf)), new Date().toISOString())); res.writeHead(204); res.end(); }
       catch (e) { res.writeHead(400); res.end('zly JSON'); }
@@ -208,7 +233,8 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`Panel:    http://localhost:${PORT}`);
   console.log(`Tablica:  http://localhost:${PORT}/board`);
-  console.log(`Modul:    ${path.dirname(state.req)}`);
-  console.log(`Moduly w: ${ROOT}`);
+  console.log(`Modul:    ${state.req ? path.dirname(state.req) : 'brak'}`);
+  if (resolved.rejected) console.log(`Pomijam:  ${resolved.rejected} - to folder aplikacji sdd-kit, wymagan tu nie trzymam.`);
+  console.log(`Moduly w: ${ROOT || 'nie wybrano - wskaz katalog w panelu'}`);
   console.log('Zostaw to okno otwarte. Ctrl+C konczy.');
 });

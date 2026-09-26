@@ -37,7 +37,8 @@
       const on = m.name === cur;
       return '<li><button type="button" role="menuitemradio" aria-checked="' + on + '" data-mod="' + esc(m.name) + '"><span class="ck">' + (on ? '✓' : '') + '</span>' +
         '<span class="nm">' + esc(m.name) + '</span><span class="lv">' + esc(LEVEL[m.level] || m.level || '') + '</span></button></li>';
-    }).join('') + '</ul><div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>';
+    }).join('') + '</ul><div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>' +
+      '<button type="button" role="menuitem" class="add" id="chroot"><span class="ck">⌂</span>Zmień katalog modułów…</button>';
   }
 
   const api = { pickTheme, tabs, modMenu, KEY };
@@ -100,6 +101,7 @@
       const b = e.target.closest('button'); if (!b) return;
       open(false); btn.focus();
       if (b.id === 'newmod') { if (opts.onNew) opts.onNew(); return; }
+      if (b.id === 'chroot') { if (opts.onRoot) opts.onRoot(); else location.href = '/#katalog'; return; }
       const name = b.getAttribute('data-mod');
       if (!name || name === cur) return;
       if (opts.onSelect) opts.onSelect(name);

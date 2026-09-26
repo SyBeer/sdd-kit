@@ -48,8 +48,11 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 W folderze projektu uruchom `sdd-board` i otworz http://localhost:8012. Strona pokazuje 6 etapow
 (Intake -> Handover) ze statusem liczonym z plikow w `requirements/`, liczniki, "aktualny krok"
 z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Odswieza sie sama.
-Naglowek "Wymagania do modułu: <nazwa> ▾" - klik w nazwe przelacza modul (modul = folder obok z `requirements/SDD.yaml`),
-a "+ Nowy moduł…" na dole menu zaklada folder obok jak `/sdd:init`, z `git init`.
+Naglowek "Wymagania do modułu: <nazwa> ▾" - klik w nazwe przelacza modul (modul = podfolder katalogu modulow z `requirements/SDD.yaml`),
+a "+ Nowy moduł…" na dole menu zaklada folder w katalogu modulow jak `/sdd:init`, z `git init`.
+Katalog modulow wskazujesz sam: przy pierwszym uruchomieniu (poza folderem projektu) panel pyta "Gdzie trzymać wymagania?",
+wybor trafia do `~/.sdd-kit/config.json`, zmiana: "Zmień katalog modułów…" w menu. Folder aplikacji sdd-kit jest odrzucany -
+kit to tylko aplikacja, wymagania leza poza nim. `SDD_MODULES_ROOT` nadpisuje wybor.
 Karta Intake przyjmuje zalaczniki (przycisk lub przeciagnij-upusc, do 25 MB) i zapisuje je do `requirements/00-intake/`, pomija pliki o identycznej tresci i pokazuje liste wrzuconych plikow (dodane / czeka na spis); ✕ przy pliku czekajacym na spis kasuje go (ostatecznie).
 Tablica (`/board`): procesy zakladasz, nazywasz, przesuwasz i usuwasz w przegladarce; karteczke edytujesz w panelu z prawej;
 powiekszenie z "Dopasuj" miesci cala tablice w oknie.

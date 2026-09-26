@@ -150,3 +150,44 @@ Uwaga usera: "dodaj mozliwosc usuniecia pliku z intake". Znosi punkt "Poza zakre
 - AC-24: `removeIntake` odrzuca plik, ktory jest w INDEX.md ("jest juz w spisie"); plik zostaje na miejscu.
 - AC-22: `removeIntake` odrzuca INDEX.md, `../SDD.yaml`, `.ukryty/...` i nieistniejacy plik; plik w podfolderze (`maile/a.eml`) usuwa.
 - AC-23 (reczne): brak ✕ przy plikach "dodane"; ✕ przy pliku -> potwierdzenie -> plik znika z listy bez przeladowania; zapytanie DELETE bez X-SDD -> 403.
+
+---
+
+# Zmiana 0.8.0 (2026-09-26): katalog produktow wskazuje uzytkownik
+
+Uwaga usera: "sdd-kit to tylko aplikacja. Produkty tej aplikacji powinny znajdowac sie w innym katalogu,
+wskazanym przez uzytkownika." Serwer uruchomiony w folderze kitu liczyl katalog modulow z biezacego
+folderu (`./requirements` -> rodzic), wiec "Nowy modul" zakladalby foldery obok aplikacji.
+Decyzje usera: katalog wskazuje sie w panelu przy starcie (wybor zapamietany); katalog wewnatrz
+aplikacji = odmowa z komunikatem.
+
+## Zakres
+1. Katalog produktow (katalog modulow) ustalany w kolejnosci:
+   `SDD_MODULES_ROOT` -> zapamietany wybor w `~/.sdd-kit/config.json` (`{"modulesRoot": "..."}`,
+   sciezke pliku mozna zmienic `SDD_CONFIG`) -> rodzic projektu, jesli serwer wskazano na ISTNIEJACY
+   `requirements/` (argument, `SDD_REQ` albo `./requirements`). Nic z tego = brak katalogu.
+2. Katalog rowny folderowi aplikacji albo lezacy w nim jest odrzucany (jak brak katalogu).
+   Tak samo modul, ktorego `requirements/` lezy w aplikacji. Folder aplikacji = 3 poziomy nad `board/`.
+3. Brak katalogu -> panel pokazuje ekran "Gdzie trzymać wymagania?": pole na sciezke bezwzgledna
+   (`~/` rozwijane), przycisk "Zapisz". Serwer sprawdza (pkt 2), zaklada brakujacy folder,
+   zapisuje wybor w configu i przelacza sie na pierwszy modul z tego katalogu (albo zaden).
+   Odrzucenie wraca jako komunikat pod polem.
+4. Katalog jest ustawiony, ale nie ma w nim modulu -> panel mowi, gdzie jest katalog, i proponuje "Nowy moduł".
+5. Zmiana katalogu pozniej: w menu modulow pozycja "Zmień katalog modułów…" otwiera ten sam ekran.
+6. `POST /api/root {path}` - chroniony jak inne zapisy (X-SDD, Host lokalny).
+7. Konsola serwera przy starcie: "Moduly w: <katalog>" albo "Moduly w: nie wybrano - wskaz katalog w panelu".
+
+## Poza zakresem
+- Tryb `--demo` (przykladowa tablica z folderu aplikacji) - zostaje jak jest.
+- Przenoszenie istniejacych modulow miedzy katalogami.
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/root.test.js`)
+- AC-26: `checkRoot` odrzuca sciezke pusta i wzgledna, folder aplikacji i jego podfolder; `~/x` rozwija do katalogu domowego;
+  brakujacy folder zaklada; zwraca sciezke bezwzgledna.
+- AC-27: `saveRoot` + `readRoot` przez plik configu; brak pliku albo zly JSON -> `null`.
+- AC-28: `resolveRoot`: env wygrywa z configiem, config z rodzicem projektu; projekt bez `requirements/` -> `null`;
+  katalog (z dowolnego zrodla) w aplikacji -> `null` z `rejected`.
+- AC-29: serwer uruchomiony w folderze bez `requirements/`, bez configu -> `/api/progress` ma `needsRoot: true`,
+  `modulesRoot: null`, nie zaklada zadnego folderu; `POST /api/root` z folderem aplikacji -> 400;
+  z folderem tymczasowym -> 200, config zapisany, `/api/progress` ma ten `modulesRoot`; `POST /api/modules` bez katalogu -> 409.
+- AC-30 (reczne): ekran wyboru w przegladarce, zapis, "Zmień katalog modułów…" w menu.

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0] - 2026-09-26
+Katalog produktow wskazuje uzytkownik. sdd-kit to tylko aplikacja: moduly (`requirements/`) nie powstaja
+w jej folderze ani obok niego. Wczesniej serwer uruchomiony w folderze kitu liczyl katalog modulow
+z biezacego folderu, wiec "Nowy moduł" zakladalby foldery obok aplikacji.
+
+- Katalog modulow: `SDD_MODULES_ROOT` -> wybor z panelu w `~/.sdd-kit/config.json` (`SDD_CONFIG` zmienia sciezke)
+  -> rodzic istniejacego `requirements/` projektu. Nic z tego = panel pyta "Gdzie trzymać wymagania?".
+- Folder aplikacji (i wszystko w nim) jest odrzucany - z configu, ze zmiennej i jako projekt startowy.
+- Panel: ekran wyboru katalogu, "Brak modułów" z przyciskiem "Nowy moduł…", w menu modulow "Zmień katalog modułów…".
+- Serwer: `POST /api/root`; bez katalogu `POST /api/modules` -> 409; konsola mowi, gdzie sa moduly albo ze nie wybrano.
+- Zmiana zachowania: `sdd-board` w folderze bez `requirements/` przy zapisanym katalogu otwiera pierwszy modul z katalogu.
+- Nowy `board/root.js`, kryteria AC-26..AC-30 w `docs/specs/progress-ui.md`, testy `test/root.test.js` (41/41).
+
 ## [0.7.2] - 2026-09-26
 - Port panelu i tablicy: **4242 -> 8012**. Konwencja workspace rezerwuje dla uslug dev zakres
   8000-8999, a 4242 byl poza nim. Zmiana objela `install.sh`, `install.ps1`, `README.md`,

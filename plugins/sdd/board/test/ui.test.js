@@ -36,6 +36,7 @@ test('AC-U6: modMenu - biezacy zaznaczony, escapowanie, Nowy modul', () => {
   assert.match(h, /pełny/);
   assert.match(h, /lekki/);
   assert.match(h, /Nowy moduł/);
+  assert.match(h, /id="chroot"[^>]*>.*Zmień katalog modułów…/); // AC-30: zmiana katalogu z menu
   const x = ui.modMenu([{ name: 'a' }], 'b<i>');
   assert.ok(x.indexOf('data-mod="b&lt;i&gt;"') >= 0 && x.indexOf('data-mod="b&lt;i&gt;"') < x.indexOf('data-mod="a"'));
   assert.ok(x.indexOf('<i>') < 0);

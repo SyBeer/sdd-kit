@@ -119,6 +119,11 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .files .rm:hover,.files .rm:focus-visible{border-color:var(--line);color:var(--hot)}
 .missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
 .missing h2{margin-top:0}
+.missing label{display:block;font-size:13px;font-weight:600;margin:16px 0 4px}
+.missing input{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+.missing .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.missing .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
+.missing .hint{color:var(--muted);font-size:13px}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 @media(max-width:640px){
   header,main{padding-left:16px;padding-right:16px}
@@ -148,7 +153,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 <dialog id="dlg">
   <form id="modform" method="dialog">
     <h2>Nowy moduł</h2>
-    <p class="hint">Założę folder obok obecnego modułu (<span id="rootdir"></span>) z pustą strukturą wymagań, tak jak <code>/sdd:init</code>.</p>
+    <p class="hint">Założę folder w katalogu modułów (<span id="rootdir"></span>) z pustą strukturą wymagań, tak jak <code>/sdd:init</code>.</p>
     <label>Nazwa modułu <small>małe litery, cyfry i myślnik, np. faktury-2026</small>
       <input name="name" required pattern="[a-z0-9][a-z0-9\-]{0,63}" autocomplete="off"></label>
     <label>Poziom
@@ -198,8 +203,41 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     }).join('');
   }
 
+  var askRoot=location.hash==='#katalog';
+  if(askRoot) history.replaceState(null,'',location.pathname);
+  function rootScreen(p){
+    $('#meta').textContent='';
+    var cancel=!p.needsRoot;
+    $('#app').innerHTML='<div class="missing"><h2>Gdzie trzymać wymagania?</h2>'+
+      '<p>sdd-kit to tylko aplikacja. Wymagania (moduły) trzymasz w swoim folderze: każdy moduł to podfolder z <code>requirements/</code>.</p>'+
+      '<form id="rootform"><label for="rootpath">Katalog modułów</label>'+
+      '<input id="rootpath" name="path" required autocomplete="off" placeholder="~/wymagania" value="'+esc(p.modulesRoot||'')+'">'+
+      '<p class="hint">Ścieżka bezwzględna albo zaczynająca się od <code>~/</code>. Brakujący folder założę. Nie może leżeć w folderze aplikacji ('+esc(p.kitDir||'')+').</p>'+
+      '<p class="err" id="rooterr"></p><div class="row">'+(cancel?'<button class="b" type="button" id="rootcancel">Anuluj</button>':'')+
+      '<button class="b p" type="submit">Zapisz</button></div></form></div>';
+    var f=$('#rootform'); f.elements.path.focus();
+    if(cancel) $('#rootcancel').onclick=function(){ askRoot=false; render(last); };
+    f.onsubmit=function(e){
+      e.preventDefault();
+      api('/api/root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:f.elements.path.value})})
+        .then(function(){ askRoot=false; if(last) render(last); })
+        .catch(function(err){ $('#rooterr').textContent=err.message; });
+    };
+  }
   function render(p){
     var app=$('#app');
+    // ekran juz stoi - nie kasuj tego, co user wpisuje, przy kazdym odswiezeniu z serwera
+    if(p.needsRoot||askRoot){ renderModules(p); if(!$('#rootform')) rootScreen(p); return; }
+    if(!p.module){
+      $('#meta').textContent='';
+      renderModules(p);
+      app.innerHTML='<div class="missing"><h2>Brak modułów</h2>'+
+        '<p>W katalogu <code>'+esc(p.modulesRoot)+'</code> nie ma jeszcze żadnego modułu.</p>'+
+        '<div class="row"><button class="b" type="button" id="chroot2">Zmień katalog</button><button class="b p" type="button" id="newmod2">Nowy moduł…</button></div></div>';
+      $('#chroot2').onclick=function(){ askRoot=true; render(p); };
+      $('#newmod2').onclick=openNew;
+      return;
+    }
     if(!p.exists){
       $('#meta').textContent='';
       renderModules(p);
@@ -260,8 +298,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var shownModule=null;
   var setModule=SddUI.modSwitch({
     onSelect:function(){ uplog=[]; },
-    onNew:function(){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
+    onNew:function(){ openNew(); },
+    onRoot:function(){ askRoot=true; if(last) render(last); }
   });
+  function openNew(){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
   function renderModules(p){
     last=p;
     var cur=p.module?p.module.name:'';
