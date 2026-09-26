@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0] - 2026-09-27
+Karty etapow w panelu w jednej kolumnie, zwijane (uwaga usera: "obsluzone tematy zwiniete, a aktualny rozwiniety").
+- Szesc kart jedna pod druga; prawa kolumna (Blokuje dev, Czeka na biznes, Ostatnie zmiany) bez zmian.
+- Domyslnie rozwinieta tylko karta aktualnego kroku; zwinieta pokazuje w naglowku jedna linie licznikow.
+- Klik w naglowek zwija/rozwija (pamietane do przeladowania albo zmiany modulu); zmiana aktualnego kroku rozwija jego karte.
+- Klik w kolko etapu na osi czasu rozwija jego karte i przewija do niej.
+- `SddUI.cardOpen` + AC-31 w `test/ui.test.js`; spec: `docs/specs/progress-ui.md`, zmiana 0.10.0. Testy 46/46.
+
 ## [0.9.0] - 2026-09-27
 Otwarte pytania nie cofaja procesu. /sdd:domain (test spojnosci) i krok 1 /sdd:interview dopisuja pytania,
 wiec panel cofal "Aktualny krok" z Domain do Interview i nie dalo sie przerwac wywiadu (uwaga z horizon-zlecenia).

@@ -243,3 +243,26 @@ Decyzja usera: blokuja tylko blokery.
   blocking, closedBy, pending). `pending` = otwarte/zadane/sprzeczne. Kolejnosc: pending wg priorytetu (sprzeczne, blokujace,
   reszta), potem pozostale po numerze.
 - AC-30b (reczne): karta Interview pokazuje liste, rozwija sie i zwija; tresc pytania escapowana.
+
+---
+
+# Zmiana 0.10.0 (2026-09-27): karty etapow w jednej kolumnie, zwijane
+
+Uwaga usera (zrzut panelu horizon-zlecenia): "Te prostokaty pod timelinem powinny byc jeden pod drugim i w jednej
+kolumnie. Obsluzone tematy zwiniete, a aktualny rozwiniety."
+
+## Zakres
+1. Karty 6 etapow w jednej kolumnie (lewa czesc), jedna pod druga; prawa kolumna (Blokuje dev, Czeka na biznes,
+   Ostatnie zmiany) bez zmian. Na waskim ekranie wszystko w jednej kolumnie jak dotad.
+2. Karta = sekcja zwijana. Naglowek zawsze widoczny: numer, nazwa, status, a w zwinietej karcie jedna linia
+   najwazniejszych licznikow (np. "2 zrodel w spisie · 0 czeka na spis").
+3. Domyslnie rozwinieta tylko karta aktualnego kroku; pozostale zwiniete (gotowe i nie zaczete).
+   Klik w naglowek rozwija/zwija; wybor pamietany do przeladowania strony albo zmiany modulu.
+   Gdy zmieni sie aktualny krok, jego karta sie rozwija (wybor usera dla innych kart zostaje).
+4. Klik w kolko etapu na osi czasu rozwija jego karte i przewija do niej.
+
+## Kryteria akceptacji
+- AC-31: `SddUI.cardOpen(key, current, toggled)` -> wybor usera z `toggled`, a bez niego `key === current`
+  (test w `plugins/sdd/board/test/ui.test.js`).
+- AC-32 (reczne): jedna kolumna kart; rozwinieta tylko aktualna; zwinieta pokazuje liczniki w jednej linii;
+  klik w naglowek i w kolko osi dziala; lista plikow Intake i pytan Interview dzialaja w rozwinietej karcie.

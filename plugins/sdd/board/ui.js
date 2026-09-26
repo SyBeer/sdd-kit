@@ -41,7 +41,12 @@
       '<button type="button" role="menuitem" class="add" id="chroot"><span class="ck">⌂</span>Zmień katalog modułów…</button>';
   }
 
-  const api = { pickTheme, tabs, modMenu, KEY };
+  // Karta etapu w panelu (zmiana 0.10.0): wybor usera, a bez niego rozwinieta tylko karta aktualnego kroku.
+  function cardOpen(key, current, toggled) {
+    return toggled && typeof toggled[key] === 'boolean' ? toggled[key] : key === current;
+  }
+
+  const api = { pickTheme, tabs, modMenu, cardOpen, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

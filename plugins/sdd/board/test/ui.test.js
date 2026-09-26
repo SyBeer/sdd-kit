@@ -42,6 +42,14 @@ test('AC-U6: modMenu - biezacy zaznaczony, escapowanie, Nowy modul', () => {
   assert.ok(x.indexOf('<i>') < 0);
 });
 
+test('AC-31: cardOpen - wybor usera, bez niego tylko aktualny etap', () => {
+  assert.strictEqual(ui.cardOpen('domain', 'domain', {}), true);
+  assert.strictEqual(ui.cardOpen('intake', 'domain', {}), false);
+  assert.strictEqual(ui.cardOpen('intake', 'domain', { intake: true }), true);
+  assert.strictEqual(ui.cardOpen('domain', 'domain', { domain: false }), false);
+  assert.strictEqual(ui.cardOpen('spec', 'domain', null), false);
+});
+
 function get(port, p) {
   return new Promise((ok, err) => http.get({ host: '127.0.0.1', port, path: p }, r => {
     let body = ''; r.on('data', d => { body += d; }); r.on('end', () => ok({ status: r.statusCode, type: r.headers['content-type'], body }));

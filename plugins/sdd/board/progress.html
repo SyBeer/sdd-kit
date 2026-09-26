@@ -59,12 +59,22 @@ button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1
 
 /* karty */
 .wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-content:start}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px}
+/* jedna kolumna, karta zwijana; rozwinieta domyslnie tylko aktualna (zmiana 0.10.0) */
+.cards{display:flex;flex-direction:column;gap:8px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:0}
 .card.current{outline:2px solid var(--active);outline-offset:-1px}
-.card h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
-.card h3 .n{color:var(--muted);font-weight:500;font-size:13px}
-.pill{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;font-size:16px;font-weight:600;min-width:0}
+.card>summary::-webkit-details-marker{display:none}
+.card>summary:focus-visible{outline:2px solid var(--ink);outline-offset:-2px;border-radius:6px}
+.card .chev{color:var(--muted);font-size:14px;width:12px;transition:transform .15s}
+.card[open] .chev{transform:rotate(90deg)}
+.card .n{color:var(--muted);font-weight:500;font-size:13px}
+.card .sumline{flex:1;min-width:0;font-size:12.5px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .sumline b{color:var(--ink)}
+.card[open] .sumline{visibility:hidden}
+.card .body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}
+.steps li{cursor:pointer}
+.pill{margin-left:auto;flex:none;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .pill.done{background:var(--done);border-color:var(--done);color:#26241f}
 .pill.active{background:var(--active);border-color:var(--active);color:#26241f}
 .card p{margin:0;color:var(--muted);font-size:13.5px}
@@ -226,6 +236,17 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
+  // Stan kart (zmiana 0.10.0): wybor usera per etap; aktualny krok rozwija sie po zmianie.
+  var cardToggled={}, lastCurrent=null;
+  // Jedna linia licznikow w naglowku zwinietej karty.
+  function sumline(st){
+    return (LABELS[st.key]||[]).map(function(l){
+      var v=st.counts[l[0]];
+      if(v===null||v===undefined) return '';
+      if(typeof v==='boolean') return esc(l[1])+': <b>'+(v?'jest':'brak')+'</b>';
+      return '<b>'+esc(v)+'</b> '+esc(l[1]);
+    }).filter(Boolean).slice(0,3).join(' · ');
+  }
   function counts(st){
     return (LABELS[st.key]||[]).map(function(l){
       var v=st.counts[l[0]];
@@ -323,17 +344,21 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 
     html+='<ol class="steps">'+p.stages.map(function(s,i){
       var cur=s.key===p.next.key?' current':'';
-      return '<li class="'+s.status+cur+'"><span class="dot">'+(s.status==='done'?'✓':i+1)+'</span>'+esc(s.name)+'</li>';
+      return '<li class="'+s.status+cur+'" data-key="'+s.key+'" title="Pokaż kartę etapu"><span class="dot">'+(s.status==='done'?'✓':i+1)+'</span>'+esc(s.name)+'</li>';
     }).join('')+'</ol>';
 
+    if(p.next.key!==lastCurrent){ delete cardToggled[p.next.key]; lastCurrent=p.next.key; }
     html+='<div class="wrap"><div class="cards">'+p.stages.map(function(s,i){
       var cur=s.key===p.next.key?' current':'';
-      return '<article class="card'+cur+'"><h3><span class="n">'+(i+1)+'</span>'+esc(s.name)+
-        '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></h3>'+
+      var open=SddUI.cardOpen(s.key,p.next.key,cardToggled);
+      return '<details class="card'+cur+'" data-key="'+s.key+'"'+(open?' open':'')+'><summary>'+
+        '<span class="chev" aria-hidden="true">›</span><span class="n">'+(i+1)+'</span><span>'+esc(s.name)+'</span>'+
+        '<span class="sumline">'+sumline(s)+'</span>'+
+        '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></summary><div class="body">'+
         '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
         (s.key==='intake'?intakeBox(s.files||[]):'')+
         (s.key==='interview'?questionBox(s.questions||[]):'')+
-        '<div class="foot"><span class="run">Uruchom w Claude Code:</span> <code>'+esc(s.command)+'</code></div></article>';
+        '<div class="foot"><span class="run">Uruchom w Claude Code:</span> <code>'+esc(s.command)+'</code></div></div></details>';
     }).join('')+'</div><aside>';
 
     html+='<section class="panel block"><h2>Blokuje dev</h2>'+(p.blockers.length?
@@ -351,6 +376,15 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     html+='</aside></div>';
     app.innerHTML=html;
     wireDrop();
+    [].forEach.call(document.querySelectorAll('.card>summary'),function(sm){
+      sm.onclick=function(){ var d=sm.parentNode; cardToggled[d.getAttribute('data-key')]=!d.open; };
+    });
+    [].forEach.call(document.querySelectorAll('.steps li'),function(li){
+      li.onclick=function(){
+        var k=li.getAttribute('data-key'); cardToggled[k]=true; render(last);
+        var d=document.querySelector('.card[data-key="'+k+'"]'); if(d) d.scrollIntoView({behavior:'smooth',block:'start'});
+      };
+    });
     var ql=$('#qlist'); if(ql){
       ql.querySelector('summary').onclick=function(){qOpen=!ql.open};
       ql.querySelector('.qf').onclick=function(e){ var b=e.target.closest('[data-qf]'); if(!b) return; qFilter=b.getAttribute('data-qf'); qOpen=true; render(last); };
@@ -375,7 +409,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   function renderModules(p){
     last=p;
     var cur=p.module?p.module.name:'';
-    if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; }
+    if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; qOpen=null; cardToggled={}; lastCurrent=null; }
     shownModule=cur;
     setModule(cur,p.modules);
     $('#rootdir').textContent=p.modulesRoot||'';
