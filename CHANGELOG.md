@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.4] - 2026-09-26
+- Tablica: wskazowka na pustej tablicy - dwie drogi: "Z AI" (`/sdd:board` z przyciskiem Kopiuj) i "Sam, w przegladarce"
+  (4 kroki + przyklad karteczek w kolorach legendy + "Dodaj pierwszy proces"). Procesy bez karteczek: linia pod tablica
+  "Kliknij + w procesie...", znika po pierwszej karteczce. Pusta tablica bez limitu wysokosci (telefon).
+- `boardHint` w board-ops.js + test AC-B17 (32/32).
+
 ## [0.5.3] - 2026-09-26
 - Intake: usuwanie pliku, ktory czeka na spis (✕ tylko przy "czeka na spis"), z potwierdzeniem; usuniecie ostateczne
   (plik kasowany z dysku). Plikow juz w spisie nie mozna usunac.

@@ -46,6 +46,14 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    - Karteczka: znaczek w rogu (✓ / ↻ / ! / ●) z dymkiem. Pasek: podsumowanie liczb w kazdym stanie. Panel: wiersz "Pliki" ze stanem i data synchronizacji.
    - Stan jest wyliczany przy kazdej zmianie tablicy albo plikow w requirements/; nie jest zapisywany do board.json.
 
+9. Wskazowka na pustej tablicy (0.5.4, punkt 10 z listy pomyslow: "poza sesja z Claude pusta tablica nie daje zadnej wskazowki, od czego zaczac"):
+   - Brak procesow: dwie drogi obok siebie (na telefonie jedna pod druga):
+     "Z AI" - `Uruchom w Claude Code: /sdd:board` z przyciskiem Kopiuj i jednym zdaniem, co zrobi AI;
+     "Sam, w przegladarce" - 4 kroki (proces, zdarzenia od lewej w czasie przeszlym, reszta typow pod zdarzeniem, `/sdd:board sync` po warsztacie)
+     i przycisk "+ Dodaj pierwszy proces".
+   - Pod krokami przyklad w miniaturze: rzad karteczek w kolorach legendy (kto, komenda, zdarzenie, regula, nie wiemy).
+   - Sa procesy, ale nie ma karteczek: jedna linia pod tablica "Kliknij + w procesie..." z podpowiedzia o zdarzeniach. Znika po pierwszej karteczce.
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module, cofanie zmian (undo).
 - Synchronizacja tablicy do plikow z przegladarki - dalej `/sdd:board sync` w Claude Code.
@@ -65,6 +73,8 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B14: `syncState(note, inFile)`: brak synced -> board; updated > synced -> changed; inFile === false -> missing; inaczej synced (takze gdy brak ref/file).
 - AC-B15: `syncMap(board, readFile)`: dla kazdej karteczki stan; `ref` szukany w tresci pliku jako cale slowo (Q-02 nie pasuje do Q-024); plik czytany raz; brak pliku -> missing.
 - AC-B16 (reczne): karteczki pokazuja znaczek stanu; dopisanie ID do pliku zmienia ! na ✓ bez przeladowania; edycja zsynchronizowanej karteczki -> ↻.
+- AC-B17: `boardHint(b)`: brak procesow -> 'blank'; procesy bez karteczek -> 'nonotes'; sa karteczki -> null (takze karteczki bez procesow w `lanes`).
+- AC-B18 (reczne): pusta tablica pokazuje obie drogi, przyklad i dziala Kopiuj; po dodaniu procesu wskazowka zmienia sie na linie pod tablica, po pierwszej karteczce znika; telefon bez poziomego przewijania, tryb ciemny czytelny.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera panel z prawej, Escape zamyka; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

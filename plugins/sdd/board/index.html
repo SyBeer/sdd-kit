@@ -45,6 +45,7 @@ main{padding:0 20px 24px}
 .board{background:var(--board);border:1px solid var(--line);border-radius:6px;overflow:auto;max-height:calc(100vh - 150px);background-image:radial-gradient(var(--line) .7px,transparent .8px);background-size:22px 22px}
 .inner{zoom:var(--z);width:max-content;min-width:100%}
 .inner.blank{zoom:1;width:auto}
+.board:has(.inner.blank){max-height:none}
 .lane{display:grid;grid-template-columns:170px auto;border-bottom:1px dashed var(--line)}
 .lane:last-child{border-bottom:0}
 .lane-title{position:sticky;left:0;z-index:2;background:var(--board);padding:12px 10px 12px 12px;border-right:1px dashed var(--line);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
@@ -102,9 +103,26 @@ main{padding:0 20px 24px}
 .types i{width:16px;height:16px;flex:none;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
 .types small{display:block;color:var(--muted);font-size:11.5px}
 button.b:disabled{opacity:.4;cursor:default;border-color:var(--line)}
-.empty{padding:40px 24px;text-align:center;color:var(--muted)}
-.empty h2{color:var(--ink);font-size:18px;margin:0 0 6px}
-.empty p{margin:0 0 14px}
+/* wskazowka na pustej tablicy */
+.empty{padding:28px 24px 32px;max-width:900px;margin:0 auto;color:var(--ink)}
+.empty>h2{font-size:20px;margin:0 0 4px}
+.empty>p{margin:0 0 18px;color:var(--muted)}
+.ways{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;align-items:start}
+.way{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.way h3{margin:0;font-size:15px}
+.way p{margin:0;color:var(--muted);font-size:14px;line-height:1.4}
+.way ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4}
+.way .run{font-size:12.5px;color:var(--muted)}
+.cmdrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cmdrow code{font-size:15px;padding:6px 10px;border:1px solid var(--line)}
+.way .go{align-self:flex-start}
+.mini{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin:0;padding-top:4px}
+.mini .note{width:92px;min-height:58px;padding:6px 7px;font-size:11.5px;cursor:default}
+.mini .note.act{min-height:40px}
+.mini figcaption{flex-basis:100%;font-size:12px;color:var(--muted)}
+.tip{margin:10px 2px 0;color:var(--muted);font-size:13.5px}
+.tip:empty{display:none}
+@media (max-width:700px){.ways{grid-template-columns:1fr}.empty{padding:20px 14px}}
 
 /* panel edycji */
 #drawer{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:100vw;background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);padding:16px;z-index:30;overflow-y:auto;font-size:14px;transform:translateX(105%);transition:transform .18s ease;visibility:hidden}
@@ -159,7 +177,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   <div class="syncbar" id="syncbar"></div>
   <div class="msg" id="msg" role="status"></div>
 </div>
-<main><div class="board" id="board"><div class="inner" id="inner"></div></div></main>
+<main><div class="board" id="board"><div class="inner" id="inner"></div></div><p class="tip" id="tip"></p></main>
 
 <aside id="drawer" aria-label="Karteczka" aria-hidden="true">
   <div class="dh"><h2 id="ph">Karteczka</h2><button class="close" id="close" title="Zamknij (Esc)" aria-label="Zamknij">×</button></div>
@@ -211,10 +229,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       '<span class="hint2">przenosi <code>/sdd:board sync</code> w Claude Code</span>':'';
     var inner=$('#inner'); inner.innerHTML=''; inner.classList.toggle('blank',!board.lanes.length);
     if(!board.lanes.length){
-      inner.innerHTML='<div class="empty"><h2>Tablica jest pusta</h2><p>Zacznij od procesu, np. „Przyjęcie zlecenia”. W jednym procesie karteczki idą od lewej do prawej.</p>'+
-        '<button class="b p" id="firstlane">+ Dodaj pierwszy proces</button></div>';
+      inner.innerHTML=EMPTY;
       $('#firstlane').onclick=addLane;
+      var cp=$('#copyboard');
+      cp.onclick=function(){ try{navigator.clipboard.writeText('/sdd:board').then(function(){cp.textContent='Skopiowano'})}catch(e){} };
     }
+    $('#tip').innerHTML=ops.boardHint(board)==='nonotes'?
+      'Kliknij <b>+</b> w procesie, żeby dodać pierwszą karteczkę. Zacznij od zdarzeń (pomarańczowe) w czasie przeszłym, od lewej do prawej.':'';
     board.lanes.forEach(function(lane,li){ inner.appendChild(laneEl(lane,li)); });
 
     if(sel && !byId(sel)){ closeDrawer(); }
@@ -308,6 +329,24 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   }
   function author(n){ return n.by==='agent'?'AI':(n.by||''); }
   function byId(id){return board.notes.find(function(n){return n.id===id})}
+  var EMPTY='<div class="empty"><h2>Tablica jest pusta</h2>'+
+    '<p>Tablica pokazuje proces na karteczkach: co się dzieje, kto to robi i czego jeszcze nie wiecie. Wybierz, jak zaczynasz.</p>'+
+    '<div class="ways">'+
+    '<section class="way"><h3>Z AI, podczas rozmowy</h3>'+
+      '<p>AI założy procesy z materiałów z Intake i będzie stawiać karteczki na bieżąco z tego, co mówicie.</p>'+
+      '<div><div class="run">Uruchom w Claude Code:</div><div class="cmdrow"><code>/sdd:board</code><button class="b" id="copyboard">Kopiuj</button></div></div></section>'+
+    '<section class="way"><h3>Sam, w przeglądarce</h3><ol>'+
+      '<li>Dodaj proces, czyli jeden ciąg zdarzeń, np. „Przyjęcie zlecenia”.</li>'+
+      '<li>Klikaj <b>+</b> i wypisuj zdarzenia od lewej do prawej, w czasie przeszłym: „Zlecenie przyjęte”.</li>'+
+      '<li>Pod zdarzeniem dołóż, kto to robi, komendę, regułę albo widok. Czego nie wiecie, zapisz na czerwonej „nie wiemy”.</li>'+
+      '<li>Po warsztacie wpisz w Claude Code <code>/sdd:board sync</code>, żeby przenieść karteczki do plików.</li></ol>'+
+      '<figure class="mini" aria-label="Przykład">'+
+        '<span class="note act">Spedytor</span><span class="note cmd">Przyjmij zlecenie</span><span class="note ev">Zlecenie przyjęte</span>'+
+        '<span class="note pol">Jeśli brak ceny, to wstrzymaj</span><span class="note hot">Kto zatwierdza rabat?</span>'+
+        '<figcaption>Przykład: kto → komenda → zdarzenie → reguła, a na czerwono pytanie do wyjaśnienia.</figcaption></figure>'+
+      '<button class="b p go" id="firstlane">+ Dodaj pierwszy proces</button></section>'+
+    '</div></div>';
+
   function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
 
   // ------------------------------------------------------------ zapis

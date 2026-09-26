@@ -139,5 +139,11 @@
     return out;
   }
 
-  return { addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap };
+  // Wskazowka na pustej tablicy: 'blank' (brak procesow), 'nonotes' (procesy bez karteczek), null.
+  function boardHint(b) {
+    if (notes(b).length) return null;
+    return lanes(b).length ? 'nonotes' : 'blank';
+  }
+
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap };
 });

@@ -165,3 +165,12 @@ test('AC-B15: syncMap - ref w pliku jako cale slowo, plik czytany raz', () => {
   assert.deepStrictEqual(ops.syncMap(b, read), { a: 'synced', b: 'missing', c: 'missing', d: 'missing', e: 'synced', f: 'board' });
   assert.strictEqual(reads.filter(f => f === '01-interview/QUESTIONS.md').length, 1);
 });
+
+test('AC-B17: boardHint - jaka wskazowke pokazac', () => {
+  assert.strictEqual(ops.boardHint({ lanes: [], notes: [] }), 'blank');
+  assert.strictEqual(ops.boardHint({}), 'blank');
+  assert.strictEqual(ops.boardHint({ lanes: ['A'], notes: [] }), 'nonotes');
+  assert.strictEqual(ops.boardHint({ lanes: ['A'] }), 'nonotes');
+  assert.strictEqual(ops.boardHint({ lanes: ['A'], notes: [{ id: 'a', lane: 'A' }] }), null);
+  assert.strictEqual(ops.boardHint({ lanes: [], notes: [{ id: 'a', lane: 'X' }] }), null);
+});
