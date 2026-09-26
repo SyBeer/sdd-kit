@@ -119,3 +119,26 @@ test('meta: projekt, poziom i changelog z plikow', () => {
   assert.strictEqual(p.level, 'full');
   assert.deepStrictEqual(p.changelog, ['2026-09-26 | init | utworzono strukture, poziom full | -']);
 });
+
+test('AC-14: intake.files - nazwa, rozmiar, w spisie, od najnowszego, bez INDEX.md', () => {
+  const req = freshProject();
+  write(req, '00-intake/stary.md', 'abc');
+  write(req, '00-intake/nowy.pdf', '12345');
+  const old = new Date(Date.now() - 60000);
+  fs.utimesSync(path.join(req, '00-intake/stary.md'), old, old);
+  append(req, '00-intake/INDEX.md', '| stary.md | 2026-09-26 | notatka | [B] | x | |\n');
+  const files = stage(readProgress(req), 'intake').files;
+  assert.deepStrictEqual(files.map(f => [f.name, f.size, f.indexed]), [['nowy.pdf', 5, false], ['stary.md', 3, true]]);
+});
+
+test('AC-17: kazdy etap ma instrukcje howto, Intake: najpierw pliki, potem komenda', () => {
+  const { STAGES } = require('../progress');
+  for (const s of STAGES) {
+    assert.ok(Array.isArray(s.howto) && s.howto.length >= 2 && s.howto.length <= 4, s.key);
+  }
+  const intake = STAGES.find(s => s.key === 'intake').howto.join(' ');
+  assert.match(intake, /wszystkie/i);
+  assert.match(intake, /skopiuj/i);
+  const p = readProgress(freshProject());
+  assert.ok(p.next.howto.length >= 2);
+});

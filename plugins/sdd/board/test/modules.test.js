@@ -68,24 +68,37 @@ test('AC-12: saveIntake zapisuje, oczyszcza nazwe, nie nadpisuje', () => {
   const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
   const intake = path.join(req, '00-intake');
 
-  const a = saveIntake(req, 'mail od klienta.pdf', Buffer.from('A'));
+  const a = saveIntake(req, 'mail od klienta.pdf', Buffer.from('A')).saved;
   assert.strictEqual(a, 'mail-od-klienta.pdf');
   assert.strictEqual(fs.readFileSync(path.join(intake, a), 'utf8'), 'A');
 
-  const b = saveIntake(req, 'mail od klienta.pdf', Buffer.from('B'));
+  const b = saveIntake(req, 'mail od klienta.pdf', Buffer.from('B')).saved;
   assert.strictEqual(b, 'mail-od-klienta-1.pdf');
   assert.strictEqual(fs.readFileSync(path.join(intake, a), 'utf8'), 'A');
 
-  const c = saveIntake(req, '../../etc/passwd', Buffer.from('C'));
+  const c = saveIntake(req, '../../etc/passwd', Buffer.from('C')).saved;
   assert.strictEqual(path.dirname(path.join(intake, c)), intake);
   assert.ok(!c.includes('/') && !c.includes('..'));
 
-  const d = saveIntake(req, '.ukryty', Buffer.from('D'));
+  const d = saveIntake(req, '.ukryty', Buffer.from('D')).saved;
   assert.ok(!d.startsWith('.'));
 
-  const e = saveIntake(req, 'Notatka źródłowa.md', Buffer.from('E'));
+  const e = saveIntake(req, 'Notatka źródłowa.md', Buffer.from('E')).saved;
   assert.strictEqual(e, 'Notatka-źródłowa.md');
   // INDEX.md katalogu nie wolno nadpisac - obcy plik o tej nazwie dostaje dopisek
-  assert.strictEqual(saveIntake(req, 'INDEX.md', Buffer.from('X')), 'INDEX-1.md');
+  assert.strictEqual(saveIntake(req, 'INDEX.md', Buffer.from('X')).saved, 'INDEX-1.md');
   assert.match(fs.readFileSync(path.join(intake, 'INDEX.md'), 'utf8'), /Indeks surowca/);
+});
+
+test('AC-15: saveIntake pomija plik o identycznej tresci', () => {
+  const root = tmp();
+  const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
+  const intake = path.join(req, '00-intake');
+  assert.deepStrictEqual(saveIntake(req, 'notatka.txt', Buffer.from('tresc')), { saved: 'notatka.txt' });
+  const before = fs.readdirSync(intake).length;
+  // ta sama tresc, inna nazwa -> duplikat, nic nie powstaje
+  assert.deepStrictEqual(saveIntake(req, 'kopia notatki.txt', Buffer.from('tresc')), { saved: null, duplicate: 'notatka.txt' });
+  assert.strictEqual(fs.readdirSync(intake).length, before);
+  // ta sama dlugosc, inna tresc -> zapis
+  assert.deepStrictEqual(saveIntake(req, 'notatka.txt', Buffer.from('TRESC')), { saved: 'notatka-1.txt' });
 });

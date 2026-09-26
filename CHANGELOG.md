@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0] - 2026-09-26
+- Panel: baner "Aktualny krok" zamiast "Nastepny krok".
+- Intake: lista wrzuconych plikow (nazwa, rozmiar, "dodane" / "czeka na spis"), najnowsze na gorze,
+  zwinieta przy wiecej niz 8 plikach, z przewijaniem.
+- Intake: plik o identycznej tresci jak juz wrzucony (SHA-256) jest pomijany z informacja, pod jaka nazwa juz jest.
+- Log uploadu: podsumowanie "zapisano N, pominieto M, bledy K" i tylko duplikaty/bledy z nazwami.
+- Baner i karty: dopisek "Uruchom w Claude Code:" przed komenda; baner ma instrukcje "Co zrobic" (3 kroki) dla kazdego etapu.
+- Testy AC-14, AC-15, AC-17 (17/17).
+
 ## [0.3.0] - 2026-09-26
 - Panel: naglowek "Wymagania do modułu: <nazwa>", przelacznik modulow, "+ Nowy moduł" (folder obok, szablony, SDD.yaml, git init).
 - Intake: zalaczanie plikow z przegladarki (przycisk / przeciagnij-upusc, do 25 MB) do `requirements/00-intake/`,

@@ -137,7 +137,10 @@ const server = http.createServer((req, res) => {
     if (!fs.existsSync(state.req)) return json(res, 409, { error: 'Brak requirements/ w tym module.' });
     return readBody(req, MAX_UPLOAD, buf => {
       if (!buf) return json(res, 413, { error: 'Plik wiekszy niz 25 MB.' });
-      try { json(res, 201, { saved: saveIntake(state.req, name, buf) }); }
+      try {
+        const r = saveIntake(state.req, name, buf);
+        json(res, r.saved ? 201 : 200, r);
+      }
       catch (e) { json(res, 500, { error: e.message }); }
     });
   }

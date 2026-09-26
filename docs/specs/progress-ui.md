@@ -82,3 +82,29 @@ zniesiona WYLACZNIE dla (a) zalaczania plikow do `00-intake/` i (b) zakladania n
 - AC-11: `createModule` odrzuca nazwe z niedozwolonymi znakami i istniejacy folder.
 - AC-12: `saveIntake` zapisuje do `00-intake/`, oczyszcza `../../etc/passwd` do bezpiecznej nazwy w `00-intake/`, nie nadpisuje (drugi plik o tej samej nazwie -> `-1`).
 - AC-13 (reczne): upload w przegladarce -> plik w `00-intake/`, Intake "w toku" bez przeladowania; nowy modul z formularza -> panel pokazuje "Wymagania do modułu: <nowy>"; `/board` ma powrot do panelu.
+
+---
+
+# Zmiana 0.4.0 (2026-09-26): lista plikow w Intake, duplikaty, "Aktualny krok"
+
+Uwagi usera: baner ma mowic "Aktualny krok", nie "Nastepny krok"; w Intake trzeba widziec,
+co juz wrzucono, bo przy wielu plikach latwo o pomylki (ten sam plik dwa razy, nie wiadomo co jest).
+Komendy wymagajace rozmowy zostaja w Claude Code - panel ich nie uruchamia.
+
+## Zakres
+1. Etykieta banera: "Aktualny krok" (przy komplecie dalej "Status").
+2. Karta Intake pokazuje liste plikow z `00-intake/` (bez INDEX.md): nazwa, rozmiar,
+   znacznik "dodane" / "czeka na spis". Najnowsze na gorze. Lista zwijana, z przewijaniem przy duzej liczbie.
+3. Upload pomija plik o identycznej tresci jak plik juz obecny w `00-intake/` (porownanie SHA-256)
+   i mowi, pod jaka nazwa juz jest. Plik o tej samej nazwie, ale innej tresci dalej dostaje `-1`.
+4. Log uploadu przy wielu plikach: jedno zdanie podsumowania (zapisane / pominiete duplikaty / bledy),
+   pod nim tylko duplikaty i bledy z nazwami.
+5. Instrukcja "co zrobic w tym kroku" (2-4 krotkie punkty) w banerze aktualnego kroku.
+   Przed kazda komenda dopisek "Uruchom w Claude Code:" - panel komend nie uruchamia, bo wymagaja rozmowy.
+
+## Kryteria akceptacji
+- AC-14: `readProgress` zwraca w etapie intake `files[]` z `name`, `size`, `indexed`, posortowane od najnowszego; INDEX.md nie ma na liscie.
+- AC-15: `saveIntake` z trescia identyczna jak istniejacy plik zwraca `{ saved: null, duplicate: <nazwa> }` i nie tworzy pliku; inna tresc -> `{ saved: <nazwa> }`.
+- AC-17: kazdy etap w `STAGES` ma `howto` - 2-4 kroki instrukcji dla prowadzacego; Intake mowi, zeby najpierw wrzucic wszystkie pliki, potem skopiowac komende.
+- AC-18 (reczne): baner pokazuje instrukcje krokow i "Uruchom w Claude Code:" przed komenda; karty etapow tez maja ten dopisek.
+- AC-16 (reczne): baner "Aktualny krok"; upload 3 plikow, w tym 1 duplikatu -> podsumowanie "zapisano 2, pominięto 1", lista plikow w karcie odswieza sie sama.

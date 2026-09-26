@@ -24,13 +24,19 @@ header nav .conn b{color:var(--ink);font-weight:600}
 main{padding:0 20px 28px;max-width:1200px}
 code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg);padding:2px 6px;border-radius:3px}
 
-/* nastepny krok */
+/* aktualny krok */
 .next{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--active);border-radius:6px;padding:16px 18px;margin:8px 0 18px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center}
 .next.alldone{border-left-color:var(--done)}
 .next .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .next h2{margin:2px 0 4px;font-size:20px}
 .next p{margin:0;color:var(--muted);max-width:60ch}
-.next .cmd{margin-left:auto;display:flex;gap:8px;align-items:center}
+.next>div:first-child{flex:1 1 380px;min-width:0}
+.next .cmd{margin-left:auto;display:flex;flex-direction:column;gap:6px;align-self:center}
+.next .cmdrow{display:flex;gap:8px;align-items:center}
+.run{font-size:12px;color:var(--muted)}
+.howto{margin-top:10px}
+.howto .hl{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.howto ol{margin:0;padding-left:20px;max-width:70ch;font-size:14px;display:flex;flex-direction:column;gap:2px}
 .next .cmd code{font-size:16px;padding:8px 12px;background:var(--bg);border:1px solid var(--line)}
 button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
 
@@ -94,6 +100,18 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .uplog{margin:0;padding:0;list-style:none;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
 .uplog .ok{color:var(--muted)}.uplog .ok::before{content:"✓ ";color:var(--ink)}
 .uplog .bad{color:var(--hot)}
+.uplog .sum{color:var(--ink);font-weight:600}
+.uplog .dup{color:var(--muted)}.uplog .dup::before{content:"= ";color:var(--ink)}
+.nofiles{margin:0;font-size:12.5px;color:var(--muted)}
+.files{font-size:13px;border-top:1px solid var(--line);padding-top:6px}
+.files summary{cursor:pointer;color:var(--muted)}
+.files summary b{color:var(--ink)}
+.files ul{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.files li{display:flex;gap:8px;align-items:baseline;font-size:12.5px}
+.files .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace}
+.files .fs{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.files .tag{font-size:11px;padding:0 6px;border-radius:8px;white-space:nowrap;background:var(--active);color:#26241f}
+.files .tag.ok{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
 .missing h2{margin-top:0}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
@@ -193,9 +211,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     document.title=(p.project||'SDD')+' · postęp';
 
     var allDone=p.next.key==='done';
-    var html='<section class="next'+(allDone?' alldone':'')+'"><div><div class="lbl">'+(allDone?'Status':'Następny krok')+'</div>'+
-      '<h2>'+esc(p.next.name)+'</h2><p>'+esc(p.next.desc)+'</p></div>'+
-      '<div class="cmd"><code id="nextcmd">'+esc(p.next.command)+'</code><button class="b" id="copy">Kopiuj</button></div></section>';
+    var html='<section class="next'+(allDone?' alldone':'')+'"><div><div class="lbl">'+(allDone?'Status':'Aktualny krok')+'</div>'+
+      '<h2>'+esc(p.next.name)+'</h2><p>'+esc(p.next.desc)+'</p>'+
+      ((p.next.howto||[]).length?'<div class="howto"><div class="hl">Co zrobić</div><ol>'+p.next.howto.map(function(h){return '<li>'+esc(h)+'</li>'}).join('')+'</ol></div>':'')+'</div>'+
+      '<div class="cmd"><div class="run">Uruchom w Claude Code:</div><div class="cmdrow"><code id="nextcmd">'+esc(p.next.command)+'</code><button class="b" id="copy">Kopiuj</button></div></div></section>';
 
     html+='<ol class="steps">'+p.stages.map(function(s,i){
       var cur=s.key===p.next.key?' current':'';
@@ -207,8 +226,8 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       return '<article class="card'+cur+'"><h3><span class="n">'+(i+1)+'</span>'+esc(s.name)+
         '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></h3>'+
         '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
-        (s.key==='intake'?intakeBox():'')+
-        '<div class="foot"><code>'+esc(s.command)+'</code></div></article>';
+        (s.key==='intake'?intakeBox(s.files||[]):'')+
+        '<div class="foot"><span class="run">Uruchom w Claude Code:</span> <code>'+esc(s.command)+'</code></div></article>';
     }).join('')+'</div><aside>';
 
     html+='<section class="panel block"><h2>Blokuje dev</h2>'+(p.blockers.length?
@@ -226,6 +245,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     html+='</aside></div>';
     app.innerHTML=html;
     wireDrop();
+    var fl=$('#filelist'); if(fl) fl.querySelector('summary').onclick=function(){filesOpen=!fl.open};
     var btn=$('#copy');
     btn.onclick=function(){
       try{navigator.clipboard.writeText(p.next.command).then(function(){btn.textContent='Skopiowano'})}catch(e){}
@@ -236,16 +256,23 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   function renderModules(p){
     last=p;
     var sel=$('#modsel'), cur=p.module?p.module.name:'';
-    if(shownModule!==null&&shownModule!==cur) uplog=[];
+    if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; }
     shownModule=cur;
     var mods=(p.modules||[]).slice();
     if(cur&&!mods.some(function(m){return m.name===cur})) mods.unshift({name:cur,project:cur});
     sel.innerHTML=mods.map(function(m){return '<option value="'+esc(m.name)+'"'+(m.name===cur?' selected':'')+'>'+esc(m.name)+(m.level?' ('+esc(m.level)+')':'')+'</option>'}).join('');
     $('#rootdir').textContent=p.modulesRoot||'';
   }
-  function intakeBox(){
-    return '<div class="drop" id="drop" role="button" tabindex="0"><b>Dołącz pliki</b> albo upuść je tutaj<br>maile, notatki, PDF, zrzuty · do 25 MB</div>'+
-      (uplog.length?'<ul class="uplog">'+uplog.map(function(l){return '<li class="'+l.cls+'">'+esc(l.text)+'</li>'}).join('')+'</ul>':'');
+  function size(b){return b<1024?b+' B':b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'}
+  var filesOpen=null;
+  function intakeBox(files){
+    var h='<div class="drop" id="drop" role="button" tabindex="0"><b>Dołącz pliki</b> albo upuść je tutaj<br>maile, notatki, PDF, zrzuty · do 25 MB</div>';
+    if(uplog.length) h+='<ul class="uplog">'+uplog.map(function(l){return '<li class="'+l.cls+'">'+esc(l.text)+'</li>'}).join('')+'</ul>';
+    if(!files.length) return h+'<p class="nofiles">Nie ma jeszcze żadnych plików.</p>';
+    var open=filesOpen===null?files.length<=8:filesOpen;
+    return h+'<details class="files" id="filelist"'+(open?' open':'')+'><summary>Wrzucone pliki: <b>'+files.length+'</b></summary><ul>'+
+      files.map(function(f){return '<li><span class="fn" title="'+esc(f.name)+'">'+esc(f.name)+'</span><span class="fs">'+size(f.size)+'</span>'+
+        '<span class="tag'+(f.indexed?' ok':'')+'">'+(f.indexed?'dodane':'czeka na spis')+'</span></li>'}).join('')+'</ul></details>';
   }
   function wireDrop(){
     var d=$('#drop'); if(!d) return;
@@ -257,15 +284,25 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   }
   function upload(list){
     var files=[].slice.call(list||[]); if(!files.length) return;
-    uplog=[];
+    var ok=[], dup=[], bad=[];
+    function show(done){
+      var many=files.length>3, l=[];
+      var head=(done?'':'wysyłam '+(ok.length+dup.length+bad.length)+' z '+files.length+' · ')+'zapisano '+ok.length+
+        (dup.length?', pominięto '+dup.length+' (już są)':'')+(bad.length?', błędy: '+bad.length:'');
+      if(files.length>1||!done) l.push({cls:'sum',text:head});
+      if(!many) ok.forEach(function(t){l.push({cls:'ok',text:'zapisano '+t+' → 00-intake/'})});
+      dup.forEach(function(t){l.push({cls:'dup',text:t})});
+      bad.forEach(function(t){l.push({cls:'bad',text:t})});
+      uplog=l; if(last) render(last);
+    }
     (function next(i){
-      if(i>=files.length){ if(last) render(last); return; }
+      if(i>=files.length) return show(true);
       var f=files[i];
-      if(f.size>25*1024*1024){ uplog.push({cls:'bad',text:f.name+': większy niż 25 MB'}); return next(i+1); }
+      if(f.size>25*1024*1024){ bad.push(f.name+': większy niż 25 MB'); return next(i+1); }
       api('/api/intake?name='+encodeURIComponent(f.name),{method:'POST',body:f})
-        .then(function(j){uplog.push({cls:'ok',text:'zapisano '+j.saved+' → 00-intake/'})})
-        .catch(function(e){uplog.push({cls:'bad',text:f.name+': '+e.message})})
-        .then(function(){ if(last) render(last); next(i+1); });
+        .then(function(j){ if(j.saved) ok.push(j.saved); else dup.push(f.name+': taki sam plik już jest jako '+j.duplicate); })
+        .catch(function(e){ bad.push(f.name+': '+e.message); })
+        .then(function(){ show(false); next(i+1); });
     })(0);
   }
   $('#files').onchange=function(e){upload(e.target.files); e.target.value='';};

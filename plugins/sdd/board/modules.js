@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const crypto = require('crypto');
 
 const TEMPLATES = path.join(__dirname, '..', 'templates');
 const NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -75,16 +76,37 @@ function cleanName(original) {
   return base || 'plik';
 }
 
+const sha = buf => crypto.createHash('sha256').update(buf).digest('hex');
+
+// Plik w 00-intake/ o identycznej tresci (najpierw rozmiar, potem SHA-256). INDEX.md sie nie liczy.
+function findSame(dir, buffer) {
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch (e) { return null; }
+  let hash = null;
+  for (const n of names.sort()) {
+    if (n === 'INDEX.md' || n.startsWith('.')) continue;
+    const f = path.join(dir, n);
+    let st;
+    try { st = fs.statSync(f); } catch (e) { continue; }
+    if (!st.isFile() || st.size !== buffer.length) continue;
+    hash = hash || sha(buffer);
+    if (sha(fs.readFileSync(f)) === hash) return n;
+  }
+  return null;
+}
+
 function saveIntake(reqDir, original, buffer) {
   const dir = path.join(reqDir, '00-intake');
   fs.mkdirSync(dir, { recursive: true });
+  const same = findSame(dir, buffer);
+  if (same) return { saved: null, duplicate: same };
   const name = cleanName(original);
   const ext = path.extname(name);
   const stem = name.slice(0, name.length - ext.length);
   let candidate = name, i = 0;
   while (fs.existsSync(path.join(dir, candidate))) candidate = stem + '-' + (++i) + ext;
   fs.writeFileSync(path.join(dir, candidate), buffer, { flag: 'wx' });
-  return candidate;
+  return { saved: candidate };
 }
 
 module.exports = { listModules, createModule, saveIntake, cleanName, NAME_RE };

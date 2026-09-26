@@ -6,17 +6,35 @@ const path = require('path');
 
 const STAGES = [
   { key: 'intake', name: 'Intake', command: '/sdd:intake',
-    desc: 'Wrzucasz surowe materiały (maile, notatki, zrzuty), AI robi z nich spis i wskazuje sprzeczności.' },
+    desc: 'Wrzucasz surowe materiały (maile, notatki, zrzuty), AI robi z nich spis i wskazuje sprzeczności.',
+    howto: ["Przeciągnij na kartę Intake wszystkie materiały: maile, notatki, PDF-y, zrzuty ekranu.",
+      "Gdy wrzucisz już wszystko, skopiuj komendę i wklej ją w Claude Code.",
+      "AI zrobi spis źródeł i wskaże sprzeczności. Status plików zmieni się na „dodane”."] },
   { key: 'interview', name: 'Interview', command: '/sdd:interview',
-    desc: 'AI zadaje pytania z luk w materiałach, odpowiedzi biznesu stają się decyzjami albo założeniami.' },
+    desc: 'AI zadaje pytania z luk w materiałach, odpowiedzi biznesu stają się decyzjami albo założeniami.',
+    howto: ["Skopiuj komendę i wklej ją w Claude Code.",
+      "AI pokaże pytania wynikające z luk w materiałach. Odpowiadaj krótko albo wskaż, kogo z biznesu zapytać.",
+      "Każdą odpowiedź potwierdzasz „tak” i wtedy staje się decyzją albo założeniem."] },
   { key: 'domain', name: 'Domain', command: '/sdd:domain',
-    desc: 'Słownik pojęć, kto jest kim, obiekty i reguły. Biznes zatwierdza słownik.' },
+    desc: 'Słownik pojęć, kto jest kim, obiekty i reguły. Biznes zatwierdza słownik.',
+    howto: ["Skopiuj komendę i wklej ją w Claude Code.",
+      "AI zbuduje słownik pojęć, role, obiekty i reguły biznesowe.",
+      "Przejrzyj słownik i zatwierdź hasła. Braki wrócą jako nowe pytania."] },
   { key: 'spec', name: 'Spec', command: '/sdd:spec',
-    desc: 'Wymagania R-xxx ze źródłem i kryteriami akceptacji. Właściciel roli zatwierdza.' },
+    desc: 'Wymagania R-xxx ze źródłem i kryteriami akceptacji. Właściciel roli zatwierdza.',
+    howto: ["Skopiuj komendę i wklej ją w Claude Code.",
+      "AI proponuje wymagania paczkami po 3–5, każde ze źródłem i kryterium akceptacji.",
+      "Zatwierdzasz „tak” albo poprawiasz, zanim trafią do dokumentu."] },
   { key: 'validate', name: 'Validate', command: '/sdd:validate',
-    desc: 'Automatyczna kontrola kompletności i procent gotowości do budowy.' },
+    desc: 'Automatyczna kontrola kompletności i procent gotowości do budowy.',
+    howto: ["Skopiuj komendę i wklej ją w Claude Code.",
+      "AI sprawdzi kompletność i poda procent gotowości do budowy.",
+      "To, co blokuje, pojawi się w „Blokuje dev”. Popraw i uruchom ponownie, aż będzie 100%."] },
   { key: 'handover', name: 'Handover', command: '/sdd:handover',
-    desc: 'Zamiana specu na zadania dla zespołu, z tabelą śledzenia R → zadanie → test.' },
+    desc: 'Zamiana specu na zadania dla zespołu, z tabelą śledzenia R → zadanie → test.',
+    howto: ["Skopiuj komendę i wklej ją w Claude Code.",
+      "AI zamieni wymagania na zadania dla zespołu (plik, Linear albo Jira) i zapyta, zanim cokolwiek wyśle.",
+      "Powstanie tabela śledzenia: wymaganie → zadanie → test."] },
 ];
 
 function read(file) {
@@ -71,9 +89,15 @@ function intake(req) {
   const index = read(path.join(req, '00-intake', 'INDEX.md'));
   const rows = parseTable(index);
   const files = listFiles(path.join(req, '00-intake')).filter(f => path.basename(f) !== 'INDEX.md');
-  const unindexed = files.filter(f => !index.includes(path.basename(f))).length;
+  const list = files.map(f => {
+    let st = { size: 0, mtimeMs: 0 };
+    try { st = fs.statSync(f); } catch (e) { /* plik zniknal */ }
+    const name = path.relative(path.join(req, '00-intake'), f).split(path.sep).join('/');
+    return { name, size: st.size, mtime: st.mtimeMs, indexed: index.includes(path.basename(f)) };
+  }).sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name));
+  const unindexed = list.filter(f => !f.indexed).length;
   const status = unindexed > 0 ? 'active' : rows.length > 0 ? 'done' : 'todo';
-  return { status, counts: { sources: rows.length, files: files.length, unindexed } };
+  return { status, counts: { sources: rows.length, files: files.length, unindexed }, files: list };
 }
 
 function interview(req, gate) {
@@ -175,16 +199,18 @@ function readProgress(reqDir) {
     intake: intake(req), interview: iv, domain: domain(req),
     spec: spec(req, level), validate: validate(req), handover: handover(req),
   };
-  const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, counts: results[s.key].counts }));
+  const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, counts: results[s.key].counts },
+    results[s.key].files ? { files: results[s.key].files } : {}));
   const next = stages.find(s => s.status !== 'done')
-    || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.' };
+    || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.',
+      howto: ['Skopiuj komendę i wklej ją w Claude Code, żeby zobaczyć podsumowanie.', 'Nowe materiały wrzucasz jak wcześniej, do karty Intake.'] };
 
   const changelog = read(path.join(req, 'CHANGELOG.md')).split('\n')
     .map(l => l.trim()).filter(l => l && !l.startsWith('#')).slice(-5).reverse();
 
   return {
     exists: true, dir: req, project: /<[^>]+>/.test(project) ? '' : project, level,
-    stages, next: { key: next.key, name: next.name, command: next.command, desc: next.desc },
+    stages, next: { key: next.key, name: next.name, command: next.command, desc: next.desc, howto: next.howto },
     blockers: iv.blockers, waiting: iv.waiting, changelog,
     updated: new Date().toISOString(),
   };
