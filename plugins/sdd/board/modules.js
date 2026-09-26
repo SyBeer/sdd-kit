@@ -109,4 +109,25 @@ function saveIntake(reqDir, original, buffer) {
   return { saved: candidate };
 }
 
-module.exports = { listModules, createModule, saveIntake, cleanName, NAME_RE };
+// Usuniecie pliku czekajacego na spis z 00-intake/ - ostateczne (decyzja usera), bez kopii.
+// `name` jak na liscie w panelu: sciezka wzgledem 00-intake/, separator "/".
+function removeIntake(reqDir, name) {
+  const dir = path.join(reqDir, '00-intake');
+  const rel = String(name || '').replace(/\\/g, '/');
+  if (rel === 'INDEX.md') throw new Error('INDEX.md to spis surowca - nie usuwam go z panelu.');
+  const parts = rel.split('/');
+  const file = path.resolve(dir, rel);
+  if (!rel || parts.some(p => !p || p === '..' || p.startsWith('.')) || !file.startsWith(dir + path.sep)
+      || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    throw new Error('Nie ma takiego pliku w 00-intake/: ' + rel);
+  }
+  // Plik ze spisu jest juz zrodlem (moga sie na niego powolywac Q/D) - usuwac mozna tylko czekajace na spis.
+  // Ta sama regula "w spisie" co w progress.js: nazwa pliku wystepuje w INDEX.md.
+  let index = '';
+  try { index = fs.readFileSync(path.join(dir, 'INDEX.md'), 'utf8'); } catch (e) { /* brak spisu */ }
+  if (index.includes(path.basename(file))) throw new Error('Plik ' + rel + ' jest już w spisie (INDEX.md) - nie można go usunąć.');
+  fs.unlinkSync(file);
+  return rel;
+}
+
+module.exports = { listModules, createModule, saveIntake, removeIntake, cleanName, NAME_RE };

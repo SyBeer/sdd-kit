@@ -124,6 +124,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .files .fs{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .files .tag{font-size:11px;padding:0 6px;border-radius:8px;white-space:nowrap;background:var(--active);color:#26241f}
 .files .tag.ok{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.files .rm{background:none;border:1px solid transparent;border-radius:3px;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;line-height:1;padding:2px 5px}
+.files .rm-none{width:22px;flex:none}
+.files .rmhint{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.files .rm:hover,.files .rm:focus-visible{border-color:var(--line);color:var(--hot)}
 .missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
 .missing h2{margin-top:0}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
@@ -256,7 +260,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     html+='</aside></div>';
     app.innerHTML=html;
     wireDrop();
-    var fl=$('#filelist'); if(fl) fl.querySelector('summary').onclick=function(){filesOpen=!fl.open};
+    var fl=$('#filelist'); if(fl){
+      fl.querySelector('summary').onclick=function(){filesOpen=!fl.open};
+      fl.querySelector('ul').onclick=function(e){ var b=e.target.closest('.rm'); if(b) removeFile(b.getAttribute('data-name')); };
+    }
     var btn=$('#copy');
     btn.onclick=function(){
       try{navigator.clipboard.writeText(p.next.command).then(function(){btn.textContent='Skopiowano'})}catch(e){}
@@ -287,7 +294,10 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     var open=filesOpen===null?files.length<=8:filesOpen;
     return h+'<details class="files" id="filelist"'+(open?' open':'')+'><summary>Wrzucone pliki: <b>'+files.length+'</b></summary><ul>'+
       files.map(function(f){return '<li><span class="fn" title="'+esc(f.name)+'">'+esc(f.name)+'</span><span class="fs">'+size(f.size)+'</span>'+
-        '<span class="tag'+(f.indexed?' ok':'')+'">'+(f.indexed?'dodane':'czeka na spis')+'</span></li>'}).join('')+'</ul></details>';
+        '<span class="tag'+(f.indexed?' ok':'')+'">'+(f.indexed?'dodane':'czeka na spis')+'</span>'+
+        (f.indexed?'<span class="rm-none" title="Plik jest już w spisie – nie można go usunąć"></span>':
+          '<button type="button" class="rm" data-name="'+esc(f.name)+'" title="Usuń plik (czeka na spis)" aria-label="Usuń plik '+esc(f.name)+'">✕</button>')+'</li>'}).join('')+'</ul>'+
+      '<p class="rmhint">✕ usuwa tylko pliki, które czekają na spis. Plików już zaindeksowanych („dodane”) nie można usunąć.</p></details>';
   }
   function wireDrop(){
     var d=$('#drop'); if(!d) return;
@@ -296,6 +306,12 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     d.ondragover=function(e){e.preventDefault();d.classList.add('over')};
     d.ondragleave=function(){d.classList.remove('over')};
     d.ondrop=function(e){e.preventDefault();d.classList.remove('over');upload(e.dataTransfer.files)};
+  }
+  function removeFile(name){
+    if(!confirm('Usunąć plik „'+name+'”?\n\nPlik zostanie skasowany z dysku. Tego nie da się cofnąć.')) return;
+    api('/api/intake?name='+encodeURIComponent(name),{method:'DELETE'})
+      .then(function(){ uplog=[{cls:'dup',text:'usunięto '+name}]; if(last) render(last); })
+      .catch(function(e){ uplog=[{cls:'bad',text:name+': '+e.message}]; if(last) render(last); });
   }
   function upload(list){
     var files=[].slice.call(list||[]); if(!files.length) return;

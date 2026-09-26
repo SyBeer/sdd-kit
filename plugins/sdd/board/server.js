@@ -10,7 +10,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { readProgress } = require('./progress');
-const { listModules, createModule, saveIntake } = require('./modules');
+const { listModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
@@ -135,7 +135,7 @@ function sse(req, res, set, first) {
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://localhost');
   const url = u.pathname;
-  const write = req.method === 'POST' || req.method === 'PUT';
+  const write = req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE';
   if (write && !allowedWrite(req)) return json(res, 403, { error: 'Zapis tylko z panelu sdd-board.' });
 
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
@@ -159,6 +159,11 @@ const server = http.createServer((req, res) => {
       }
       catch (e) { json(res, 500, { error: e.message }); }
     });
+  }
+
+  if (url === '/api/intake' && req.method === 'DELETE') {
+    try { return json(res, 200, { removed: removeIntake(state.req, u.searchParams.get('name') || '') }); }
+    catch (e) { return json(res, /w spisie/.test(e.message) ? 409 : 404, { error: e.message }); }
   }
 
   if (url === '/api/modules' && req.method === 'POST') {

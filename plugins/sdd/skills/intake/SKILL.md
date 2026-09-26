@@ -12,6 +12,8 @@ Etap 1. Katalogujesz, NIE interpretujesz. Wymagania piszesz dopiero w /sdd:spec.
 2. Wylistuj pliki w `00-intake/`, ktorych nie ma w `INDEX.md`.
 3. Dla kazdego: przeczytaj, wpisz wiersz do `INDEX.md`: plik, data (z tresci lub metadanych), typ (mail / notatka ze spotkania / dokument procesu / zrzut ekranu / eksport z systemu / historia czatu z narzedziem no-code / inne), wiarygodnosc `[B]/[P]/[D]/[AI]`, opis 1-2 zdania, uwagi.
 4. Duplikaty: jesli dwa pliki mowia to samo, oznacz w uwagach "duplikat X", nie usuwaj.
+   Plikow, ktore sa juz w `INDEX.md` (zaindeksowanych), nie usuwasz, nie przenosisz i nie zmieniasz im nazwy - to zrodla,
+   na ktore moga sie powolywac pytania i decyzje. W panelu (`sdd-board`) usunac mozna tylko plik, ktory czeka na spis.
 5. Sprzecznosci: jesli dwa zrodla mowia co innego o tym samym, NIE rozstrzygaj. Dodaj wiersz do `01-interview/QUESTIONS.md` ze statusem `sprzeczne`, kolumna "Skad" = oba zrodla, kolumna "Do kogo" = rola z `SDD.yaml` najblizsza tematowi.
 6. Kandydaci: jesli w materiale widzisz wprost sformulowane wymaganie lub decyzje biznesu `[B]`, dopisz w uwagach "kandydat R" lub "kandydat D". Nie twórz jeszcze R ani D.
 

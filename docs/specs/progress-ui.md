@@ -125,3 +125,25 @@ Uwaga usera: lista rozwijana "horizon (full)" + "+ Nowy moduł" po prawej dublow
 ## Kryteria akceptacji (reczne)
 - AC-19: w naglowku nazwa modulu wystepuje raz; klik w nia otwiera menu z modulami i "Nowy moduł…"; wybor innego modulu przelacza panel.
 - AC-20: w panelu nie ma slow "full"/"light" - tylko "pełny"/"lekki". Na telefonie menu miesci sie w ekranie.
+
+---
+
+# Zmiana 0.5.3 (2026-09-26): usuwanie pliku z Intake
+
+Uwaga usera: "dodaj mozliwosc usuniecia pliku z intake". Znosi punkt "Poza zakresem: usuwanie plikow z przegladarki" z 0.3.0 - tylko dla plikow w `00-intake/`.
+
+## Zakres
+1. Usunac mozna TYLKO plik, ktory czeka na spis (nie ma go w INDEX.md) - decyzja usera: plik w spisie jest juz zrodlem,
+   na ktore moga sie powolywac pytania i decyzje. Przy takich plikach przycisk "✕"; przy plikach "dodane" go nie ma.
+2. Potwierdzenie przed usunieciem. Pod lista plikow informacja: "✕ usuwa tylko pliki, które czekają na spis.
+   Plików już zaindeksowanych („dodane”) nie można usunąć." Ta sama zasada w skillu `/sdd:intake`.
+3. Usuniecie jest ostateczne (decyzja usera: "usuniecie jest ostateczne, nie potrzebuje katalogu .usuniete") -
+   plik jest kasowany z dysku. Potwierdzenie mowi wprost: "Tego nie da się cofnąć."
+4. Serwer: `DELETE /api/intake?name=<nazwa z listy>`, tak samo chroniony jak inne zapisy (naglowek X-SDD, Host lokalny).
+   Odrzuca INDEX.md, pliki juz w spisie, sciezki poza `00-intake/`, sciezki z kropka na poczatku i nieistniejace.
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/modules.test.js`)
+- AC-21: `removeIntake(req, name)` kasuje plik z dysku (bez kopii), zwraca jego nazwe; plik znika z `readProgress().stages[intake].files`; nie powstaje zaden katalog pomocniczy.
+- AC-24: `removeIntake` odrzuca plik, ktory jest w INDEX.md ("jest juz w spisie"); plik zostaje na miejscu.
+- AC-22: `removeIntake` odrzuca INDEX.md, `../SDD.yaml`, `.ukryty/...` i nieistniejacy plik; plik w podfolderze (`maile/a.eml`) usuwa.
+- AC-23 (reczne): brak ✕ przy plikach "dodane"; ✕ przy pliku -> potwierdzenie -> plik znika z listy bez przeladowania; zapytanie DELETE bez X-SDD -> 403.

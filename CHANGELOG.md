@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.3] - 2026-09-26
+- Intake: usuwanie pliku, ktory czeka na spis (✕ tylko przy "czeka na spis"), z potwierdzeniem; usuniecie ostateczne
+  (plik kasowany z dysku). Plikow juz w spisie nie mozna usunac.
+  Informacja pod lista plikow; skill intake: nie usuwaj ani nie przenos plikow z INDEX.md.
+- Serwer: `DELETE /api/intake?name=`, chroniony jak inne zapisy, plik ze spisu -> 409; `removeIntake` + testy AC-21, AC-22, AC-24 (31/31).
+
 ## [0.5.2] - 2026-09-26
 - Tablica: stan synchronizacji z plikami na karteczce - ✓ w plikach, ↻ zmieniona po synchronizacji, ! brak ID w pliku
   (bez znaczka = tylko na tablicy); podsumowanie liczb w pasku, wiersz "Pliki" w panelu.

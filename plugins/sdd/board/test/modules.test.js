@@ -6,7 +6,8 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { listModules, createModule, saveIntake } = require('../modules');
+const { listModules, createModule, saveIntake, removeIntake } = require('../modules');
+const { readProgress } = require('../progress');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-modules-'));
 const opts = { git: false };
@@ -101,4 +102,44 @@ test('AC-15: saveIntake pomija plik o identycznej tresci', () => {
   assert.strictEqual(fs.readdirSync(intake).length, before);
   // ta sama dlugosc, inna tresc -> zapis
   assert.deepStrictEqual(saveIntake(req, 'notatka.txt', Buffer.from('TRESC')), { saved: 'notatka-1.txt' });
+});
+
+test('AC-21: removeIntake kasuje plik ostatecznie, bez katalogu pomocniczego', () => {
+  const root = tmp();
+  const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
+  const intake = path.join(req, '00-intake');
+  saveIntake(req, 'notatka.md', Buffer.from('tresc'));
+  const before = fs.readdirSync(intake).sort();
+  assert.strictEqual(removeIntake(req, 'notatka.md'), 'notatka.md');
+  assert.ok(!fs.existsSync(path.join(intake, 'notatka.md')));
+  assert.deepStrictEqual(fs.readdirSync(intake).sort(), before.filter(f => f !== 'notatka.md'));
+  const st = readProgress(req).stages.find(s => s.key === 'intake');
+  assert.deepStrictEqual(st.files, []);
+  assert.strictEqual(st.status, 'todo');
+});
+
+test('AC-22: removeIntake odrzuca INDEX.md, sciezki poza intake, ukryte i brak pliku', () => {
+  const root = tmp();
+  const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
+  const intake = path.join(req, '00-intake');
+  assert.throws(() => removeIntake(req, 'INDEX.md'), /spis surowca/);
+  assert.throws(() => removeIntake(req, '../SDD.yaml'), /Nie ma/);
+  assert.throws(() => removeIntake(req, 'brak.pdf'), /Nie ma/);
+  fs.mkdirSync(path.join(intake, '.ukryty'));
+  fs.writeFileSync(path.join(intake, '.ukryty', 'x.md'), 'x');
+  assert.throws(() => removeIntake(req, '.ukryty/x.md'), /Nie ma/);
+  assert.ok(fs.existsSync(path.join(req, 'SDD.yaml')));
+  fs.mkdirSync(path.join(intake, 'maile'));
+  fs.writeFileSync(path.join(intake, 'maile', 'a.eml'), 'x');
+  assert.strictEqual(removeIntake(req, 'maile/a.eml'), 'maile/a.eml');
+  assert.ok(!fs.existsSync(path.join(intake, 'maile', 'a.eml')));
+});
+
+test('AC-24: removeIntake nie usuwa pliku, ktory jest juz w spisie', () => {
+  const root = tmp();
+  const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
+  saveIntake(req, 'spisany.md', Buffer.from('x'));
+  fs.appendFileSync(path.join(req, '00-intake', 'INDEX.md'), '| spisany.md | 2026-09-26 | notatka | [B] | opis | |\n');
+  assert.throws(() => removeIntake(req, 'spisany.md'), /w spisie/);
+  assert.ok(fs.existsSync(path.join(req, '00-intake', 'spisany.md')));
 });
