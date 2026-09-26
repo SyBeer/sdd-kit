@@ -160,7 +160,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
 </head>
 <body>
 <nav class="topbar" id="topbar" data-page="board" aria-label="Widok"></nav>
-<header><h1 id="title">Tablica</h1><p id="subtitle"></p></header>
+<header>
+  <h1><span class="lbl">Wymagania do modułu:</span> <span class="modsw">
+    <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span class="mname">…</span><span class="car" aria-hidden="true">▾</span></button>
+    <div id="modmenu" class="modmenu" role="menu" hidden></div>
+  </span></h1>
+  <p><span id="title">Tablica</span><span id="subtitle"></span></p>
+</header>
 <div class="bar">
   <div class="legend">
     <span><i style="background:var(--ev)"></i>zdarzenie</span>
@@ -213,6 +219,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   var $=function(s){return document.querySelector(s)};
   var TYPES=['ev','cmd','act','pol','rm','hot'];
   var ops=window.BoardOps;
+  var setModule=SddUI.modSwitch({ onNew:function(){ location.href='/#nowy-modul'; } });
   var SYNC={synced:['✓','w plikach'],changed:['↻','zmienione po synchronizacji'],missing:['!','brak w pliku'],board:['','tylko na tablicy']};
   function syncOf(n){ return (board._sync&&board._sync[n.id])||'board'; }
 
@@ -220,8 +227,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   function render(){
     if(editingLane){ pendingRender=true; return; }
     pendingRender=false;
+    setModule(board._module&&board._module.name,board._modules);
     $('#title').textContent=board.title||'Tablica';
-    $('#subtitle').textContent=board.subtitle||'';
+    $('#subtitle').textContent=board.subtitle?' · '+board.subtitle:'';
     var laneSel=$('#f-lane'), keep=laneSel.value; laneSel.innerHTML='';
     board.lanes.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;laneSel.appendChild(o)});
     if(keep&&board.lanes.indexOf(keep)>=0) laneSel.value=keep;
@@ -361,7 +369,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(t&&!saveErr) sayT=setTimeout(function(){ $('#msg').textContent=''; },6000);
   }
   function save(){
-    return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return k==='_sync'?undefined:v})})
+    return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return this===board&&k.charAt(0)==='_'?undefined:v})})
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); if(saveErr){ saveErr=false; say(''); } })
       .catch(function(e){ saveErr=true; say('Nie zapisałem tablicy: '+e.message+'. Sprawdź, czy serwer działa.'); });
   }

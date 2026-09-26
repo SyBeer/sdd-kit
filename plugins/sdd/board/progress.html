@@ -84,22 +84,6 @@ aside{display:flex;flex-direction:column;gap:12px}
 .panel.block{border-top:4px solid var(--hot)}
 .log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
 
-/* modul */
-h1 .lbl{font-weight:500;color:var(--muted);font-size:18px}
-.modsw{position:relative;display:inline-block}
-#modbtn{font:inherit;color:inherit;background:none;border:0;border-bottom:2px dashed var(--line);padding:0 2px;cursor:pointer;display:inline-flex;align-items:baseline;gap:6px}
-#modbtn:hover,#modbtn[aria-expanded="true"]{border-bottom-color:var(--active)}
-#modbtn .car{font-size:15px;color:var(--muted)}
-.modmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:20;min-width:260px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:6px;font-size:14px;font-weight:400}
-.modmenu .mh{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:4px 8px 6px}
-.modmenu ul{list-style:none;margin:0;padding:0;max-height:320px;overflow-y:auto}
-.modmenu button{font:inherit;color:var(--ink);background:none;border:0;width:100%;text-align:left;padding:7px 8px;border-radius:4px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
-.modmenu button:hover,.modmenu button:focus-visible{background:var(--bg);outline:none}
-.modmenu .ck{width:14px;color:var(--ink)}
-.modmenu .nm{flex:1;font-weight:600}
-.modmenu .lv{font-size:12px;color:var(--muted)}
-.modmenu .sep{border-top:1px solid var(--line);margin:6px 0}
-.modmenu .add{color:var(--ink);font-weight:600}
 button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 dialog{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);padding:20px;width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(0,0,0,.35)}
@@ -144,7 +128,6 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   .steps li::before{display:none}
   .steps .dot{left:0;transform:none;top:2px;width:26px;height:26px}
   .next .cmd{margin-left:0}
-  .modmenu{position:fixed;top:auto;left:16px;right:16px;min-width:0;margin-top:6px}
 }
 </style>
 </head>
@@ -152,7 +135,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 <nav class="topbar" id="topbar" data-page="panel" aria-label="Widok"></nav>
 <header>
   <h1><span class="lbl">Wymagania do modułu:</span> <span class="modsw">
-    <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span id="title">…</span><span class="car" aria-hidden="true">▾</span></button>
+    <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span class="mname" id="title">…</span><span class="car" aria-hidden="true">▾</span></button>
     <div id="modmenu" class="modmenu" role="menu" hidden></div>
   </span></h1>
   <span class="meta" id="meta"></span>
@@ -218,7 +201,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   function render(p){
     var app=$('#app');
     if(!p.exists){
-      $('#title').textContent=(p.module&&p.module.name)||'?'; $('#meta').textContent='';
+      $('#meta').textContent='';
       renderModules(p);
       app.innerHTML='<div class="missing"><h2>Brak folderu requirements/</h2>'+
         '<p>Serwer patrzy na: <code>'+esc(p.dir)+'</code></p>'+
@@ -226,7 +209,6 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       return;
     }
     renderModules(p);
-    $('#title').textContent=(p.module&&p.module.name)||p.project||'bez nazwy';
     $('#meta').textContent='poziom '+(LEVEL[p.level]||p.level)+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
     document.title=(p.project||'SDD')+' · postęp';
 
@@ -276,18 +258,16 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   }
 
   var shownModule=null;
+  var setModule=SddUI.modSwitch({
+    onSelect:function(){ uplog=[]; },
+    onNew:function(){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
+  });
   function renderModules(p){
     last=p;
     var cur=p.module?p.module.name:'';
     if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; }
     shownModule=cur;
-    var mods=(p.modules||[]).slice();
-    if(cur&&!mods.some(function(m){return m.name===cur})) mods.unshift({name:cur,project:cur});
-    $('#modmenu').innerHTML='<div class="mh">Moduły</div><ul>'+mods.map(function(m){
-      var on=m.name===cur;
-      return '<li><button type="button" role="menuitemradio" aria-checked="'+on+'" data-mod="'+esc(m.name)+'"><span class="ck">'+(on?'✓':'')+'</span>'+
-        '<span class="nm">'+esc(m.name)+'</span><span class="lv">'+esc(LEVEL[m.level]||m.level||'')+'</span></button></li>'}).join('')+
-      '</ul><div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>';
+    setModule(cur,p.modules);
     $('#rootdir').textContent=p.modulesRoot||'';
   }
   function size(b){return b<1024?b+' B':b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'}
@@ -342,28 +322,6 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     })(0);
   }
   $('#files').onchange=function(e){upload(e.target.files); e.target.value='';};
-  // przelacznik modulu w tytule
-  var menu=$('#modmenu'), mbtn=$('#modbtn');
-  function items(){return [].slice.call(menu.querySelectorAll('button'))}
-  function openMenu(on){
-    menu.hidden=!on; mbtn.setAttribute('aria-expanded',on);
-    if(on){ var c=menu.querySelector('[aria-checked="true"]')||items()[0]; if(c) c.focus(); }
-  }
-  mbtn.onclick=function(){ openMenu(menu.hidden); };
-  menu.onclick=function(e){
-    var b=e.target.closest('button'); if(!b) return;
-    openMenu(false); mbtn.focus();
-    if(b.id==='newmod'){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); return; }
-    var name=b.getAttribute('data-mod');
-    if(name&&name!==shownModule){ uplog=[]; api('/api/modules/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name})}).catch(function(err){alert(err.message)}); }
-  };
-  menu.onkeydown=function(e){
-    var l=items(), i=l.indexOf(document.activeElement);
-    if(e.key==='ArrowDown'){ e.preventDefault(); l[(i+1)%l.length].focus(); }
-    else if(e.key==='ArrowUp'){ e.preventDefault(); l[(i-1+l.length)%l.length].focus(); }
-    else if(e.key==='Escape'){ openMenu(false); mbtn.focus(); }
-  };
-  document.addEventListener('click',function(e){ if(!menu.hidden&&!e.target.closest('.modsw')) openMenu(false); });
   $('#modcancel').onclick=function(){ $('#dlg').close(); };
   $('#modform').onsubmit=function(e){
     e.preventDefault();
@@ -372,6 +330,8 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       .then(function(){ uplog=[]; f.reset(); $('#dlg').close(); })
       .catch(function(err){ $('#moderr').textContent=err.message; });
   };
+
+  if(location.hash==='#nowy-modul'){ history.replaceState(null,'',location.pathname); $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
 
   function connect(){
     var es=new EventSource('/progress-events');

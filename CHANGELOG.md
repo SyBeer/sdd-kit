@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.3] - 2026-09-26
+- Tablica: naglowek jak w panelu - "Wymagania do modułu: <nazwa> ▾" z menu modulow; wybor modulu na tablicy przelacza
+  modul na serwerze (tablica i panel). "Nowy moduł…" przechodzi do panelu i otwiera formularz. Tytul tablicy - linia obok.
+- Jeden kod menu dla panelu i tablicy (`modMenu`, `modSwitch` w ui.js, wyglad w ui.css).
+- Serwer: widok tablicy z `_module` i `_modules`; pola `_...` nie trafiaja do board.json. Testy AC-U6, AC-U7 (36/36).
+
 ## [0.6.2] - 2026-09-26
 - Motyw: same ikony slonce / ksiezyc, bez ramki i tla; wybrana w kolorze tekstu, druga przygaszona.
 

@@ -48,10 +48,14 @@ function boardView() {
     if (!f.startsWith(state.req + path.sep)) return null;
     try { return fs.readFileSync(f, 'utf8'); } catch (e) { return null; }
   });
+  // naglowek "Wymagania do modulu" na tablicy; jak _sync - nie trafia do board.json
+  b._module = { name: path.basename(path.dirname(state.req)) };
+  b._modules = listModules(ROOT).map(m => ({ name: m.name, level: m.level }));
   return b;
 }
+const VIEW_ONLY = ['_sync', '_module', '_modules'];
 function writeBoard(b) {
-  delete b._sync;
+  VIEW_ONLY.forEach(k => { delete b[k]; });
   b.updated = new Date().toISOString();
   fs.mkdirSync(path.dirname(state.board), { recursive: true });
   fs.writeFileSync(state.board, JSON.stringify(b, null, 2));

@@ -23,6 +23,14 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
    - Kolory tylko z tokenow `:root`; ciemne tokeny pod `:root[data-theme="dark"]` i pod `prefers-color-scheme: dark` z `:root:not([data-theme="light"])`.
 3. Wspolny kod: `board/ui.js` (motyw + pasek) i `board/ui.css` (wyglad paska), serwowane pod `/ui.js` i `/ui.css`.
 4. Telefon (< 640 px): pasek miesci sie bez poziomego przewijania (krotkie etykiety zakladek "Panel" / "Tablica").
+5. Naglowek modulu na tablicy (0.6.3, user: "w tablicy warsztatowej musi sie pojawic analogiczny naglowek jak w Panel Modulu"):
+   - Tablica ma ten sam naglowek co panel: "Wymagania do modułu: <nazwa> ▾" z tym samym menu modulow
+     (lista z ✓ przy biezacym i poziomem pelny/lekki, strzalki, Escape, klik obok zamyka).
+   - Wybor modulu na tablicy przelacza modul na serwerze (jak w panelu); tablica pokazuje board.json nowego modulu, panel w drugiej karcie tez sie przelacza.
+   - "+ Nowy moduł…" na tablicy przechodzi do panelu i otwiera tam formularz (`/#nowy-modul`).
+   - Tytul i podtytul tablicy (z board.json) zostaja jako mniejsza linia pod naglowkiem.
+   - Jeden kod menu dla obu stron: `ui.js` (`modMenu` + obsluga), wyglad w `ui.css`.
+   - Serwer dokleja do widoku tablicy `_module` (nazwa) i `_modules` (lista); jak `_sync` - nigdy nie trafiaja do board.json.
 
 ## Poza zakresem
 - Wiecej motywow, kontrast, rozmiar czcionki; przelacznik jezyka.
@@ -31,6 +39,10 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - AC-U1: `pickTheme(stored, systemDark)`: 'light' / 'dark' zapisane -> ten motyw; brak albo zla wartosc (null, '', 'auto', 'blue') -> motyw systemu.
 - AC-U2: `tabs(page)`: dwie zakladki w kolejnosci Panel (`/`), Tablica (`/board`); `current` tylko przy `page`; nieznana strona -> zadna biezaca.
 - AC-U3: serwer zwraca `/ui.js` (text/javascript) i `/ui.css` (text/css) z kodem 200.
+- AC-U6: `modMenu(mods, cur)`: przycisk na kazdy modul, `aria-checked="true"` i ✓ tylko przy biezacym; biezacy spoza listy dopisany na poczatku;
+  nazwy escapowane; na koncu "Nowy moduł…".
+- AC-U7: serwer: GET /api/board zawiera `_module.name` i `_modules`; PUT z `_module`, `_modules`, `_sync` nie zapisuje ich do board.json.
 - AC-U4 (reczne): na obu stronach pasek w tym samym miejscu; klik zakladki przechodzi na druga strone.
 - AC-U5 (reczne): ksiezyc przy jasnym systemie -> ciemne kolory na obu stronach, po przeladowaniu tez; slonce przy ciemnym -> jasne;
   zmiana w jednej karcie zmienia druga; telefon bez poziomego przewijania.
+- AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.
