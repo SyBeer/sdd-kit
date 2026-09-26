@@ -73,12 +73,35 @@ aside{display:flex;flex-direction:column;gap:12px}
 .panel.block{border-top:4px solid var(--hot)}
 .log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
 
+/* modul */
+h1 .lbl{font-weight:500;color:var(--muted);font-size:18px}
+.modbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.modbar select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink)}
+button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);padding:20px;width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog h2{margin:0 0 4px;font-size:18px}
+dialog .hint{margin:0 0 12px;color:var(--muted);font-size:13px}
+dialog label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+dialog label small{display:block;font-weight:400;color:var(--muted)}
+dialog input,dialog select{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
+/* zalaczniki */
+.drop{border:2px dashed var(--line);border-radius:6px;padding:10px;text-align:center;font-size:13px;color:var(--muted);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--active);background:color-mix(in srgb,var(--active) 10%,transparent);color:var(--ink)}
+.drop b{color:var(--ink)}
+.uplog{margin:0;padding:0;list-style:none;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.uplog .ok{color:var(--muted)}.uplog .ok::before{content:"✓ ";color:var(--ink)}
+.uplog .bad{color:var(--hot)}
 .missing{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:640px}
 .missing h2{margin-top:0}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 @media(max-width:640px){
   header,main{padding-left:16px;padding-right:16px}
-  header nav{margin-left:0;width:100%}
+  header nav{margin-left:0;width:100%;flex-wrap:wrap;gap:8px 14px}
+  .modbar{width:100%}
+  .modbar select{flex:1}
   .steps{grid-template-columns:1fr;gap:6px}
   .steps li{text-align:left;padding:4px 0 4px 40px;min-height:30px}
   .steps li::before{display:none}
@@ -89,14 +112,41 @@ aside{display:flex;flex-direction:column;gap:12px}
 </head>
 <body>
 <header>
-  <h1 id="title">Postęp SDD</h1>
+  <h1><span class="lbl">Wymagania do modułu:</span> <span id="title">…</span></h1>
   <span class="meta" id="meta"></span>
   <nav>
+    <span class="modbar">
+      <select id="modsel" aria-label="Przełącz moduł"></select>
+      <button class="b" id="newmod">+ Nowy moduł</button>
+    </span>
     <a href="/board">Tablica warsztatowa →</a>
     <span class="conn">na żywo: <b id="conn">…</b></span>
   </nav>
 </header>
 <main id="app"></main>
+<input type="file" id="files" multiple hidden>
+<dialog id="dlg">
+  <form id="modform" method="dialog">
+    <h2>Nowy moduł</h2>
+    <p class="hint">Założę folder obok obecnego modułu (<span id="rootdir"></span>) z pustą strukturą wymagań, tak jak <code>/sdd:init</code>.</p>
+    <label>Nazwa modułu <small>małe litery, cyfry i myślnik, np. faktury-2026</small>
+      <input name="name" required pattern="[a-z0-9][a-z0-9\-]{0,63}" autocomplete="off"></label>
+    <label>Poziom
+      <select name="level">
+        <option value="full">pełny: dokument PRD dla biznesu + pliki dla programistów</option>
+        <option value="light">lekki: jeden krótki SPEC.md, do małych rzeczy</option>
+      </select></label>
+    <label>Kto akceptuje wymagania, decyzje i słownik pojęć? <small>rola, nie osoba, np. właściciel procesu, kierownik działu</small>
+      <input name="approver" value="właściciel procesu"></label>
+    <label>Kto zatwierdza cały dokument na koniec? <small>opcjonalnie, np. sponsor, zarząd; puste = ta sama osoba co wyżej</small>
+      <input name="sponsor" value="sponsor biznesowy"></label>
+    <p class="err" id="moderr"></p>
+    <div class="row">
+      <button class="b" type="button" id="modcancel">Anuluj</button>
+      <button class="b p" type="submit">Załóż moduł</button>
+    </div>
+  </form>
+</dialog>
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
@@ -110,6 +160,11 @@ aside{display:flex;flex-direction:column;gap:12px}
     validate:[['readiness','% gotowości'],['reports','raportów']],
     handover:[['traceability','tabela śledzenia'],['backlogs','backlogów']]
   };
+  var last=null, uplog=[];
+  function api(url,opts){
+    opts=opts||{}; opts.headers=Object.assign({'X-SDD':'1'},opts.headers||{});
+    return fetch(url,opts).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j})});
+  }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
   function counts(st){
@@ -125,13 +180,15 @@ aside{display:flex;flex-direction:column;gap:12px}
   function render(p){
     var app=$('#app');
     if(!p.exists){
-      $('#title').textContent='Postęp SDD'; $('#meta').textContent='';
+      $('#title').textContent=(p.module&&p.module.name)||'?'; $('#meta').textContent='';
+      renderModules(p);
       app.innerHTML='<div class="missing"><h2>Brak folderu requirements/</h2>'+
         '<p>Serwer patrzy na: <code>'+esc(p.dir)+'</code></p>'+
         '<p>Uruchom <code>sdd-board</code> w folderze projektu albo załóż strukturę w Claude Code: <code>/sdd:init</code>. Strona odświeży się sama.</p></div>';
       return;
     }
-    $('#title').textContent=p.project||'Projekt bez nazwy';
+    renderModules(p);
+    $('#title').textContent=p.project||(p.module&&p.module.name)||'bez nazwy';
     $('#meta').textContent='poziom '+p.level+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
     document.title=(p.project||'SDD')+' · postęp';
 
@@ -150,6 +207,7 @@ aside{display:flex;flex-direction:column;gap:12px}
       return '<article class="card'+cur+'"><h3><span class="n">'+(i+1)+'</span>'+esc(s.name)+
         '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span></h3>'+
         '<p>'+esc(s.desc)+'</p><ul class="counts">'+counts(s)+'</ul>'+
+        (s.key==='intake'?intakeBox():'')+
         '<div class="foot"><code>'+esc(s.command)+'</code></div></article>';
     }).join('')+'</div><aside>';
 
@@ -167,11 +225,60 @@ aside{display:flex;flex-direction:column;gap:12px}
 
     html+='</aside></div>';
     app.innerHTML=html;
+    wireDrop();
     var btn=$('#copy');
     btn.onclick=function(){
       try{navigator.clipboard.writeText(p.next.command).then(function(){btn.textContent='Skopiowano'})}catch(e){}
     };
   }
+
+  var shownModule=null;
+  function renderModules(p){
+    last=p;
+    var sel=$('#modsel'), cur=p.module?p.module.name:'';
+    if(shownModule!==null&&shownModule!==cur) uplog=[];
+    shownModule=cur;
+    var mods=(p.modules||[]).slice();
+    if(cur&&!mods.some(function(m){return m.name===cur})) mods.unshift({name:cur,project:cur});
+    sel.innerHTML=mods.map(function(m){return '<option value="'+esc(m.name)+'"'+(m.name===cur?' selected':'')+'>'+esc(m.name)+(m.level?' ('+esc(m.level)+')':'')+'</option>'}).join('');
+    $('#rootdir').textContent=p.modulesRoot||'';
+  }
+  function intakeBox(){
+    return '<div class="drop" id="drop" role="button" tabindex="0"><b>Dołącz pliki</b> albo upuść je tutaj<br>maile, notatki, PDF, zrzuty · do 25 MB</div>'+
+      (uplog.length?'<ul class="uplog">'+uplog.map(function(l){return '<li class="'+l.cls+'">'+esc(l.text)+'</li>'}).join('')+'</ul>':'');
+  }
+  function wireDrop(){
+    var d=$('#drop'); if(!d) return;
+    d.onclick=function(){$('#files').click()};
+    d.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#files').click()}};
+    d.ondragover=function(e){e.preventDefault();d.classList.add('over')};
+    d.ondragleave=function(){d.classList.remove('over')};
+    d.ondrop=function(e){e.preventDefault();d.classList.remove('over');upload(e.dataTransfer.files)};
+  }
+  function upload(list){
+    var files=[].slice.call(list||[]); if(!files.length) return;
+    uplog=[];
+    (function next(i){
+      if(i>=files.length){ if(last) render(last); return; }
+      var f=files[i];
+      if(f.size>25*1024*1024){ uplog.push({cls:'bad',text:f.name+': większy niż 25 MB'}); return next(i+1); }
+      api('/api/intake?name='+encodeURIComponent(f.name),{method:'POST',body:f})
+        .then(function(j){uplog.push({cls:'ok',text:'zapisano '+j.saved+' → 00-intake/'})})
+        .catch(function(e){uplog.push({cls:'bad',text:f.name+': '+e.message})})
+        .then(function(){ if(last) render(last); next(i+1); });
+    })(0);
+  }
+  $('#files').onchange=function(e){upload(e.target.files); e.target.value='';};
+  $('#modsel').onchange=function(e){ uplog=[]; api('/api/modules/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:e.target.value})}).catch(function(err){alert(err.message)}); };
+  $('#newmod').onclick=function(){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); };
+  $('#modcancel').onclick=function(){ $('#dlg').close(); };
+  $('#modform').onsubmit=function(e){
+    e.preventDefault();
+    var f=e.target, el=f.elements, body={name:el['name'].value.trim(),level:el.level.value,approver:el.approver.value.trim(),sponsor:el.sponsor.value.trim()};
+    api('/api/modules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(){ uplog=[]; f.reset(); $('#dlg').close(); })
+      .catch(function(err){ $('#moderr').textContent=err.message; });
+  };
 
   function connect(){
     var es=new EventSource('/progress-events');

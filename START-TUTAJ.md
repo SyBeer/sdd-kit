@@ -70,11 +70,13 @@ Biznes nie instaluje nic.
 6. Chcesz zobaczyc, jak to wyglada, zanim zaczniesz? Uruchom serwer z plikiem przykladowym:
    w terminalu: `sdd-board --demo`, potem http://localhost:4242/board
 
-## 4b. Gdzie jestesmy - widok postepu
+## 4b. Panel modulu - gdzie jestesmy
 
 W folderze projektu wpisz w terminalu `sdd-board` i otworz http://localhost:4242.
 Zobaczysz 6 etapow, co jest gotowe, co w toku i jaka komende wpisac dalej w Claude Code.
-Strona odswieza sie sama, gdy agent zmienia pliki. Nic tam nie edytujesz, to tylko podglad.
+Strona odswieza sie sama, gdy agent zmienia pliki.
+Materialy (maile, PDF, zrzuty) wrzucasz przeciagajac je na karte Intake, potem w Claude Code `/sdd:intake`.
+Nowy modul (kolejny obszar wymagan) zakladasz przyciskiem "+ Nowy moduł" u gory.
 
 ## 5. Trzy zasady, ktore trzeba pamietac
 

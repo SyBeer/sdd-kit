@@ -1,117 +1,183 @@
 #!/usr/bin/env node
-// Lokalna tablica warsztatowa dla sdd-kit.
+// Lokalny panel sdd-kit: postep procesu SDD i tablica warsztatowa.
 // Uruchom:  node server.js [sciezka/do/board.json] [port]
-// Agent (Claude Code) pisze do board.json, przegladarka odswieza sie sama.
-// Przegladarka zapisuje przesuniecia i nowe karteczki z powrotem do board.json.
-// Strony:  /  postep procesu SDD (tylko podglad),  /board  tablica warsztatowa.
+// Strony:  /  panel postepu (+ zalaczniki do Intake, nowy modul),  /board  tablica warsztatowa.
+// Agent (Claude Code) pisze do plikow, przegladarka odswieza sie sama (SSE).
 // Katalog wymagan: SDD_REQ albo nadrzedny 'requirements/' pliku tablicy, albo ./requirements.
+// Katalog modulow: SDD_MODULES_ROOT albo folder nadrzedny biezacego projektu.
 'use strict';
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { readProgress } = require('./progress');
+const { listModules, createModule, saveIntake } = require('./modules');
 
-const BOARD = path.resolve(process.argv[2] || 'requirements/01-interview/board.json');
 const PORT = parseInt(process.argv[3] || process.env.PORT || '4242', 10);
 const UI = path.join(__dirname, 'index.html');
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
-const { readProgress } = require('./progress');
+const MAX_UPLOAD = 25 * 1024 * 1024;
 
-function findReqDir() {
-  if (process.env.SDD_REQ) return path.resolve(process.env.SDD_REQ);
-  const parts = BOARD.split(path.sep);
+const boardArg = path.resolve(process.argv[2] || 'requirements/01-interview/board.json');
+function reqOf(file) {
+  const parts = file.split(path.sep);
   const i = parts.lastIndexOf('requirements');
-  return i > 0 ? parts.slice(0, i + 1).join(path.sep) : path.resolve('requirements');
+  return i > 0 ? parts.slice(0, i + 1).join(path.sep) : null;
 }
-const REQ = findReqDir();
+// Tablica spoza requirements/ (np. --demo) zostaje stala przy zmianie modulu.
+const CUSTOM_BOARD = reqOf(boardArg) ? null : boardArg;
 
+const state = { req: null, board: null };
+const ROOT = process.env.SDD_MODULES_ROOT
+  ? path.resolve(process.env.SDD_MODULES_ROOT)
+  : path.dirname(path.dirname(process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'))));
+
+// ---------------------------------------------------------------- tablica
 function emptyBoard() {
   return { title: 'Warsztat', subtitle: '', lanes: ['Proces 1'], notes: [], updated: new Date().toISOString() };
 }
 function readBoard() {
-  try { return JSON.parse(fs.readFileSync(BOARD, 'utf8')); }
+  try { return JSON.parse(fs.readFileSync(state.board, 'utf8')); }
   catch (e) { return emptyBoard(); }
 }
 function writeBoard(b) {
   b.updated = new Date().toISOString();
-  fs.mkdirSync(path.dirname(BOARD), { recursive: true });
-  fs.writeFileSync(BOARD, JSON.stringify(b, null, 2));
+  fs.mkdirSync(path.dirname(state.board), { recursive: true });
+  fs.writeFileSync(state.board, JSON.stringify(b, null, 2));
 }
-if (!fs.existsSync(BOARD)) writeBoard(emptyBoard());
 
-const clients = new Set();
-function broadcast() {
-  const data = `data: ${JSON.stringify(readBoard())}\n\n`;
-  for (const res of clients) res.write(data);
-}
-let timer = null;
-fs.watch(path.dirname(BOARD), (ev, file) => {
-  if (file && file !== path.basename(BOARD)) return;
-  clearTimeout(timer); timer = setTimeout(broadcast, 120);
-});
-
-// Postep: SSE przy kazdej zmianie w requirements/ (rekurencyjnie).
+// ---------------------------------------------------------------- SSE
+const boardClients = new Set();
 const progressClients = new Set();
-function broadcastProgress() {
-  const data = `data: ${JSON.stringify(readProgress(REQ))}\n\n`;
-  for (const res of progressClients) res.write(data);
+function progressPayload() {
+  const p = readProgress(state.req);
+  p.module = { name: path.basename(path.dirname(state.req)), dir: path.dirname(state.req) };
+  p.modules = listModules(ROOT).map(m => ({ name: m.name, project: m.project, level: m.level }));
+  p.modulesRoot = ROOT;
+  return p;
 }
-let ptimer = null;
-function watchReq() {
+const send = (set, obj) => { const d = `data: ${JSON.stringify(obj)}\n\n`; for (const r of set) r.write(d); };
+let btimer = null, ptimer = null;
+const broadcastBoard = () => { clearTimeout(btimer); btimer = setTimeout(() => send(boardClients, readBoard()), 120); };
+const broadcastProgress = () => { clearTimeout(ptimer); ptimer = setTimeout(() => send(progressClients, progressPayload()), 150); };
+
+// ---------------------------------------------------------------- watchery (przepinane przy zmianie modulu)
+let watchers = [], retry = null;
+function watch() {
+  watchers.forEach(w => w.close()); watchers = []; clearTimeout(retry);
   try {
-    fs.watch(REQ, { recursive: true }, () => { clearTimeout(ptimer); ptimer = setTimeout(broadcastProgress, 150); });
+    watchers.push(fs.watch(state.req, { recursive: true }, (ev, file) => {
+      broadcastProgress();
+      if (!CUSTOM_BOARD && file && path.basename(file) === path.basename(state.board)) broadcastBoard();
+    }));
   } catch (e) {
-    setTimeout(watchReq, 3000); // requirements/ jeszcze nie ma - sprobuj pozniej
+    retry = setTimeout(watch, 3000); // requirements/ jeszcze nie ma
+  }
+  if (CUSTOM_BOARD) {
+    try {
+      watchers.push(fs.watch(path.dirname(CUSTOM_BOARD), (ev, file) => {
+        if (!file || file === path.basename(CUSTOM_BOARD)) broadcastBoard();
+      }));
+    } catch (e) { /* brak katalogu tablicy */ }
   }
 }
-watchReq();
+function selectModule(req) {
+  state.req = req;
+  state.board = CUSTOM_BOARD || path.join(req, '01-interview', 'board.json');
+  watch();
+  send(progressClients, progressPayload());
+  send(boardClients, readBoard());
+}
+selectModule(process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements')));
 
+// ---------------------------------------------------------------- HTTP
 function sendHtml(res, file) {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   fs.createReadStream(file).pipe(res);
 }
+function json(res, code, obj) {
+  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(obj));
+}
+function readBody(req, limit, cb) {
+  const chunks = []; let size = 0, over = false;
+  req.on('data', c => {
+    size += c.length;
+    if (size > limit) { over = true; req.destroy(); return; }
+    chunks.push(c);
+  });
+  req.on('end', () => { if (!over) cb(Buffer.concat(chunks)); });
+  req.on('close', () => { if (over) cb(null); });
+}
+// Zapisy tylko z tej strony: wlasny naglowek (wymusza preflight dla obcych stron) i Host lokalny.
+function allowedWrite(req) {
+  const host = (req.headers.host || '').split(':')[0];
+  return req.headers['x-sdd'] === '1' && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]');
+}
+function sse(req, res, set, first) {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+  res.write(`data: ${JSON.stringify(first)}\n\n`);
+  set.add(res);
+  req.on('close', () => set.delete(res));
+}
 
 const server = http.createServer((req, res) => {
-  const url = req.url.split('?')[0];
+  const u = new URL(req.url, 'http://localhost');
+  const url = u.pathname;
+  const write = req.method === 'POST' || req.method === 'PUT';
+  if (write && !allowedWrite(req)) return json(res, 403, { error: 'Zapis tylko z panelu sdd-board.' });
+
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
-  if (url === '/api/progress' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(readProgress(REQ)));
+
+  if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload());
+  if (url === '/progress-events') return sse(req, res, progressClients, progressPayload());
+
+  if (url === '/api/intake' && req.method === 'POST') {
+    const name = u.searchParams.get('name') || '';
+    if (!fs.existsSync(state.req)) return json(res, 409, { error: 'Brak requirements/ w tym module.' });
+    return readBody(req, MAX_UPLOAD, buf => {
+      if (!buf) return json(res, 413, { error: 'Plik wiekszy niz 25 MB.' });
+      try { json(res, 201, { saved: saveIntake(state.req, name, buf) }); }
+      catch (e) { json(res, 500, { error: e.message }); }
+    });
   }
-  if (url === '/progress-events') {
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-    res.write(`data: ${JSON.stringify(readProgress(REQ))}\n\n`);
-    progressClients.add(res);
-    req.on('close', () => progressClients.delete(res));
-    return;
+
+  if (url === '/api/modules' && req.method === 'POST') {
+    return readBody(req, 64 * 1024, buf => {
+      try {
+        const body = JSON.parse(String(buf || '{}'));
+        const dir = createModule(ROOT, body);
+        selectModule(path.join(dir, 'requirements'));
+        json(res, 201, { name: path.basename(dir), dir });
+      } catch (e) { json(res, 400, { error: e.message }); }
+    });
   }
-  if (url === '/api/board' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(readBoard()));
+  if (url === '/api/modules/select' && req.method === 'POST') {
+    return readBody(req, 64 * 1024, buf => {
+      let name = '';
+      try { name = JSON.parse(String(buf || '{}')).name; } catch (e) { /* zly JSON */ }
+      const m = listModules(ROOT).find(x => x.name === name);
+      if (!m) return json(res, 404, { error: 'Nie ma modulu ' + name });
+      selectModule(path.join(m.dir, 'requirements'));
+      json(res, 200, { name: m.name });
+    });
   }
+
+  if (url === '/api/board' && req.method === 'GET') return json(res, 200, readBoard());
   if (url === '/api/board' && req.method === 'PUT') {
-    let body = '';
-    req.on('data', c => body += c);
-    req.on('end', () => {
-      try { writeBoard(JSON.parse(body)); res.writeHead(204); res.end(); }
+    return readBody(req, 5 * 1024 * 1024, buf => {
+      try { writeBoard(JSON.parse(String(buf))); res.writeHead(204); res.end(); }
       catch (e) { res.writeHead(400); res.end('zly JSON'); }
     });
-    return;
   }
-  if (url === '/events') {
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-    res.write(`data: ${JSON.stringify(readBoard())}\n\n`);
-    clients.add(res);
-    req.on('close', () => clients.delete(res));
-    return;
-  }
+  if (url === '/events') return sse(req, res, boardClients, readBoard());
   res.writeHead(404); res.end();
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Postep:   http://localhost:${PORT}`);
+  console.log(`Panel:    http://localhost:${PORT}`);
   console.log(`Tablica:  http://localhost:${PORT}/board`);
-  console.log(`Wymagania: ${REQ}`);
-  console.log(`Plik:     ${BOARD}`);
+  console.log(`Modul:    ${path.dirname(state.req)}`);
+  console.log(`Moduly w: ${ROOT}`);
   console.log('Zostaw to okno otwarte. Ctrl+C konczy.');
 });

@@ -16,6 +16,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 header{padding:16px 20px 6px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline}
 h1{margin:0;font-size:24px;font-weight:700}
 header p{margin:0;color:var(--muted)}
+.back{font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);align-self:center}
+.back:hover{border-color:var(--ink)}
 .bar{display:flex;flex-wrap:wrap;gap:8px 14px;padding:4px 20px 10px;font-size:13px;color:var(--muted);align-items:center}
 .bar span{display:inline-flex;align-items:center;gap:6px}
 .bar i{width:14px;height:14px;display:inline-block;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
@@ -52,7 +54,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
 </style>
 </head>
 <body>
-<header><h1 id="title">Tablica</h1><p id="subtitle"></p></header>
+<header><a class="back" href="/">← Panel modułu</a><h1 id="title">Tablica</h1><p id="subtitle"></p></header>
 <div class="bar">
   <span><i style="background:var(--ev)"></i>zdarzenie</span>
   <span><i style="background:var(--cmd)"></i>komenda</span>
@@ -60,7 +62,6 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   <span><i style="background:var(--pol)"></i>reguła</span>
   <span><i style="background:var(--rm)"></i>widok</span>
   <span><i style="background:var(--hot)"></i>nie wiemy</span>
-  <a href="/" style="color:var(--ink)">← Postęp</a>
   <span class="st">połączenie: <b id="conn">…</b></span>
 </div>
 <div class="wrap">
@@ -140,7 +141,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   }
   function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
   function save(){
-    fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(board)});
+    fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board)});
   }
   $('#save').onclick=function(){
     var n=sel?byId(sel):null;

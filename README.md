@@ -43,13 +43,16 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 | /sdd:status    | stan w 20 linijkach | pisze sam |
 | /sdd:board     | lokalna tablica z karteczkami na zywo (bez Miro) | rysuje sam, do plikow po "tak" |
 
-## Widok postepu (web)
+## Panel modulu (web)
 
 W folderze projektu uruchom `sdd-board` i otworz http://localhost:4242. Strona pokazuje 6 etapow
 (Intake -> Handover) ze statusem liczonym z plikow w `requirements/`, liczniki, "nastepny krok"
 z komenda do wpisania, co blokuje dev, co czeka na biznes i ostatnie zmiany. Odswieza sie sama.
-Tylko podglad, nic nie zapisuje. Spec: `docs/specs/progress-ui.md`.
-Testy: `node --test plugins/sdd/board/test/progress.test.js`
+Naglowek "Wymagania do modułu: <nazwa>" z przelacznikiem modulow (modul = folder obok z `requirements/SDD.yaml`)
+i przyciskiem "+ Nowy moduł" (zaklada folder obok jak `/sdd:init`, z `git init`).
+Karta Intake przyjmuje zalaczniki (przycisk lub przeciagnij-upusc, do 25 MB) i zapisuje je do `requirements/00-intake/`.
+Poza tym tylko podglad. Spec: `docs/specs/progress-ui.md`.
+Testy: `node --test plugins/sdd/board/test/*.test.js`
 
 ## Tablica warsztatowa (bez Miro)
 
