@@ -296,3 +296,64 @@ test('AC-56: details Spec - wymagania, zatwierdzone, do przegladu z powodem z se
   for (const k of ['requirements', 'approved', 'review']) assert.strictEqual(d[k].items.length, s.counts[k], k);
   assert.strictEqual(d.requirements.file, '03-spec/PRD.md');
 });
+
+// ---------------------------------------------------------------- 0.18.0: walidacja nieaktualna po zmianie wymagan
+const { fingerprint } = require('../fingerprint');
+
+test('AC-59: fingerprint - zmienia sie tylko od plikow, ktore sprawdza walidacja', () => {
+  const req = freshProject();
+  const f0 = fingerprint(req);
+  assert.match(f0, /^sha256:[0-9a-f]{64}$/);
+  assert.strictEqual(fingerprint(req), f0);
+  // bez znaczenia: widok, sesje, historia, raporty, pliki generowane
+  write(req, '01-interview/board.json', '{"notes":[]}');
+  write(req, '01-interview/session-2026-09-27.md', 'notatka');
+  append(req, 'CHANGELOG.md', '2026-09-27 | board | x | y\n');
+  write(req, '04-validation/validate-2026-09-27.md', 'gotowosc: 100%\n');
+  write(req, '03-spec/agent/limity/spec.md', 'GENEROWANE');
+  write(req, '00-intake/mail.md', 'surowiec');
+  assert.strictEqual(fingerprint(req), f0);
+  // konce linii
+  const dec = path.join(req, '01-interview', 'DECISIONS.md');
+  const txt = fs.readFileSync(dec, 'utf8');
+  fs.writeFileSync(dec, txt.replace(/\n/g, '\r\n'));
+  assert.strictEqual(fingerprint(req), f0);
+  fs.writeFileSync(dec, txt);
+  // zmiana wymagan
+  for (const rel of ['01-interview/DECISIONS.md', '02-domain/GLOSSARY.md', '03-spec/PRD.md', '00-intake/INDEX.md', 'SDD.yaml']) {
+    const before = fingerprint(req);
+    append(req, rel, '\nzmiana\n');
+    assert.notStrictEqual(fingerprint(req), before, rel);
+  }
+});
+
+test('AC-60: raport z odciskiem - zgodny done, po zmianie wymagan stale', () => {
+  const req = freshProject();
+  write(req, '04-validation/validate-2026-09-27.md', 'gotowosc: 100%\nOdcisk wymagan: ' + fingerprint(req) + '\n');
+  let v = stage(readProgress(req), 'validate');
+  assert.strictEqual(v.status, 'done');
+  assert.ok(!v.stale);
+  append(req, '01-interview/DECISIONS.md', '\n## D-099 | 2026-09-27 | nowa\n');
+  const p = readProgress(req);
+  v = stage(p, 'validate');
+  assert.strictEqual(v.status, 'active');
+  assert.strictEqual(v.stale, true);
+  assert.strictEqual(v.counts.readiness, 100);
+});
+
+test('AC-61: raport bez odcisku - nieaktualny, gdy po wpisie validate w CHANGELOG jest wpis innego etapu', () => {
+  const req = freshProject();
+  write(req, '04-validation/validate-2026-09-27.md', 'gotowosc: 100%\n');
+  append(req, 'CHANGELOG.md', '2026-09-27 | validate | przebieg 1: 100% | 03-spec/PRD.md\n');
+  assert.strictEqual(stage(readProgress(req), 'validate').status, 'done');
+  append(req, 'CHANGELOG.md', '2026-09-27 | interview | D-099 | x\n');
+  const v = stage(readProgress(req), 'validate');
+  assert.strictEqual(v.status, 'active');
+  assert.strictEqual(v.stale, true);
+});
+
+test('AC-62: CLI fingerprint.js wypisuje ten sam odcisk', () => {
+  const req = freshProject();
+  const out = require('child_process').execFileSync(process.execPath, [path.join(__dirname, '..', 'fingerprint.js'), req]).toString().trim();
+  assert.strictEqual(out, fingerprint(req));
+});

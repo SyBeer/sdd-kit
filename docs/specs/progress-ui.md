@@ -465,3 +465,39 @@ Decyzja: tak, dla Interview, Domain i Spec.
 - AC-58 (reczne): horizon-zlecenia - klik "36 decyzji" pokazuje 36 decyzji z D-036 "brak powodu"; klik "1 obalonych" -> A-006;
   "1 do przegladu" -> to R; "53 hasel" -> slownik; drugi klik zwija; licznik 0 nieklikalny; odswiezenie na zywo nie zwija listy;
   telefon bez poziomego przewijania, tryb ciemny czytelny.
+
+# Zmiana 0.18.0 (2026-09-27): walidacja nieaktualna po zmianie wymagan
+
+Status: zatwierdzony 2026-09-27 (user: "w sytuacji gdy zmieniaja sie poprzednie kroki - validate powinno zmienic status" -> "tak, buduj").
+Zdarzenie: horizon-zlecenia - raport walidacji 100% z rana, po poludniu D-038..D-043, BR-035..BR-039, R-019, A-015 obalone;
+panel dalej pokazywal Validate "gotowe" i proponowal Handover.
+
+## Cel
+"Gotowe" przy Validate znaczy: raport dotyczy wymagan, ktore leza teraz w plikach. Zmiana wymagan po walidacji cofa
+aktualny krok na Validate, zanim ktos przekaze nieaktualny spec do budowy.
+
+## Zakres
+1. Odcisk wymagan (`board/fingerprint.js`): sha256 z posortowanych sciezek i tresci plikow, ktore walidacja sprawdza:
+   `SDD.yaml`, `00-intake/INDEX.md`, `01-interview/QUESTIONS.md`, `DECISIONS.md`, `ASSUMPTIONS.md`, `02-domain/*.md`,
+   `03-spec/*.md` (bez `03-spec/agent/` - generowane z PRD). Konce linii ujednolicone (\r\n -> \n).
+   Nie licza sie: `board.json` (widok), sesje i pliki rund, `CHANGELOG.md`, `04-validation/`, surowiec w `00-intake/`.
+   CLI: `node board/fingerprint.js <requirements>` wypisuje `sha256:<hex>`.
+2. `/sdd:validate` wpisuje do raportu linie `Odcisk wymagan: sha256:<hex>` (z CLI, na koniec przebiegu).
+3. Panel: raport z odciskiem innym niz biezacy -> nieaktualny. Raport bez odcisku (starsze): nieaktualny, gdy w
+   `CHANGELOG.md` po ostatnim wpisie `validate` jest wpis innego etapu (kolejnosc wpisow, nie godziny).
+4. Nieaktualny raport: etap Validate ma status `active` z flaga `stale` (nigdy `done`), pigulka "nieaktualne" (zolta, jak
+   "do wyjasnienia"), aktualny krok = Validate z opisem "Wymagania zmienily sie po ostatniej walidacji - uruchom ponownie".
+   Gotowosc z raportu dalej widac (licznik), ale nie zamyka etapu.
+5. Demo: raport demo dostaje odcisk - demo zostaje na 100% i pokazuje nowa linie.
+
+## Poza zakresem
+- Handover nieaktualny po zmianie specu (ta sama zasada, osobna zmiana).
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
+- AC-59: `fingerprint(req)` - ten sam wynik dla tych samych plikow; zmiana w DECISIONS/GLOSSARY/PRD/INDEX/SDD.yaml zmienia odcisk;
+  zmiana w board.json, session-*.md, CHANGELOG.md, 04-validation/, 03-spec/agent/ nie zmienia; \r\n i \n daja ten sam odcisk.
+- AC-60: raport 100% z odciskiem zgodnym -> Validate `done`; po zmianie DECISIONS -> `active`, `stale: true`, `next.key` = validate.
+- AC-61: raport 100% bez odcisku: ostatni wpis CHANGELOG to `validate` -> `done`; po nim wpis `interview` -> `stale`.
+- AC-62: CLI wypisuje `sha256:` + 64 znaki hex, ten sam co `fingerprint(req)`.
+- AC-35 (demo) bez zmian: demo 100%, aktualny krok Handover.
+- AC-63 (reczne): horizon-zlecenia - panel pokazuje Validate "nieaktualne" i krok Validate; po `/sdd:validate` z odciskiem wraca "gotowe".

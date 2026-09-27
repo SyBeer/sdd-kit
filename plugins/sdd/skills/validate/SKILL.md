@@ -40,6 +40,10 @@ Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent
 `04-validation/validate-YYYY-MM-DD.md`: tabela wynikow, lista blokerow z odnosnikami, lista ostrzezen, wskaznik:
 gotowosc = (R zatwierdzone bez BLOCK i bez WARN 7-8) / (wszystkie R w zakresie) w %.
 Na koncu: 3 najwazniejsze rzeczy do zrobienia, zeby podniesc gotowosc.
+Pod linia z gotowoscia wpisz odcisk wymagan, liczony na koncu przebiegu (po wszystkich poprawkach):
+`node "${CLAUDE_PLUGIN_ROOT}/board/fingerprint.js" requirements` -> linia `Odcisk wymagan: sha256:<hex>`.
+Panel porownuje go z biezacym stanem plikow: kazda zmiana wymagan po walidacji oznacza raport jako nieaktualny
+i cofa aktualny krok na /sdd:validate. Bez tej linii panel ocenia raport tylko po kolejnosci wpisow w CHANGELOG.
 
 ## Na koniec
 CHANGELOG + wypisz gotowosc i liczbe blokerow. Nie powtarzaj calego raportu na ekranie.

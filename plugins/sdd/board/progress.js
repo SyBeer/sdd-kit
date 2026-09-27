@@ -3,6 +3,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { fingerprint } = require('./fingerprint');
 
 const STAGES = [
   { key: 'intake', name: 'Intake', command: '/sdd:intake',
@@ -256,9 +257,25 @@ function validate(req) {
   try { reports = fs.readdirSync(dir).filter(f => /^validate-.*\.md$/.test(f)).sort(); } catch (e) { /* brak */ }
   if (!reports.length) return { status: 'todo', counts: { reports: 0, readiness: null } };
   const last = reports[reports.length - 1];
-  const m = read(path.join(dir, last)).match(/gotowo(?:s|ś)(?:c|ć)[^0-9\n]*?(\d{1,3})\s*%/i);
+  const text = read(path.join(dir, last));
+  const m = text.match(/gotowo(?:s|ś)(?:c|ć)[^0-9\n]*?(\d{1,3})\s*%/i);
   const readiness = m ? parseInt(m[1], 10) : null;
-  return { status: readiness === 100 ? 'done' : 'active', counts: { reports: reports.length, readiness, last } };
+  const stale = validateStale(req, text);
+  const counts = { reports: reports.length, readiness, last };
+  // nieaktualny raport nigdy nie zamyka etapu, nawet przy 100% (zmiana 0.18.0, AC-60, AC-61)
+  if (stale) return { status: 'active', stale: true, counts };
+  return { status: readiness === 100 ? 'done' : 'active', counts };
+}
+
+// Raport nieaktualny: odcisk w raporcie inny niz biezacy; bez odcisku (starsze raporty) - po ostatnim wpisie
+// "validate" w CHANGELOG jest wpis innego etapu. Brak wpisu validate w CHANGELOG - nie da sie stwierdzic, raport aktualny.
+function validateStale(req, text) {
+  const fp = text.match(/Odcisk wymaga[nń]:\s*(sha256:[0-9a-f]{64})/i);
+  if (fp) return fp[1] !== fingerprint(req);
+  const steps = read(path.join(req, 'CHANGELOG.md')).split('\n')
+    .map(l => (l.match(/^\d{4}-\d{2}-\d{2}\s*\|\s*([a-z-]+)\s*\|/i) || [])[1]).filter(Boolean);
+  const v = steps.lastIndexOf('validate');
+  return v >= 0 && v < steps.length - 1;
 }
 
 function handover(req) {
@@ -285,7 +302,14 @@ function readProgress(reqDir) {
   const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, partial: results[s.key].partial || 0, counts: results[s.key].counts },
     results[s.key].files ? { files: results[s.key].files } : {},
     results[s.key].questions ? { questions: results[s.key].questions } : {},
-    results[s.key].details ? { details: results[s.key].details } : {}));
+    results[s.key].details ? { details: results[s.key].details } : {},
+    results[s.key].stale ? { stale: true } : {}));
+  const vs = stages.find(s => s.key === 'validate');
+  if (vs && vs.stale) {
+    vs.desc = 'Wymagania zmieniły się po ostatniej walidacji - uruchom ją ponownie, zanim przekażesz spec do budowy.';
+    vs.howto = ['Skopiuj komendę i wklej ją w Claude Code.', 'AI sprawdzi aktualne wymagania i zapisze nowy raport z odciskiem wymagań.',
+      'Gdy gotowość wróci do 100%, etap znów będzie gotowy.'];
+  }
   const next = stages.find(s => s.status !== 'done')
     || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.',
       howto: ['Skopiuj komendę i wklej ją w Claude Code, żeby zobaczyć podsumowanie.', 'Nowe materiały wrzucasz jak wcześniej, do karty Intake.'] };

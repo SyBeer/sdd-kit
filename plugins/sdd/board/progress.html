@@ -254,6 +254,8 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var cardToggled={}, lastCurrent=null;
   // Jedna linia licznikow w naglowku zwinietej karty.
   function pill(s){
+    // raport walidacji starszy niz wymagania (zmiana 0.18.0)
+    if(s.stale) return '<span class="pill partial" title="Wymagania zmieniły się po ostatniej walidacji">nieaktualne</span>';
     if(s.status==='done'&&s.partial) return '<span class="pill partial" title="Etap nie blokuje dalszej pracy, ale zostały pytania">gotowe · '+s.partial+' do wyjaśnienia</span>';
     return '<span class="pill '+s.status+'">'+STATUS[s.status]+'</span>';
   }
