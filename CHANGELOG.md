@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.16.0] - 2026-09-27
+Zakladki Moduł, Jak to działa i Konfiguracja (spec: `docs/specs/info-config.md`, AC-C1..AC-C14).
+- Pasek: Panel | Tablica | Moduł | Jak to działa | Konfiguracja; na telefonie zakladki przewijaja sie w pasku. `/demo/start`: Tablica i Jak to działa.
+- Moduł (tylko odczyt): cel, zakres, poza zakresem, aktorzy z PRD.md (lekki: SPEC.md), kto zatwierdza, liczby R/BR/D/A/Q, stan tablicy, aktualny krok, ostatnie zmiany.
+- Jak to działa: etapy z `STAGES` (ten sam kod co panel), komendy /sdd:*, uklad requirements/, zrodla [B]/[D]/[AI], statusy, tablica i sync.
+- Konfiguracja: edycja nazwy projektu, backlogu i rol (SDD.yaml z zachowaniem komentarzy + wpis w requirements/CHANGELOG.md);
+  rola uzywana w plikach nie da sie usunac ani przemianowac (409, porownanie bez polskich znakow); zmiana katalogu modulow z podgladem,
+  ktore moduly znikna; usuwanie projektow dodanych z listy (pliki zostaja). Poziom i etykieta blokujaca tylko do odczytu z instrukcja.
+- Serwer: `info.js`, trasy /module /guide /config, GET /api/module /api/guide /api/config /api/root/preview, PUT /api/config, DELETE /api/modules; demo tylko odczyt.
+- Oznaczenia zrodel w calym kicie: `[B]` -> `[Biz]`, `[P]` -> `[App]` (dzialajaca aplikacja/prototyp), `[D]` -> `[Dok]` (`[D]` mylilo sie z decyzjami D-xxx); `[AI]` bez zmian.
+  Skille, szablony, CLAUDE.md modulu, tablica (karteczki z przegladarki), demo, README. Stare `[B]`/`[P]`/`[D]` w istniejacych modulach
+  czytane tak samo (zdanie w CLAUDE.md). Przewodnik: pelna hierarchia [Biz] > [App] > [Dok] > [AI] (AC-C15, AC-C16).
+- Testy 91/91.
+
 ## [0.15.0] - 2026-09-27
 - Panel: liczniki na kartach Interview, Domain i Spec sa klikalne - klik rozwija liste tego, co licza (drugi klik zwija):
   pytania (wszystkie/otwarte/zadane/sprzeczne), decyzje D-xxx (kto, kiedy, tresc, "brak powodu"), zalozenia
