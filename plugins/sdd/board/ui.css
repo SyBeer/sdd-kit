@@ -2,7 +2,10 @@
    Wymiary paska i naglowka sa stale i niezalezne od CSS strony, zeby przejscie Panel <-> Tablica nie przesuwalo ekranu. */
 html{scrollbar-gutter:stable}
 .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;height:47px;padding:0 20px;border-bottom:1px solid var(--line);font-size:14px;line-height:20px}
-.topbar .tabs{display:flex;gap:4px}
+.topbar .tabs{display:flex;gap:4px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;align-self:stretch;align-items:flex-end}
+.topbar .tabs::-webkit-scrollbar{display:none}
+/* piec zakladek (0.16.0): gdy brak miejsca, przewijaja sie w pasku, strona nie (AC-C13) */
+.topbar .right{flex:none}
 .topbar .tab{display:block;padding:7px 14px 8px;margin-bottom:-1px;border:1px solid transparent;border-radius:6px 6px 0 0;color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap}
 .topbar a.tab:hover{color:var(--ink);background:var(--panel)}
 .topbar a.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}

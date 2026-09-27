@@ -39,7 +39,7 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 
 ## Kryteria akceptacji (testy w `plugins/sdd/board/test/ui.test.js`)
 - AC-U1: `pickTheme(stored, systemDark)`: 'light' / 'dark' zapisane -> ten motyw; brak albo zla wartosc (null, '', 'auto', 'blue') -> motyw systemu.
-- AC-U2: `tabs(page)`: dwie zakladki w kolejnosci Panel (`/`), Tablica (`/board`); `current` tylko przy `page`; nieznana strona -> zadna biezaca.
+- AC-U2 (od 0.16.0 zastapione przez AC-C1 w info-config.md - piec zakladek): `tabs(page)`: dwie zakladki w kolejnosci Panel (`/`), Tablica (`/board`); `current` tylko przy `page`; nieznana strona -> zadna biezaca.
 - AC-U3: serwer zwraca `/ui.js` (text/javascript) i `/ui.css` (text/css) z kodem 200.
 - AC-U6: `modMenu(mods, cur)`: przycisk na kazdy modul, `aria-checked="true"` i ✓ tylko przy biezacym; biezacy spoza listy dopisany na poczatku;
   nazwy escapowane; na koncu "Nowy moduł…".

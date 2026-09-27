@@ -27,11 +27,18 @@
 
   function tabs(page, b) {
     b = b || '';
-    // /demo/start nie ma plikow requirements/, wiec nie ma panelu
-    if (b === '/demo/start') return [{ href: b, label: 'Tablica warsztatowa', short: 'Tablica', current: true }];
+    // /demo/start nie ma plikow requirements/, wiec nie ma panelu, modulu ani konfiguracji
+    if (b === '/demo/start') return [
+      { href: b, label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
+      { href: b + '/guide', label: 'Jak to działa', short: 'Jak działa', current: page === 'guide' },
+    ];
+    // Modul, Jak to dziala, Konfiguracja (zmiana 0.16.0, AC-C1)
     return [
       { href: b || '/', label: 'Panel modułu', short: 'Panel', current: page === 'panel' },
       { href: b + '/board', label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
+      { href: b + '/module', label: 'Moduł', short: 'Moduł', current: page === 'module' },
+      { href: b + '/guide', label: 'Jak to działa', short: 'Jak działa', current: page === 'guide' },
+      { href: b + '/config', label: 'Konfiguracja', short: 'Ustawienia', current: page === 'config' },
     ];
   }
 

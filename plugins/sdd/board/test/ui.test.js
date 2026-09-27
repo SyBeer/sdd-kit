@@ -19,12 +19,12 @@ test('AC-U1: pickTheme - zapisany wybor albo motyw systemu', () => {
   });
 });
 
-test('AC-U2: tabs - Panel i Tablica, biezaca zaznaczona', () => {
+test('AC-U2: tabs - Panel i Tablica na poczatku, biezaca zaznaczona (pelna lista: AC-C1)', () => {
   const t = ui.tabs('board');
-  assert.deepStrictEqual(t.map(x => x.href), ['/', '/board']);
-  assert.deepStrictEqual(t.map(x => x.current), [false, true]);
-  assert.deepStrictEqual(ui.tabs('panel').map(x => x.current), [true, false]);
-  assert.deepStrictEqual(ui.tabs('cos').map(x => x.current), [false, false]);
+  assert.deepStrictEqual(t.slice(0, 2).map(x => x.href), ['/', '/board']);
+  assert.deepStrictEqual(t.map(x => x.current).filter(Boolean).length, 1);
+  assert.strictEqual(t[1].current, true);
+  assert.strictEqual(ui.tabs('panel')[0].current, true);
   t.forEach(x => { assert.ok(x.label); assert.ok(x.short); });
 });
 
@@ -112,10 +112,11 @@ test('AC-44: base() i tabs() z przedrostkiem kontekstu', () => {
   assert.strictEqual(ui.base('/demo/board'), '/demo');
   assert.strictEqual(ui.base('/demo/start'), '/demo/start');
   assert.strictEqual(ui.base('/demonstracja'), '');
-  assert.deepStrictEqual(ui.tabs('panel', '/demo').map(x => x.href), ['/demo', '/demo/board']);
-  assert.deepStrictEqual(ui.tabs('board').map(x => x.href), ['/', '/board']);
+  // pelna lista zakladek od 0.16.0: AC-C1 (info-config.test.js)
+  assert.deepStrictEqual(ui.tabs('panel', '/demo').slice(0, 2).map(x => x.href), ['/demo', '/demo/board']);
+  assert.deepStrictEqual(ui.tabs('board').slice(0, 2).map(x => x.href), ['/', '/board']);
   const st = ui.tabs('board', '/demo/start');
-  assert.deepStrictEqual(st.map(x => x.href), ['/demo/start']);
+  assert.strictEqual(st[0].href, '/demo/start');
   assert.strictEqual(st[0].current, true);
 });
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Lokalny panel sdd-kit: postep procesu SDD i tablica warsztatowa.
 // Uruchom:  node server.js [sciezka/do/board.json] [port]
-// Strony:  /  panel postepu (+ zalaczniki do Intake, nowy modul),  /board  tablica warsztatowa.
+// Strony:  /  panel postepu (+ zalaczniki do Intake, nowy modul),  /board  tablica warsztatowa,
+//          /module, /guide, /config  opis modulu, jak to dziala, konfiguracja (0.16.0).
 //          /demo, /demo/board  gotowy modul po SDD;  /demo/start  tablica z poczatku warsztatu (tylko podglad, 0.12.0).
 // Agent (Claude Code) pisze do plikow, przegladarka odswieza sie sama (SSE).
 // Katalog wymagan: SDD_REQ albo nadrzedny 'requirements/' pliku tablicy, albo ./requirements.
@@ -15,10 +16,13 @@ const { readProgress } = require('./progress');
 const { listModules, allModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs } = require('./root');
+const info = require('./info');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
+const INFO_UI = path.join(__dirname, 'info.html');  // Modul, Jak to dziala, Konfiguracja
+const VERSION = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.claude-plugin', 'plugin.json'), 'utf8')).version; } catch (e) { return ''; } })();
 const MAX_UPLOAD = 25 * 1024 * 1024;
 const DEMO_REQ = path.join(__dirname, '..', 'demo', 'zlecenia', 'requirements');
 const DEMO_START_BOARD = path.join(__dirname, 'example-zlecenia.json');
@@ -35,6 +39,7 @@ const CONFIG = configPath();
 const START_REQ = process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'));
 const resolved = resolveRoot({ project: START_REQ });
 let ROOT = resolved.root;
+let ROOT_SOURCE = resolved.source; // env / config / project - pokazywane w Konfiguracji
 
 // ---------------------------------------------------------------- konteksty
 // Kontekst = jeden modul z tablica i wlasnymi klientami SSE. Twoj (base '') zmienia modul i zapisuje;
@@ -154,6 +159,57 @@ selectModule(user, !startInKit && fs.existsSync(START_REQ) ? START_REQ : (lastMo
 selectModule(demoWynik, DEMO_REQ);
 selectModule(demoStart, null);
 
+// ---------------------------------------------------------------- Modul i Konfiguracja (0.16.0)
+function sddFile(ctx) { return ctx.req ? path.join(ctx.req, 'SDD.yaml') : null; }
+function configView(ctx) {
+  const demo = !!ctx.demo;
+  let sdd = null;
+  if (ctx.req) {
+    const y = fs.existsSync(sddFile(ctx)) ? fs.readFileSync(sddFile(ctx), 'utf8') : '';
+    sdd = { project: info.yamlField(y, 'project'), level: info.yamlField(y, 'level') || 'full', owners: info.parseOwners(y),
+      gate: info.yamlField(y, 'gate_blocking_status'), backlog: info.yamlField(y, 'backlog') || 'none',
+      file: demo ? '' : sddFile(ctx), approvesAllowed: info.APPROVES, backlogsAllowed: info.BACKLOGS };
+  }
+  const cfg = demo ? {} : readConfig(CONFIG);
+  return {
+    demo: ctx.demo || false,
+    module: ctx.req ? { name: moduleName(ctx), dir: demo ? '' : path.dirname(ctx.req) } : null,
+    modulesRoot: demo ? null : ROOT, rootSource: demo ? null : ROOT_SOURCE, kitDir: demo ? '' : KIT_DIR,
+    modules: (Array.isArray(cfg.modules) ? cfg.modules : []).filter(d => typeof d === 'string')
+      .map(d => ({ dir: d, name: path.basename(d), exists: fs.existsSync(path.join(d, 'requirements', 'SDD.yaml')) })),
+    lastModule: demo ? null : (cfg.lastModule || null),
+    sdd,
+    server: demo ? { version: VERSION, port: PORT } : { version: VERSION, port: PORT, board: ctx.board || '', config: CONFIG },
+  };
+}
+function localDate() {
+  const d = new Date(), z = v => (v < 10 ? '0' : '') + v;
+  return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+}
+// Zmiana SDD.yaml z panelu: tylko project, backlog, owners (level i gate zmienia Claude - AC-C9).
+function saveSdd(ctx, body) {
+  const allowed = ['project', 'backlog', 'owners'];
+  const keys = Object.keys(body || {});
+  const bad = keys.filter(k => allowed.indexOf(k) < 0);
+  if (bad.length) return { code: 400, error: 'Tego nie zmienisz w przeglądarce: ' + bad.join(', ') + '. Poziom i etykietę blokującą zmienia Claude (wymaga zmian w plikach).' };
+  if (!keys.length) return { code: 400, error: 'Brak zmian.' };
+  const file = sddFile(ctx);
+  if (!file || !fs.existsSync(file)) return { code: 409, error: 'Brak SDD.yaml w tym module.' };
+  let y = fs.readFileSync(file, 'utf8');
+  try {
+    y = info.yamlSet(y, body);
+    if (body.owners) {
+      const blocked = info.roleChangeBlocked(ctx.req, info.parseOwners(y), body.owners);
+      if (blocked.length) return { code: 409, error: 'Tej roli nie można usunąć ani przemianować, bo występuje w plikach: ' +
+        blocked.map(b => '„' + b.role + '” (' + b.files.join(', ') + ')').join('; ') + '. Poproś Claude o zmianę nazwy we wszystkich plikach.', blocked };
+      y = info.ownersSet(y, body.owners);
+    }
+  } catch (e) { return { code: 400, error: e.message }; }
+  fs.writeFileSync(file, y);
+  fs.appendFileSync(path.join(ctx.req, 'CHANGELOG.md'), localDate() + ' | config | zmiana SDD.yaml: ' + keys.join(', ') + ' | panel\n');
+  return { code: 200 };
+}
+
 // ---------------------------------------------------------------- HTTP
 function sendHtml(res, file) {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -198,17 +254,26 @@ const server = http.createServer((req, res) => {
   const url = u.pathname.slice(ctx.base.length) || '/';
   const write = req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE';
   if (write && !allowedWrite(req)) return json(res, 403, { error: 'Zapis tylko z panelu sdd-board.' });
-  if (ctx.demo && (write || url === '/api/dirs')) return json(res, 403, { error: READ_ONLY });
+  if (ctx.demo && (write || url === '/api/dirs' || url === '/api/root/preview')) return json(res, 403, { error: READ_ONLY });
 
   // /demo/start ma tylko tablice (bez plikow requirements/)
   if (ctx.demo === 'start' && (url === '/' || url === '/board')) return sendHtml(res, UI);
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
+  if (url === '/module' || url === '/guide' || url === '/config') return sendHtml(res, INFO_UI);
 
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView(ctx));
   if (url === '/events') return sse(req, res, ctx.boardClients, boardView(ctx));
+  if (url === '/api/guide' && req.method === 'GET') return json(res, 200, info.guide());
+  if (url === '/api/config' && req.method === 'GET') return json(res, 200, configView(ctx));
+  if (url === '/api/module' && req.method === 'GET') {
+    if (!ctx.req || !fs.existsSync(ctx.req)) return json(res, 409, { error: 'Nie wybrano modułu.' });
+    const m = info.moduleSummary(ctx.req);
+    m.dir = ctx.demo ? '' : path.dirname(ctx.req);
+    return json(res, 200, m);
+  }
 
   // ponizej tylko Twoj kontekst (demo odpadlo wyzej na zapisach)
   if (url === '/api/intake' && req.method === 'POST') {
@@ -241,11 +306,38 @@ const server = http.createServer((req, res) => {
       try {
         const dir = checkRoot(JSON.parse(String(buf || '{}')).path);
         saveRoot(configPath(), dir);
-        ROOT = dir;
+        ROOT = dir; ROOT_SOURCE = 'config';
         selectModule(user, user.req && inside(user.req, dir) ? user.req : firstModule());
         json(res, 200, { modulesRoot: dir, module: user.req ? moduleName(user) : null });
       } catch (e) { json(res, 400, { error: e.message }); }
     });
+  }
+  if (url === '/api/root/preview' && req.method === 'GET') {
+    try {
+      const dir = path.resolve(String(u.searchParams.get('path') || ''));
+      return json(res, 200, { path: dir, exists: fs.existsSync(dir), hidden: info.rootPreview(modulesOf(user), dir),
+        visible: listModules(dir).map(m => m.name) });
+    } catch (e) { return json(res, 400, { error: e.message }); }
+  }
+  if (url === '/api/config' && req.method === 'PUT') {
+    return readBody(req, 64 * 1024, buf => {
+      let body;
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+      const r = saveSdd(user, body);
+      if (r.code !== 200) return json(res, r.code, { error: r.error, blocked: r.blocked });
+      broadcastProgress(user);
+      json(res, 200, configView(user));
+    });
+  }
+  // Usuniecie projektu z listy dodanych recznie - tylko wpis w config.json, folder zostaje (AC-C10).
+  if (url === '/api/modules' && req.method === 'DELETE') {
+    const dir = path.resolve(String(u.searchParams.get('dir') || ''));
+    const cfg = readConfig(CONFIG), list = Array.isArray(cfg.modules) ? cfg.modules : [];
+    if (!list.some(d => typeof d === 'string' && path.resolve(d) === dir)) return json(res, 404, { error: 'Nie ma takiego projektu na liście.' });
+    writeConfig(CONFIG, { modules: list.filter(d => typeof d !== 'string' || path.resolve(d) !== dir) });
+    if (user.req && !modulesOf(user).some(m => path.join(m.dir, 'requirements') === user.req)) selectModule(user, firstModule());
+    else send(user.progressClients, progressPayload(user));
+    return json(res, 200, configView(user));
   }
   if (url === '/api/modules' && req.method === 'POST') {
     if (!ROOT) return json(res, 409, { error: 'Najpierw wskaż katalog modułów.' });

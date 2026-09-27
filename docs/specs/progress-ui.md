@@ -375,7 +375,7 @@ tez pod /demo/start; link do demo w gornym pasku. Zmienia zakres 0.11.0 punkty 1
 - AC-42: pod `/demo` i `/demo/start` kazdy zapis (PUT board, POST/DELETE intake, POST root, modules, modules/select)
   i GET `/demo/api/dirs` -> 403 "Demo - tylko podgląd."; w kontekscie usera PUT `/api/board` dalej dziala (204).
 - AC-43: POST `/api/modules/select` w kontekscie usera nie zmienia `/demo/api/progress` (modul dalej `zlecenia`).
-- AC-44: `SddUI.base(pathname)` -> `''`, `/demo`, `/demo/start`; `SddUI.tabs(page, base)` - hrefy z przedrostkiem,
+- AC-44 (lista zakladek od 0.16.0: AC-C1 w info-config.md): `SddUI.base(pathname)` -> `''`, `/demo`, `/demo/start`; `SddUI.tabs(page, base)` - hrefy z przedrostkiem,
   w `/demo/start` tylko zakladka Tablica (test w `test/ui.test.js`).
 - AC-45: serwer na zajetym porcie konczy sie kodem 1 z komunikatem "Port N jest zajęty" (bez stosu bledu Node).
 - AC-46 (reczne): dwa okna na jednym porcie - `/` (horizon-zlecenia) i `/demo`; przelaczanie Start/Wynik, "Przykład ↗"
