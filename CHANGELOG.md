@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.0] - 2026-09-27
+Tablica warsztatowa: cofanie zmian, "+" pod kazda kolumna, panel karteczki na stale (uwagi usera z warsztatu horizon-zlecenia).
+- "↶ Cofnij" / "↷ Ponów" w pasku oraz Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y (w polu tekstowym cofa tekst, nie tablice).
+  Do 50 krokow, historia w karcie przegladarki. Zmiana spoza karty (agent, sync, druga karta) czysci historie z komunikatem;
+  echo wlasnego zapisu nie. Cofnieta karteczka wraca z datami, wiec i ze stanem synchronizacji.
+- Pod kazda zajeta kolumna niski "+" - nowa karteczka na koncu tej kolumny; ostatnia pusta kolumna z pelnym "+".
+- Panel karteczki na stale po prawej (okno > 640 px): tablica sie zweza, nic nie przykrywa edytowanej karteczki.
+  Bez wybranej karteczki podpowiedz i "+ Karteczka" / "+ Proces". "»" zwija do paska (zapamietane), klik karteczki rozwija.
+  "×"/Escape koncza edycje, nie chowaja panelu. Telefon bez zmian (panel od dolu).
+- Spec: `docs/specs/board-ui.md` punkty 4, 10, 11 (AC-B19..AC-B23); testy 64/64 (nowy `test/history.test.js`).
+
 ## [0.13.1] - 2026-09-27
 `/sdd:init` w repo istniejacej aplikacji (sprawdzone na fv-manager).
 - `CLAUDE.md` nigdy nie nadpisywany: istniejacy dostaje na koncu tresc szablonu, bez drugiego naglowka.

@@ -145,5 +145,53 @@
     return lanes(b).length ? 'nonotes' : 'blank';
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap };
+  // Cofnij / Ponow (AC-B19, AC-B20). Stan = board.json bez pol `_` (serwer dopisuje je do widoku).
+  // Klucz tresci pomija daty updated tablicy i created/updated karteczek - roznia sie w echu wlasnego zapisu, bo nadaje je serwer.
+  function snap(b) {
+    return JSON.stringify(b, function (k, v) { return this === b && k.charAt(0) === '_' ? undefined : v; });
+  }
+  function keyOf(s) {
+    const b = JSON.parse(s);
+    delete b.updated;
+    notes(b).forEach(function (n) { delete n.created; delete n.updated; });
+    return JSON.stringify(b);
+  }
+  function createHistory(limit) {
+    const max = limit || 50;
+    let base = null, undos = [], redos = [], pending = [];
+    function sent(s) { pending.push(keyOf(s)); if (pending.length > max) pending.shift(); }
+    return {
+      reset: function (b) { base = snap(b); undos = []; redos = []; pending = []; },
+      record: function (b) {
+        const s = snap(b);
+        if (base !== null && keyOf(s) === keyOf(base)) return false;
+        if (base !== null) { undos.push(base); if (undos.length > max) undos.shift(); }
+        redos = []; base = s; sent(s);
+        return true;
+      },
+      undo: function () {
+        if (!undos.length) return null;
+        redos.push(base); base = undos.pop(); sent(base);
+        return JSON.parse(base);
+      },
+      redo: function () {
+        if (!redos.length) return null;
+        undos.push(base); base = redos.pop(); sent(base);
+        return JSON.parse(base);
+      },
+      // Tablica przyszla z serwera: 'echo' (wlasny zapis), 'same' (bez zmian), 'external' (ktos inny - historia pusta).
+      incoming: function (b) {
+        const s = snap(b), k = keyOf(s), i = pending.indexOf(k);
+        if (i >= 0) { pending.splice(0, i + 1); if (!pending.length) base = s; return 'echo'; }
+        if (base !== null && k === keyOf(base)) { base = s; return 'same'; }
+        undos = []; redos = []; pending = []; base = s;
+        return 'external';
+      },
+      canUndo: function () { return undos.length > 0; },
+      canRedo: function () { return redos.length > 0; },
+      waiting: function () { return pending.length > 0; },
+    };
+  }
+
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap, createHistory };
 });
