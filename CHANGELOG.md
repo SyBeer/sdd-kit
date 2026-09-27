@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.14.2] - 2026-09-27
 - Tablica ostrzega o podmianie: serwer podaje w widoku `_file` (sciezka pliku tablicy, nie trafia do board.json);
   gdy karta dostanie tablice z innego pliku, a sama nie przelaczala modulu - staly pasek "Serwer pokazuje teraz inna
   tablice" z oboma plikami i "Rozumiem"; edycja z poprzedniej tablicy zamykana. (Zdarzenie 2026-09-27: po restarcie
