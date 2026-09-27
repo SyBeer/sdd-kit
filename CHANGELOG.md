@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.0] - 2026-09-27
+Walidacja nieaktualna po zmianie wymagan (spec: `docs/specs/progress-ui.md`, zmiana 0.18.0, AC-59..AC-63).
+- `board/fingerprint.js`: odcisk wymagan (sha256 z SDD.yaml, INDEX.md, QUESTIONS/DECISIONS/ASSUMPTIONS, 02-domain, 03-spec bez agent/);
+  CLI `node board/fingerprint.js <requirements>`.
+- `/sdd:validate` wpisuje do raportu `Odcisk wymagan: sha256:...`. Panel: inny odcisk (albo, bez odcisku, wpis innego etapu
+  w CHANGELOG po ostatnim `validate`) -> Validate "nieaktualne", aktualny krok wraca na Validate, Handover nie jest proponowany.
+- Demo: raport z odciskiem (dalej 100%).
+- Testy 109/109.
+
 ## [0.17.0] - 2026-09-27
 - Tablica: pytania z `QUESTIONS.md` na tablicy. Pasek "Pytania": ile na tablicy, ile z pliku brakuje - "Dołóż"
   (jeden krok Cofnij). Pytanie staje obok karteczki, ktorej dotyczy: bezposrednio (Skad/Wplyw) albo posrednio - decyzja
