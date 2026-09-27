@@ -320,7 +320,8 @@ test('AC-59: fingerprint - zmienia sie tylko od plikow, ktore sprawdza walidacja
   assert.strictEqual(fingerprint(req), f0);
   fs.writeFileSync(dec, txt);
   // zmiana wymagan
-  for (const rel of ['01-interview/DECISIONS.md', '02-domain/GLOSSARY.md', '03-spec/PRD.md', '00-intake/INDEX.md', 'SDD.yaml']) {
+  // SDD.yaml: tylko wybrane pola (AC-64)
+  for (const rel of ['01-interview/DECISIONS.md', '02-domain/GLOSSARY.md', '03-spec/PRD.md', '00-intake/INDEX.md']) {
     const before = fingerprint(req);
     append(req, rel, '\nzmiana\n');
     assert.notStrictEqual(fingerprint(req), before, rel);
@@ -356,4 +357,17 @@ test('AC-62: CLI fingerprint.js wypisuje ten sam odcisk', () => {
   const req = freshProject();
   const out = require('child_process').execFileSync(process.execPath, [path.join(__dirname, '..', 'fingerprint.js'), req]).toString().trim();
   assert.strictEqual(out, fingerprint(req));
+});
+
+test('AC-64: fingerprint - z SDD.yaml tylko level, owners i gate_blocking_status', () => {
+  const req = freshProject();
+  const y = path.join(req, 'SDD.yaml');
+  const base = fs.readFileSync(y, 'utf8');
+  const f0 = fingerprint(req);
+  const same = [t => t.replace(/^backlog: none/m, 'backlog: file'), t => t.replace(/^project: .*$/m, 'project: "inna nazwa"'),
+    t => t.replace('# etykieta pytan blokujacych', '# inny komentarz'), t => t + '\n# dopisek\n'];
+  same.forEach((fn, i) => { fs.writeFileSync(y, fn(base)); assert.strictEqual(fingerprint(req), f0, 'bez zmiany #' + i); });
+  const diff = [t => t.replace(/^level: full/m, 'level: light'), t => t.replace('wlasciciel procesu', 'kierownik'),
+    t => t.replace('approves: [BR]', 'approves: [BR, PRD]'), t => t.replace('"blokuje go-live"', '"blokuje start"')];
+  diff.forEach((fn, i) => { fs.writeFileSync(y, fn(base)); assert.notStrictEqual(fingerprint(req), f0, 'zmiana #' + i); });
 });

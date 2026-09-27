@@ -494,10 +494,17 @@ aktualny krok na Validate, zanim ktos przekaze nieaktualny spec do budowy.
 - Handover nieaktualny po zmianie specu (ta sama zasada, osobna zmiana).
 
 ## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
-- AC-59: `fingerprint(req)` - ten sam wynik dla tych samych plikow; zmiana w DECISIONS/GLOSSARY/PRD/INDEX/SDD.yaml zmienia odcisk;
+- AC-59: `fingerprint(req)` - ten sam wynik dla tych samych plikow; zmiana w DECISIONS/GLOSSARY/PRD/INDEX zmienia odcisk (SDD.yaml - AC-64);
   zmiana w board.json, session-*.md, CHANGELOG.md, 04-validation/, 03-spec/agent/ nie zmienia; \r\n i \n daja ten sam odcisk.
 - AC-60: raport 100% z odciskiem zgodnym -> Validate `done`; po zmianie DECISIONS -> `active`, `stale: true`, `next.key` = validate.
 - AC-61: raport 100% bez odcisku: ostatni wpis CHANGELOG to `validate` -> `done`; po nim wpis `interview` -> `stale`.
 - AC-62: CLI wypisuje `sha256:` + 64 znaki hex, ten sam co `fingerprint(req)`.
 - AC-35 (demo) bez zmian: demo 100%, aktualny krok Handover.
 - AC-63 (reczne): horizon-zlecenia - panel pokazuje Validate "nieaktualne" i krok Validate; po `/sdd:validate` z odciskiem wraca "gotowe".
+
+## Poprawka 0.18.2 (2026-09-27): z SDD.yaml tylko pola, ktore dotycza walidacji
+Zdarzenie: /sdd:handover w horizon-zlecenia mial ustawic `backlog: file`; caly SDD.yaml w odcisku oznaczylby walidacje
+jako nieaktualna, choc wymagania sie nie zmienily (to samo przy zmianie nazwy projektu w Konfiguracji).
+- Z `SDD.yaml` do odcisku wchodza tylko `level`, blok `owners` i `gate_blocking_status`; `project`, `backlog` i komentarze nie.
+- AC-64: zmiana `backlog`, `project` albo komentarza w SDD.yaml nie zmienia odcisku; zmiana `level`, roli w `owners`,
+  `approves` albo `gate_blocking_status` zmienia.

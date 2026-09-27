@@ -22,17 +22,31 @@ function tracked(req) {
   return out.sort();
 }
 
+// Z SDD.yaml tylko to, co zmienia ocene walidacji: poziom, kto zatwierdza, etykieta blokujaca (0.18.2, AC-64).
+// project i backlog (ustawiany przy handover) oraz komentarze nie uniewazniaja raportu.
+function sddRelevant(text) {
+  const out = [];
+  let inOwners = false;
+  text.split('\n').forEach(l => {
+    const line = l.replace(/\s+#.*$/, '').replace(/\s+$/, '');
+    if (/^\S/.test(line)) inOwners = /^owners:/.test(line);
+    if (/^(level|gate_blocking_status):/.test(line) || (inOwners && /^\s+\S/.test(line))) out.push(line.trim());
+  });
+  return out.join('\n');
+}
+
 function fingerprint(req) {
   const h = crypto.createHash('sha256');
   tracked(req).forEach(rel => {
+    const text = fs.readFileSync(path.join(req, rel), 'utf8').replace(/\r\n/g, '\n');
     h.update(rel + '\n');
-    h.update(fs.readFileSync(path.join(req, rel), 'utf8').replace(/\r\n/g, '\n'));
+    h.update(rel === 'SDD.yaml' ? sddRelevant(text) : text);
     h.update('\n\0\n');
   });
   return 'sha256:' + h.digest('hex');
 }
 
-module.exports = { fingerprint, tracked };
+module.exports = { fingerprint, tracked, sddRelevant };
 
 if (require.main === module) {
   const req = path.resolve(process.argv[2] || 'requirements');
