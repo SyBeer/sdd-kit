@@ -175,15 +175,21 @@ const FOLDERS = [
 ];
 const SECTIONS = [
   { title: 'Źródła i wiarygodność', items: [
-    'Od najwyższej: [Biz] - wypowiedź biznesu (cytat, data, kto).',
-    '[App] - działająca aplikacja, system albo prototyp (zaobserwowane zachowanie).',
-    '[Dok] - dokument spisany z kodu albo przez AI.',
-    '[AI] - interpretacja AI; musi wrócić do biznesu jako pytanie albo założenie.',
-    'Wyższe źródło wygrywa, a różnica trafia do QUESTIONS.md jako „sprzeczne” - AI nie rozstrzyga jej po cichu.'] },
+    '[Biz] – wypowiedź biznesu (cytat, data, kto). Najwyższa wiarygodność.',
+    '[App] – działająca aplikacja, system albo prototyp (zaobserwowane zachowanie).',
+    '[Dok] – dokument spisany z kodu albo przez model.',
+    '[AI] – interpretacja modelu; musi wrócić do biznesu jako pytanie albo założenie.',
+    'Kolejność: [Biz] → [App] → [Dok] → [AI]. Wyższe źródło wygrywa, a różnica trafia do QUESTIONS.md jako „sprzeczne” - Claude nie rozstrzyga jej po cichu.'] },
   { title: 'Identyfikatory i statusy', items: [
-    'Q – pytanie, D – decyzja, A – założenie, BR – reguła biznesowa, R – wymaganie, AC – kryterium akceptacji, PRD – dokument wymagań dla biznesu.',
+    '**Q** – pytanie.',
+    '**D** – decyzja.',
+    '**A** – założenie.',
+    '**BR** – reguła biznesowa.',
+    '**R** – wymaganie.',
+    '**AC** – kryterium akceptacji.',
+    '**PRD** – dokument wymagań dla biznesu.',
     'Statusy: robocze → zatwierdzone; zakwestionowane (Q-xxx), gdy nowe źródło podważa element modelu.',
-    'Zmiana decyzji albo reguły uruchamia kaskadę: powiązane R wracają „do przeglądu”.'] },
+    'Zmiana decyzji albo reguły uruchamia kaskadę: powiązane **R** wracają „do przeglądu”.'] },
   { title: 'Tablica warsztatowa', items: [
     'Karteczki: zdarzenie, komenda, kto, reguła, widok, „nie wiemy” (pytanie).',
     'Tablica to widok, pliki w requirements/ są prawdą. Po warsztacie /sdd:board sync przenosi karteczki do plików.',

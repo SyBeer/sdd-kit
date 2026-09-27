@@ -296,3 +296,29 @@ test('AC-C20: guide - warianty komend istnieja w plikach skilli', () => {
     }
   }
 });
+
+test('AC-C23: zrodla jako [X], identyfikatory pogrubione bez nawiasow, jeden na punkt', () => {
+  const g = info.guide();
+  const bare = t => new RegExp('(^|[^\\[\\w*ąćęłńóśźż-])(' + t + ')(?![\\wąćęłńóśźż\\]*-])');
+  const src = g.sections.find(x => x.title === 'Źródła i wiarygodność');
+  assert.ok(src);
+  for (const t of ['Biz', 'App', 'Dok', 'AI']) assert.ok(src.items.some(i => i.startsWith('[' + t + ']')), '[' + t + ']');
+  for (const it of src.items) assert.ok(!bare('Biz|App|Dok|AI').test(it), 'goły skrót w „' + it + '”');
+  const ids = g.sections.find(x => x.title === 'Identyfikatory i statusy');
+  assert.ok(ids);
+  for (const t of ['Q', 'D', 'A', 'BR', 'R', 'AC', 'PRD']) {
+    assert.strictEqual(ids.items.filter(i => i.startsWith('**' + t + '** – ')).length, 1, 'punkt dla **' + t + '**');
+  }
+  for (const it of ids.items) assert.ok(!bare('Q|D|A|BR|R|AC|PRD').test(it), 'goły skrót w „' + it + '”');
+  assert.ok(!/\[(Q|D|A|BR|R|AC|PRD)\]/.test(ids.items.join(' ')), 'identyfikator w nawiasie');
+});
+
+test('AC-C23: SddUI.marks pogrubia zrodla w nawiasach i **tekst**', () => {
+  assert.strictEqual(ui.marks('[App] i [XYZ], **D** – decyzja'), '<strong>[App]</strong> i [XYZ], <strong>D</strong> – decyzja');
+});
+
+test('AC-C22: sekcje przewodnika jako lista punktowana z pogrubionymi skrotami', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  assert.match(html, /\.list\.bullets\{[^}]*list-style:\s*disc/);
+  assert.match(html, /g\.sections\.forEach[^\n]*class="list bullets"[^\n]*SddUI\.marks\(esc\(i\)\)/);
+});

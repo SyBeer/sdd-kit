@@ -90,6 +90,9 @@
   // Rozwiniecia skrotow (AC-C17) - jeden slownik dla wszystkich zakladek.
   const ABBR = { R: 'wymagania', D: 'decyzje', GLOSSARY: 'słownik pojęć', BR: 'reguły biznesowe', PRD: 'cały dokument wymagań',
     Q: 'pytania', A: 'założenia', AC: 'kryteria akceptacji' };
+  // Zrodla w nawiasach ([Biz], [App], [Dok], [AI]) i **tekst** pogrubione; wejscie juz escapowane (0.22.0, AC-C23).
+  const MARKS = /\[(Biz|App|Dok|AI)\]/g;
+  function marks(html) { return String(html).replace(MARKS, '<strong>[$1]</strong>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
   function abbr(code) { return ABBR[code] ? code + ' – ' + ABBR[code] : String(code); }
 
   // Wersja w pasku (AC-U10): stary serwer po aktualizacji pluginu -> ostrzezenie o restarcie.
@@ -109,7 +112,7 @@
       title: tips.length ? tips.join('\n') : 'sdd-kit ' + v.running };
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, versionBadge, KEY };
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

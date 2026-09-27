@@ -107,5 +107,15 @@ dopisz pelny wyraz")
 mozna zaczac tez od tablicy. Tablica synchronizuje sie z Panelem (konieczna wspolpraca z Claude Code). Dla komend sa
 dodatkowe subkomendy - nie ma po nich sladu - uzupelnij")
 
+## Zmiana 0.22.0: listy punktowane i skroty w nawiasach (uwaga usera: "do kazdej nowej linijki w Tablica i panel;
+Tablica warsztatowa; Identyfikatory i statusy; Panel i serwer dodaj bulet. W Identyfikatory i statusy; Zrodla
+i wiarygodnosc to co jest skrotem np. Q - pytanie albo [App] doprowadz do spojnej formy [Q] [App] pisane BOLDEM")
+- AC-C22: sekcje przewodnika (`guide().sections`) w zakladce Jak to dziala sa listami punktowanymi - kazda pozycja
+  `items` to jeden punkt z widocznym znacznikiem.
+- AC-C23: w sekcji "Zrodla i wiarygodnosc" zrodla maja forme `[Biz]`, `[App]`, `[Dok]`, `[AI]`; w "Identyfikatory
+  i statusy" skroty identyfikatorow (Q, D, A, BR, R, AC, PRD) sa pogrubione BEZ nawiasow (`**D**`), jeden na punkt -
+  decyzja usera 2026-09-27: nawiasy zostaja zarezerwowane dla zrodel, bo `[D]` to dawne oznaczenie `[Dok]` (AC-C15/16).
+  Zaden skrot w tych dwoch sekcjach nie stoi goly. `SddUI.marks()` pogrubia `[X]` znanych zrodel i `**tekst**`.
+
 ## Wyglad
 Tokeny kolorow z `:root` jak panel (ui.css + strony); bez nowych kolorow. Tresc w kartach jak karty etapow panelu.

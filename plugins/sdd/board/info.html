@@ -52,6 +52,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg
 .counts b{color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums}
 .counts .warn b{color:var(--hot)}
 .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.list.bullets{display:block;list-style:disc;padding-left:20px}
+.list.bullets li{margin:0 0 6px}
+.list.bullets li:last-child{margin-bottom:0}
 .log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
 .tag{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
 .tag.bad{background:var(--hot);border-color:var(--hot);color:#fff}
@@ -209,7 +212,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
         vs.map(function(v,i){return '<tr class="var'+(i===vs.length-1?' last':'')+'"><td><code>'+esc(v.command)+'</code></td><td colspan="2">'+esc(v.desc)+'</td></tr>'}).join('')}).join('')+'</tbody></table></div></section>';
     h+='<section class="card wide"><h2>Folder requirements/</h2><dl class="kv">'+
       g.folders.map(function(f){return '<dt><code>'+esc(f.path)+'</code></dt><dd>'+esc(f.desc)+'</dd>'}).join('')+'</dl></section>';
-    g.sections.forEach(function(s){ h+='<section class="card"><h2>'+esc(s.title)+'</h2><ul class="list">'+s.items.map(function(i){return '<li>'+esc(i)+'</li>'}).join('')+'</ul></section>'; });
+    g.sections.forEach(function(s){ h+='<section class="card"><h2>'+esc(s.title)+'</h2><ul class="list bullets">'+s.items.map(function(i){return '<li>'+SddUI.marks(esc(i))+'</li>'}).join('')+'</ul></section>'; });
     $('#app').innerHTML=h+'</div>';
   }
 
