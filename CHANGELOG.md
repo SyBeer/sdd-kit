@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0] - 2026-09-27
+- Panel: liczniki na kartach Interview, Domain i Spec sa klikalne - klik rozwija liste tego, co licza (drugi klik zwija):
+  pytania (wszystkie/otwarte/zadane/sprzeczne), decyzje D-xxx (kto, kiedy, tresc, "brak powodu"), zalozenia
+  niepotwierdzone/obalone, hasla slownika, role, encje, reguly BR, wymagania R-xxx (zatwierdzone, do przegladu z powodem
+  z sekcji 6 PRD). Naglowek listy z plikiem, z ktorego pochodzi. Tylko do czytania.
+- Spec: `docs/specs/progress-ui.md` zmiana 0.15.0 (AC-54..AC-58); testy 77/77.
+
 ## [0.14.3] - 2026-09-27
 - Tablica: zmiana nazwy procesu nie oznacza juz jego karteczek jako "zmienione po synchronizacji" (↻).
   `stampNotes` rozpoznaje zmiane nazwy po `lanes` (stara nazwa znika, nowa na tym samym miejscu); przeniesienie

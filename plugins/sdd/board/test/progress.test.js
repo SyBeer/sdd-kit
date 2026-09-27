@@ -222,3 +222,77 @@ test('AC-17: kazdy etap ma instrukcje howto, Intake: najpierw pliki, potem komen
   const p = readProgress(freshProject());
   assert.ok(p.next.howto.length >= 2);
 });
+
+// ---- Zmiana 0.15.0: szczegoly licznikow (AC-54..AC-56)
+const DEC = [
+  '', '## D-001 | 2026-09-20 | Termin platnosci', 'Pytanie: Q-003', 'Decyzja: 14 dni od wystawienia.',
+  'Powod: tak jest w umowach', 'Zdecydowal: sponsor', '',
+  '## D-002 | 2026-09-21 | Jeden przycisk', 'Pytanie: Q-004', 'Decyzja: Jeden przycisk "Zwieksz limit".', 'Powod:',
+  'Zdecydowal: wlasciciel procesu', '',
+].join('\n');
+
+test('AC-54: details Interview - decyzje i zalozenia', () => {
+  const req = freshProject();
+  append(req, '01-interview/DECISIONS.md', DEC);
+  append(req, '01-interview/ASSUMPTIONS.md', [
+    '| A-001 | Faktura ma jedna walute | potwierdzone | [D] mail | R-001 |',
+    '| A-002 | Klient ma NIP | niepotwierdzone | [AI] | R-002 |',
+    '| A-003 | Kopia wymaga potwierdzenia | obalone (D-035) | [D] doc | R-001 |',
+  ].join('\n') + '\n');
+  const d = stage(readProgress(req), 'interview').details;
+  assert.strictEqual(d.decisions.file, '01-interview/DECISIONS.md');
+  assert.deepStrictEqual(d.decisions.items.map(i => i.id), ['D-001', 'D-002']);
+  const [a, b] = d.decisions.items;
+  assert.strictEqual(a.title, 'Termin platnosci');
+  assert.match(a.status, /sponsor/); assert.match(a.status, /2026-09-20/);
+  assert.strictEqual(a.note, '14 dni od wystawienia.');
+  assert.ok(!a.warn);
+  assert.strictEqual(b.warn, 'brak powodu');
+  assert.deepStrictEqual(d.unconfirmed.items.map(i => i.id), ['A-002']);
+  assert.strictEqual(d.unconfirmed.items[0].title, 'Klient ma NIP');
+  assert.match(d.unconfirmed.items[0].note, /\[AI\]/);
+  assert.deepStrictEqual(d.refuted.items.map(i => i.id), ['A-003']);
+  assert.strictEqual(d.unconfirmed.file, '01-interview/ASSUMPTIONS.md');
+});
+
+test('AC-55: details Domain - hasla, zatwierdzone, role, reguly, encje', () => {
+  const req = freshProject();
+  append(req, '02-domain/GLOSSARY.md', [
+    '| Faktura | Dokument sprzedazy | invoice | FV 1/2026 | [D] mail | zatwierdzone |',
+    '| Korekta | Zmiana faktury | | KOR 1 | [D] mail | robocze |',
+  ].join('\n') + '\n');
+  append(req, '02-domain/ACTORS.md', '| Ksiegowa | Wystawia faktury | Nie zatwierdza | [B] | robocze |\n');
+  append(req, '02-domain/RULES.md', '| BR-001 | Jezeli faktura po terminie, to przypomnienie | [B] | | R-003 | robocze |\n');
+  append(req, '02-domain/ENTITIES.md', '\n## Faktura\nStany: robocza, wystawiona\n');
+  const s = stage(readProgress(req), 'domain');
+  const d = s.details;
+  assert.deepStrictEqual(d.terms.items.map(i => i.title), ['Faktura', 'Korekta']);
+  assert.strictEqual(d.terms.items[0].note, 'Dokument sprzedazy');
+  assert.deepStrictEqual(d.approved.items.map(i => i.title), ['Faktura']);
+  assert.deepStrictEqual(d.actors.items.map(i => [i.title, i.note]), [['Ksiegowa', 'Wystawia faktury']]);
+  assert.deepStrictEqual(d.rules.items.map(i => i.id), ['BR-001']);
+  assert.match(d.rules.items[0].note, /R-003/);
+  assert.deepStrictEqual(d.entities.items.map(i => i.title), ['Faktura']);
+  for (const k of ['terms', 'approved', 'actors', 'rules', 'entities']) assert.strictEqual(d[k].items.length, s.counts[k], k);
+  assert.strictEqual(d.terms.file, '02-domain/GLOSSARY.md');
+});
+
+test('AC-56: details Spec - wymagania, zatwierdzone, do przegladu z powodem z sekcji 6', () => {
+  const req = freshProject();
+  const prd = fs.readFileSync(path.join(req, '03-spec/PRD.md'), 'utf8')
+    .replace('## 6. Do przegladu', '## 6. Do przegladu\n- R-003: D-036 zmienia przycisk wniosku (AC-003-1)')
+    + ['', '### R-002 Eksport faktur', 'Opis:              Ksiegowa eksportuje faktury do CSV.', 'Status:            zatwierdzone (sponsor, 2026-09-27)',
+      '', '### R-003 Import', 'Opis:              Import z banku.', 'Status:            do przegladu', ''].join('\n');
+  write(req, '03-spec/PRD.md', prd);
+  const s = stage(readProgress(req), 'spec');
+  const d = s.details;
+  assert.deepStrictEqual(d.requirements.items.map(i => i.id), ['R-002', 'R-003']);
+  assert.strictEqual(d.requirements.items[0].title, 'Eksport faktur');
+  assert.strictEqual(d.requirements.items[0].note, 'Ksiegowa eksportuje faktury do CSV.');
+  assert.match(d.requirements.items[0].status, /^zatwierdzone/);
+  assert.deepStrictEqual(d.approved.items.map(i => i.id), ['R-002']);
+  assert.deepStrictEqual(d.review.items.map(i => i.id), ['R-003']);
+  assert.match(d.review.items[0].note, /D-036 zmienia przycisk/);
+  for (const k of ['requirements', 'approved', 'review']) assert.strictEqual(d[k].items.length, s.counts[k], k);
+  assert.strictEqual(d.requirements.file, '03-spec/PRD.md');
+});

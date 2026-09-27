@@ -61,7 +61,26 @@
     return toggled && typeof toggled[key] === 'boolean' ? toggled[key] : key === current;
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, KEY };
+  // Lista pozycji pod licznikiem karty (zmiana 0.15.0, AC-57). detail = {file, items:[{id,title,status,note,warn}]}.
+  // Status ze znanym slowem -> znacznik (pelny w dymku), inny (np. "zdecydowal: X · data") -> linia szczegolow.
+  const STATUS_WORD = /^(zatwierdzone|robocze|potwierdzone|niepotwierdzone|obalone|do przegladu|zakwestionowane|odpowiedziane|otwarte|zadane|sprzeczne|zaparkowane)/i;
+  function countList(label, d) {
+    const items = (d && d.items) || [];
+    let out = '<div class="files qs cl"><div class="clh"><b>' + items.length + '</b> ' + esc(label) +
+      (d && d.file ? ' <span class="clf">· <code>' + esc(d.file) + '</code></span>' : '') + '</div>';
+    if (!items.length) return out + '<p class="nofiles">Brak pozycji.</p></div>';
+    return out + '<ul>' + items.map(function (it) {
+      const st = String(it.status || ''), m = st.match(STATUS_WORD);
+      const tag = m ? '<span class="tag' + (/obalone|zakwestionowane|sprzeczne/i.test(m[1]) ? ' bad' : /^zatwierdzone|^potwierdzone/i.test(m[1]) ? ' ok' : '') +
+        '" title="' + esc(st) + '">' + esc(m[1].toLowerCase()) + '</span>' : '<span></span>';
+      const meta = [m ? '' : st, it.note].filter(Boolean).join(' · ');
+      return '<li><span class="qid">' + esc(it.id || '') + '</span><span class="qt">' + esc(it.title) +
+        (it.warn ? ' <span class="tag bad warn">' + esc(it.warn) + '</span>' : '') + '</span>' + tag +
+        (meta ? '<span class="qm">' + esc(meta) + '</span>' : '') + '</li>';
+    }).join('') + '</ul></div>';
+  }
+
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

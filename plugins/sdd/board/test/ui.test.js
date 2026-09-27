@@ -128,3 +128,14 @@ test('AC-52: modMenu - modul po sciezce, dopisek "poza katalogiem", Dodaj istnie
   assert.ok(h.includes('id="addproj"'));
   assert.ok(!ui.modMenu(mods, '/r/horizon', true).includes('addproj'));
 });
+
+test('AC-57: countList - naglowek z plikiem, pozycje, escapowanie, warn, pusta lista', () => {
+  const h = ui.countList('decyzji', { file: '01-interview/DECISIONS.md', items: [
+    { id: 'D-001', title: 'Termin <b>', status: 'sponsor · 2026-09-20', note: '14 dni' },
+    { id: 'D-002', title: 'Przycisk', status: 'wlasciciel', note: 'x', warn: 'brak powodu' },
+  ] });
+  assert.match(h, /decyzji/); assert.match(h, /2/); assert.match(h, /01-interview\/DECISIONS\.md/);
+  assert.match(h, /D-001/); assert.match(h, /Termin &lt;b&gt;/); assert.ok(!/Termin <b>/.test(h));
+  assert.match(h, /14 dni/); assert.match(h, /class="[^"]*warn[^"]*"[^>]*>brak powodu/);
+  assert.match(ui.countList('obalonych', { file: 'x.md', items: [] }), /Brak pozycji/);
+});

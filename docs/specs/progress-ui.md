@@ -427,3 +427,41 @@ w jej repo (`<repo>/requirements/`); osobne repo wymagan (jak horizon-zlecenia) 
   "Dodaj istniejący projekt…" (id `addproj`) poza demo, w demo brak (test w `test/ui.test.js`).
 - AC-53 (reczne): dodanie `~/_DEV_/repos/fv-manager` bez requirements/ -> komunikat z /sdd:init; dodanie folderu
   z requirements/ -> panel przelacza sie na niego; restart serwera -> ten sam modul.
+
+# Zmiana 0.15.0 (2026-09-27): szczegoly licznikow na kartach
+
+Uwaga usera (zrzut karty Interview i Spec): "76 pytan, 18 otwartych, 36 decyzji, 2 zalozen niepotwierdzonych, 1 obalonych;
+18 wymagan, 17 zatwierdzonych, 1 do przegladu - czy po kliknieciu na te rzeczy moga wyswietlac sie informacje, czego dotycza?"
+Decyzja: tak, dla Interview, Domain i Spec.
+
+## Zakres
+1. Licznik z pozycjami jest przyciskiem. Klik rozwija pod wierszem licznikow liste tego, co liczy; drugi klik (albo klik
+   innego licznika) zwija / przelacza. Na karcie otwarta jedna lista naraz. Licznik z wartoscia 0 nie jest klikalny.
+2. Naglowek listy: nazwa licznika, liczba i plik, z ktorego pochodzi (np. `01-interview/DECISIONS.md`) - wiadomo,
+   gdzie poprawic. Pozycja: ID (jesli jest), tytul, znacznik statusu, jedna linia szczegolow.
+3. Co pokazuje:
+   - Interview: pytan / otwarte / zadane biznesowi / sprzeczne - pytania z QUESTIONS.md (jak lista "Pytania do wyjasnienia":
+     pytanie, do kogo, skad); decyzji - D-xxx z DECISIONS.md: tytul, kto zdecydowal i kiedy, tresc decyzji, "brak powodu"
+     wyrozniony; zalozen niepotw. / obalonych - A-xxx z ASSUMPTIONS.md: tresc, zrodlo, wymagania zalezne.
+   - Domain: hasel / zatwierdzonych - pojecie i definicja z GLOSSARY.md; rol - rola i co robi z ACTORS.md;
+     encji - naglowki z ENTITIES.md; regul - BR-xxx z RULES.md: tresc i wymagania.
+   - Spec: wymagan / zatwierdzonych / do przegladu - R-xxx z PRD.md (SPEC.md przy `light`): tytul, status, opis;
+     przy "do przegladu" powod z sekcji "6. Do przegladu", jesli jest.
+4. Tylko do czytania - zmiany dalej przez `/sdd:...` w Claude Code. Nazwy plikow i tresci jak w plikach (bez tlumaczenia).
+5. Panel odswieza sie na zywo; otwarta lista zostaje otwarta po odswiezeniu (do przeladowania strony albo zmiany modulu).
+
+## Poza zakresem
+- Edycja z panelu, przejscie do pliku w edytorze, liczniki Intake/Validate/Handover (Intake ma juz liste plikow).
+
+## Kryteria akceptacji (test w `plugins/sdd/board/test/progress.test.js`)
+- AC-54: `stage.details` Interview: `decisions` - pozycje D-xxx z tytulem, `status` z "Zdecydowal" i data, `note` z "Decyzja",
+  `warn` gdy "Powod" pusty; szablon (D-xxx) pominiety; `unconfirmed` / `refuted` - tylko A o tym statusie; kazda lista z `file`.
+- AC-55: `stage.details` Domain: `terms` wszystkie hasla, `approved` tylko zatwierdzone (tytul = pojecie, note = definicja);
+  `actors`, `rules` (id BR-xxx), `entities` (naglowki bez placeholdera `<Encja>`); liczba pozycji = licznik.
+- AC-56: `stage.details` Spec: `requirements` / `approved` / `review` - R-xxx z tytulem, statusem i opisem; `review` ma
+  `note` z sekcji 6, gdy R jest tam wymienione; placeholder R pominiety; liczba pozycji = licznik.
+- AC-57: `SddUI.countList(label, detail)` (ui.js) - HTML listy: naglowek z liczba i plikiem, pozycje z ID, tytulem, statusem
+  i notatka, tekst escapowany, `warn` wyrozniony; pusta lista -> komunikat (test w `test/ui.test.js`).
+- AC-58 (reczne): horizon-zlecenia - klik "36 decyzji" pokazuje 36 decyzji z D-036 "brak powodu"; klik "1 obalonych" -> A-006;
+  "1 do przegladu" -> to R; "53 hasel" -> slownik; drugi klik zwija; licznik 0 nieklikalny; odswiezenie na zywo nie zwija listy;
+  telefon bez poziomego przewijania, tryb ciemny czytelny.

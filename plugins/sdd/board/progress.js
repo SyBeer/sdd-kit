@@ -57,6 +57,30 @@ function parseTable(md) {
     .filter(r => !/<[^>]+>/.test(r._raw));
 }
 
+// Szczegoly licznikow (zmiana 0.15.0, AC-54..AC-56): lista pozycji z plikiem, z ktorego pochodza.
+const list = (file, items) => ({ file, items });
+const clean = v => String(v || '').trim();
+
+// DECISIONS.md: sekcje "## D-001 | data | tytul" z polami "Decyzja:", "Powod:", "Zdecydowal:". Szablon D-xxx pominiety.
+function parseDecisions(md) {
+  const out = [];
+  let cur = null;
+  md.split('\n').forEach(l => {
+    const h = l.match(/^##\s+(D-\d+)\s*(?:\|\s*([^|]*?)\s*)?(?:\|\s*(.*))?$/);
+    if (h) { cur = { id: h[1], date: clean(h[2]), title: clean(h[3]), fields: {} }; out.push(cur); return; }
+    if (/^#{1,2}\s/.test(l)) { cur = null; return; }
+    const f = cur && l.match(/^(Decyzja|Powod|Zdecydowal):\s*(.*)$/);
+    if (f && !(f[1] in cur.fields)) cur.fields[f[1]] = clean(f[2]);
+  });
+  return out.map(d => {
+    const who = d.fields.Zdecydowal;
+    const item = { id: d.id, title: d.title || d.fields.Decyzja || '',
+      status: [who && 'zdecydował: ' + who, d.date].filter(Boolean).join(' · '), note: d.fields.Decyzja || '' };
+    if (!d.fields.Powod || /^\(puste/.test(d.fields.Powod)) item.warn = 'brak powodu';
+    return item;
+  });
+}
+
 function yamlField(text, key) {
   const m = text.match(new RegExp('^' + key + ':\\s*"?([^"#\\n]*?)"?\\s*(#.*)?$', 'm'));
   return m ? m[1].trim() : '';
@@ -119,7 +143,7 @@ function hasGate(raw, gate) {
 function interview(req, gate) {
   const qs = parseTable(read(path.join(req, '01-interview', 'QUESTIONS.md')));
   const as = parseTable(read(path.join(req, '01-interview', 'ASSUMPTIONS.md')));
-  const decisions = (read(path.join(req, '01-interview', 'DECISIONS.md')).match(/^##\s+D-\d+/gm) || []).length;
+  const decisions = parseDecisions(read(path.join(req, '01-interview', 'DECISIONS.md'))).length;
   const by = k => qs.filter(q => qKind(q.status || '') === k).length;
   const counts = {
     questions: qs.length, open: by('open'), asked: by('asked'), conflicting: by('conflicting'),
@@ -158,34 +182,55 @@ function interview(req, gate) {
   const waiting = [...roles].map(([role, ids]) => ({ role, count: ids.length, ids }));
   // done z zaleglosciami (zmiana 0.10.1): pytania do wyjasnienia, ktore nie blokuja.
   const partial = status === 'done' ? counts.open + counts.asked : 0;
-  return { status, partial, counts, blockers, waiting, questions };
+  const aItem = a => ({ id: a.id, title: a.zalozenie || '', status: clean(a.status),
+    note: [a.zrodlo && 'źródło: ' + a.zrodlo, a['wymagania zalezne'] && 'wymagania: ' + a['wymagania zalezne']].filter(Boolean).join(' · ') });
+  const aFile = '01-interview/ASSUMPTIONS.md';
+  const details = {
+    decisions: list('01-interview/DECISIONS.md', parseDecisions(read(path.join(req, '01-interview', 'DECISIONS.md')))),
+    unconfirmed: list(aFile, as.filter(a => /niepotwierdzone/i.test(a.status || '')).map(aItem)),
+    refuted: list(aFile, as.filter(a => /obalone/i.test(a.status || '')).map(aItem)),
+  };
+  return { status, partial, counts, blockers, waiting, questions, details };
 }
 
 function domain(req) {
   const d = f => path.join(req, '02-domain', f);
   const gl = parseTable(read(d('GLOSSARY.md')));
-  const approved = gl.filter(g => /^zatwierdzone/i.test(g.status || '')).length;
-  const entities = (read(d('ENTITIES.md')).match(/^##\s+[^<\n]+$/gm) || []).length;
-  const counts = {
-    terms: gl.length, approved, entities,
-    actors: parseTable(read(d('ACTORS.md'))).length,
-    rules: parseTable(read(d('RULES.md'))).length,
-  };
+  const approvedGl = gl.filter(g => /^zatwierdzone/i.test(g.status || ''));
+  const approved = approvedGl.length;
+  const ents = (read(d('ENTITIES.md')).match(/^##\s+[^<\n]+$/gm) || []).map(h => h.replace(/^##\s+/, '').trim());
+  const actors = parseTable(read(d('ACTORS.md'))), rules = parseTable(read(d('RULES.md')));
+  const counts = { terms: gl.length, approved, entities: ents.length, actors: actors.length, rules: rules.length };
   const status = gl.length === 0 ? 'todo' : approved === gl.length ? 'done' : 'active';
-  return { status, counts };
+  const term = g => ({ id: '', title: g.pojecie || '', status: clean(g.status), note: g.definicja || '' });
+  const details = {
+    terms: list('02-domain/GLOSSARY.md', gl.map(term)),
+    approved: list('02-domain/GLOSSARY.md', approvedGl.map(term)),
+    actors: list('02-domain/ACTORS.md', actors.map(a => ({ id: '', title: a.rola || '', status: clean(a.status), note: a['co robi'] || '' }))),
+    rules: list('02-domain/RULES.md', rules.map(r => ({ id: r.id, title: r.regula || '', status: clean(r.status),
+      note: r.wymagania ? 'wymagania: ' + r.wymagania : '' }))),
+    entities: list('02-domain/ENTITIES.md', ents.map(e => ({ id: '', title: e, status: '', note: '' }))),
+  };
+  return { status, counts, details };
 }
 
 function spec(req, level) {
   const file = path.join(req, '03-spec', level === 'light' ? 'SPEC.md' : 'PRD.md');
   const lines = read(file).split('\n');
-  const reqs = [];
-  let cur = null;
+  const reqs = [], review = {};
+  let cur = null, sec6 = false;
   for (const l of lines) {
     const h = l.match(/^#{2,4}\s+(R-\d+)\s*(.*)$/);
-    if (h) { cur = /<[^>]+>/.test(h[2]) ? null : { id: h[1], status: '' }; if (cur) reqs.push(cur); continue; }
-    if (/^#{1,4}\s/.test(l)) { cur = null; continue; }
+    if (h) { cur = /<[^>]+>/.test(h[2]) ? null : { id: h[1], title: h[2].trim(), status: '', desc: '' }; if (cur) reqs.push(cur); sec6 = false; continue; }
+    if (/^#{1,4}\s/.test(l)) { cur = null; sec6 = /^##\s+6\.?\s/.test(l); continue; }
+    if (sec6) { // sekcja "6. Do przegladu": linie z R-xxx -> powod przegladu
+      (l.match(/R-\d+/g) || []).forEach(id => { review[id] = (review[id] ? review[id] + '; ' : '') + l.replace(/^[-*\s]+/, '').trim(); });
+      continue;
+    }
     const s = cur && l.match(/^Status:\s*(.+)$/);
     if (s && !cur.status) cur.status = s[1].trim();
+    const o = cur && l.match(/^Opis:\s*(.+)$/);
+    if (o && !cur.desc) cur.desc = o[1].trim();
   }
   const approved = reqs.filter(r => /^zatwierdzone/i.test(r.status)).length;
   const counts = {
@@ -194,7 +239,15 @@ function spec(req, level) {
     agentFiles: listFiles(path.join(req, '03-spec', 'agent')).length,
   };
   const status = reqs.length === 0 ? 'todo' : approved === reqs.length ? 'done' : 'active';
-  return { status, counts };
+  const rel = path.join('03-spec', path.basename(file));
+  const rItem = r => ({ id: r.id, title: r.title, status: r.status, note: r.desc });
+  const details = {
+    requirements: list(rel, reqs.map(rItem)),
+    approved: list(rel, reqs.filter(r => /^zatwierdzone/i.test(r.status)).map(rItem)),
+    review: list(rel, reqs.filter(r => /^do przegladu/i.test(r.status))
+      .map(r => Object.assign(rItem(r), review[r.id] ? { note: 'powód przeglądu: ' + review[r.id] } : {}))),
+  };
+  return { status, counts, details };
 }
 
 function validate(req) {
@@ -231,7 +284,8 @@ function readProgress(reqDir) {
   };
   const stages = STAGES.map(s => Object.assign({}, s, { status: results[s.key].status, partial: results[s.key].partial || 0, counts: results[s.key].counts },
     results[s.key].files ? { files: results[s.key].files } : {},
-    results[s.key].questions ? { questions: results[s.key].questions } : {}));
+    results[s.key].questions ? { questions: results[s.key].questions } : {},
+    results[s.key].details ? { details: results[s.key].details } : {}));
   const next = stages.find(s => s.status !== 'done')
     || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.',
       howto: ['Skopiuj komendę i wklej ją w Claude Code, żeby zobaczyć podsumowanie.', 'Nowe materiały wrzucasz jak wcześniej, do karty Intake.'] };
