@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0] - 2026-09-27
+Handover nieaktualny po zmianie wymagan (spec: `docs/specs/progress-ui.md`, zmiana 0.19.0, AC-65..AC-67).
+- `/sdd:handover` wpisuje `Odcisk wymagan: sha256:...` do `04-validation/TRACEABILITY.md`. Inny odcisk (albo, bez odcisku,
+  wpis etapu innego niz handover/validate/config po ostatnim `handover` w CHANGELOG) -> Handover "nieaktualne", krok
+  wraca na Handover (najpierw /sdd:spec --agent); przy nieaktualnej walidacji krokiem zostaje Validate.
+- Wspolna logika `stepStale` dla Validate i Handover; dymek pigulki "nieaktualne" mowi, czego dotyczy.
+- Testy 114/114.
+
 ## [0.18.2] - 2026-09-27
 - Odcisk wymagan: z `SDD.yaml` licza sie tylko `level`, `owners` i `gate_blocking_status`. Zmiana `backlog` (handover),
   nazwy projektu (Konfiguracja) albo komentarza nie oznacza juz walidacji jako nieaktualnej (AC-64). Zdarzenie: /sdd:handover
