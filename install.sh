@@ -5,7 +5,7 @@
 #   bash install.sh                      z rozpakowanego folderu
 #   bash install.sh --update             odswiez po zmianach w kicie
 #   bash install.sh --uninstall          usun dodatek i pomocnika
-#   curl -fsSL https://raw.githubusercontent.com/<user>/sdd-kit/main/install.sh | SDD_REPO=<user>/sdd-kit bash
+#   curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | SDD_REPO=SyBeer/sdd-kit bash
 #                                        jedna komenda z GitHuba
 set -u
 

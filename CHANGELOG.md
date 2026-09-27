@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.19.1] - 2026-09-27
+- Repo publiczne na GitHubie: github.com/SyBeer/sdd-kit. Instalacja jedna komenda z README i z komentarza w `install.sh`
+  ma prawdziwy adres (`SyBeer/sdd-kit`) zamiast `<user>`.
+
 ## [0.19.0] - 2026-09-27
 Handover nieaktualny po zmianie wymagan (spec: `docs/specs/progress-ui.md`, zmiana 0.19.0, AC-65..AC-67).
 - `/sdd:handover` wpisuje `Odcisk wymagan: sha256:...` do `04-validation/TRACEABILITY.md`. Inny odcisk (albo, bez odcisku,

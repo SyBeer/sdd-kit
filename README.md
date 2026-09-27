@@ -17,7 +17,7 @@ Windows (PowerShell):
 
 Jedna komenda z GitHuba (po wrzuceniu repo):
 
-    curl -fsSL https://raw.githubusercontent.com/<user>/sdd-kit/main/install.sh | SDD_REPO=<user>/sdd-kit bash
+    curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | SDD_REPO=SyBeer/sdd-kit bash
 
 Instalator: sprawdza Claude Code, Git, Node.js -> rejestruje kit jako zrodlo dodatkow -> instaluje
 dodatek 'sdd' -> weryfikuje -> dodaje komende terminalowa `sdd-board` -> opcjonalnie zaklada projekt.
