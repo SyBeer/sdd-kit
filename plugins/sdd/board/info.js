@@ -158,10 +158,10 @@ const SKILLS = [
   ['/sdd:init', 'Zakłada folder requirements/ z szablonami i CLAUDE.md z zasadami.', 'Na początku, raz na moduł.'],
   ['/sdd:intake', 'Spisuje surowe materiały do INDEX.md, szuka duplikatów i sprzeczności.', 'Po wrzuceniu plików albo wklejeniu maila, notatki.'],
   ['/sdd:interview', 'Zadaje pytania z luk i zapisuje odpowiedzi jako decyzje (D) albo założenia (A).', 'Gdy są otwarte pytania; na żywo albo rundami w plikach.'],
-  ['/sdd:domain', 'Buduje słownik, role, encje ze stanami i reguły BR.', 'Gdy wiadomo już, kto co robi.'],
-  ['/sdd:spec', 'Pisze wymagania R ze źródłem i kryteriami Given/When/Then.', 'Po zatwierdzeniu słownika.'],
+  ['/sdd:domain', 'Buduje słownik pojęć, role, encje ze stanami i reguły biznesowe (BR).', 'Gdy wiadomo już, kto co robi.'],
+  ['/sdd:spec', 'Pisze wymagania (R) ze źródłem i kryteriami akceptacji (AC) w formie Given/When/Then.', 'Po zatwierdzeniu słownika.'],
   ['/sdd:validate', 'Sprawdza źródła, kryteria i sprzeczności, liczy procent gotowości.', 'Przed przekazaniem do budowy.'],
-  ['/sdd:handover', 'Zamienia wymagania na zadania i tabelę śledzenia R → zadanie → test.', 'Gdy walidacja ma 100%.'],
+  ['/sdd:handover', 'Zamienia wymagania na zadania i tabelę śledzenia: wymaganie (R) → zadanie → test.', 'Gdy walidacja ma 100%.'],
   ['/sdd:board', 'Tablica warsztatowa: karteczki na żywo, potem sync do plików.', 'Na warsztacie i po nim („sync”).'],
   ['/sdd:status', 'Stan w 20 linijkach: liczby, co blokuje, co czeka na biznes.', 'Przed spotkaniem.'],
 ];
@@ -181,7 +181,7 @@ const SECTIONS = [
     '[AI] - interpretacja AI; musi wrócić do biznesu jako pytanie albo założenie.',
     'Wyższe źródło wygrywa, a różnica trafia do QUESTIONS.md jako „sprzeczne” - AI nie rozstrzyga jej po cichu.'] },
   { title: 'Identyfikatory i statusy', items: [
-    'Q - pytanie, D - decyzja, A - założenie, BR - reguła biznesowa, R - wymaganie, AC - kryterium akceptacji.',
+    'Q – pytanie, D – decyzja, A – założenie, BR – reguła biznesowa, R – wymaganie, AC – kryterium akceptacji, PRD – dokument wymagań dla biznesu.',
     'Statusy: robocze → zatwierdzone; zakwestionowane (Q-xxx), gdy nowe źródło podważa element modelu.',
     'Zmiana decyzji albo reguły uruchamia kaskadę: powiązane R wracają „do przeglądu”.'] },
   { title: 'Tablica warsztatowa', items: [
@@ -194,12 +194,57 @@ const SECTIONS = [
     'Panel, tablica i te zakładki odświeżają się same, gdy Claude zmienia pliki.',
     'Komend wymagających rozmowy nie uruchamia się z panelu - kopiujesz je do Claude Code.'] },
 ];
+// Warianty komend (AC-C20): tylko to, co jest w skills/<nazwa>/SKILL.md - test pilnuje zgodnosci.
+const VARIANTS = {
+  '/sdd:init': [['/sdd:init --light', 'Poziom lekki bez pytania: jeden krótki SPEC.md zamiast dokumentu wymagań (PRD).']],
+  '/sdd:intake': [
+    ['/sdd:intake', 'Domyślnie: nowe pliki z 00-intake/. Eksport czatu z narzędzia no-code (Base44, Lovable) rozbija na polecenia biznesu, odpowiedzi AI i dokumentację.'],
+    ['/sdd:intake --message', 'Wklejona wiadomość (mail, Teams): zapisuje ją jako plik w 00-intake/ i od razu katalogi.']],
+  '/sdd:interview': [
+    ['/sdd:interview live', 'Warsztat na żywo: jedno pytanie naraz, odpowiedź zapisywana od razu (dobrze działa razem z tablicą).'],
+    ['/sdd:interview async', 'Rundy w plikach: pytania do każdej roli w Q-round-N-<rola>.md z terminem; potem wklejasz odpowiedzi.']],
+  '/sdd:domain': [['/sdd:domain', 'Także przebudowa modelu, gdy /sdd:intake zgłosi, że nowe źródło podważa słownik, encje albo reguły.']],
+  '/sdd:spec': [
+    ['/sdd:spec', 'Domyślnie: dokument wymagań (PRD) dla biznesu - wymagania proponowane paczkami, każde z Twoim „tak”.'],
+    ['/sdd:spec --agent', 'Pliki dla agenta, który będzie budował (03-spec/agent/): generowane z zatwierdzonych wymagań.'],
+    ['/sdd:spec --light', 'Jeden krótki SPEC.md, do małych rzeczy.']],
+  '/sdd:validate': [],
+  '/sdd:handover': [['/sdd:handover', 'Cel backlogu bierze z Konfiguracji: plik, Linear albo Jira.']],
+  '/sdd:board': [
+    ['/sdd:board', 'W trakcie rozmowy: po każdej wypowiedzi biznesu AI stawia karteczki i pyta o jedną rzecz.'],
+    ['/sdd:board start', 'Jak uruchomić tablicę i założyć board.json dla modułu.'],
+    ['/sdd:board sync', 'Po warsztacie: karteczki i odpowiedzi z tablicy trafiają do plików - AI proponuje, Ty zatwierdzasz.'],
+    ['/sdd:board rebuild', 'Buduje tablicę od zera z plików (role, encje, reguły, otwarte pytania), gdy pliki są dalej niż tablica.']],
+  '/sdd:status': [['/sdd:status --file', 'To samo podsumowanie, zapisane też do requirements/STATUS.md.']],
+};
+// Dwa punkty startu (AC-C19).
+const STARTS = [
+  { title: 'Od materiałów', lead: 'Masz maile, notatki, dokumenty albo eksport czatu z prototypu.', steps: [
+    'Wrzuć pliki na kartę Intake w Panelu (albo wklej wiadomość w Claude Code: /sdd:intake --message).',
+    'W Claude Code: /sdd:intake - AI spisuje materiały i szuka sprzeczności.',
+    'Dalej po kolei: /sdd:interview → /sdd:domain → /sdd:spec → /sdd:validate → /sdd:handover. Panel pokazuje, który krok teraz.',
+    'Tablicę możesz dołożyć w każdej chwili: /sdd:board rebuild zbuduje ją z plików.'] },
+  { title: 'Od tablicy warsztatowej', lead: 'Nie ma jeszcze materiałów albo chcesz zacząć od rozmowy z biznesem.', steps: [
+    'Otwórz Tablicę: załóż procesy i karteczki sam albo z AI - w Claude Code /sdd:board prowadzi warsztat i stawia karteczki.',
+    'Po warsztacie w Claude Code: /sdd:board sync - karteczki trafiają do plików (pytania, role, stany, reguły, kandydaci na wymagania), każda paczka z Twoim „tak”.',
+    'Panel liczy postęp z plików - dalej /sdd:domain i /sdd:spec jak w pierwszej drodze.',
+    'Materiały dorzucisz później: /sdd:intake porówna je z tym, co już ustaliliście.'] },
+];
+const BOARD_SYNC = { title: 'Tablica i panel', items: [
+  'Tablica to widok, pliki w requirements/ to prawda. Panel i zakładka Moduł liczą wszystko z plików.',
+  'Z tablicy do plików przenosi tylko Claude Code: /sdd:board sync (AI proponuje, Ty zatwierdzasz). Bez tego karteczka zostaje „tylko na tablicy”.',
+  'Z plików na tablicę: pytania z QUESTIONS.md dokładasz przyciskiem „Dołóż” w pasku Pytania; pytania zamknięte w pliku szarzeją same; całość z plików - /sdd:board rebuild.',
+  'Odpowiedzi wpisane na tablicy czekają na zapis - /sdd:board sync zamienia je na decyzje albo założenia.',
+  'Znaczki na karteczkach (✓ w plikach, ↻ zmienione, ! brak w pliku) pokazują zgodność z plikami na żywo.'] };
+
 function guide() {
   return {
     stages: STAGES.map(s => ({ key: s.key, name: s.name, command: s.command, desc: s.desc, howto: s.howto })),
-    skills: SKILLS.map(s => ({ command: s[0], desc: s[1], when: s[2] })),
+    starts: STARTS,
+    skills: SKILLS.map(s => ({ command: s[0], desc: s[1], when: s[2],
+      variants: (VARIANTS[s[0]] || []).map(v => ({ command: v[0], desc: v[1] })) })),
     folders: FOLDERS.map(f => ({ path: f[0], desc: f[1] })),
-    sections: SECTIONS,
+    sections: [BOARD_SYNC].concat(SECTIONS),
   };
 }
 

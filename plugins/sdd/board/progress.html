@@ -214,7 +214,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       <input name="name" required pattern="[a-z0-9][a-z0-9\-]{0,63}" autocomplete="off"></label>
     <label>Poziom
       <select name="level">
-        <option value="full">pełny: dokument PRD dla biznesu + pliki dla programistów</option>
+        <option value="full">pełny: dokument wymagań (PRD) dla biznesu + pliki dla programistów</option>
         <option value="light">lekki: jeden krótki SPEC.md, do małych rzeczy</option>
       </select></label>
     <label>Kto akceptuje wymagania, decyzje i słownik pojęć? <small>rola, nie osoba, np. właściciel procesu, kierownik działu</small>
@@ -237,7 +237,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   // etykiety licznikow: [klucz, etykieta, czy ostrzezenie gdy > 0]
   var LABELS={
     intake:[['sources','źródeł w spisie'],['unindexed','czeka na spis',1]],
-    interview:[['questions','pytań'],['open','otwarte'],['asked','zadane biznesowi'],['conflicting','sprzeczne',1],['decisions','decyzji'],['unconfirmed','założeń niepotw.'],['refuted','obalonych',1]],
+    interview:[['questions','pytań'],['open','otwarte'],['asked','zadane biznesowi'],['conflicting','sprzeczne',1],['decisions','decyzji'],['unconfirmed','założeń niepotwierdzonych'],['refuted','obalonych',1]],
     domain:[['terms','haseł'],['approved','zatwierdzonych'],['actors','ról'],['entities','encji'],['rules','reguł']],
     spec:[['requirements','wymagań'],['approved','zatwierdzonych'],['review','do przeglądu']],
     validate:[['readiness','% gotowości'],['reports','raportów']],

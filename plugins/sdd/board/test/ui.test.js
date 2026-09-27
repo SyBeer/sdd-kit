@@ -140,3 +140,12 @@ test('AC-57: countList - naglowek z plikiem, pozycje, escapowanie, warn, pusta l
   assert.match(h, /14 dni/); assert.match(h, /class="[^"]*warn[^"]*"[^>]*>brak powodu/);
   assert.match(ui.countList('obalonych', { file: 'x.md', items: [] }), /Brak pozycji/);
 });
+
+test('AC-C17: ABBR i abbr - rozwiniecie kazdego skrotu', () => {
+  for (const k of ['R', 'D', 'GLOSSARY', 'BR', 'PRD', 'Q', 'A', 'AC']) assert.ok(ui.ABBR[k] && ui.ABBR[k].length > 3, k);
+  assert.strictEqual(ui.abbr('R'), 'R – wymagania');
+  assert.strictEqual(ui.abbr('BR'), 'BR – reguły biznesowe');
+  assert.strictEqual(ui.abbr('XYZ'), 'XYZ');
+  const info = require('../info');
+  for (const k of info.APPROVES) assert.ok(ui.ABBR[k], 'kazde "zatwierdza" ma rozwiniecie: ' + k);
+});

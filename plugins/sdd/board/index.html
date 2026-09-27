@@ -104,6 +104,26 @@ body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:trans
 .sync.missing{background:var(--hot);color:#fff}
 .sync.board{background:none;box-shadow:none;border:1px dashed var(--muted)}
 .syncbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:12.5px}
+/* Pytania z pliku na tablicy (0.17.0) */
+.qbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px}
+.qbar:empty{display:none}
+.qbar .lbl{font-weight:700;color:var(--ink)}
+.qbar button.b{padding:2px 9px;font-size:12.5px}
+.qbar label{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.lane.qlane .lname{color:var(--hot)}
+.note.closedq{opacity:.5;filter:grayscale(1)}
+/* Odpowiedzi na tablicy (0.17.0) */
+.note .qans{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;color:#26241f;border-radius:3px;padding:1px 4px;align-self:flex-start}
+.note .ans{font-size:12px;font-style:italic;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note.answered{outline:3px solid var(--rm);outline-offset:1px}
+.idhint{margin-top:3px}
+.ansbox{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+.ansbox[hidden]{display:none}
+.qbar .rv{display:inline-flex;gap:6px;align-items:center}
+.qbar .pend{color:var(--ink)}
+.note .qclosed{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+body.hideq .note.hot,body.hideq .lane.qonly{display:none}
+body.demo .qbar button{display:none}
 .syncbar:empty{display:none}
 .syncbar .lbl{color:var(--ink);font-weight:600}
 .syncbar .si{display:inline-flex;align-items:center;gap:6px}
@@ -241,6 +261,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     <span class="st">połączenie: <b id="conn">…</b></span>
   </div>
   <div class="syncbar" id="syncbar"></div>
+  <div class="qbar" id="qbar"></div>
   <div class="msg" id="msg" role="status"></div>
   <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
     Tablicę przełączono w innej karcie albo serwer uruchomiono z innym plikiem. Niezapisana edycja i historia Cofnij z poprzedniej tablicy zostały odrzucone.</div>
@@ -271,7 +292,14 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     <label class="t"><input type="radio" name="ntype" value="space"><i class="spacei"></i><span>odstęp<small>puste miejsce</small></span></label>
   </fieldset>
   <label for="f-lane">Proces</label><select id="f-lane"></select>
-  <label for="f-ref">ID (R/Q/A/D/BR, opcjonalne)</label><input id="f-ref" autocomplete="off">
+  <label for="f-ref">ID (opcjonalne)</label><input id="f-ref" autocomplete="off" aria-describedby="f-ref-hint">
+  <p class="hint idhint" id="f-ref-hint">R – wymaganie · Q – pytanie · A – założenie · D – decyzja · BR – reguła biznesowa</p>
+  <div class="ansbox" id="ansbox" hidden>
+    <label for="f-ans">Odpowiedź</label><textarea id="f-ans" placeholder="Co odpowiedział biznes – słowami biznesu"></textarea>
+    <label for="f-by">Kto odpowiedział</label><input id="f-by" list="rolelist" autocomplete="off" placeholder="rola, np. sponsor biznesowy">
+    <datalist id="rolelist"></datalist>
+    <p class="hint">Do plików (decyzja albo założenie) wpisze to agent: <code>/sdd:board sync</code>.</p>
+  </div>
   <div class="order" id="order"><span>Kolejność w kolumnie:</span><button class="b" id="up">↑ wyżej</button><button class="b" id="down">↓ niżej</button></div>
   <div class="row">
     <button class="b p" id="save">Zapisz</button>
@@ -320,6 +348,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       var cp=$('#copyboard');
       cp.onclick=function(){ try{navigator.clipboard.writeText('/sdd:board').then(function(){cp.textContent='Skopiowano'})}catch(e){} };
     }
+    qbar();
     $('#tip').innerHTML=ops.boardHint(board)==='nonotes'?
       'Kliknij <b>+</b> w procesie, żeby dodać pierwszą karteczkę. Zacznij od zdarzeń (pomarańczowe) w czasie przeszłym, od lewej do prawej.':'';
     board.lanes.forEach(function(lane,li){ inner.appendChild(laneEl(lane,li)); });
@@ -333,6 +362,10 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
 
   function laneEl(lane,li){
     var L=document.createElement('div');L.className='lane';
+    if(ops.isQuestionsLane(lane)){ // proces pytan na czerwono (0.17.0); bez innych karteczek chowany razem z pytaniami
+      L.classList.add('qlane');
+      if(!board.notes.some(function(x){return x.lane===lane&&x.type!=='hot'})) L.classList.add('qonly');
+    }
     var t=document.createElement('div');t.className='lane-title';
     var name=document.createElement('button');name.className='lname';name.textContent=lane;name.title='Kliknij, żeby zmienić nazwę';
     name.onclick=function(){ startRename(t,lane); };
@@ -424,6 +457,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(sel===n.id) el.classList.add('sel');
     el.draggable=!board._demo&&!draft; el.dataset.id=n.id; // przy szkicu uklad kolumn jest tymczasowy - bez przeciagania
     var tx=document.createElement('span');tx.className='txt';tx.textContent=n.text||'';el.appendChild(tx);
+    var qc=ops.closedQuestion(n,board._questions); // pytanie zamkniete w pliku - szare z dopiskiem (0.17.0)
+    if(qc){ el.classList.add('closedq'); var qb=document.createElement('span'); qb.className='qclosed'; qb.textContent=qc; el.insertBefore(qb,tx); }
+    var as=ops.answerState(n,board._questions); // odpowiedz z warsztatu (0.17.0)
+    if(as){
+      if(as==='pending'){ el.classList.add('answered'); var ab=document.createElement('span'); ab.className='qans'; ab.textContent='odpowiedź czeka na zapis'; el.insertBefore(ab,tx); }
+      var at=document.createElement('span'); at.className='ans'; at.textContent='↳ '+n.answer+(n.answeredBy?' – '+n.answeredBy:''); tx.after(at);
+    }
     if(n.type==='space'){
       el.title='Odstęp – puste miejsce na tablicy, nie trafia do plików';
       el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id)});
@@ -456,7 +496,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   }
   function paintDraft(){ var old=$('#draftnote'); if(old&&draft) old.replaceWith(draftEl()); }
   $('#f-text').addEventListener('input',paintDraft);
-  [].forEach.call(document.querySelectorAll('input[name="ntype"]'),function(r){ r.addEventListener('change',function(){ if($('#ok').textContent==='Wybierz typ.') $('#ok').textContent=''; paintDraft(); }); });
+  [].forEach.call(document.querySelectorAll('input[name="ntype"]'),function(r){ r.addEventListener('change',function(){ if($('#ok').textContent==='Wybierz typ.') $('#ok').textContent=''; paintDraft(); ansBox(); }); });
+  // Pole odpowiedzi tylko dla pytania (hot); podpowiedzi rol z pytan w pliku (0.17.0)
+  function ansBox(){
+    $('#ansbox').hidden=getType()!=='hot'||!!board._demo;
+    var roles={}; Object.keys(board._questions||{}).forEach(function(k){ var r=board._questions[k].role; if(r) roles[r]=1; });
+    $('#rolelist').innerHTML=Object.keys(roles).map(function(r){return '<option value="'+esc(r)+'">'}).join('');
+  }
   $('#f-lane').addEventListener('change',function(){
     if(!draft) return;
     var l=this.value; draft={lane:l,col:ops.nextCol(board,l)}; render(); showDraft();
@@ -613,11 +659,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   function fill(n){
     filledFor=n?n.id:null; $('#ok').textContent='';
     $('#cancel').hidden=!!n;
-    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; return; }
+    $('#f-ans').value=n&&n.answer||''; $('#f-by').value=n&&n.answeredBy||'';
+    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; ansBox(); return; }
     $('#del').hidden=false;
     $('#ph').textContent=('Karteczka '+(n.ref||'')).trim();
     $('#f-text').value=n.text||'';setType(n.type||'ev');$('#f-lane').value=n.lane;$('#f-ref').value=n.ref||'';
-    fillMeta(n);
+    ansBox(); fillMeta(n);
   }
   // Informacje o karteczce (daty, autor, zrodlo) - odswiezane po kazdej zmianie pliku, bez ruszania pol formularza.
   function fillMeta(n){
@@ -635,6 +682,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     var chk=document.querySelector('input[name="ntype"]:checked');
     if(!text&&!(chk&&chk.value==='space')){ $('#ok').textContent='Wpisz treść.'; $('#f-text').focus(); return; } // odstep bez tresci
     if(!chk){ $('#ok').textContent='Wybierz typ.'; $('#f-type').scrollIntoView({block:'nearest'}); return; }
+    var ans=$('#f-ans').value.trim(), by=$('#f-by').value.trim();
+    if(chk.value==='hot'&&ans&&!by){ $('#ok').textContent='Wpisz, kto odpowiedział.'; $('#f-by').focus(); return; } // kazda odpowiedz ma autora
     var n=sel?byId(sel):null, lane=$('#f-lane').value;
     if(!n){
       var dr=draft&&draft.lane===lane?draft:null, col=dr?dr.col:ops.nextCol(board,lane);
@@ -645,6 +694,10 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       sel=n.id; draft=null;
     } else if(n.lane!==lane){ ops.placeNote(board,n.id,lane,ops.nextCol(board,lane)); } // stara kolumna znika, jesli pusta
     n.text=text;n.type=getType();n.lane=lane;n.ref=$('#f-ref').value.trim()||undefined;
+    if(n.type==='hot'){
+      if((n.answer||'')!==ans) n.answeredAt=ans?new Date().toISOString():undefined;
+      n.answer=ans||undefined; n.answeredBy=ans?by:undefined;
+    }
     if(!n.source){n.source='warsztat, dopisane w przeglądarce [Biz]';n.by='człowiek'}
     filledFor=undefined; commit().then(function(){ $('#ok').textContent='Zapisano ✓'; });
   };
@@ -678,6 +731,61 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     function end(e){ if(!pan||e.pointerId!==pan.id) return; pan=null; B.classList.remove('panning'); }
     B.addEventListener('pointerup',end); B.addEventListener('pointercancel',end);
   })();
+
+  // ------------------------------------------------------------ pytania z pliku (zmiana 0.17.0)
+  var showQ=true;
+  try{ showQ=localStorage.getItem('sdd-board-questions')!=='hide'; }catch(e){}
+  function setShowQ(v){ showQ=v; document.body.classList.toggle('hideq',!v); try{ localStorage.setItem('sdd-board-questions',v?'show':'hide'); }catch(e){} }
+  setShowQ(showQ);
+  var review=null; // przeglad pytan: {ids, i} (0.17.0)
+  function qbar(){
+    var qs=board._questions||{}, bar=$('#qbar');
+    var hot=board.notes.filter(function(n){return n.type==='hot'});
+    if(!Object.keys(qs).length&&!hot.length){ bar.innerHTML=''; return; }
+    if(review){ // tryb przegladu: tylko nawigacja
+      review.ids=review.ids.filter(function(id){return byId(id)});
+      if(review.i>=review.ids.length) review.i=review.ids.length-1;
+      if(!review.ids.length){ review=null; return qbar(); }
+      bar.innerHTML='<span class="lbl">Przegląd pytań:</span><span class="rv"><button class="b" id="rvprev"'+(review.i<=0?' disabled':'')+'>‹ Poprzednie</button>'+
+        '<span><b>'+(review.i+1)+'</b> z '+review.ids.length+'</span><button class="b" id="rvnext"'+(review.i>=review.ids.length-1?' disabled':'')+'>Następne ›</button></span>'+
+        '<button class="b" id="rvend">Zakończ przegląd</button>';
+      $('#rvprev').onclick=function(){ goReview(review.i-1); };
+      $('#rvnext').onclick=function(){ goReview(review.i+1); };
+      $('#rvend').onclick=function(){ review=null; closeDrawer(); qbar(); };
+      return;
+    }
+    var miss=ops.missingQuestions(board,qs), closed=board.notes.filter(function(n){return ops.closedQuestion(n,qs)});
+    var pend=ops.pendingAnswers(board,qs);
+    bar.innerHTML='<span class="lbl">Pytania:</span><span>'+hot.length+' na tablicy</span>'+
+      (miss.length?'<span><b>'+miss.length+'</b> z pliku nie ma na tablicy</span><button class="b" id="qadd" title="'+esc(miss.map(function(q){return q.id}).join(', '))+'">Dołóż</button>':'')+
+      (hot.length?'<button class="b" id="qreview" title="Po kolei: sprzeczne, blokujące, zadane, otwarte">Przegląd pytań</button>':'')+
+      (pend.length?'<span class="pend"><b>'+pend.length+'</b> '+(pend.length===1?'odpowiedź czeka':'odpowiedzi czeka')+' na zapis – uruchom <code>/sdd:board sync</code></span><button class="b" id="qcopy">Kopiuj</button>':'')+
+      (closed.length?'<button class="b" id="qclean" title="Pytania odpowiedziane albo zaparkowane w pliku">Zdejmij zamknięte ('+closed.length+')</button>':'')+
+      '<label><input type="checkbox" id="qshow"'+(showQ?' checked':'')+'> Pokaż pytania</label>';
+    var a=$('#qadd'); if(a) a.onclick=function(){
+      var m=ops.missingQuestions(board,board._questions), n=ops.placeQuestions(board,m,new Date().toISOString());
+      if(!showQ) setShowQ(true);
+      commit(); say('Dołożono '+n+' '+(n===1?'pytanie':'pytań')+' z pliku – Cofnij zdejmuje wszystkie naraz.');
+    };
+    var c=$('#qclean'); if(c) c.onclick=function(){
+      var ids=board.notes.filter(function(n){return ops.closedQuestion(n,board._questions)}).map(function(n){return n.id});
+      if(sel&&ids.indexOf(sel)>=0) closeDrawer();
+      ids.forEach(function(id){ ops.removeNote(board,id); }); commit(); say('Zdjęto '+ids.length+' zamkniętych pytań.');
+    };
+    var cp=$('#qcopy'); if(cp) cp.onclick=function(){ try{ navigator.clipboard.writeText('/sdd:board sync').then(function(){ cp.textContent='Skopiowano'; }); }catch(e){} };
+    var rv=$('#qreview'); if(rv) rv.onclick=function(){
+      review={ids:ops.questionOrder(board,board._questions),i:0};
+      if(!showQ) setShowQ(true);
+      goReview(0);
+    };
+    $('#qshow').onchange=function(){ setShowQ(this.checked); };
+  }
+  function goReview(i){
+    if(!review) return;
+    review.i=Math.max(0,Math.min(i,review.ids.length-1));
+    openNote(review.ids[review.i]); qbar();
+    var f=$('#f-ans'); if(f&&!$('#ansbox').hidden) f.focus({preventScroll:true});
+  }
 
   // ------------------------------------------------------------ powiekszenie
   var z=1;

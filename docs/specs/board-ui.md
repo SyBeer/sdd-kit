@@ -140,6 +140,43 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    - Zrodlo zdarzenia poza tablica: `sdd-kit/project.json` (dashboard HQAI) uruchamial przyklad `example-zlecenia.json`
      na porcie 8012; od 0.14.2 uruchamia biezacy modul (przyklad jest pod /demo).
 
+18. Pytania z pliku na tablicy (0.17.0, uwaga usera: "dlaczego nierozwiazane kwestie nie pojawiaja sie na tablicy?";
+    decyzja: wszystkie cztery punkty, "pytanie, ktorego nie da sie przypisac do procesu - do procesu Do wyjasnienia
+    (napisanego na czerwono)"):
+   - Serwer podaje w widoku tablicy `_questions` - pytania z `01-interview/QUESTIONS.md`: ID, tresc, rodzaj statusu
+     (otwarte, zadane, sprzeczne, odpowiedziane, zaparkowane), status, "Zamkniete przez", powiazane ID (R/BR/D/A z kolumn
+     "Skad" i "Wplyw"). Pole tylko widoku.
+   - Brakujace pytania: otwarte, zadane i sprzeczne Q, ktorych nie ma na tablicy (zadna karteczka nie ma `ref` = Q-xxx).
+     Pasek tablicy: "Pytania z plików: N nie ma na tablicy - Dołóż". Dolozenie = jeden krok Cofnij, karteczki `hot`
+     z trescia pytania i `ref`, `file` = 01-interview/QUESTIONS.md, `synced` (pytanie juz jest w pliku).
+   - Miejsce: obok karteczki, ktorej `ref` jest wsrod powiazanych ID pytania (ten sam proces i kolumna, na koncu kolumny).
+     Brak takiej karteczki -> proces "Do wyjaśnienia" na koncu tablicy (zakladany, jesli go nie ma), kolejna kolumna.
+   - Proces "Do wyjaśnienia" ma nazwe na czerwono (rozpoznawany po nazwie).
+   - Karteczka pytania zamknietego w pliku (odpowiedziane / zaparkowane): wyszarzona, z dopiskiem "zamknięte: D-xxx"
+     albo "zaparkowane". Przycisk "Zdejmij zamknięte (N)" usuwa je z tablicy - jeden krok Cofnij.
+   - Przelacznik "Pokaż pytania" w pasku tablicy (zapamietany w przegladarce): wylaczony chowa karteczki `hot`
+     i proces "Do wyjaśnienia", jesli poza pytaniami nic w nim nie ma.
+   - Skill board: `rebuild` bierze otwarte/zadane/sprzeczne Q z tymi samymi zasadami miejsca; `sync` konczy sie
+     informacja o pytaniach spoza tablicy (dolozenie przyciskiem albo przez agenta).
+
+19. Odpowiedzi na pytania na tablicy (0.17.0, uwaga usera: "a jak zrobic wyjasnienie tych pytan? Czy mozna je ogarnac
+    po stronie Tablicy Warsztatowej" - decyzja: komplet, tablica zbiera odpowiedzi, do plikow wpisuje agent):
+   - Panel czerwonej karteczki (`hot`): pola "Odpowiedź" i "Kto odpowiedział" (rola; podpowiedzi z rol w pytaniach).
+     Zapis odpowiedzi bez "Kto odpowiedział" - komunikat "Wpisz, kto odpowiedział." (zasada procesu: kazda odpowiedz ma autora).
+     board.json: nowe opcjonalne pola karteczki `answer`, `answeredBy`, `answeredAt` (ISO, ustawiane przy zmianie odpowiedzi).
+     Zmiana odpowiedzi to zmiana karteczki (`updated`, stan ↻ dla zsynchronizowanej).
+   - Karteczka z odpowiedzia, ktorej pytanie w pliku jest dalej otwarte/zadane/sprzeczne (albo pytania nie ma w pliku):
+     znacznik "odpowiedź czeka na zapis" i poczatek odpowiedzi na karteczce. Po zamknieciu pytania w pliku - jak w punkcie 18
+     (szara, "zamknięte: D-xxx"); odpowiedz zostaje na karteczce jako slad.
+   - Pasek "Pytania": "N odpowiedzi czeka na zapis - uruchom /sdd:board sync" (z przyciskiem Kopiuj).
+   - `/sdd:board sync` (skill board): odpowiedzi z tablicy przetwarza jak `/sdd:interview` krok 3 - dla kazdej 3-5 linijek:
+     D czy potwierdzenie/obalenie A czy nowe Q, tresc, kaskada; autor = "Kto odpowiedział"; czeka na "tak"; zapis do
+     DECISIONS/ASSUMPTIONS, Q -> odpowiedziane + "Zamkniete przez", PRD sekcja 6, CHANGELOG.
+   - Przeglad pytan: przycisk "Przegląd pytań" w pasku. Kolejnosc: sprzeczne, blokujace (etykieta z SDD.yaml), zadane,
+     otwarte, potem pytania z tablicy spoza pliku; zamkniete i juz odpowiedziane - na koncu. Pasek pokazuje
+     "‹ Poprzednie · 3 z 18 · Następne ›" i "Zakończ"; kazdy krok przewija tablice do pytania, otwiera je w panelu
+     i ustawia kursor w polu odpowiedzi. Wlacza "Pokaż pytania", jesli byly schowane.
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module.
 - Cofanie zmian agenta i historia miedzy sesjami przegladarki.
@@ -183,6 +220,16 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B37: `boardSwitched(known, board)`: brak zapamietanego pliku -> null; ten sam `_file` -> null; inny `_file` -> {from, to}; GET /api/board zwraca `_file` = sciezka pliku tablicy, a PUT nie zapisuje `_file` do board.json.
 - AC-B38 (reczne): karta tablicy otwarta, serwer zatrzymany i uruchomiony z innym plikiem tablicy -> staly pasek ostrzezenia z oboma plikami, "Rozumiem" go chowa; przelaczenie modulu z menu tej karty -> bez paska.
 - AC-B39: `stampNotes`: zmiana nazwy procesu (`renameLane` - stara nazwa znika z `lanes`, nowa stoi na tym samym miejscu) nie zmienia `updated` karteczek tego procesu, takze przy cofnieciu; przeniesienie karteczki do innego istniejacego procesu (formularz albo `placeNote`) dalej daje `updated`=now (AC-B11).
+- AC-B40: `questionIndex(req)` (progress.js): mapa Q-xxx -> {text, kind, status, closedBy, refs}; `refs` - ID R/BR/D/A z kolumn Skad i Wplyw, bez samego pytania; wiersz szablonu pominiety; GET /api/board zwraca `_questions`, PUT go nie zapisuje.
+- AC-B41: `missingQuestions(board, questions)`: otwarte/zadane/sprzeczne Q bez karteczki z tym `ref`; odpowiedziane, zaparkowane i juz obecne - pominiete; kolejnosc po ID.
+- AC-B42: `placeQuestions(board, missing, now)`: pytanie z ref znanym na tablicy -> ten proces i kolumna, na koncu kolumny; bez miejsca -> proces "Do wyjaśnienia" (zalozony na koncu `lanes`, jesli brak), kolejne kolumny; karteczki `hot` z `ref`, `file`, `synced`/`created`/`updated` = now, `by: "agent"`; zwraca liczbe dolozonych.
+- AC-B43: `closedQuestion(note, questions)`: karteczka z `ref` Q o rodzaju odpowiedziane -> "zamknięte: <Zamkniete przez>" (albo "zamknięte"), zaparkowane -> "zaparkowane"; inne i karteczki bez Q -> null. `isQuestionsLane(name)` rozpoznaje "Do wyjaśnienia" (takze bez polskich znakow, wielkosc liter dowolna).
+- AC-B44 (reczne): horizon-zlecenia: pasek "16 nie ma na tablicy", Dołóż -> pytania przy swoich karteczkach, reszta w czerwonym "Do wyjaśnienia"; Cofnij zdejmuje wszystkie naraz; pytanie oznaczone w pliku jako odpowiedziane -> karteczka szara z "zamknięte: D-xxx" na zywo; "Zdejmij zamknięte" usuwa; "Pokaż pytania" wylaczone chowa czerwone karteczki i pusty proces pytan; stan przelacznika po przeladowaniu zachowany; tryb ciemny czytelny.
+- AC-B45: `questionIndex` podaje tez `role` ("Do kogo") i `blocking` (etykieta blokujaca z SDD.yaml, bez zaprzeczenia "nie").
+- AC-B46: `stampNotes`: zmiana `answer` albo `answeredBy` -> `updated`=now (jak tresc).
+- AC-B47: `answerState(note, questions)`: `hot` z `answer` i pytaniem w pliku otwartym/zadanym/sprzecznym albo bez pytania w pliku -> 'pending'; z `answer` i pytaniem zamknietym -> 'recorded'; bez `answer`, pusta odpowiedz albo nie `hot` -> null. `pendingAnswers(board, questions)` - karteczki 'pending'.
+- AC-B48: `questionOrder(board, questions)`: id karteczek `hot` w kolejnosci: sprzeczne, blokujace, zadane, otwarte (w grupie po ID pytania), pytania spoza pliku, na koncu odpowiedziane na tablicy i zamkniete w pliku.
+- AC-B49 (reczne): horizon-zlecenia (kopia): panel pytania ma Odpowiedz i Kto; zapis bez "Kto" -> komunikat; z "Kto" -> znacznik na karteczce i licznik w pasku; Przegląd pytań prowadzi po kolei z kursorem w odpowiedzi; Cofnij cofa odpowiedz; oznaczenie Q w pliku jako odpowiedziane -> karteczka szara z odpowiedzia; tryb ciemny czytelny.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

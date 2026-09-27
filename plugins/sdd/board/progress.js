@@ -69,12 +69,12 @@ function parseDecisions(md) {
     const h = l.match(/^##\s+(D-\d+)\s*(?:\|\s*([^|]*?)\s*)?(?:\|\s*(.*))?$/);
     if (h) { cur = { id: h[1], date: clean(h[2]), title: clean(h[3]), fields: {} }; out.push(cur); return; }
     if (/^#{1,2}\s/.test(l)) { cur = null; return; }
-    const f = cur && l.match(/^(Decyzja|Powod|Zdecydowal):\s*(.*)$/);
+    const f = cur && l.match(/^(Decyzja|Powod|Zdecydowal|Wplyw):\s*(.*)$/);
     if (f && !(f[1] in cur.fields)) cur.fields[f[1]] = clean(f[2]);
   });
   return out.map(d => {
     const who = d.fields.Zdecydowal;
-    const item = { id: d.id, title: d.title || d.fields.Decyzja || '',
+    const item = { id: d.id, title: d.title || d.fields.Decyzja || '', impact: d.fields.Wplyw || '',
       status: [who && 'zdecydował: ' + who, d.date].filter(Boolean).join(' · '), note: d.fields.Decyzja || '' };
     if (!d.fields.Powod || /^\(puste/.test(d.fields.Powod)) item.warn = 'brak powodu';
     return item;
@@ -301,4 +301,41 @@ function readProgress(reqDir) {
   };
 }
 
-module.exports = { isProcessFile, readProgress, parseTable, STAGES };
+// Pytania dla tablicy (AC-B40): Q-xxx -> tresc, rodzaj statusu, "Zamkniete przez" i powiazane ID R/BR/D/A
+// z kolumn "Skad" i "Wplyw" - tablica stawia pytanie obok karteczki z takim ID.
+const IDS = /(?<![A-Z])(?:BR|R|D|A)-\d+/g;
+function questionIndex(req) {
+  const out = {};
+  const gate = yamlField(read(path.join(req, 'SDD.yaml')), 'gate_blocking_status');
+  // Posrednie ID (AC-B40b): tablica zna glownie R i BR, a pytania "dlaczego" wskazuja D albo A.
+  // Decyzja -> ID z jej "Wplyw"; zalozenie -> "Wymagania zalezne" i reguly, ktore na nim stoja.
+  const via = {};
+  parseDecisions(read(path.join(req, '01-interview', 'DECISIONS.md'))).forEach(d => { via[d.id] = d.impact; });
+  parseTable(read(path.join(req, '01-interview', 'ASSUMPTIONS.md'))).forEach(a => { if (a.id) via[a.id.trim()] = a['wymagania zalezne'] || ''; });
+  // Wstecz (AC-B40c): regula albo wymaganie, ktore cytuje D/A (zrodlo, zalozenia), stoi na nim.
+  const cites = (text, id) => (String(text).match(/(?<![A-Z])(?:D|A)-\d+/g) || []).forEach(x => { via[x] = (via[x] || '') + ' ' + id; });
+  parseTable(read(path.join(req, '02-domain', 'RULES.md'))).forEach(r => { if (r.id) cites(r._raw, r.id.trim()); });
+  ['PRD.md', 'SPEC.md'].forEach(f => {
+    let cur = null;
+    read(path.join(req, '03-spec', f)).split('\n').forEach(l => {
+      const h = l.match(/^#{2,4}\s+(R-\d+)/);
+      if (h) { cur = h[1]; return; }
+      if (/^#{1,4}\s/.test(l)) { cur = null; return; }
+      if (cur) cites(l, cur);
+    });
+  });
+  parseTable(read(path.join(req, '01-interview', 'QUESTIONS.md'))).forEach(q => {
+    const id = (q.id || '').trim();
+    if (!/^Q-\d+$/.test(id)) return;
+    const refs = [];
+    const add = text => String(text || '').replace(IDS, m => { if (refs.indexOf(m) < 0) refs.push(m); return m; });
+    add((q['skad'] || '') + ' ' + (q['wplyw'] || ''));
+    refs.slice().forEach(r => add(via[r]));
+    out[id] = { text: q.pytanie || '', kind: qKind(q.status || ''), status: (q.status || '').trim(),
+      closedBy: (q['zamkniete przez'] || '').trim(), refs,
+      role: (q['do kogo (rola)'] || q['do kogo'] || '').trim(), blocking: hasGate(q._raw, gate) };
+  });
+  return out;
+}
+
+module.exports = { isProcessFile, readProgress, parseTable, questionIndex, STAGES };

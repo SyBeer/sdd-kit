@@ -28,6 +28,8 @@ Typy: `ev` zdarzenie (cos sie stalo), `cmd` komenda (ktos cos robi), `act` kto (
 `space` odstep - puste miejsce oddzielajace elementy na tablicy (tresc nieobowiazkowa); to uklad, nie wymaganie.
 `created` / `updated`: data i czas ISO 8601 z czasem lokalnym (`date -Iseconds`). Nowa karteczka: oba pola = teraz. Zmiana tresci, typu, pasa, `ref` albo przeniesienie w inne miejsce: `updated` = teraz, `created` bez zmian.
 Samo przenumerowanie kolumn (wstawienie albo zamkniecie kolumny w pasie) nie zmienia `updated`. Panel pokazuje je jako RRRR-MM-DD HH:MM.
+`answer`, `answeredBy`, `answeredAt` (tylko `hot`): odpowiedz biznesu wpisana na tablicy, kto odpowiedzial (rola), kiedy.
+Tablica tylko zbiera odpowiedzi - do plikow wpisuje je agent przy `sync` (krok 3 ponizej).
 `col` to kolejnosc w pasie od lewej (0,1,2...). Karteczki z tym samym `col` stoja jedna pod druga (np. zdarzenie i jego hotspot).
 
 ## Tura warsztatu (`/sdd:board` podczas rozmowy)
@@ -45,6 +47,12 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
 ## Synchronizacja po warsztacie (`/sdd:board sync`)
 1. Przeczytaj `board.json`. Karteczki z `by: "czlowiek"` lub zmienione recznie (brak `by`, `source` zaczynajace sie od "warsztat, dopisane w przegladarce") to slowa biznesu `[Biz]` o najwyzszej wiarygodnosci.
 2. Pomin karteczki `space` (odstepy) - nie trafiaja do plikow i nie dostaja `synced`.
+   **Odpowiedzi z tablicy najpierw**: karteczki `hot` z `answer`, ktorych pytanie w `QUESTIONS.md` jest dalej otwarte,
+   zadane albo sprzeczne (albo pytania nie ma w pliku - wtedy najpierw zaloz Q). Kazda przetwarzasz jak `/sdd:interview`
+   krok 3: 3-5 linijek - decyzja D czy potwierdzenie/obalenie A czy nowe Q, tresc, kaskada (R, AC, A, BR); autor =
+   `answeredBy` (bez autora - zapytaj, kto odpowiedzial); czekasz na "tak". Po "tak": wpis do DECISIONS/ASSUMPTIONS,
+   Q -> `odpowiedziane` + "Zamkniete przez", dotkniete R do sekcji 6 PRD, linia w CHANGELOG. `answer` zostaje na
+   karteczce (slad); tablica sama pokaze ja szara z "zamknięte: D-xxx".
    Zaproponuj mapowanie (i PYTAJ przed zapisem, 3-5 linijek na paczke):
    - `hot` -> wiersze w `QUESTIONS.md` (status `otwarte`, "Skad" = warsztat + data)
    - `act` -> `ACTORS.md`
@@ -54,7 +62,19 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
 3. Wpisz `ref` z powrotem do karteczek, zeby tablica i pliki mialy te same numery.
    Kazdej karteczce przeniesionej do plikow ustaw `synced` = teraz (ISO, `date -Iseconds`) i `file` = plik, do ktorego trafila.
    Nie zmieniaj przy tym `updated`. Panel pokazuje wtedy ✓; jesli `ref` nie ma w `file` - ! (popraw plik albo ref).
-4. `CHANGELOG.md` + 5 linijek podsumowania.
+4. Pytania w druga strone: otwarte, zadane i sprzeczne Q z `QUESTIONS.md`, ktorych nie ma na tablicy (zadna karteczka
+   nie ma `ref` = Q-xxx), dopisz jako `hot` wg zasad miejsca ponizej - albo powiedz userowi, ze tablica pokazuje je
+   w pasku "Pytania" z przyciskiem "Dołóż". Pytan zamknietych w pliku nie usuwaj sam: tablica pokazuje je szare
+   z "zamknięte: D-xxx", user zdejmuje je przyciskiem "Zdejmij zamknięte".
+5. `CHANGELOG.md` + 5 linijek podsumowania.
 
 ## Odtworzenie tablicy z plikow (`/sdd:board rebuild`)
 Zbuduj `board.json` od zera z ACTORS, ENTITIES, RULES, QUESTIONS. Uzywaj, gdy pliki sa dalej niz tablica.
+Pytania: kazde otwarte, zadane i sprzeczne Q staje sie karteczka `hot` (`ref` = Q-xxx, tresc = pytanie,
+`file` = `01-interview/QUESTIONS.md`, `synced` = teraz). Odpowiedziane i zaparkowane - nie.
+
+## Gdzie stawiac pytanie (`hot`)
+1. Powiazane ID pytania to R/BR/D/A z kolumn "Skad" i "Wplyw" w QUESTIONS.md.
+2. Pierwsza karteczka (nie `hot`), ktorej `ref` jest wsrod tych ID -> ten sam `lane` i `col`, na koncu kolumny.
+3. Brak takiej karteczki -> proces `Do wyjaśnienia` na koncu `lanes` (zaloz, jesli go nie ma), kolejna wolna kolumna.
+   Tablica pokazuje nazwe tego procesu na czerwono. Tak samo liczy przycisk "Dołóż" na tablicy (`placeQuestions`).

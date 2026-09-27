@@ -87,7 +87,12 @@
     }).join('') + '</ul></div>';
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, KEY };
+  // Rozwiniecia skrotow (AC-C17) - jeden slownik dla wszystkich zakladek.
+  const ABBR = { R: 'wymagania', D: 'decyzje', GLOSSARY: 'słownik pojęć', BR: 'reguły biznesowe', PRD: 'cały dokument wymagań',
+    Q: 'pytania', A: 'założenia', AC: 'kryteria akceptacji' };
+  function abbr(code) { return ABBR[code] ? code + ' – ' + ABBR[code] : String(code); }
+
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

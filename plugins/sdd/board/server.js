@@ -12,7 +12,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { readProgress } = require('./progress');
+const { readProgress, questionIndex } = require('./progress');
 const { listModules, allModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs } = require('./root');
@@ -87,9 +87,10 @@ function boardView(ctx) {
   b._modules = modulesOf(ctx).map(m => ({ name: m.name, level: m.level, dir: ctx.demo ? '' : m.dir, external: !!m.external }));
   b._demo = ctx.demo || false;
   b._file = ctx.board || ''; // strona ostrzega, gdy serwer podmieni plik tablicy (AC-B37)
+  b._questions = ctx.req ? questionIndex(ctx.req) : {}; // pytania z pliku na tablicy (AC-B40)
   return b;
 }
-const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo', '_file'];
+const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo', '_file', '_questions'];
 function writeBoard(ctx, b) {
   VIEW_ONLY.forEach(k => { delete b[k]; });
   b.updated = new Date().toISOString();

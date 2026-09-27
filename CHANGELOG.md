@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.17.0] - 2026-09-27
+- Tablica: pytania z `QUESTIONS.md` na tablicy. Pasek "Pytania": ile na tablicy, ile z pliku brakuje - "Dołóż"
+  (jeden krok Cofnij). Pytanie staje obok karteczki, ktorej dotyczy: bezposrednio (Skad/Wplyw) albo posrednio - decyzja
+  -> jej Wplyw, zalozenie -> wymagania i reguly, wstecz: R w PRD i BR w RULES, ktore cytuja D/A. Bez miejsca -> proces
+  "Do wyjaśnienia" (nazwa na czerwono). Pytanie zamkniete w pliku - karteczka szara z "zamknięte: D-xxx";
+  "Zdejmij zamknięte (N)". Przelacznik "Pokaż pytania" (chowa czerwone karteczki i pusty proces pytan).
+- Tablica: odpowiedzi na pytania. Panel czerwonej karteczki ma "Odpowiedź" i "Kto odpowiedział" (bez autora - nie zapisze);
+  karteczka "odpowiedź czeka na zapis", w pasku licznik z `/sdd:board sync`. "Przegląd pytań": po kolei sprzeczne,
+  blokujace, zadane, otwarte - przewija do pytania, kursor w odpowiedzi. Po zamknieciu Q w pliku - szara, odpowiedz jako slad.
+- Skill board: `rebuild` bierze otwarte/zadane/sprzeczne Q; `sync` najpierw przetwarza odpowiedzi z tablicy jak
+  `/sdd:interview` krok 3 (D/A/Q, kaskada, "tak"), potem mapowanie karteczek i pytania w druga strone.
+- Rozwiniecia skrotow w calym interfejsie (jeden slownik `SddUI.ABBR`): Konfiguracja "R – wymagania", "PRD – cały
+  dokument wymagań" itd.; Modul "Kto zatwierdza" i "Stan wymagań" z pelnymi wyrazami; przewodnik; licznik "założeń
+  niepotwierdzonych"; panel karteczki - podpowiedz pod polem ID. Spec: `docs/specs/info-config.md` AC-C17, AC-C18.
+- Jak to dziala: karta "Od czego zacząć" - dwa punkty startu (od materialow albo od tablicy warsztatowej); sekcja
+  "Tablica i panel" - jak tablica synchronizuje sie z plikami i panelem (przez Claude Code, /sdd:board sync); w tabeli
+  komend warianty kazdej komendy (np. /sdd:board start|sync|rebuild, /sdd:interview live|async, /sdd:spec --agent|--light).
+  Test pilnuje, ze kazdy opisany wariant istnieje w pliku skilla. Spec: `docs/specs/info-config.md` AC-C19..AC-C21.
+- Spec: `docs/specs/board-ui.md` punkty 18-19 (AC-B40..AC-B49); testy 105/105.
+
 ## [0.16.0] - 2026-09-27
 Zakladki Moduł, Jak to działa i Konfiguracja (spec: `docs/specs/info-config.md`, AC-C1..AC-C14).
 - Pasek: Panel | Tablica | Moduł | Jak to działa | Konfiguracja; na telefonie zakladki przewijaja sie w pasku. `/demo/start`: Tablica i Jak to działa.

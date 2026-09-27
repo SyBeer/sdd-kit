@@ -83,6 +83,29 @@ Testy: `plugins/sdd/board/test/info-config.test.js` (+ ui.test.js dla paska).
 
 - AC-C15: `guide()` - sekcja zrodel opisuje `[Biz]`, `[App]`, `[Dok]`, `[AI]` w kolejnosci hierarchii; w tresci przewodnika nie ma `[B]`, `[D]`, `[P]`.
 - AC-C16: w plikach sdd-kit (skille, szablony, tablica, demo, przyklad tablicy) nie ma `[B]`, `[D]` ani `[P]`, poza zdaniem o zgodnosci ze starymi plikami (linia z "dawniej"); CHANGELOG.md pominiety.
+- AC-C17: `SddUI.ABBR` - rozwiniecie kazdego skrotu uzywanego w interfejsie (R, D, GLOSSARY, BR, PRD, Q, A, AC);
+  `SddUI.abbr(code)` -> "R – wymagania"; nieznany skrot -> sam skrot (test w `test/ui.test.js`).
+- AC-C18 (reczne): Konfiguracja - przy kazdym "zatwierdza" pelny wyraz ("R – wymagania", "PRD – cały dokument wymagań");
+  Modul - "Kto zatwierdza" z rozwinieciami; licznik "założeń niepotwierdzonych" w calosci; panel karteczki - pod polem ID
+  podpowiedz, co oznacza kazdy skrot; 375 px bez przewijania w poziomie.
+- AC-C19: `guide().starts` - dwa punkty startu ("Od materiałów", "Od tablicy warsztatowej"), kazdy z krokami; sekcja
+  "Tablica i panel" opisuje synchronizacje (tablica -> pliki przez `/sdd:board sync` w Claude Code, pytania z plikow ->
+  tablica, panel liczy z plikow).
+- AC-C20: kazdy skill w `guide().skills` ma `variants` (lista {command, desc}; moze byc pusta); kazdy wariant zawiera
+  komende skilla, a jego argument (np. `--light`, `live`, `sync`) wystepuje w `skills/<nazwa>/SKILL.md` - przewodnik
+  nie opisuje podkomend, ktorych skill nie ma (test czyta pliki skilli).
+- AC-C21 (reczne): Jak to dziala - karta "Od czego zaczac" z dwoma drogami obok siebie (telefon: jedna pod druga), karta
+  "Tablica i panel", w tabeli komend pod kazda komenda jej warianty; 375 px bez przewijania w poziomie; tryb ciemny.
+
+## Zmiana 0.17.0: rozwiniecia skrotow (uwaga usera: "do kazdego skrotu dopisz rozwiniecie; wszedzie, gdzie jest miejsce,
+dopisz pelny wyraz")
+- Jeden slownik skrotow w `ui.js` (`SddUI.ABBR`) - ten sam tekst na wszystkich zakladkach.
+- Pelny wyraz tam, gdzie jest miejsce (Konfiguracja, Modul, przewodnik, liczniki panelu); w waskim panelu karteczki
+  podpowiedz pod polem zamiast rozwiniec w etykiecie. Nazwy plikow (GLOSSARY.md itd.) i identyfikatory (R-001) bez zmian.
+
+## Zmiana 0.17.0: dwa punkty startu i podkomendy (uwaga usera: "trzeba napisac, ze sa dwa mozliwe punkty startu:
+mozna zaczac tez od tablicy. Tablica synchronizuje sie z Panelem (konieczna wspolpraca z Claude Code). Dla komend sa
+dodatkowe subkomendy - nie ma po nich sladu - uzupelnij")
 
 ## Wyglad
 Tokeny kolorow z `:root` jak panel (ui.css + strony); bez nowych kolorow. Tresc w kartach jak karty etapow panelu.

@@ -61,6 +61,8 @@ JEDNO pytanie naraz. Nigdy partia pytan - prowadzacy zbiera odpowiedzi na zywo i
 - Gdy user wklei lub wgra odpowiedzi: sparsuj, dla kazdego pytania przejdz do kroku 3.
 
 ## Krok 3: przetwarzanie odpowiedzi (tu PYTASZ przed zapisem)
+Odpowiedzi moga przyjsc tez z Tablicy warsztatowej (pole "Odpowiedź" na czerwonej karteczce, `answer` w board.json) -
+`/sdd:board sync` przetwarza je tym samym krokiem.
 Dla kazdej odpowiedzi zaproponuj w 3-5 linijkach:
 - czy to decyzja D (rozstrzyga) czy potwierdzenie/obalenie A, czy nowe pytanie
 - tresc wpisu - tylko to, co padlo; bez wlasnych dopowiedzen

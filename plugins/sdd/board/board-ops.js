@@ -120,7 +120,7 @@
   // Daty karteczek (ISO): nowe dostaja created/updated, zmienione - updated. Daty podane w `next` (agent, klient) zostaja.
   // Przeniesienie liczy sie tylko z oznaczeniem `_moved` (przegladarka, placeNote) - sam numer `col` zmieniony przez
   // wstawienie albo zamkniecie kolumny to uklad, nie zmiana (AC-B28). `_moved` nie trafia do pliku.
-  const TRACKED = ['text', 'type', 'lane', 'ref'];
+  const TRACKED = ['text', 'type', 'lane', 'ref', 'answer', 'answeredBy']; // odpowiedz na pytanie tez (AC-B46)
   function changed(a, b) {
     return TRACKED.some(function (k) {
       return (a[k] == null ? '' : a[k]) !== (b[k] == null ? '' : b[k]);
@@ -176,6 +176,77 @@
     if (n.type === 'space') return 'space';
     const st = map && map[n.id];
     return STATES.indexOf(st) >= 0 ? st : 'board';
+  }
+
+  // Pytania z pliku na tablicy (AC-B41..AC-B43). Pytanie bez miejsca w procesie trafia do procesu "Do wyjaśnienia".
+  const QLANE = 'Do wyjaśnienia';
+  function plain(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').trim().toLowerCase(); }
+  function isQuestionsLane(name) { return plain(name) === 'do wyjasnienia'; }
+  function refTokens(n) { return String(n.ref || '').split(/[\s,;]+/).filter(Boolean); }
+  const PENDING = ['open', 'asked', 'conflicting'];
+  function missingQuestions(b, qs) {
+    if (!qs) return [];
+    const on = {};
+    notes(b).forEach(function (n) { refTokens(n).forEach(function (t) { on[t] = true; }); });
+    return Object.keys(qs).filter(function (id) { return PENDING.indexOf(qs[id].kind) >= 0 && !on[id]; })
+      .sort(function (a, b2) { return a.localeCompare(b2, undefined, { numeric: true }); })
+      .map(function (id) { return Object.assign({ id: id }, qs[id]); });
+  }
+  function placeQuestions(b, missing, now) {
+    let added = 0;
+    (missing || []).forEach(function (q) {
+      let lane = null, col = 0;
+      const refs = q.refs || [];
+      for (let i = 0; i < refs.length && !lane; i++) {
+        const hit = notes(b).find(function (n) { return n.type !== 'hot' && refTokens(n).indexOf(refs[i]) >= 0; });
+        if (hit) { lane = hit.lane; col = hit.col || 0; }
+      }
+      if (!lane) {
+        lane = lanes(b).find(isQuestionsLane);
+        if (!lane) { lane = QLANE; lanes(b).push(lane); }
+        col = nextCol(b, lane);
+      }
+      let id = 'q' + String(q.id).toLowerCase().replace(/[^a-z0-9]/g, ''), k = 2;
+      while (notes(b).some(function (n) { return n.id === id; })) id = id.replace(/_\d+$/, '') + '_' + (k++);
+      notes(b).push({ id: id, type: 'hot', text: q.text || q.id, lane: lane, col: col, ref: q.id,
+        source: '01-interview/QUESTIONS.md', file: '01-interview/QUESTIONS.md', by: 'agent',
+        created: now, updated: now, synced: now });
+      added++;
+    });
+    return added;
+  }
+  function closedQuestion(n, qs) {
+    if (!qs || n.type !== 'hot') return null;
+    const q = qs[n.ref];
+    if (!q) return null;
+    if (q.kind === 'answered') return 'zamknięte' + (q.closedBy ? ': ' + q.closedBy : '');
+    if (q.kind === 'parked') return 'zaparkowane';
+    return null;
+  }
+
+  // Odpowiedzi na tablicy (AC-B47, AC-B48): tablica zbiera, do plikow wpisuje agent (/sdd:board sync).
+  function answerState(n, qs) {
+    if (n.type !== 'hot' || !String(n.answer || '').trim()) return null;
+    const q = qs && qs[n.ref];
+    return q && PENDING.indexOf(q.kind) < 0 ? 'recorded' : 'pending';
+  }
+  function pendingAnswers(b, qs) { return notes(b).filter(function (n) { return answerState(n, qs) === 'pending'; }); }
+  function questionOrder(b, qs) {
+    const group = function (n) {
+      const q = qs && qs[n.ref];
+      if (q && PENDING.indexOf(q.kind) < 0) return 6;          // zamkniete w pliku
+      if (String(n.answer || '').trim()) return 5;              // odpowiedziane na tablicy
+      if (!q) return 4;                                        // pytanie z warsztatu, spoza pliku
+      if (q.kind === 'conflicting') return 0;
+      if (q.blocking) return 1;
+      return q.kind === 'asked' ? 2 : 3;
+    };
+    const list = notes(b).filter(function (n) { return n.type === 'hot'; })
+      .map(function (n, i) { return { n: n, g: group(n), i: i }; });
+    list.sort(function (a, c) {
+      return a.g - c.g || String(a.n.ref || '').localeCompare(String(c.n.ref || ''), undefined, { numeric: true }) || a.i - c.i;
+    });
+    return list.map(function (x) { return x.n.id; });
   }
 
   // Podmiana tablicy (AC-B37): karta pamieta plik z pierwszego wczytania; inny `_file` = serwer pokazuje inna tablice.
@@ -258,5 +329,5 @@
     };
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, createHistory };
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
 });

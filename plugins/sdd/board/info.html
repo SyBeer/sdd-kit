@@ -27,6 +27,16 @@ header nav .conn b{color:var(--ink);font-weight:600}
 main{padding:0 20px 32px;max-width:1100px}
 code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg);padding:1px 6px;border-radius:3px;border:1px solid var(--line);overflow-wrap:anywhere}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.starts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.start{border:1px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--bg)}
+.start h3{margin:0 0 4px;font-size:15px}
+.start p{margin:0 0 6px;font-size:13px}
+.start ol{margin:0;padding-left:20px;font-size:14px;line-height:1.45}
+.tbl tr.hasvar td,.tbl tr.var td{border-bottom:0}
+.tbl tr.var.last td{border-bottom:1px solid var(--line)}
+.tbl tr.var td{font-size:13px;color:var(--muted);padding-top:2px}
+.tbl tr.var td:first-child{padding-left:18px}
+.tbl tr.var code{font-size:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
 .card.wide{grid-column:1 / -1}
 .card h2{margin:0 0 8px;font-size:16px}
@@ -79,7 +89,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
 .mods li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .mods li:last-child{border-bottom:0}
 .mods .path{flex:1 1 200px;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow-wrap:anywhere}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
+@media(max-width:800px){.grid,.starts{grid-template-columns:1fr}}
 @media(max-width:640px){main{padding-left:16px;padding-right:16px}header nav{margin-left:0;width:100%}}
 </style>
 </head>
@@ -172,13 +182,13 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
       h+='<section class="card"><h2>'+s[1]+'</h2>'+(t?'<div class="md">'+md(t)+'</div>':'<p class="muted">Jeszcze nie spisane - powstanie w <code>/sdd:spec</code>.</p>')+'</section>';
     });
     h+='<section class="card"><h2>Stan wymagań</h2><ul class="counts">'+
-      cnt(c.requirements,'wymagań R')+cnt(c.approved,'zatwierdzonych')+cnt(c.review,'do przeglądu',1)+
-      cnt(c.rules,'reguł BR')+cnt(c.terms,'haseł słownika')+cnt(c.decisions,'decyzji D')+cnt(c.assumptions,'założeń A')+
-      cnt(c.questions,'pytań Q')+cnt(c.open,'otwartych')+cnt(c.blockers,'blokujących',1)+'</ul>'+
+      cnt(c.requirements,'wymagań (R)')+cnt(c.approved,'zatwierdzonych')+cnt(c.review,'do przeglądu',1)+
+      cnt(c.rules,'reguł biznesowych (BR)')+cnt(c.terms,'haseł słownika')+cnt(c.decisions,'decyzji (D)')+cnt(c.assumptions,'założeń (A)')+
+      cnt(c.questions,'pytań (Q)')+cnt(c.open,'otwartych')+cnt(c.blockers,'blokujących',1)+'</ul>'+
       '<h3>Tablica warsztatowa</h3><p class="muted">'+(m.board.notes?('<b>'+m.board.notes+'</b> karteczek w '+m.board.lanes+' procesach, w plikach: <b>'+m.board.synced+'</b>'):'Tablica jest pusta.')+'</p></section>';
     h+='<section class="card"><h2>Kto zatwierdza</h2>'+(m.owners.length?'<ul class="list">'+m.owners.map(function(o){
-      return '<li><b>'+esc(o.role)+'</b> - '+esc(o.approves.join(', ')||'nic')+'</li>'}).join('')+'</ul>':'<p class="muted">Brak ról w SDD.yaml.</p>')+
-      '<p class="hint">R - wymagania, D - decyzje, GLOSSARY - słownik, BR - reguły, PRD - cały dokument. Zmienisz w zakładce Konfiguracja.</p></section>';
+      return '<li><b>'+esc(o.role)+'</b> – '+esc(o.approves.map(function(a){return SddUI.ABBR[a]?SddUI.ABBR[a]+' ('+a+')':a}).join(', ')||'nic')+'</li>'}).join('')+'</ul>':'<p class="muted">Brak ról w SDD.yaml.</p>')+
+      '<p class="hint">Zmienisz w zakładce Konfiguracja.</p></section>';
     h+='<section class="card wide"><h2>Ostatnie zmiany</h2>'+(m.changelog.length?'<ul class="list log">'+m.changelog.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>':'<p class="muted">Brak wpisów.</p>')+'</section>';
     $('#app').innerHTML=h+'</div>';
   }
@@ -186,11 +196,17 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
   // ---------------------------------------------------------------- Jak to dziala
   function renderGuide(g){
     var h='<div class="grid">';
+    // Dwa punkty startu (0.17.0, AC-C19)
+    if(g.starts) h+='<section class="card wide"><h2>Od czego zacząć</h2><p class="hint">Są dwie drogi - obie kończą się w tych samych plikach i w tym samym procesie.</p><div class="starts">'+
+      g.starts.map(function(st,i){return '<div class="start"><h3>'+(i+1)+'. '+esc(st.title)+'</h3><p class="muted">'+esc(st.lead)+'</p><ol>'+
+        st.steps.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></div>'}).join('')+'</div></section>';
     h+='<section class="card wide"><h2>Proces w sześciu krokach</h2><p class="hint">Każdy krok uruchamiasz komendą w Claude Code, w folderze modułu. Panel pokazuje, który krok jest teraz.</p><ol class="stages">'+
       g.stages.map(function(s){return '<li><span class="nm">'+esc(s.name)+' <code>'+esc(s.command)+'</code></span><span>'+esc(s.desc)+'</span>'+
         (s.howto&&s.howto.length?'<ol>'+s.howto.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')+'</li>'}).join('')+'</ol></section>';
     h+='<section class="card wide"><h2>Komendy</h2><div class="scroll"><table class="tbl"><thead><tr><th>Komenda</th><th>Co robi</th><th>Kiedy</th></tr></thead><tbody>'+
-      g.skills.map(function(s){return '<tr><td><code>'+esc(s.command)+'</code></td><td>'+esc(s.desc)+'</td><td class="muted">'+esc(s.when)+'</td></tr>'}).join('')+'</tbody></table></div></section>';
+      g.skills.map(function(s){var vs=s.variants||[];
+        return '<tr'+(vs.length?' class="hasvar"':'')+'><td><code>'+esc(s.command)+'</code></td><td>'+esc(s.desc)+'</td><td class="muted">'+esc(s.when)+'</td></tr>'+
+        vs.map(function(v,i){return '<tr class="var'+(i===vs.length-1?' last':'')+'"><td><code>'+esc(v.command)+'</code></td><td colspan="2">'+esc(v.desc)+'</td></tr>'}).join('')}).join('')+'</tbody></table></div></section>';
     h+='<section class="card wide"><h2>Folder requirements/</h2><dl class="kv">'+
       g.folders.map(function(f){return '<dt><code>'+esc(f.path)+'</code></dt><dd>'+esc(f.desc)+'</dd>'}).join('')+'</dl></section>';
     g.sections.forEach(function(s){ h+='<section class="card"><h2>'+esc(s.title)+'</h2><ul class="list">'+s.items.map(function(i){return '<li>'+esc(i)+'</li>'}).join('')+'</ul></section>'; });
@@ -261,7 +277,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     $('#owners').innerHTML=ownersDraft.map(function(o,i){
       return '<div class="owner"><input type="text" data-role="'+i+'" value="'+esc(o.role)+'" aria-label="Nazwa roli"'+(demo?' disabled':'')+'>'+
         (demo?'<span></span>':'<button class="b" type="button" data-delrole="'+i+'" aria-label="Usuń rolę '+esc(o.role)+'">Usuń</button>')+
-        '<div class="ap">zatwierdza: '+all.map(function(a){return '<label><input type="checkbox" data-ap="'+i+'" value="'+a+'"'+(o.approves.indexOf(a)>=0?' checked':'')+(demo?' disabled':'')+'>'+a+'</label>'}).join('')+'</div></div>';
+        '<div class="ap">zatwierdza: '+all.map(function(a){return '<label><input type="checkbox" data-ap="'+i+'" value="'+a+'"'+(o.approves.indexOf(a)>=0?' checked':'')+(demo?' disabled':'')+'>'+esc(SddUI.abbr(a))+'</label>'}).join('')+'</div></div>';
     }).join('');
   }
   function bindConfig(){

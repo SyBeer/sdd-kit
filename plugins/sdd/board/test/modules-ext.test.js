@@ -99,3 +99,19 @@ test('AC-B37: widok tablicy podaje _file, zapis go pomija', async () => {
     assert.strictEqual('_file' in JSON.parse(fs.readFileSync(file, 'utf8')), false);
   } finally { proc.kill(); }
 });
+
+test('AC-B40: widok tablicy podaje _questions, zapis go pomija', async () => {
+  const root = tmp(), cfg = path.join(tmp(), 'config.json');
+  const dir = createModule(root, { name: 'horizon', level: 'full' }, { git: false });
+  fs.appendFileSync(path.join(dir, 'requirements', '01-interview', 'QUESTIONS.md'), '| Q-001 | Maile? | otwarte | sponsor | BR-030 | | |\n');
+  saveRoot(cfg, root);
+  const { port, proc } = await start(cfg, tmp());
+  try {
+    const b = JSON.parse((await call(port, 'GET', '/api/board')).body);
+    assert.strictEqual(b._questions['Q-001'].kind, 'open');
+    assert.deepStrictEqual(b._questions['Q-001'].refs, ['BR-030']);
+    await call(port, 'PUT', '/api/board', JSON.stringify({ lanes: [], notes: [], _questions: b._questions }));
+    const file = path.join(dir, 'requirements', '01-interview', 'board.json');
+    assert.strictEqual('_questions' in JSON.parse(fs.readFileSync(file, 'utf8')), false);
+  } finally { proc.kill(); }
+});

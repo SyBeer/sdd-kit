@@ -267,3 +267,32 @@ test('AC-C12: demo - konfiguracja tylko do odczytu, bez sciezek usera', async ()
     assert.ok(c.sdd.owners.length > 0);
   } finally { proc.kill(); }
 });
+
+test('AC-C19: guide - dwa punkty startu i sekcja Tablica i panel', () => {
+  const g = info.guide();
+  assert.strictEqual(g.starts.length, 2);
+  assert.match(g.starts[0].title, /materiał/i); assert.match(g.starts[1].title, /tablic/i);
+  for (const st of g.starts) assert.ok(st.steps.length >= 3, st.title);
+  assert.match(JSON.stringify(g.starts[1]), /\/sdd:board sync/);
+  const sync = g.sections.find(s => /Tablica i panel/.test(s.title));
+  assert.ok(sync, 'sekcja Tablica i panel');
+  assert.match(sync.items.join(' '), /Claude Code/);
+});
+
+test('AC-C20: guide - warianty komend istnieja w plikach skilli', () => {
+  const g = info.guide();
+  const SK = path.join(__dirname, '..', '..', 'skills');
+  const withVariants = g.skills.filter(s => s.variants && s.variants.length).map(s => s.command);
+  for (const c of ['/sdd:board', '/sdd:interview', '/sdd:spec', '/sdd:intake', '/sdd:init', '/sdd:status']) assert.ok(withVariants.includes(c), c);
+  for (const s of g.skills) {
+    assert.ok(Array.isArray(s.variants), s.command);
+    const name = s.command.replace('/sdd:', '');
+    const text = fs.readFileSync(path.join(SK, name, 'SKILL.md'), 'utf8');
+    for (const v of s.variants) {
+      assert.ok(v.command.startsWith(s.command), v.command);
+      assert.ok(v.desc && v.desc.length > 10, v.command);
+      const arg = v.command.slice(s.command.length).trim();
+      if (arg) assert.ok(text.includes(arg), s.command + ': argumentu "' + arg + '" nie ma w SKILL.md');
+    }
+  }
+});
