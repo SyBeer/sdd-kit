@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.2] - 2026-09-27
+- Odcisk wymagan: z `SDD.yaml` licza sie tylko `level`, `owners` i `gate_blocking_status`. Zmiana `backlog` (handover),
+  nazwy projektu (Konfiguracja) albo komentarza nie oznacza juz walidacji jako nieaktualnej (AC-64). Zdarzenie: /sdd:handover
+  w horizon-zlecenia. Odciski policzone przez 0.18.0-0.18.1 zmieniaja sie raz - raport trzeba przeliczyc (demo przeliczone).
+- Testy 112/112.
+
 ## [0.18.1] - 2026-09-27
 - Wersja sdd-kit w gornym pasku na kazdej zakladce (i w demo), pelna w dymku. Serwer pamieta wersje z chwili startu
   (GET /api/version: running + disk); po aktualizacji pluginu bez restartu serwera pasek pokazuje na czerwono
