@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.0] - 2026-09-27
+Plugin w Claude Code nieaktualny (spec: `docs/specs/ui-switch.md`, zmiana 0.21.0, AC-U13..AC-U15).
+- Serwer czyta wersje zainstalowanego pluginu `sdd@sdd-kit` z `installed_plugins.json` Claude Code (`SDD_PLUGINS_FILE`,
+  `CLAUDE_CONFIG_DIR` albo `~/.claude`); `GET /api/version` zwraca `{running, disk, plugin}`.
+- Plugin w innej wersji niz kit na dysku -> pasek na czerwono "plugin nieaktualny", w dymku komenda aktualizacji i restart
+  sesji Claude Code. Zdarzenie: panel 0.20.0, a skille z pluginu 0.19.0.
+- Testy 119/119.
+
 ## [0.20.0] - 2026-09-27
 Pobieranie pliku z Intake (spec: `docs/specs/progress-ui.md`, zmiana 0.20.0, AC-68..AC-70).
 - Nazwa pliku na liscie "Wrzucone pliki" jest linkiem - klik zapisuje plik na dysk (takze "dodane" i w demo).
