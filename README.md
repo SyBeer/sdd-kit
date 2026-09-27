@@ -69,6 +69,10 @@ W osobnym oknie terminala, w folderze projektu:
 Otworz http://localhost:8012/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
 Ty mozesz przesuwac i dopisywac karteczki w przegladarce, agent to widzi.
 Po warsztacie: /sdd:board sync przenosi karteczki do plikow. Przyklad: plugins/sdd/board/example-zlecenia.json
+
+Jak wyglada wynik? `sdd-board --demo wynik` otwiera gotowy modul Zlecenia po przejsciu SDD (walidacja 100%,
+18 wymagan zatwierdzonych, model na tablicy w 5 procesach) - tylko do podgladu, nic sie nie zapisuje.
+Dane demo sa zanonimizowane: `plugins/sdd/demo/zlecenia/requirements/`.
 Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik motywu jasny / ciemny (slonce / ksiezyc), wspolny dla obu zakladek.
 
 ## Pliki w projekcie

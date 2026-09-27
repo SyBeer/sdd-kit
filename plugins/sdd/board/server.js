@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Lokalny panel sdd-kit: postep procesu SDD i tablica warsztatowa.
 // Uruchom:  node server.js [sciezka/do/board.json] [port]
+//           node server.js --demo [nazwa] [port]   demo z plugins/sdd/demo/<nazwa>, tylko podglad (0.11.0)
 // Strony:  /  panel postepu (+ zalaczniki do Intake, nowy modul),  /board  tablica warsztatowa.
 // Agent (Claude Code) pisze do plikow, przegladarka odswieza sie sama (SSE).
 // Katalog wymagan: SDD_REQ albo nadrzedny 'requirements/' pliku tablicy, albo ./requirements.
@@ -15,12 +16,18 @@ const { listModules, createModule, saveIntake, removeIntake } = require('./modul
 const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, saveRoot, checkRoot, resolveRoot, listDirs } = require('./root');
 
-const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
+// Tryb demo: gotowy modul z pluginu, bez katalogu modulow usera i bez zapisow.
+const DEMO = process.argv[2] === '--demo' ? (process.argv[3] || 'zlecenia') : null;
+const DEMO_ROOT = path.join(__dirname, '..', 'demo');
+const ARGS = DEMO ? [null, null, null].concat(process.argv.slice(4)) : process.argv;
+if (DEMO && !/^[a-z0-9-]+$/.test(DEMO)) { console.error('Zla nazwa demo: ' + DEMO); process.exit(2); }
+const PORT = parseInt(ARGS[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
 const MAX_UPLOAD = 25 * 1024 * 1024;
 
-const boardArg = path.resolve(process.argv[2] || 'requirements/01-interview/board.json');
+const boardArg = DEMO ? path.join(DEMO_ROOT, DEMO, 'requirements', '01-interview', 'board.json')
+  : path.resolve(ARGS[2] || 'requirements/01-interview/board.json');
 function reqOf(file) {
   const parts = file.split(path.sep);
   const i = parts.lastIndexOf('requirements');
@@ -30,9 +37,13 @@ function reqOf(file) {
 const CUSTOM_BOARD = reqOf(boardArg) ? null : boardArg;
 
 const state = { req: null, board: null };
-const START_REQ = process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'));
-const resolved = resolveRoot({ project: START_REQ });
+const START_REQ = DEMO ? reqOf(boardArg)
+  : process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'));
+if (DEMO && !fs.existsSync(START_REQ)) { console.error('Nie ma demo: ' + path.dirname(START_REQ)); process.exit(2); }
+const resolved = DEMO ? { root: null } : resolveRoot({ project: START_REQ });
 let ROOT = resolved.root;
+// Lista modulow: w demo tylko ten jeden.
+const modules = () => DEMO ? listModules(DEMO_ROOT).filter(m => m.name === DEMO) : ROOT ? listModules(ROOT) : [];
 
 // ---------------------------------------------------------------- tablica
 function emptyBoard() {
@@ -53,10 +64,11 @@ function boardView() {
   });
   // naglowek "Wymagania do modulu" na tablicy; jak _sync - nie trafia do board.json
   b._module = { name: state.req ? path.basename(path.dirname(state.req)) : '' };
-  b._modules = listModules(ROOT).map(m => ({ name: m.name, level: m.level }));
+  b._modules = modules().map(m => ({ name: m.name, level: m.level }));
+  b._demo = !!DEMO;
   return b;
 }
-const VIEW_ONLY = ['_sync', '_module', '_modules'];
+const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo'];
 function writeBoard(b) {
   VIEW_ONLY.forEach(k => { delete b[k]; });
   b.updated = new Date().toISOString();
@@ -70,9 +82,10 @@ const progressClients = new Set();
 function progressPayload() {
   const p = state.req ? readProgress(state.req) : { exists: false };
   p.module = state.req ? { name: path.basename(path.dirname(state.req)), dir: path.dirname(state.req) } : null;
-  p.modules = ROOT ? listModules(ROOT).map(m => ({ name: m.name, project: m.project, level: m.level })) : [];
+  p.modules = modules().map(m => ({ name: m.name, project: m.project, level: m.level }));
   p.modulesRoot = ROOT;
-  p.needsRoot = !ROOT;
+  p.needsRoot = !ROOT && !DEMO;
+  p.demo = !!DEMO;
   p.kitDir = KIT_DIR;
   return p;
 }
@@ -113,7 +126,7 @@ function firstModule() {
   const m = ROOT ? listModules(ROOT)[0] : null;
   return m ? path.join(m.dir, 'requirements') : null;
 }
-const startInKit = inside(path.dirname(START_REQ), KIT_DIR);
+const startInKit = !DEMO && inside(path.dirname(START_REQ), KIT_DIR);
 selectModule(!startInKit && fs.existsSync(START_REQ) ? START_REQ : firstModule());
 
 // ---------------------------------------------------------------- HTTP
@@ -155,6 +168,7 @@ const server = http.createServer((req, res) => {
   const url = u.pathname;
   const write = req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE';
   if (write && !allowedWrite(req)) return json(res, 403, { error: 'Zapis tylko z panelu sdd-board.' });
+  if (DEMO && (write || url === '/api/dirs')) return json(res, 403, { error: 'Demo - tylko podgląd.' });
 
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
@@ -240,7 +254,8 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`Panel:    http://localhost:${PORT}`);
   console.log(`Tablica:  http://localhost:${PORT}/board`);
   console.log(`Modul:    ${state.req ? path.dirname(state.req) : 'brak'}`);
+  if (DEMO) console.log('DEMO - tylko podgląd, zapisy wylaczone.');
   if (resolved.rejected) console.log(`Pomijam:  ${resolved.rejected} - to folder aplikacji sdd-kit, wymagan tu nie trzymam.`);
-  console.log(`Moduly w: ${ROOT || 'nie wybrano - wskaz katalog w panelu'}`);
+  if (!DEMO) console.log(`Moduly w: ${ROOT || 'nie wybrano - wskaz katalog w panelu'}`);
   console.log('Zostaw to okno otwarte. Ctrl+C konczy.');
 });

@@ -94,3 +94,11 @@ test('AC-U3, AC-U7: serwer - /ui.js, /ui.css, modul w widoku tablicy', async () 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('AC-40: modMenu w demo - bez "Nowy moduł…" i "Zmień katalog modułów…"', () => {
+  const d = ui.modMenu([{ name: 'zlecenia', level: 'full' }], 'zlecenia', true);
+  assert.ok(d.includes('zlecenia'));
+  assert.ok(!d.includes('newmod') && !d.includes('chroot'));
+  const n = ui.modMenu([{ name: 'zlecenia', level: 'full' }], 'zlecenia');
+  assert.ok(n.includes('newmod') && n.includes('chroot'));
+});

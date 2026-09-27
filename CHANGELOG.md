@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.11.0] - 2026-09-27
+Demo "wynik" - jak wyglada modul po przejsciu SDD (uwaga usera: "zeby operator mogl sobie podejrzec jaki ma osiagnac wynik").
+- `sdd-board --demo wynik` (serwer: `node server.js --demo [nazwa] [port]`): gotowy modul Zlecenia z
+  `plugins/sdd/demo/zlecenia/requirements/` - panel 100% (5 z 6 etapow, aktualny krok Handover) i tablica
+  62 karteczek w 5 procesach, wszystkie z ✓. `sdd-board --demo` (tablica startowa) bez zmian.
+- Demo tylko do podgladu: kazdy zapis przez API -> 403 "Demo - tylko podgląd."; nie czyta i nie zapisuje
+  `~/.sdd-kit/config.json`; pasek DEMO w panelu i na tablicy; menu modulu bez "Nowy moduł…" i "Zmień katalog…";
+  tablica bez przyciskow edycji, karteczka otwiera sie do czytania.
+- Dane demo z projektu SDD po walidacji 100%, zanonimizowane (klient, dostawcy, gieldy, dzialy, liczby); tablica
+  startowa `example-zlecenia.json` tez bez nazw.
+- Spec: `docs/specs/progress-ui.md`, zmiana 0.11.0 (AC-35..AC-40); testy `test/demo.test.js` + AC-40 w `ui.test.js` (52/52).
+- Instalatory i README: nowa komenda. Po aktualizacji pluginu uruchom `bash install.sh --update`.
+
 ## [0.10.1] - 2026-09-27
 - Etap "gotowe" z pytaniami do wyjasnienia ma inny status i kolor: pigulka "gotowe · N do wyjaśnienia" (zolta)
   i zolte kolko na osi czasu. Nie cofa aktualnego kroku (jak w 0.9.0). Pole `partial` w etapie, AC-33, testy 47/47.

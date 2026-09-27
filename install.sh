@@ -127,8 +127,10 @@ cat > "$BIN_DIR/sdd-board" <<EOF
 # Uruchamia tablice warsztatowa dla projektu w biezacym folderze.
 #   sdd-board            -> requirements/01-interview/board.json, port 8012
 #   sdd-board plik.json  -> wskazany plik
-#   sdd-board --demo     -> przykladowa tablica Zlecen
+#   sdd-board --demo     -> przykladowa tablica Zlecen (start warsztatu)
+#   sdd-board --demo wynik -> gotowy modul po SDD: panel 100% + tablica, tylko podglad
 KIT="$KIT_DIR/plugins/$PLUGIN/board"
+if [ "\${1:-}" = "--demo" ] && [ "\${2:-}" = "wynik" ]; then exec node "\$KIT/server.js" --demo zlecenia "\${3:-8012}"; fi
 if [ "\${1:-}" = "--demo" ]; then exec node "\$KIT/server.js" "\$KIT/example-zlecenia.json" "\${2:-8012}"; fi
 exec node "\$KIT/server.js" "\${1:-requirements/01-interview/board.json}" "\${2:-8012}"
 EOF
@@ -168,6 +170,7 @@ say "    /sdd:board       tablica na zywo (start / sync / rebuild)"
 say "  W terminalu:"
 say "    sdd-board           postep projektu -> http://localhost:8012, tablica -> /board"
 say "    sdd-board --demo    przykladowa tablica Zlecen, zobacz jak to wyglada"
+say "    sdd-board --demo wynik  gotowy modul po SDD (panel 100% + tablica), tylko podglad"
 say "    bash install.sh --update      po zmianach w kicie"
 say "    bash install.sh --uninstall   usun"
 say "  Przewodnik po ludzku: $KIT_DIR/START-TUTAJ.md"

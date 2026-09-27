@@ -77,6 +77,8 @@ $board = Join-Path $PluginDir "board"
 rem sdd-board            -> requirements\01-interview\board.json
 rem sdd-board plik.json  -> wskazany plik
 rem sdd-board --demo     -> przykladowa tablica Zlecen
+rem sdd-board --demo wynik -> gotowy modul po SDD, tylko podglad
+if "%~1"=="--demo" if "%~2"=="wynik" ( node "$board\server.js" --demo zlecenia 8012 & goto :eof )
 if "%~1"=="--demo" ( node "$board\server.js" "$board\example-zlecenia.json" 8012 ) else if "%~1"=="" ( node "$board\server.js" requirements\01-interview\board.json 8012 ) else ( node "$board\server.js" %1 8012 )
 "@ | Set-Content (Join-Path $BinDir "sdd-board.cmd") -Encoding ASCII
 Ok "Zapisano $BinDir\sdd-board.cmd"
@@ -98,5 +100,5 @@ if (-not $Update) {
 
 Hr; Write-Host "GOTOWE"
 Write-Host "  W Claude Code: /sdd:init  /sdd:intake  /sdd:interview  /sdd:domain  /sdd:spec  /sdd:validate  /sdd:handover  /sdd:status  /sdd:board"
-Write-Host "  W PowerShell:  sdd-board   (postep -> http://localhost:8012, tablica -> /board)   sdd-board --demo   (przyklad Zlecen)"
+Write-Host "  W PowerShell:  sdd-board   (postep -> http://localhost:8012, tablica -> /board)   sdd-board --demo   (przyklad Zlecen)   sdd-board --demo wynik   (gotowy modul po SDD)"
 Write-Host "  Przewodnik po ludzku: $KitDir\START-TUTAJ.md"; Hr

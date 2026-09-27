@@ -285,3 +285,52 @@ tak samo jak etap bez zadnych zaleglosci.
 - AC-33: Interview `done` z 3 pytaniami otwartymi i 1 zadanym -> `partial` = 4; bez takich pytan -> `partial` = 0
   (test w `plugins/sdd/board/test/progress.test.js`).
 - AC-34 (reczne): pigulka i kolko osi dla Interview z otwartymi pytaniami maja inny kolor i tekst niz czyste "gotowe".
+
+---
+
+# Zmiana 0.11.0 (2026-09-27): demo "wynik" - jak wyglada modul po przejsciu SDD
+
+Uwaga usera: "z tego co teraz jest zrob tablice demo - zeby operator mogl sobie podejrzec jaki ma osiagnac wynik".
+Dotychczasowe `sdd-board --demo` pokazuje tablice z poczatku warsztatu (`example-zlecenia.json`) - bez plikow
+`requirements/`, wiec panel postepu nie ma czego pokazac. Operator nie widzi, dokad zmierza.
+
+## Zakres
+1. Nowy tryb serwera `node server.js --demo [nazwa] [port]` (domyslna nazwa `zlecenia`): modul z
+   `plugins/sdd/demo/<nazwa>/requirements/`. Komenda `sdd-board --demo wynik` uruchamia go; `sdd-board --demo`
+   bez zmian (tablica startowa).
+2. Tresc demo = kompletny modul po walidacji 100%, zbudowany z projektu horizon-zlecenia (stan 2026-09-27):
+   intake, pytania z rundami live i async, decyzje, zalozenia, model domeny, PRD 18/18 zatwierdzone, raport walidacji,
+   CHANGELOG oraz `01-interview/board.json` - docelowy model jako proces (pasy = procesy, karteczki wszystkich 6 typow,
+   kazda z `ref` obecnym w pliku `file`, czyli ✓ na tablicy). Handover nie jest zrobiony - demo konczy sie na
+   "aktualny krok: Handover", tak jak prawdziwy projekt.
+3. Anonimizacja: w plikach demo nie ma nazw klienta, dostawcow ani liczb pozwalajacych rozpoznac firme.
+   Zamiany: FlowLogist -> "Grupa spedycyjna", Base44 -> "prototyp no-code", Trans.eu / Timocom -> "Gielda A" / "Gielda B",
+   DWK (Dzial Weryfikacji Kontrahenta) -> DR (Dzial Ryzyka), baza CBK -> "baza kredytowa", EHID -> "numer u ubezpieczyciela",
+   horizon -> "zlecenia-demo", liczby zespolow/osob -> "kilkanascie zespolow, kilkaset osob". Nazwy plikow zrodel
+   zmienione tak samo, odwolania w tresci zgodne z nowymi nazwami. Tytul `example-zlecenia.json` tez bez "Horizon".
+4. Demo tylko do podgladu: kazdy zapis przez API (tablica, zalaczniki, moduly, katalog modulow, przegladanie katalogow)
+   -> 403 "Demo - tylko podgląd.". Pliki demo w pluginie nie zmieniaja sie od ogladania.
+5. Demo nie dotyka katalogu modulow usera: nie czyta ani nie zapisuje `~/.sdd-kit/config.json`, lista modulow = tylko demo.
+6. Panel i tablica pokazuja pasek "DEMO - tylko podgląd" i nie oferuja "Nowy moduł…" ani "Zmień katalog modułów…".
+7. Tablica w demo bez przyciskow edycji (+ Karteczka, + Proces, "+" w kolumnie, strzalki i usuwanie procesu,
+   zmiana nazwy, przeciaganie, Zapisz/Usun w panelu karteczki). Karteczke mozna otworzyc do czytania (zrodlo, daty).
+   Gdyby zapis jednak poszedl (np. stara karta przegladarki), serwer odmawia, a tablica wraca do stanu z serwera.
+
+## Poza zakresem
+- Demo "przebieg krok po kroku" (przelaczanie etapow) - osobna zmiana, jesli bedzie potrzebna.
+- Tablica startowa (`sdd-board --demo`) zostaje edytowalna - jest do cwiczenia.
+
+## Kryteria akceptacji
+- AC-35: `readProgress(plugins/sdd/demo/zlecenia/requirements)` -> Intake, Interview, Domain, Spec, Validate `done`,
+  gotowosc 100%, Handover `todo`, aktualny krok Handover; 0 blokerow (test w `test/demo.test.js`).
+- AC-36: serwer `--demo`: GET `/api/progress` -> `demo: true`, `needsRoot: false`, modul `zlecenia`, lista modulow = 1;
+  PUT `/api/board`, POST/DELETE `/api/intake`, POST `/api/root`, `/api/modules`, `/api/modules/select`, GET `/api/dirs`
+  -> 403 z komunikatem "Demo - tylko podgląd." (test uruchamia serwer na wolnym porcie).
+- AC-37: anonimizacja - zaden plik w `plugins/sdd/demo/` ani `example-zlecenia.json` nie zawiera (bez wzgledu na
+  wielkosc liter): flowlogist, base44, trans.eu, timocom, horizon, dwk, cbk, ehid, 660.
+- AC-38: `demo/zlecenia/requirements/01-interview/board.json` - sa wszystkie typy karteczek (ev, cmd, act, pol, rm, hot);
+  kazda karteczka z `ref` i `file` ma ten `ref` w tresci pliku `file` (stan ✓ z `syncMap`).
+- AC-40: `SddUI.modMenu(mods, cur, true)` bez "Nowy moduł…" i "Zmień katalog modułów…"; bez trzeciego argumentu - z nimi
+  (test w `test/ui.test.js`).
+- AC-39 (reczne): `sdd-board --demo wynik` -> panel ze 100%, pasek DEMO, menu modulu bez "Nowy moduł…" i
+  "Zmień katalog modułów…"; tablica z procesami bez przyciskow edycji; karteczka otwiera sie do czytania, bez "Zapisz" i "Usuń".

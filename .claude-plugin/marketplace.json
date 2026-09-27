@@ -7,7 +7,7 @@
       "name": "sdd",
       "source": "./plugins/sdd",
       "description": "Proces SDD: intake -> interview -> domain -> spec -> validate -> handover",
-      "version": "0.10.1"
+      "version": "0.11.0"
     }
   ]
 }

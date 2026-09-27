@@ -30,15 +30,16 @@
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // Menu modulow w naglowku "Wymagania do modulu: X ▾" (panel i tablica).
-  function modMenu(mods, cur) {
+  // demo (0.11.0): bez "Nowy modul…" i "Zmien katalog…" - demo nie dotyka modulow usera.
+  function modMenu(mods, cur, demo) {
     const list = (mods || []).slice();
     if (cur && !list.some(function (m) { return m.name === cur; })) list.unshift({ name: cur });
     return '<div class="mh">Moduły</div><ul>' + list.map(function (m) {
       const on = m.name === cur;
       return '<li><button type="button" role="menuitemradio" aria-checked="' + on + '" data-mod="' + esc(m.name) + '"><span class="ck">' + (on ? '✓' : '') + '</span>' +
         '<span class="nm">' + esc(m.name) + '</span><span class="lv">' + esc(LEVEL[m.level] || m.level || '') + '</span></button></li>';
-    }).join('') + '</ul><div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>' +
-      '<button type="button" role="menuitem" class="add" id="chroot"><span class="ck">⌂</span>Zmień katalog modułów…</button>';
+    }).join('') + '</ul>' + (demo ? '' : '<div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>' +
+      '<button type="button" role="menuitem" class="add" id="chroot"><span class="ck">⌂</span>Zmień katalog modułów…</button>');
   }
 
   // Karta etapu w panelu (zmiana 0.10.0): wybor usera, a bez niego rozwinieta tylko karta aktualnego kroku.
@@ -95,11 +96,11 @@
   function modSwitch(opts) {
     opts = opts || {};
     const menu = document.getElementById('modmenu'), btn = document.getElementById('modbtn');
-    let cur = null, mods = [];
+    let cur = null, mods = [], demo = false;
     const items = function () { return [].slice.call(menu.querySelectorAll('button')); };
     function open(on) {
       menu.hidden = !on; btn.setAttribute('aria-expanded', on);
-      if (on) { menu.innerHTML = modMenu(mods, cur); const c = menu.querySelector('[aria-checked="true"]') || items()[0]; if (c) c.focus(); }
+      if (on) { menu.innerHTML = modMenu(mods, cur, demo); const c = menu.querySelector('[aria-checked="true"]') || items()[0]; if (c) c.focus(); }
     }
     btn.onclick = function () { open(menu.hidden); };
     menu.onclick = function (e) {
@@ -121,12 +122,25 @@
       else if (e.key === 'Escape') { open(false); btn.focus(); }
     };
     document.addEventListener('click', function (e) { if (!menu.hidden && !e.target.closest('.modsw')) open(false); });
-    return function update(name, list) {
-      cur = name; mods = list || [];
+    return function update(name, list, isDemo) {
+      cur = name; mods = list || []; demo = !!isDemo;
       btn.querySelector('.mname').textContent = name || '…';
+      demoBar(demo);
     };
   }
   api.modSwitch = modSwitch;
+
+  // Pasek "DEMO - tylko podglad" pod gornym paskiem (zmiana 0.11.0).
+  function demoBar(on) {
+    let el = document.getElementById('demobar');
+    if (!on) { if (el) el.remove(); return; }
+    if (el) return;
+    const bar = document.getElementById('topbar'); if (!bar) return;
+    el = document.createElement('div');
+    el.id = 'demobar'; el.className = 'demobar'; el.setAttribute('role', 'note');
+    el.innerHTML = '<b>DEMO - tylko podgląd.</b> Tak wygląda moduł po przejściu SDD: wymagania zatwierdzone, walidacja 100%, model na tablicy. Zmiany są wyłączone.';
+    bar.insertAdjacentElement('afterend', el);
+  }
 
   function init() { const bar = document.getElementById('topbar'); if (bar) render(bar); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

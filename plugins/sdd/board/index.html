@@ -54,6 +54,9 @@ main{padding:0 20px 24px}
 .lane-title{position:sticky;left:0;z-index:2;background:var(--board);padding:12px 10px 12px 12px;border-right:1px dashed var(--line);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .lname{background:none;border:0;padding:0;text-align:left;font-weight:700;font-size:17px;line-height:1.2;cursor:text;border-bottom:1px dashed transparent;word-break:break-word}
 .lname:hover{border-bottom-color:var(--muted)}
+/* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
+body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .ltools,body.demo .addnote,body.demo #order,body.demo #save,body.demo #del{display:none}
+body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
 .lane-title input{font:inherit;font-weight:700;font-size:16px;width:100%;padding:3px 5px;border:1px solid var(--ink);border-radius:3px;background:var(--panel);color:var(--ink)}
 .lmeta{font-size:12px;color:var(--muted)}
 .ltools{display:flex;gap:2px;opacity:.35;transition:opacity .15s}
@@ -191,7 +194,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
 
 <aside id="drawer" aria-label="Karteczka" aria-hidden="true">
   <div class="dh"><h2 id="ph">Karteczka</h2><button class="close" id="close" title="Zamknij (Esc)" aria-label="Zamknij">×</button></div>
-  <p class="hint">Zmiany zapisują się do pliku tablicy, Claude je widzi.</p>
+  <p class="hint ed">Zmiany zapisują się do pliku tablicy, Claude je widzi.</p>
+  <p class="hint ro">Demo - karteczka tylko do czytania.</p>
   <label for="f-text">Treść</label><textarea id="f-text"></textarea>
   <fieldset class="types" id="f-type">
     <legend>Typ</legend>
@@ -227,7 +231,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   function render(){
     if(editingLane){ pendingRender=true; return; }
     pendingRender=false;
-    setModule(board._module&&board._module.name,board._modules);
+    setModule(board._module&&board._module.name,board._modules,board._demo);
+    document.body.classList.toggle('demo',!!board._demo);
     $('#title').textContent=board.title||'Tablica';
     $('#subtitle').textContent=board.subtitle?' · '+board.subtitle:'';
     var laneSel=$('#f-lane'), keep=laneSel.value; laneSel.innerHTML='';
@@ -320,7 +325,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(!first && !seen.has(n.id)) el.classList.add('fresh');
     seen.add(n.id);
     if(sel===n.id) el.classList.add('sel');
-    el.draggable=true;el.dataset.id=n.id;
+    el.draggable=!board._demo;el.dataset.id=n.id;
     var tx=document.createElement('span');tx.className='txt';tx.textContent=n.text;el.appendChild(tx);
     var who=author(n), when=ops.fmtDate(n.updated||n.created);
     if(n.ref||n.source||who||when){
@@ -370,8 +375,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   }
   function save(){
     return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return this===board&&k.charAt(0)==='_'?undefined:v})})
-      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); if(saveErr){ saveErr=false; say(''); } })
-      .catch(function(e){ saveErr=true; say('Nie zapisałem tablicy: '+e.message+'. Sprawdź, czy serwer działa.'); });
+      .then(function(r){
+        if(r.status===403) return r.json().catch(function(){return {}}).then(function(j){ throw Object.assign(new Error(j.error||'HTTP 403'),{ro:true}); });
+        if(!r.ok) throw new Error('HTTP '+r.status); if(saveErr){ saveErr=false; say(''); } })
+      .catch(function(e){
+        if(e.ro){ say(e.message); return fetch('/api/board').then(function(r){return r.json()}).then(function(b){ board=b; board.notes=board.notes||[]; board.lanes=board.lanes||[]; render(); }); } // demo: wracamy do stanu z serwera
+        saveErr=true; say('Nie zapisałem tablicy: '+e.message+'. Sprawdź, czy serwer działa.'); });
   }
   function commit(){ render(); return save(); }
 
@@ -382,6 +391,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(t){ t.scrollIntoView({block:'nearest'}); startRename(t,name); }
   }
   function startRename(t,lane){
+    if(board._demo) return;
     if(editingLane) return;
     editingLane=lane;
     var name=t.querySelector('.lname'), inp=document.createElement('input');

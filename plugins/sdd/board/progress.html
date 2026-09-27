@@ -418,7 +418,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     var cur=p.module?p.module.name:'';
     if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; qOpen=null; cardToggled={}; lastCurrent=null; }
     shownModule=cur;
-    setModule(cur,p.modules);
+    setModule(cur,p.modules,p.demo);
     $('#rootdir').textContent=p.modulesRoot||'';
   }
   function size(b){return b<1024?b+' B':b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'}
