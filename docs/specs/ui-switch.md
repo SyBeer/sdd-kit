@@ -34,6 +34,11 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
      z `ui.css`, niezalezne od CSS strony; `scrollbar-gutter: stable`, zeby pasek przewijania nie przesuwal strony w bok.
    - Serwer dokleja do widoku tablicy `_module` (nazwa) i `_modules` (lista); jak `_sync` - nigdy nie trafiaja do board.json.
 
+## Zmiana 0.18.1: wersja w gornym pasku (uwaga usera: "dodaj do ekranu wyswietlanie wersji")
+- Maly napis "v0.18.1" po prawej w pasku zakladek, na kazdej stronie; pelna informacja w dymku.
+- Serwer pamieta wersje z chwili startu i porownuje z plugin.json na dysku: po aktualizacji pluginu bez restartu serwera
+  pasek pokazuje "serwer nieaktualny – zrestartuj" (lekcja z 2026-09-27: nowa strona + stary serwer psuly zapis).
+
 ## Poza zakresem
 - Wiecej motywow, kontrast, rozmiar czcionki; przelacznik jezyka.
 
@@ -48,4 +53,12 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - AC-U5 (reczne): ksiezyc przy jasnym systemie -> ciemne kolory na obu stronach, po przeladowaniu tez; slonce przy ciemnym -> jasne;
   zmiana w jednej karcie zmienia druga; telefon bez poziomego przewijania.
 - AC-U9 (reczne, pomiar): pasek, zakladki, ikony motywu, h1 i przycisk modulu maja te same wspolrzedne na panelu i tablicy (1200 px i 375 px).
+- AC-U10: `versionBadge({running, disk})`: tekst "v<running>"; gdy wersja na dysku inna niz wersja dzialajacego serwera ->
+  `stale: true`, tekst z "serwer nieaktualny" i podpowiedz z wersja na dysku i restartem; brak wersji -> null.
+- AC-U11 (serwer): GET /api/version (i /demo/api/version) -> `{running, disk}`; `running` = wersja z plugin.json przy starcie,
+  `disk` = czytana przy kazdym zapytaniu (zmiana pliku po starcie -> rozne wartosci).
+- AC-U12 (reczne): wersja widoczna w gornym pasku na wszystkich zakladkach (Panel, Tablica, Moduł, Jak to działa, Konfiguracja)
+  i w demo, powyzej 900 px; ponizej 1180 px link do przykladu w krotkiej formie (zakladki nie sa ucinane przez wersje);
+  ponizej 900 px zwykly numer tylko w Konfiguracji, ostrzezenie "serwer nieaktualny" zawsze; po podbiciu wersji w
+  plugin.json bez restartu serwera - "serwer nieaktualny"; 375 px bez przewijania strony w poziomie.
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.

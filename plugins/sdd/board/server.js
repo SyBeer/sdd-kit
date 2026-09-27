@@ -22,7 +22,9 @@ const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
 const PROGRESS_UI = path.join(__dirname, 'progress.html');
 const INFO_UI = path.join(__dirname, 'info.html');  // Modul, Jak to dziala, Konfiguracja
-const VERSION = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.claude-plugin', 'plugin.json'), 'utf8')).version; } catch (e) { return ''; } })();
+// Wersja z chwili startu i wersja na dysku (AC-U11): rozne = serwer dziala na starym kodzie, trzeba go zrestartowac.
+function diskVersion() { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.claude-plugin', 'plugin.json'), 'utf8')).version || ''; } catch (e) { return ''; } }
+const VERSION = diskVersion();
 const MAX_UPLOAD = 25 * 1024 * 1024;
 const DEMO_REQ = path.join(__dirname, '..', 'demo', 'zlecenia', 'requirements');
 const DEMO_START_BOARD = path.join(__dirname, 'example-zlecenia.json');
@@ -263,6 +265,7 @@ const server = http.createServer((req, res) => {
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
   if (url === '/module' || url === '/guide' || url === '/config') return sendHtml(res, INFO_UI);
 
+  if (url === '/api/version' && req.method === 'GET') return json(res, 200, { running: VERSION, disk: diskVersion() });
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView(ctx));

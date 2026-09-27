@@ -149,3 +149,14 @@ test('AC-C17: ABBR i abbr - rozwiniecie kazdego skrotu', () => {
   const info = require('../info');
   for (const k of info.APPROVES) assert.ok(ui.ABBR[k], 'kazde "zatwierdza" ma rozwiniecie: ' + k);
 });
+
+test('AC-U10: versionBadge - wersja i nieaktualny serwer', () => {
+  assert.deepStrictEqual(ui.versionBadge({ running: '0.17.1', disk: '0.17.1' }).stale, false);
+  assert.strictEqual(ui.versionBadge({ running: '0.17.1', disk: '0.17.1' }).text, 'v0.17.1');
+  const s = ui.versionBadge({ running: '0.17.0', disk: '0.17.1' });
+  assert.strictEqual(s.stale, true);
+  assert.match(s.text, /v0\.17\.0/); assert.match(s.text, /serwer nieaktualny/);
+  assert.match(s.title, /0\.17\.1/); assert.match(s.title, /zrestartuj|uruchom ponownie/i);
+  assert.strictEqual(ui.versionBadge({ running: '', disk: '' }), null);
+  assert.strictEqual(ui.versionBadge(null), null);
+});

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.1] - 2026-09-27
+- Wersja sdd-kit w gornym pasku na kazdej zakladce (i w demo), pelna w dymku. Serwer pamieta wersje z chwili startu
+  (GET /api/version: running + disk); po aktualizacji pluginu bez restartu serwera pasek pokazuje na czerwono
+  "serwer nieaktualny" z instrukcja restartu. Ponizej 1180 px link do przykladu w krotkiej formie; ponizej 900 px
+  zwykly numer tylko w Konfiguracji (ostrzezenie zostaje). Spec: `docs/specs/ui-switch.md` AC-U10..AC-U12.
+
 ## [0.18.0] - 2026-09-27
 Walidacja nieaktualna po zmianie wymagan (spec: `docs/specs/progress-ui.md`, zmiana 0.18.0, AC-59..AC-63).
 - `board/fingerprint.js`: odcisk wymagan (sha256 z SDD.yaml, INDEX.md, QUESTIONS/DECISIONS/ASSUMPTIONS, 02-domain, 03-spec bez agent/);

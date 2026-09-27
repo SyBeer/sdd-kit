@@ -12,6 +12,13 @@ html{scrollbar-gutter:stable}
 .topbar .tab[aria-current="page"]{color:var(--ink);background:var(--bg);border-color:var(--line);border-bottom-color:var(--bg)}
 .topbar .short{display:none}
 .topbar .right{display:flex;align-items:center;gap:12px;align-self:center}
+.topbar .ver{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.topbar .ver.stale{color:var(--hot,#e8503f);font-weight:700}
+.topbar .ver[hidden]{display:none}
+/* Srednia szerokosc: krotki link do przykladu, zeby wersja nie zabierala miejsca zakladkom (0.18.1) */
+@media (max-width:1180px){.topbar .xlink .long{display:none}.topbar .xlink .short{display:inline}}
+/* Waski ekran: zakladki i tak sie nie mieszcza - zwykly numer wersji tylko w Konfiguracji, ostrzezenie zostaje */
+@media (max-width:900px){.topbar .ver:not(.stale){display:none}}
 .topbar .xlink{color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap}
 .topbar .xlink:hover{color:var(--ink);text-decoration:underline}
 .topbar .xlink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}

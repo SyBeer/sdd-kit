@@ -115,3 +115,18 @@ test('AC-B40: widok tablicy podaje _questions, zapis go pomija', async () => {
     assert.strictEqual('_questions' in JSON.parse(fs.readFileSync(file, 'utf8')), false);
   } finally { proc.kill(); }
 });
+
+test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
+  const root = tmp(), cfg = path.join(tmp(), 'config.json');
+  createModule(root, { name: 'horizon', level: 'full' }, { git: false });
+  saveRoot(cfg, root);
+  const want = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.claude-plugin', 'plugin.json'), 'utf8')).version;
+  const { port, proc } = await start(cfg, tmp());
+  try {
+    for (const u of ['/api/version', '/demo/api/version']) {
+      const r = await call(port, 'GET', u);
+      assert.strictEqual(r.code, 200, u);
+      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want });
+    }
+  } finally { proc.kill(); }
+});

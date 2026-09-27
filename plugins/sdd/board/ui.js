@@ -92,7 +92,18 @@
     Q: 'pytania', A: 'założenia', AC: 'kryteria akceptacji' };
   function abbr(code) { return ABBR[code] ? code + ' – ' + ABBR[code] : String(code); }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, KEY };
+  // Wersja w pasku (AC-U10): stary serwer po aktualizacji pluginu -> ostrzezenie o restarcie.
+  function versionBadge(v) {
+    if (!v || !v.running) return null;
+    const stale = !!v.disk && v.disk !== v.running;
+    return { stale: stale,
+      text: 'v' + v.running + (stale ? ' · serwer nieaktualny' : ''),
+      title: stale ? 'Serwer działa na wersji ' + v.running + ', a zainstalowana jest ' + v.disk +
+        '. Zrestartuj serwer: zatrzymaj sdd-board (Ctrl+C) i uruchom ponownie (albo restart w HQAI).'
+        : 'sdd-kit ' + v.running };
+  }
+
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, versionBadge, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -123,7 +134,7 @@
         const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
         return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
       }).join('') + '</div>' +
-      '<div class="right">' + link +
+      '<div class="right"><span class="ver" hidden></span>' + link +
       '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
         return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
           (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
@@ -139,6 +150,12 @@
     });
     // bez zapisanego wyboru zaznaczenie idzie za systemem
     if (mq && mq.addEventListener) mq.addEventListener('change', function () { mark(bar, load()); });
+    // Wersja sdd-kit w pasku (zmiana 0.18.1); stary serwer po aktualizacji -> ostrzezenie
+    fetch(b + '/api/version').then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      const x = versionBadge(v), el = bar.querySelector('.ver');
+      if (!x || !el) return;
+      el.textContent = x.text; el.title = x.title; el.hidden = false; el.classList.toggle('stale', x.stale);
+    }).catch(function () {});
   }
 
   // Obsluga przelacznika modulu: #modbtn (z .mname) + #modmenu w .modsw.
