@@ -39,6 +39,15 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - Serwer pamieta wersje z chwili startu i porownuje z plugin.json na dysku: po aktualizacji pluginu bez restartu serwera
   pasek pokazuje "serwer nieaktualny – zrestartuj" (lekcja z 2026-09-27: nowa strona + stary serwer psuly zapis).
 
+## Zmiana 0.21.0: plugin w Claude Code nieaktualny (uwaga usera: "czy moge miec status, ze rozjechala sie wersja serwera i pluginu?")
+- Zdarzenie 2026-09-27: panel pokazywal 0.20.0 (serwer z repo), a Claude Code mial zainstalowany plugin 0.19.0 (kopia w
+  `~/.claude/plugins/cache`) - skille /sdd:* i tablica z roznych wersji, nikt tego nie widzial.
+- Serwer czyta wersje zainstalowanego pluginu `sdd@sdd-kit` z `installed_plugins.json` Claude Code
+  (`$SDD_PLUGINS_FILE`, inaczej `$CLAUDE_CONFIG_DIR/plugins/installed_plugins.json`, inaczej `~/.claude/plugins/...`).
+- Plugin inny niz wersja na dysku -> pasek na czerwono "plugin nieaktualny", w dymku obie wersje, komenda aktualizacji
+  i przypomnienie o restarcie sesji Claude Code. Brak pliku / wpisu -> bez ostrzezenia (np. kit uzywany bez Claude Code).
+- Poza zakresem: wykrywanie juz uruchomionych sesji Claude Code ze starymi skillami (panel ich nie widzi).
+
 ## Poza zakresem
 - Wiecej motywow, kontrast, rozmiar czcionki; przelacznik jezyka.
 
@@ -61,4 +70,10 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
   i w demo, powyzej 900 px; ponizej 1180 px link do przykladu w krotkiej formie (zakladki nie sa ucinane przez wersje);
   ponizej 900 px zwykly numer tylko w Konfiguracji, ostrzezenie "serwer nieaktualny" zawsze; po podbiciu wersji w
   plugin.json bez restartu serwera - "serwer nieaktualny"; 375 px bez przewijania strony w poziomie.
+- AC-U13: `pluginVersion(file)`: wersja `sdd@sdd-kit` z installed_plugins.json (wpis `scope: user`, inaczej pierwszy);
+  brak pliku, zly JSON, brak wpisu -> ''. `pluginsFile(env)`: SDD_PLUGINS_FILE > CLAUDE_CONFIG_DIR/plugins/installed_plugins.json > ~/.claude/plugins/installed_plugins.json.
+- AC-U14 (serwer): GET /api/version (i /demo/api/version) -> `{running, disk, plugin}`; `plugin` czytany przy kazdym zapytaniu.
+- AC-U15: `versionBadge({running, disk, plugin})`: plugin rozny od disk -> `stale: true`, tekst z "plugin nieaktualny", dymek z
+  obiema wersjami, `claude plugin update sdd@sdd-kit` i restartem sesji; plugin pusty -> bez ostrzezenia; serwer i plugin
+  nieaktualne naraz -> oba napisy; zachowanie AC-U10 bez zmian.
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.

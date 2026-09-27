@@ -9,6 +9,17 @@ const KIT_DIR = path.resolve(__dirname, '..', '..', '..');
 
 const configPath = (env = process.env) => env.SDD_CONFIG || path.join(os.homedir(), '.sdd-kit', 'config.json');
 
+// Wersja pluginu sdd@sdd-kit zainstalowanego w Claude Code (zmiana 0.21.0, AC-U13).
+const pluginsFile = (env = process.env) => env.SDD_PLUGINS_FILE ||
+  path.join(env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), 'plugins', 'installed_plugins.json');
+function pluginVersion(file = pluginsFile()) {
+  try {
+    const list = (JSON.parse(fs.readFileSync(file, 'utf8')).plugins || {})['sdd@sdd-kit'] || [];
+    const e = list.find((x) => x && x.scope === 'user') || list[0];
+    return (e && e.version) || '';
+  } catch (e) { return ''; }
+}
+
 const inside = (p, parent) => p === parent || p.startsWith(parent + path.sep);
 
 // config.json: modulesRoot, modules (foldery dodane recznie), lastModule (zmiana 0.13.0). Zapis laczy pola.
@@ -102,4 +113,4 @@ function resolveRoot({ env = process.env, configFile = configPath(env), project 
   return { root: null, source: null, rejected: null };
 }
 
-module.exports = { KIT_DIR, configPath, inside, readConfig, writeConfig, readRoot, saveRoot, addModule, checkRoot, resolveRoot, listDirs };
+module.exports = { KIT_DIR, configPath, pluginsFile, pluginVersion, inside, readConfig, writeConfig, readRoot, saveRoot, addModule, checkRoot, resolveRoot, listDirs };

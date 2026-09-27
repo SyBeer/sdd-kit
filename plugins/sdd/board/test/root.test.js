@@ -179,3 +179,22 @@ test('AC-48: addModule - tylko folder z requirements/SDD.yaml, bez duplikatow, n
   assert.throws(() => addModule(cfg, path.join(KIT_DIR, 'plugins', 'sdd', 'demo', 'zlecenia')), /aplikacji/);
   assert.throws(() => addModule(cfg, path.join(base, 'nie-ma')), /Nie ma folderu/);
 });
+
+// ---------------------------------------------------------------- 0.21.0: wersja pluginu w Claude Code
+test('AC-U13: pluginVersion i pluginsFile - wersja sdd@sdd-kit z installed_plugins.json', () => {
+  const { pluginVersion, pluginsFile } = require('../root');
+  const d = tmp(), f = path.join(d, 'installed_plugins.json');
+  const write = (o) => fs.writeFileSync(f, typeof o === 'string' ? o : JSON.stringify(o));
+  write({ version: 2, plugins: { 'sdd@sdd-kit': [{ scope: 'project', version: '0.18.0' }, { scope: 'user', version: '0.19.0' }] } });
+  assert.strictEqual(pluginVersion(f), '0.19.0');
+  write({ version: 2, plugins: { 'sdd@sdd-kit': [{ scope: 'project', version: '0.18.0' }] } });
+  assert.strictEqual(pluginVersion(f), '0.18.0');
+  write({ version: 2, plugins: { 'inny@x': [{ scope: 'user', version: '1.0.0' }] } });
+  assert.strictEqual(pluginVersion(f), '');
+  write('{zly json');
+  assert.strictEqual(pluginVersion(f), '');
+  assert.strictEqual(pluginVersion(path.join(d, 'brak.json')), '');
+  assert.strictEqual(pluginsFile({ SDD_PLUGINS_FILE: f, CLAUDE_CONFIG_DIR: '/cc' }), f);
+  assert.strictEqual(pluginsFile({ CLAUDE_CONFIG_DIR: '/cc' }), path.join('/cc', 'plugins', 'installed_plugins.json'));
+  assert.strictEqual(pluginsFile({}), path.join(os.homedir(), '.claude', 'plugins', 'installed_plugins.json'));
+});

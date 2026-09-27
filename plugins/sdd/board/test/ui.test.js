@@ -160,3 +160,18 @@ test('AC-U10: versionBadge - wersja i nieaktualny serwer', () => {
   assert.strictEqual(ui.versionBadge({ running: '', disk: '' }), null);
   assert.strictEqual(ui.versionBadge(null), null);
 });
+
+test('AC-U15: versionBadge - plugin w Claude Code nieaktualny', () => {
+  const ok = ui.versionBadge({ running: '0.21.0', disk: '0.21.0', plugin: '0.21.0' });
+  assert.strictEqual(ok.stale, false); assert.strictEqual(ok.text, 'v0.21.0');
+  const p = ui.versionBadge({ running: '0.21.0', disk: '0.21.0', plugin: '0.20.0' });
+  assert.strictEqual(p.stale, true);
+  assert.match(p.text, /plugin nieaktualny/); assert.doesNotMatch(p.text, /serwer nieaktualny/);
+  assert.match(p.title, /0\.20\.0/); assert.match(p.title, /0\.21\.0/);
+  assert.match(p.title, /claude plugin update sdd@sdd-kit/); assert.match(p.title, /restart|uruchom ponownie/i);
+  const none = ui.versionBadge({ running: '0.21.0', disk: '0.21.0', plugin: '' });
+  assert.strictEqual(none.stale, false); assert.strictEqual(none.text, 'v0.21.0');
+  const both = ui.versionBadge({ running: '0.20.0', disk: '0.21.0', plugin: '0.19.0' });
+  assert.strictEqual(both.stale, true);
+  assert.match(both.text, /serwer nieaktualny/); assert.match(both.text, /plugin nieaktualny/);
+});

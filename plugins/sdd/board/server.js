@@ -15,7 +15,7 @@ const path = require('path');
 const { readProgress, questionIndex } = require('./progress');
 const { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
-const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs } = require('./root');
+const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
 const info = require('./info');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
@@ -268,7 +268,7 @@ const server = http.createServer((req, res) => {
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
   if (url === '/module' || url === '/guide' || url === '/config') return sendHtml(res, INFO_UI);
 
-  if (url === '/api/version' && req.method === 'GET') return json(res, 200, { running: VERSION, disk: diskVersion() });
+  if (url === '/api/version' && req.method === 'GET') return json(res, 200, { running: VERSION, disk: diskVersion(), plugin: pluginVersion() });
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView(ctx));

@@ -27,9 +27,9 @@ function call(port, method, url, body) {
   });
 }
 // Serwer uruchomiony w folderze bez projektu (jak konfiguracja podgladu w katalogu modulow).
-async function start(cfg, cwd) {
+async function start(cfg, cwd, extra = {}) {
   const port = await freePort();
-  const env = Object.assign({}, process.env, { SDD_CONFIG: cfg });
+  const env = Object.assign({}, process.env, { SDD_CONFIG: cfg, SDD_PLUGINS_FILE: path.join(os.tmpdir(), 'sdd-brak-pluginow.json') }, extra);
   delete env.SDD_MODULES_ROOT; delete env.SDD_REQ;
   const proc = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), 'requirements/01-interview/board.json', String(port)], { cwd, env });
   await new Promise((res, rej) => {
@@ -126,7 +126,21 @@ test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
     for (const u of ['/api/version', '/demo/api/version']) {
       const r = await call(port, 'GET', u);
       assert.strictEqual(r.code, 200, u);
-      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want });
+      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '' });
     }
+  } finally { proc.kill(); }
+});
+
+test('AC-U14: GET /api/version - wersja pluginu w Claude Code, czytana przy kazdym zapytaniu', async () => {
+  const root = tmp(), cfg = path.join(tmp(), 'config.json'), pf = path.join(tmp(), 'installed_plugins.json');
+  createModule(root, { name: 'horizon', level: 'full' }, { git: false });
+  saveRoot(cfg, root);
+  const put = (v) => fs.writeFileSync(pf, JSON.stringify({ version: 2, plugins: { 'sdd@sdd-kit': [{ scope: 'user', version: v }] } }));
+  put('0.19.0');
+  const { port, proc } = await start(cfg, tmp(), { SDD_PLUGINS_FILE: pf });
+  try {
+    for (const u of ['/api/version', '/demo/api/version']) assert.strictEqual(JSON.parse((await call(port, 'GET', u)).body).plugin, '0.19.0', u);
+    put('0.20.0');
+    assert.strictEqual(JSON.parse((await call(port, 'GET', '/api/version')).body).plugin, '0.20.0');
   } finally { proc.kill(); }
 });

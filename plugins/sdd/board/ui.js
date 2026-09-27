@@ -93,14 +93,20 @@
   function abbr(code) { return ABBR[code] ? code + ' – ' + ABBR[code] : String(code); }
 
   // Wersja w pasku (AC-U10): stary serwer po aktualizacji pluginu -> ostrzezenie o restarcie.
+  // AC-U15 (0.21.0): plugin w Claude Code w innej wersji niz kit na dysku -> ostrzezenie o aktualizacji pluginu.
   function versionBadge(v) {
     if (!v || !v.running) return null;
-    const stale = !!v.disk && v.disk !== v.running;
-    return { stale: stale,
-      text: 'v' + v.running + (stale ? ' · serwer nieaktualny' : ''),
-      title: stale ? 'Serwer działa na wersji ' + v.running + ', a zainstalowana jest ' + v.disk +
-        '. Zrestartuj serwer: zatrzymaj sdd-board (Ctrl+C) i uruchom ponownie (albo restart w HQAI).'
-        : 'sdd-kit ' + v.running };
+    const server = !!v.disk && v.disk !== v.running;
+    const plugin = !!v.plugin && !!v.disk && v.plugin !== v.disk;
+    const tips = [];
+    if (server) tips.push('Serwer działa na wersji ' + v.running + ', a zainstalowana jest ' + v.disk +
+      '. Zrestartuj serwer: zatrzymaj sdd-board (Ctrl+C) i uruchom ponownie (albo restart w HQAI).');
+    if (plugin) tips.push('Plugin w Claude Code ma wersję ' + v.plugin + ', a kit na dysku ' + v.disk +
+      '. Zaktualizuj: claude plugin marketplace update sdd-kit && claude plugin update sdd@sdd-kit,' +
+      ' potem restart sesji Claude Code.');
+    return { stale: server || plugin,
+      text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : ''),
+      title: tips.length ? tips.join('\n') : 'sdd-kit ' + v.running };
   }
 
   const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, versionBadge, KEY };
