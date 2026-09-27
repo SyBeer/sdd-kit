@@ -531,3 +531,26 @@ ktore leza teraz w plikach. Inaczej dev buduje ze starego specu, a panel pokazuj
   przy aktualnej walidacji `next.key` = handover, przy nieaktualnej walidacji `next.key` = validate.
 - AC-66: TRACEABILITY.md bez odcisku: po wpisie `handover` wpisy `validate` i `config` -> dalej `done`; wpis `spec` -> `stale`.
 - AC-67 (reczne): horizon-zlecenia - po `/sdd:handover` z odciskiem Handover "gotowe"; zmiana PRD -> Validate i Handover "nieaktualne".
+
+# Zmiana 0.20.0 (2026-09-27): pobieranie pliku z Intake
+
+Status: zatwierdzony 2026-09-27 (user: "w INTAKE po kliknieciu na plik powinno go sciagnac na dysk").
+Cel: z listy "Wrzucone pliki" na karcie Intake da sie otworzyc/zachowac surowiec bez szukania folderu `00-intake/`.
+
+## Zakres
+1. Nazwa pliku na liscie jest linkiem; klik pobiera plik na dysk (Content-Disposition: attachment, oryginalna nazwa,
+   takze z polskimi znakami). Dotyczy plikow "dodane" i "czeka na spis".
+2. Serwer: `GET /api/intake?name=<nazwa z listy>` - ta sama walidacja sciezki co usuwanie (tylko pliki w `00-intake/`,
+   bez `..` i ukrytych, bez INDEX.md), nieistniejacy -> 404.
+3. Ochrona: tylko Host lokalny (jak zapisy - chroni przed DNS rebinding). Bez naglowka X-SDD, bo zwykly link go nie wysle.
+4. Demo (`/demo`) tez pozwala pobrac swoje pliki - to odczyt, nie zapis.
+
+## Poza zakresem
+- Podglad pliku w przegladarce, pobieranie calego folderu jako ZIP.
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/modules.test.js`, `test/demo.test.js`)
+- AC-68: `intakeFile(req, name)` zwraca sciezke pliku w `00-intake/` (takze w podfolderze `maile/a.eml`, takze plik "dodane");
+  odrzuca INDEX.md, `../SDD.yaml`, `.ukryty/x.md` i nieistniejacy plik.
+- AC-69: `GET /api/intake?name=...` -> 200, tresc pliku, `Content-Disposition: attachment` z nazwa (`filename*=UTF-8''...`);
+  zla nazwa -> 404; obcy Host -> 403; `/demo/api/intake?name=...` pobiera plik demo.
+- AC-70 (reczne): klik w nazwe pliku na karcie Intake zapisuje plik w Pobranych.

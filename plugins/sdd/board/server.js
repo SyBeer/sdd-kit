@@ -13,7 +13,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { readProgress, questionIndex } = require('./progress');
-const { listModules, allModules, createModule, saveIntake, removeIntake } = require('./modules');
+const { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs } = require('./root');
 const info = require('./info');
@@ -233,9 +233,12 @@ function readBody(req, limit, cb) {
   req.on('close', () => { if (over) cb(null); });
 }
 // Zapisy tylko z tej strony: wlasny naglowek (wymusza preflight dla obcych stron) i Host lokalny.
+function localHost(req) {
+  const host = (req.headers.host || '').replace(/:\d+$/, '');
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+}
 function allowedWrite(req) {
-  const host = (req.headers.host || '').split(':')[0];
-  return req.headers['x-sdd'] === '1' && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]');
+  return req.headers['x-sdd'] === '1' && localHost(req);
 }
 function sse(req, res, set, first) {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
@@ -277,6 +280,19 @@ const server = http.createServer((req, res) => {
     const m = info.moduleSummary(ctx.req);
     m.dir = ctx.demo ? '' : path.dirname(ctx.req);
     return json(res, 200, m);
+  }
+
+  // Pobranie pliku z listy Intake (0.20.0). Zwykly link nie wysle X-SDD, wiec tylko Host lokalny; demo tez (to odczyt).
+  if (url === '/api/intake' && req.method === 'GET') {
+    if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+    let file;
+    try { file = intakeFile(ctx.req || '', u.searchParams.get('name') || ''); }
+    catch (e) { return json(res, 404, { error: e.message }); }
+    const base = path.basename(file);
+    res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': fs.statSync(file).size,
+      'Content-Disposition': "attachment; filename=\"" + base.replace(/[^\x20-\x7e]|["\\]/g, '_') + "\"; filename*=UTF-8''" + encodeURIComponent(base),
+      'X-Content-Type-Options': 'nosniff' });
+    return fs.createReadStream(file).pipe(res);
   }
 
   // ponizej tylko Twoj kontekst (demo odpadlo wyzej na zapisach)

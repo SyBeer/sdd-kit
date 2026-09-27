@@ -63,11 +63,11 @@ function freePort() {
     const s = http.createServer().listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
   });
 }
-function call(port, method, url, body) {
+function call(port, method, url, body, extra) {
   return new Promise((res, rej) => {
     const r = http.request({ host: '127.0.0.1', port, method, path: url,
-      headers: { 'x-sdd': '1', Host: 'localhost:' + port, 'Content-Type': 'application/json' } }, resp => {
-      let d = ''; resp.on('data', c => { d += c; }); resp.on('end', () => res({ code: resp.statusCode, body: d, type: resp.headers['content-type'] || '' }));
+      headers: Object.assign({ 'x-sdd': '1', Host: 'localhost:' + port, 'Content-Type': 'application/json' }, extra) }, resp => {
+      let d = ''; resp.on('data', c => { d += c; }); resp.on('end', () => res({ code: resp.statusCode, body: d, type: resp.headers['content-type'] || '', headers: resp.headers }));
     });
     r.on('error', rej);
     if (body !== undefined) r.write(body);
@@ -152,6 +152,27 @@ test('AC-43: zmiana Twojego modulu nie rusza demo', async () => {
     assert.strictEqual(r.code, 200);
     assert.strictEqual(JSON.parse((await call(port, 'GET', '/api/progress')).body).module.name, 'b');
     assert.strictEqual(JSON.parse((await call(port, 'GET', '/demo/api/progress')).body).module.name, 'zlecenia');
+  } finally { proc.kill(); }
+});
+
+test('AC-69: GET /api/intake pobiera plik jako zalacznik, tylko Host lokalny, takze w demo', async () => {
+  const { port, proc } = await startServer();
+  try {
+    const up = await call(port, 'POST', '/api/intake?name=' + encodeURIComponent('notatka źródło.md'), 'tresc pliku');
+    assert.strictEqual(up.code, 201);
+    const name = JSON.parse(up.body).saved;
+    const r = await call(port, 'GET', '/api/intake?name=' + encodeURIComponent(name));
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(r.body, 'tresc pliku');
+    assert.match(r.headers['content-disposition'], /^attachment;/);
+    assert.ok(r.headers['content-disposition'].includes("filename*=UTF-8''" + encodeURIComponent(name)));
+    assert.strictEqual((await call(port, 'GET', '/api/intake?name=' + encodeURIComponent('../SDD.yaml'))).code, 404);
+    assert.strictEqual((await call(port, 'GET', '/api/intake?name=INDEX.md')).code, 404);
+    const foreign = await call(port, 'GET', '/api/intake?name=' + encodeURIComponent(name), undefined, { Host: 'evil.example:' + port });
+    assert.strictEqual(foreign.code, 403);
+    const d = await call(port, 'GET', '/demo/api/intake?name=wymagania-limity-i-blokady.md');
+    assert.strictEqual(d.code, 200);
+    assert.ok(d.body.length > 0);
   } finally { proc.kill(); }
 });
 

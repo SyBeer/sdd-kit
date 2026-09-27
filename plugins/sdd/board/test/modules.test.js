@@ -6,7 +6,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { listModules, createModule, saveIntake, removeIntake } = require('../modules');
+const { listModules, createModule, saveIntake, removeIntake, intakeFile } = require('../modules');
 const { readProgress } = require('../progress');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-modules-'));
@@ -159,4 +159,22 @@ test('AC-49: allModules - katalog + dodane, bez duplikatow, pomija znikniete', (
   assert.strictEqual(mods[0].level, 'light');
   assert.deepStrictEqual(allModules(null, [app]).map(m => m.name), ['fv-manager']);
   assert.deepStrictEqual(allModules(root, undefined).map(m => m.name), ['horizon']);
+});
+
+test('AC-68: intakeFile zwraca sciezke pliku z 00-intake/, odrzuca INDEX.md, wyjscie poza folder i ukryte', () => {
+  const root = tmp();
+  const req = path.join(createModule(root, { name: 'm', level: 'full' }, opts), 'requirements');
+  const intake = path.join(req, '00-intake');
+  saveIntake(req, 'notatka.md', Buffer.from('tresc'));
+  assert.strictEqual(intakeFile(req, 'notatka.md'), path.join(intake, 'notatka.md'));
+  // plik "dodane" (w spisie) tez mozna pobrac
+  fs.appendFileSync(path.join(intake, 'INDEX.md'), '| S-001 | notatka.md |\n');
+  assert.strictEqual(intakeFile(req, 'notatka.md'), path.join(intake, 'notatka.md'));
+  fs.mkdirSync(path.join(intake, 'maile'));
+  fs.writeFileSync(path.join(intake, 'maile', 'a.eml'), 'x');
+  assert.strictEqual(intakeFile(req, 'maile/a.eml'), path.join(intake, 'maile', 'a.eml'));
+  fs.mkdirSync(path.join(intake, '.ukryty'));
+  fs.writeFileSync(path.join(intake, '.ukryty', 'x.md'), 'x');
+  ['INDEX.md', '../SDD.yaml', '.ukryty/x.md', 'brak.pdf', '', 'maile'].forEach(n =>
+    assert.throws(() => intakeFile(req, n), /Nie ma|spis surowca/, n));
 });

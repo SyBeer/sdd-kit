@@ -129,18 +129,26 @@ function saveIntake(reqDir, original, buffer) {
   return { saved: candidate };
 }
 
-// Usuniecie pliku czekajacego na spis z 00-intake/ - ostateczne (decyzja usera), bez kopii.
-// `name` jak na liscie w panelu: sciezka wzgledem 00-intake/, separator "/".
-function removeIntake(reqDir, name) {
+// Plik z listy w panelu -> sciezka na dysku (pobieranie 0.20.0, usuwanie 0.5.3).
+// `name` jak na liscie: sciezka wzgledem 00-intake/, separator "/". Tylko pliki wewnatrz 00-intake/, bez ukrytych i INDEX.md.
+function intakeFile(reqDir, name) {
   const dir = path.join(reqDir, '00-intake');
   const rel = String(name || '').replace(/\\/g, '/');
-  if (rel === 'INDEX.md') throw new Error('INDEX.md to spis surowca - nie usuwam go z panelu.');
+  if (rel === 'INDEX.md') throw new Error('INDEX.md to spis surowca - nie jest plikiem z listy.');
   const parts = rel.split('/');
   const file = path.resolve(dir, rel);
   if (!rel || parts.some(p => !p || p === '..' || p.startsWith('.')) || !file.startsWith(dir + path.sep)
       || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
     throw new Error('Nie ma takiego pliku w 00-intake/: ' + rel);
   }
+  return file;
+}
+
+// Usuniecie pliku czekajacego na spis z 00-intake/ - ostateczne (decyzja usera), bez kopii.
+function removeIntake(reqDir, name) {
+  const dir = path.join(reqDir, '00-intake');
+  const rel = String(name || '').replace(/\\/g, '/');
+  const file = intakeFile(reqDir, rel);
   // Plik ze spisu jest juz zrodlem (moga sie na niego powolywac Q/D) - usuwac mozna tylko czekajace na spis.
   // Ta sama regula "w spisie" co w progress.js: nazwa pliku wystepuje w INDEX.md.
   let index = '';
@@ -150,4 +158,4 @@ function removeIntake(reqDir, name) {
   return rel;
 }
 
-module.exports = { listModules, allModules, createModule, saveIntake, removeIntake, cleanName, NAME_RE };
+module.exports = { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile, cleanName, NAME_RE };

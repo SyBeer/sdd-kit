@@ -134,6 +134,8 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 .files ul{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
 .files li{display:flex;gap:8px;align-items:baseline;font-size:12.5px}
 .files .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace}
+.files a.fn{color:inherit;text-decoration:none}
+.files a.fn:hover,.files a.fn:focus-visible{text-decoration:underline;color:var(--active)}
 .files .fs{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .files .tag{font-size:11px;padding:0 6px;border-radius:8px;white-space:nowrap;background:var(--active);color:#26241f}
 .files .tag.ok{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
@@ -523,7 +525,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     if(!files.length) return h+'<p class="nofiles">Nie ma jeszcze żadnych plików.</p>';
     var open=filesOpen===null?files.length<=8:filesOpen;
     return h+'<details class="files" id="filelist"'+(open?' open':'')+'><summary>Wrzucone pliki: <b>'+files.length+'</b></summary><ul>'+
-      files.map(function(f){return '<li><span class="fn" title="'+esc(f.name)+'">'+esc(f.name)+'</span><span class="fs">'+size(f.size)+'</span>'+
+      files.map(function(f){return '<li><a class="fn" href="'+esc(BASE+'/api/intake?name='+encodeURIComponent(f.name))+'" download="'+esc(f.name.split('/').pop())+'" title="Pobierz '+esc(f.name)+'">'+esc(f.name)+'</a><span class="fs">'+size(f.size)+'</span>'+
         '<span class="tag'+(f.indexed?' ok':'')+'">'+(f.indexed?'dodane':'czeka na spis')+'</span>'+
         (f.indexed?'<span class="rm-none" title="Plik jest już w spisie – nie można go usunąć"></span>':
           '<button type="button" class="rm" data-name="'+esc(f.name)+'" title="Usuń plik (czeka na spis)" aria-label="Usuń plik '+esc(f.name)+'">✕</button>')+'</li>'}).join('')+'</ul>'+
