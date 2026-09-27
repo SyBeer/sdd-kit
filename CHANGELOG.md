@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.0] - 2026-09-27
+Pobieranie pliku z Intake (spec: `docs/specs/progress-ui.md`, zmiana 0.20.0, AC-68..AC-70).
+- Nazwa pliku na liscie "Wrzucone pliki" jest linkiem - klik zapisuje plik na dysk (takze "dodane" i w demo).
+- Serwer: `GET /api/intake?name=...` jako zalacznik, ta sama walidacja sciezki co usuwanie (`intakeFile`), tylko Host lokalny.
+- Testy 116/116.
+
 ## [0.19.1] - 2026-09-27
 - Repo publiczne na GitHubie: github.com/SyBeer/sdd-kit. Instalacja jedna komenda z README i z komentarza w `install.sh`
   ma prawdziwy adres (`SyBeer/sdd-kit`) zamiast `<user>`.
