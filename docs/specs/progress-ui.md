@@ -508,3 +508,26 @@ jako nieaktualna, choc wymagania sie nie zmienily (to samo przy zmianie nazwy pr
 - Z `SDD.yaml` do odcisku wchodza tylko `level`, blok `owners` i `gate_blocking_status`; `project`, `backlog` i komentarze nie.
 - AC-64: zmiana `backlog`, `project` albo komentarza w SDD.yaml nie zmienia odcisku; zmiana `level`, roli w `owners`,
   `approves` albo `gate_blocking_status` zmienia.
+
+# Zmiana 0.19.0 (2026-09-27): handover nieaktualny po zmianie wymagan
+
+Status: zatwierdzony 2026-09-27 (user: "zrob to samo dla Handover - nieaktualny po zmianie specu").
+Ta sama zasada co przy walidacji (0.18.0): backlog i tabela sledzenia przekazane do budowy musza dotyczyc wymagan,
+ktore leza teraz w plikach. Inaczej dev buduje ze starego specu, a panel pokazuje "Gotowe".
+
+## Zakres
+1. `/sdd:handover` wpisuje do `04-validation/TRACEABILITY.md` linie `Odcisk wymagan: sha256:<hex>` (ten sam
+   `board/fingerprint.js`, liczony na koncu przebiegu).
+2. Panel: TRACEABILITY.md z odciskiem innym niz biezacy -> handover nieaktualny. Bez odcisku (starsze): nieaktualny,
+   gdy w `CHANGELOG.md` po ostatnim wpisie `handover` jest wpis etapu innego niz `handover`, `validate` i `config`
+   (ponowna walidacja i ustawienia panelu, np. `backlog`, nie zmieniaja wymagan; zdarzenie: horizon-zlecenia po handover).
+3. Nieaktualny handover: status `active` z flaga `stale`, pigulka "nieaktualne", aktualny krok = Handover z opisem
+   "Wymagania zmienily sie po przekazaniu - wygeneruj pliki dla agenta i przekaz ponownie" (komenda /sdd:handover;
+   w "Co zrobic" najpierw /sdd:spec --agent). Jesli nieaktualna jest tez walidacja, aktualnym krokiem zostaje Validate.
+4. Wspolna logika dla obu etapow (`stepStale(req, text, step, ignore)`), bez zmian w zachowaniu Validate.
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
+- AC-65: TRACEABILITY.md z odciskiem zgodnym -> Handover `done`; po zmianie PRD -> `active`, `stale: true`;
+  przy aktualnej walidacji `next.key` = handover, przy nieaktualnej walidacji `next.key` = validate.
+- AC-66: TRACEABILITY.md bez odcisku: po wpisie `handover` wpisy `validate` i `config` -> dalej `done`; wpis `spec` -> `stale`.
+- AC-67 (reczne): horizon-zlecenia - po `/sdd:handover` z odciskiem Handover "gotowe"; zmiana PRD -> Validate i Handover "nieaktualne".

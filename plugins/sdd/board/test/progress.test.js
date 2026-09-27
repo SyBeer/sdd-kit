@@ -371,3 +371,43 @@ test('AC-64: fingerprint - z SDD.yaml tylko level, owners i gate_blocking_status
     t => t.replace('approves: [BR]', 'approves: [BR, PRD]'), t => t.replace('"blokuje go-live"', '"blokuje start"')];
   diff.forEach((fn, i) => { fs.writeFileSync(y, fn(base)); assert.notStrictEqual(fingerprint(req), f0, 'zmiana #' + i); });
 });
+
+// ---------------------------------------------------------------- 0.19.0: handover nieaktualny po zmianie wymagan
+function handedOver(req) {
+  write(req, '04-validation/validate-2026-09-27.md', 'gotowosc: 100%\nOdcisk wymagan: ' + fingerprint(req) + '\n');
+  write(req, '04-validation/TRACEABILITY.md', '# Tabela\nOdcisk wymagan: ' + fingerprint(req) + '\n| R | AC | Zadanie | Test |\n');
+}
+
+test('AC-65: handover z odciskiem - zgodny done, po zmianie PRD stale; kolejnosc krokow', () => {
+  // kopia demo: etapy do Validate gotowe, wiec widac, ktory krok jest aktualny
+  const req = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-handover-')), 'requirements');
+  fs.cpSync(path.join(__dirname, '..', '..', 'demo', 'zlecenia', 'requirements'), req, { recursive: true });
+  handedOver(req);
+  let p = readProgress(req);
+  assert.strictEqual(stage(p, 'handover').status, 'done');
+  // zmiana PRD po przekazaniu i ponowna walidacja (aktualna) -> krok Handover
+  append(req, '03-spec/PRD.md', '\nDoprecyzowanie opisu po przekazaniu.\n');
+  write(req, '04-validation/validate-2026-09-28.md', 'gotowosc: 100%\nOdcisk wymagan: ' + fingerprint(req) + '\n');
+  p = readProgress(req);
+  const h = stage(p, 'handover');
+  assert.strictEqual(h.status, 'active');
+  assert.strictEqual(h.stale, true);
+  assert.strictEqual(p.next.key, 'handover');
+  assert.match(p.next.desc, /przekazaniu/);
+  // walidacja tez nieaktualna -> krok Validate
+  append(req, '03-spec/PRD.md', '\nkolejna zmiana\n');
+  p = readProgress(req);
+  assert.strictEqual(p.next.key, 'validate');
+  assert.strictEqual(stage(p, 'handover').stale, true);
+});
+
+test('AC-66: handover bez odcisku - validate po handover nie szkodzi, spec po handover -> stale', () => {
+  const req = freshProject();
+  write(req, '04-validation/TRACEABILITY.md', '# Tabela\n');
+  append(req, 'CHANGELOG.md', '2026-09-27 | handover | backlog | x\n2026-09-27 | validate | przebieg | x\n2026-09-27 | config | backlog: file | x\n');
+  assert.strictEqual(stage(readProgress(req), 'handover').status, 'done');
+  append(req, 'CHANGELOG.md', '2026-09-28 | spec | R-099 | x\n');
+  const h = stage(readProgress(req), 'handover');
+  assert.strictEqual(h.status, 'active');
+  assert.strictEqual(h.stale, true);
+});

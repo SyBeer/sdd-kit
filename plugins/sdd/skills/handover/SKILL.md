@@ -15,6 +15,10 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
    - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). ID zadania wpisz z powrotem do tabeli.
 4. `04-validation/TRACEABILITY.md`: tabela R | AC | task | test (kolumna test pusta do wypelnienia przez dev, nazwa testu = AC-xxx-n).
 5. Reguła dla dev, wpisz na koncu TRACEABILITY.md: zmiana wymagania po przekazaniu = zmiana PRD i ponowny handover, nigdy ticket "z boku".
+6. Pod naglowkiem TRACEABILITY.md wpisz odcisk wymagan, liczony na koncu przebiegu:
+   `node "${CLAUDE_PLUGIN_ROOT}/board/fingerprint.js" requirements` -> linia `Odcisk wymagan: sha256:<hex>`.
+   Panel porownuje go z biezacym stanem plikow: zmiana wymagan po przekazaniu oznacza handover jako nieaktualny
+   i cofa aktualny krok na /sdd:handover (po /sdd:spec --agent).
 
 ## Na koniec
 CHANGELOG + 5 linijek: ile zadan, gdzie, ile R pokrytych.

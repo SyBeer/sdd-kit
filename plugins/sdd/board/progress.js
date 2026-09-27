@@ -260,30 +260,35 @@ function validate(req) {
   const text = read(path.join(dir, last));
   const m = text.match(/gotowo(?:s|ś)(?:c|ć)[^0-9\n]*?(\d{1,3})\s*%/i);
   const readiness = m ? parseInt(m[1], 10) : null;
-  const stale = validateStale(req, text);
+  const stale = stepStale(req, text, 'validate');
   const counts = { reports: reports.length, readiness, last };
   // nieaktualny raport nigdy nie zamyka etapu, nawet przy 100% (zmiana 0.18.0, AC-60, AC-61)
   if (stale) return { status: 'active', stale: true, counts };
   return { status: readiness === 100 ? 'done' : 'active', counts };
 }
 
-// Raport nieaktualny: odcisk w raporcie inny niz biezacy; bez odcisku (starsze raporty) - po ostatnim wpisie
-// "validate" w CHANGELOG jest wpis innego etapu. Brak wpisu validate w CHANGELOG - nie da sie stwierdzic, raport aktualny.
-function validateStale(req, text) {
+// Etap nieaktualny (0.18.0 walidacja, 0.19.0 handover): odcisk w pliku inny niz biezacy; bez odcisku (starsze pliki) -
+// po ostatnim wpisie etapu w CHANGELOG jest wpis innego etapu (poza `ignore`). Brak wpisu etapu - nie da sie stwierdzic.
+function stepStale(req, text, step, ignore) {
   const fp = text.match(/Odcisk wymaga[nń]:\s*(sha256:[0-9a-f]{64})/i);
   if (fp) return fp[1] !== fingerprint(req);
   const steps = read(path.join(req, 'CHANGELOG.md')).split('\n')
     .map(l => (l.match(/^\d{4}-\d{2}-\d{2}\s*\|\s*([a-z-]+)\s*\|/i) || [])[1]).filter(Boolean);
-  const v = steps.lastIndexOf('validate');
-  return v >= 0 && v < steps.length - 1;
+  const v = steps.lastIndexOf(step);
+  return v >= 0 && steps.slice(v + 1).some(x => x !== step && (ignore || []).indexOf(x) < 0);
 }
 
 function handover(req) {
   const dir = path.join(req, '04-validation');
-  const trace = fs.existsSync(path.join(dir, 'TRACEABILITY.md'));
+  const traceFile = path.join(dir, 'TRACEABILITY.md');
+  const trace = fs.existsSync(traceFile);
   let backlogs = 0;
   try { backlogs = fs.readdirSync(dir).filter(f => /^backlog-.*\.md$/.test(f)).length; } catch (e) { /* brak */ }
-  return { status: trace ? 'done' : 'todo', counts: { traceability: trace, backlogs } };
+  const counts = { traceability: trace, backlogs };
+  if (!trace) return { status: 'todo', counts };
+  // ponowna walidacja i ustawienia panelu po przekazaniu nie zmieniaja wymagan (0.19.0, AC-65, AC-66)
+  if (stepStale(req, read(traceFile), 'handover', ['validate', 'config'])) return { status: 'active', stale: true, counts };
+  return { status: 'done', counts };
 }
 
 function readProgress(reqDir) {
@@ -309,6 +314,13 @@ function readProgress(reqDir) {
     vs.desc = 'Wymagania zmieniły się po ostatniej walidacji - uruchom ją ponownie, zanim przekażesz spec do budowy.';
     vs.howto = ['Skopiuj komendę i wklej ją w Claude Code.', 'AI sprawdzi aktualne wymagania i zapisze nowy raport z odciskiem wymagań.',
       'Gdy gotowość wróci do 100%, etap znów będzie gotowy.'];
+  }
+  const hs = stages.find(s => s.key === 'handover');
+  if (hs && hs.stale) {
+    hs.desc = 'Wymagania zmieniły się po przekazaniu - wygeneruj pliki dla agenta i przekaż zadania ponownie.';
+    hs.howto = ['Najpierw w Claude Code: /sdd:spec --agent (pliki dla agenta z aktualnego PRD).',
+      'Potem skopiuj komendę /sdd:handover i wklej ją w Claude Code - backlog i tabela śledzenia powstaną od nowa.',
+      'Gdy nowa tabela śledzenia ma aktualny odcisk wymagań, etap znów będzie gotowy.'];
   }
   const next = stages.find(s => s.status !== 'done')
     || { key: 'done', name: 'Gotowe', command: '/sdd:status', desc: 'Wszystkie etapy zamknięte.',
