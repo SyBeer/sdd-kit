@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.22.0] - 2026-09-27
+Czytelniejsza zakladka "Jak to dziala" (spec: `docs/specs/info-config.md`, AC-C22..AC-C23).
+- Sekcje przewodnika (Tablica i panel, Zrodla, Identyfikatory, Tablica warsztatowa, Panel i serwer) jako listy punktowane.
+- Zrodla pogrubione w formie `[Biz]`/`[App]`/`[Dok]`/`[AI]`; identyfikatory Q, D, A, BR, R, AC, PRD pogrubione bez nawiasow,
+  jeden na punkt - nawiasy zarezerwowane dla zrodel (`[D]` to dawne `[Dok]`).
+- `SddUI.marks()` pogrubia znaczniki zrodel i `**tekst**`.
+- Testy 122/122.
+
 ## [0.21.0] - 2026-09-27
 Plugin w Claude Code nieaktualny (spec: `docs/specs/ui-switch.md`, zmiana 0.21.0, AC-U13..AC-U15).
 - Serwer czyta wersje zainstalowanego pluginu `sdd@sdd-kit` z `installed_plugins.json` Claude Code (`SDD_PLUGINS_FILE`,
