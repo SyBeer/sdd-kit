@@ -219,6 +219,36 @@ test('AC-B28: stampNotes - numer kolumny bez zmiany miejsca nie jest zmiana', ()
   assert.deepStrictEqual(['a', 'b', 'c'].map(id => by(undo, id).updated), [T0, T0, T0]);
 });
 
+test('AC-B39: stampNotes - zmiana nazwy procesu nie jest zmiana karteczek', () => {
+  const T0 = '2026-09-26T10:00:00.000Z', NOW = '2026-09-27T12:00:00.000Z';
+  const base = () => ({ lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0, text: 'a', created: T0, updated: T0 },
+    { id: 'b', lane: 'A', col: 1, text: 'b', created: T0, updated: T0 },
+    { id: 'e', lane: 'B', col: 0, text: 'e', created: T0, updated: T0 },
+  ] });
+  const by = (b, id) => b.notes.find(n => n.id === id);
+  // zmiana nazwy A -> A2: karteczki bez stempla
+  const renamed = base();
+  ops.renameLane(renamed, 'A', 'A2');
+  ops.stampNotes(base(), renamed, NOW);
+  assert.deepStrictEqual(['a', 'b', 'e'].map(id => by(renamed, id).updated), [T0, T0, T0]);
+  // cofniecie zmiany nazwy
+  const back = base();
+  ops.stampNotes(renamed, back, NOW);
+  assert.deepStrictEqual(['a', 'b'].map(id => by(back, id).updated), [T0, T0]);
+  // zmiana nazwy i w tym samym zapisie przeniesienie b formularzem do B - stempel tylko dla b
+  const both = base();
+  ops.renameLane(both, 'A', 'A2');
+  by(both, 'b').lane = 'B';
+  ops.stampNotes(base(), both, NOW);
+  assert.deepStrictEqual([by(both, 'a').updated, by(both, 'b').updated], [T0, NOW]);
+  // przeniesienie formularzem do innego istniejacego procesu (bez _moved) - dalej zmiana
+  const form = base();
+  by(form, 'a').lane = 'B';
+  ops.stampNotes(base(), form, NOW);
+  assert.strictEqual(by(form, 'a').updated, NOW);
+});
+
 test('AC-B30: closeCol - zamyka tylko pusta kolumne procesu', () => {
   const b = { lanes: ['A', 'B'], notes: [
     { id: 'a', lane: 'A', col: 0 }, { id: 'c', lane: 'A', col: 2 }, { id: 'd', lane: 'A', col: 3 }, { id: 'e', lane: 'B', col: 3 },

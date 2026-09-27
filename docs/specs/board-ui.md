@@ -182,6 +182,7 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B34 (reczne): nowa karteczka ma "Anuluj" obok "Zapisz" (istniejaca - nie), Anuluj usuwa szkic bez zapisu; typ "odstęp" zapisuje sie bez tresci, na tablicy przezroczysty z blada ramka, bez znaczka i daty, nie liczy sie do licznika procesu ani paska Pliki; da sie go przeciagnac i usunac; tryb ciemny czytelny.
 - AC-B37: `boardSwitched(known, board)`: brak zapamietanego pliku -> null; ten sam `_file` -> null; inny `_file` -> {from, to}; GET /api/board zwraca `_file` = sciezka pliku tablicy, a PUT nie zapisuje `_file` do board.json.
 - AC-B38 (reczne): karta tablicy otwarta, serwer zatrzymany i uruchomiony z innym plikiem tablicy -> staly pasek ostrzezenia z oboma plikami, "Rozumiem" go chowa; przelaczenie modulu z menu tej karty -> bez paska.
+- AC-B39: `stampNotes`: zmiana nazwy procesu (`renameLane` - stara nazwa znika z `lanes`, nowa stoi na tym samym miejscu) nie zmienia `updated` karteczek tego procesu, takze przy cofnieciu; przeniesienie karteczki do innego istniejacego procesu (formularz albo `placeNote`) dalej daje `updated`=now (AC-B11).
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

@@ -126,15 +126,26 @@
       return (a[k] == null ? '' : a[k]) !== (b[k] == null ? '' : b[k]);
     });
   }
+  // Zmiana nazwy procesu (renameLane) to uklad, nie zmiana karteczek (AC-B39): stara nazwa znika z `lanes`,
+  // nowa stoi na tym samym miejscu i wczesniej jej nie bylo. Zwraca mape stara -> nowa nazwa.
+  function laneRenames(prev, next) {
+    const a = lanes(prev || {}), b = lanes(next), map = {};
+    a.forEach(function (from, i) {
+      const to = b[i];
+      if (to !== undefined && to !== from && b.indexOf(from) < 0 && a.indexOf(to) < 0) map[from] = to;
+    });
+    return map;
+  }
   function stampNotes(prev, next, now) {
-    const old = {};
+    const old = {}, renamed = laneRenames(prev, next);
     notes(prev || {}).forEach(function (n) { old[n.id] = n; });
     notes(next).forEach(function (n) {
       const p = old[n.id], moved = n._moved === true;
       delete n._moved;
       if (!p) { n.created = n.created || now; n.updated = n.updated || now; return; }
       if (!n.created && p.created) n.created = p.created;
-      if ((moved || changed(p, n)) && n.updated === p.updated) n.updated = now;
+      const q = renamed[p.lane] === n.lane ? Object.assign({}, p, { lane: n.lane }) : p;
+      if ((moved || changed(q, n)) && n.updated === p.updated) n.updated = now;
       else if (!n.updated && p.updated) n.updated = p.updated;
     });
     return next;
