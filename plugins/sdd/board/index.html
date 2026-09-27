@@ -43,6 +43,9 @@ button.b.danger{color:var(--hot)}
 .zoom .fit{border-left:1px solid var(--line);font-size:12.5px}
 .st b{color:var(--ink);font-weight:600}
 .msg{flex-basis:100%;color:var(--hot);font-size:13px;min-height:0}
+.switched{flex-basis:100%;display:flex;gap:12px;align-items:center;padding:8px 12px;border:2px solid var(--hot);border-radius:6px;background:var(--panel);color:var(--ink);font-size:13px;line-height:1.45}
+.switched[hidden]{display:none}
+.switched code{font-size:12px}
 .msg:empty{display:none}
 
 /* tablica */
@@ -239,6 +242,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   </div>
   <div class="syncbar" id="syncbar"></div>
   <div class="msg" id="msg" role="status"></div>
+  <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
+    Tablicę przełączono w innej karcie albo serwer uruchomiono z innym plikiem. Niezapisana edycja i historia Cofnij z poprzedniej tablicy zostały odrzucone.</div>
+    <button class="b" id="sw-ok">Rozumiem</button></div>
 </div>
 <main><div class="board" id="board"><div class="inner" id="inner"></div></div><p class="tip" id="tip"></p></main>
 
@@ -284,7 +290,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   var $=function(s){return document.querySelector(s)};
   var TYPES=['ev','cmd','act','pol','rm','hot','space']; // space = odstep, uklad tablicy (0.14.1)
   var ops=window.BoardOps;
-  var setModule=SddUI.modSwitch({ onNew:function(){ location.href='/#nowy-modul'; } });
+  var expectSwitch=false; // przelaczenie modulu z menu tej karty - bez ostrzezenia (AC-B38)
+  var setModule=SddUI.modSwitch({ onNew:function(){ location.href='/#nowy-modul'; }, onSelect:function(){ expectSwitch=true; } });
   var SYNC={synced:['✓','w plikach'],changed:['↻','zmienione po synchronizacji'],missing:['!','brak w pliku'],board:['','tylko na tablicy']};
   function syncOf(n){ return ops.noteSync(n,board._sync); } // zawsze znany stan (AC-B35)
 
@@ -692,14 +699,30 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   setZoom(z);
 
   // ------------------------------------------------------------ na zywo
+  var knownFile=null, lastModuleName='';
+  function label(file,name){ return (name?'<b>'+esc(name)+'</b> ':'')+'<code>'+esc(file)+'</code>'; }
+  function showSwitched(sw,b){
+    $('#sw-from').innerHTML=label(sw.from,lastModuleName);
+    $('#sw-to').innerHTML=label(sw.to,b._module&&b._module.name);
+    $('#switched').hidden=false;
+  }
+  $('#sw-ok').onclick=function(){ $('#switched').hidden=true; };
   function connect(){
     var es=new EventSource(BASE+'/events');
     es.onopen=function(){$('#conn').textContent='na żywo'};
     es.onmessage=function(e){
-      var b=JSON.parse(e.data), had=hist.canUndo()||hist.canRedo(), got=hist.incoming(b);
+      var b=JSON.parse(e.data), sw=ops.boardSwitched(knownFile,b);
+      if(b._file) knownFile=b._file;
+      if(sw){ // inna tablica niz na poczatku (AC-B37/B38)
+        if(!expectSwitch) showSwitched(sw,b);
+        expectSwitch=false;
+        if(sel||draft) closeDrawer();
+      }
+      var had=hist.canUndo()||hist.canRedo(), got=hist.incoming(b);
       if(got==='echo'&&hist.waiting()) return; // echo starszego zapisu - na ekranie jest juz nowszy stan
       board=b; board.notes=board.notes||[]; board.lanes=board.lanes||[];
       if(got==='external'&&had) say('Tablicę zmieniono poza tą kartą (np. agent) – historię cofania wyczyszczono.');
+      lastModuleName=(b._module&&b._module.name)||'';
       undoButtons(); safeRender();
     };
     es.onerror=function(){$('#conn').textContent='przerwane, łączę…';es.close();setTimeout(connect,1500)};

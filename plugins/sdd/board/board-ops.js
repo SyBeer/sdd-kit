@@ -167,6 +167,13 @@
     return STATES.indexOf(st) >= 0 ? st : 'board';
   }
 
+  // Podmiana tablicy (AC-B37): karta pamieta plik z pierwszego wczytania; inny `_file` = serwer pokazuje inna tablice.
+  function boardSwitched(known, b) {
+    const f = b && b._file;
+    if (!known || !f || f === known) return null;
+    return { from: known, to: f };
+  }
+
   // readFile(sciezka wzgledem requirements/) -> tresc albo null. Kazdy plik czytany raz.
   function syncMap(b, readFile) {
     const cache = {}, out = {};
@@ -240,5 +247,5 @@
     };
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, createHistory };
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, createHistory };
 });

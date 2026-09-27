@@ -11,7 +11,7 @@
     { "label": "Panel postępu", "url_path": "/" },
     { "label": "Tablica warsztatowa", "url_path": "/board" }
   ],
-  "start_cmd": "node plugins/sdd/board/server.js plugins/sdd/board/example-zlecenia.json 8012",
+  "start_cmd": "node plugins/sdd/board/server.js requirements/01-interview/board.json 8012",
   "extra_cmds": [
     { "label": "Panel dla projektu", "cmd": "cd <projekt> && ~/.local/bin/sdd-board" },
     { "label": "Aktualizacja pluginu po zmianach", "cmd": "/opt/homebrew/bin/claude plugin marketplace update sdd-kit && /opt/homebrew/bin/claude plugin update sdd@sdd-kit" },

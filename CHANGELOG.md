@@ -1,5 +1,13 @@
 # Changelog
 
+## [Niewydane]
+- Tablica ostrzega o podmianie: serwer podaje w widoku `_file` (sciezka pliku tablicy, nie trafia do board.json);
+  gdy karta dostanie tablice z innego pliku, a sama nie przelaczala modulu - staly pasek "Serwer pokazuje teraz inna
+  tablice" z oboma plikami i "Rozumiem"; edycja z poprzedniej tablicy zamykana. (Zdarzenie 2026-09-27: po restarcie
+  Claude Code port przejal serwer z przykladem, karta po cichu pokazala przyklad.)
+- `project.json` (dashboard HQAI): start serwera na biezacym module zamiast przykladu `example-zlecenia.json`.
+- Spec: `docs/specs/board-ui.md` punkt 17 (AC-B37, AC-B38); testy 72/72.
+
 ## [0.14.1] - 2026-09-27
 Tablica warsztatowa - uwagi usera z pracy na horizon-zlecenia.
 - Szkic nowej karteczki: klik "+" stawia od razu szara karteczke w miejscu docelowym; tresc i kolor (typ) na zywo z panelu.

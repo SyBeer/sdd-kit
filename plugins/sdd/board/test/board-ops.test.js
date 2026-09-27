@@ -266,3 +266,10 @@ test('AC-B35: noteSync - stan do narysowania zawsze znany', () => {
   assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, undefined), 'board');
   for (const st of ['synced', 'changed', 'missing', 'board']) assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, { a: st }), st);
 });
+
+test('AC-B37: boardSwitched - wykrywa tablice z innego pliku', () => {
+  assert.strictEqual(ops.boardSwitched(null, { _file: '/a/board.json' }), null);
+  assert.strictEqual(ops.boardSwitched('/a/board.json', { _file: '/a/board.json' }), null);
+  assert.deepStrictEqual(ops.boardSwitched('/a/board.json', { _file: '/x/example.json' }), { from: '/a/board.json', to: '/x/example.json' });
+  assert.strictEqual(ops.boardSwitched('/a/board.json', {}), null, 'stary serwer bez _file - nie ostrzegaj na slepo');
+});

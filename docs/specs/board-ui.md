@@ -129,6 +129,17 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
      `/sdd:board sync` go pomija (skill board). Stan synchronizacji `space`.
    - W legendzie na gorze bez zmian (legenda to typy tresci).
 
+17. Ostrzezenie o podmianie tablicy (0.14.2, zdarzenie 2026-09-27: po restarcie Claude Code port przejal serwer z przykladowa
+    tablica, karta po cichu pokazala przyklad i user uznal, ze stracil prace):
+   - Serwer podaje w widoku tablicy `_file` - pelna sciezke pliku tablicy (pole tylko widoku, nie trafia do board.json).
+   - Strona zapamietuje `_file` z pierwszego wczytania. Gdy przyjdzie tablica z innego pliku, a ta karta nie przelaczala
+     modulu: staly pasek ostrzezenia "Serwer pokazuje teraz inna tablice: <modul> (<plik>). Wczesniej: <modul> (<plik>)"
+     z wyjasnieniem (przelaczenie w innej karcie albo serwer uruchomiony z innym plikiem) i przyciskiem "Rozumiem".
+     Otwarta edycja/szkic z poprzedniej tablicy jest zamykana, historia Cofnij czyszczona (jak przy zmianie z zewnatrz).
+   - Przelaczenie modulu z menu na tej karcie - bez ostrzezenia.
+   - Zrodlo zdarzenia poza tablica: `sdd-kit/project.json` (dashboard HQAI) uruchamial przyklad `example-zlecenia.json`
+     na porcie 8012; od 0.14.2 uruchamia biezacy modul (przyklad jest pod /demo).
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module.
 - Cofanie zmian agenta i historia miedzy sesjami przegladarki.
@@ -169,6 +180,8 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B35: `noteSync(note, map)` - stan do narysowania: odstep -> 'space'; zwykla karteczka ze stanem z serwera 'space' (typ wlasnie zmieniony z odstepu) albo nieznanym/brakujacym -> 'board'; znany stan -> ten stan. (Blad user 2026-09-27: zmiana odstepu na zdarzenie wywracala rysowanie - proces znikal z ekranu, zapis nie szedl.)
 - AC-B36 (reczne): blad rysowania tablicy nie blokuje zapisu (zapis idzie przed rysowaniem) i pokazuje komunikat; odstep zmieniony na zdarzenie zapisuje sie i rysuje z kolorem zdarzenia.
 - AC-B34 (reczne): nowa karteczka ma "Anuluj" obok "Zapisz" (istniejaca - nie), Anuluj usuwa szkic bez zapisu; typ "odstęp" zapisuje sie bez tresci, na tablicy przezroczysty z blada ramka, bez znaczka i daty, nie liczy sie do licznika procesu ani paska Pliki; da sie go przeciagnac i usunac; tryb ciemny czytelny.
+- AC-B37: `boardSwitched(known, board)`: brak zapamietanego pliku -> null; ten sam `_file` -> null; inny `_file` -> {from, to}; GET /api/board zwraca `_file` = sciezka pliku tablicy, a PUT nie zapisuje `_file` do board.json.
+- AC-B38 (reczne): karta tablicy otwarta, serwer zatrzymany i uruchomiony z innym plikiem tablicy -> staly pasek ostrzezenia z oboma plikami, "Rozumiem" go chowa; przelaczenie modulu z menu tej karty -> bez paska.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

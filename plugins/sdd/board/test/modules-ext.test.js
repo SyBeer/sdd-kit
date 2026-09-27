@@ -84,3 +84,18 @@ test('AC-51: start bez projektu w folderze - lastModule, a gdy go nie ma - pierw
   s = await start(cfg, tmp());
   try { assert.strictEqual((await progress(s.port)).module.name, 'alfa'); } finally { s.proc.kill(); }
 });
+
+test('AC-B37: widok tablicy podaje _file, zapis go pomija', async () => {
+  const root = tmp(), cfg = path.join(tmp(), 'config.json');
+  const dir = createModule(root, { name: 'horizon', level: 'full' }, { git: false });
+  saveRoot(cfg, root);
+  const { port, proc } = await start(cfg, tmp());
+  try {
+    const file = path.join(dir, 'requirements', '01-interview', 'board.json');
+    const b = JSON.parse((await call(port, 'GET', '/api/board')).body);
+    assert.strictEqual(b._file, file);
+    const put = await call(port, 'PUT', '/api/board', JSON.stringify({ lanes: ['A'], notes: [], _file: '/inny/plik.json' }));
+    assert.strictEqual(put.code, 204);
+    assert.strictEqual('_file' in JSON.parse(fs.readFileSync(file, 'utf8')), false);
+  } finally { proc.kill(); }
+});

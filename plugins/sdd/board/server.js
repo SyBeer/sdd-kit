@@ -81,9 +81,10 @@ function boardView(ctx) {
   b._module = { name: moduleName(ctx), dir: ctx.req && !ctx.demo ? path.dirname(ctx.req) : '' };
   b._modules = modulesOf(ctx).map(m => ({ name: m.name, level: m.level, dir: ctx.demo ? '' : m.dir, external: !!m.external }));
   b._demo = ctx.demo || false;
+  b._file = ctx.board || ''; // strona ostrzega, gdy serwer podmieni plik tablicy (AC-B37)
   return b;
 }
-const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo'];
+const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo', '_file'];
 function writeBoard(ctx, b) {
   VIEW_ONLY.forEach(k => { delete b[k]; });
   b.updated = new Date().toISOString();
