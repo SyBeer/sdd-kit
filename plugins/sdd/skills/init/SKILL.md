@@ -10,7 +10,15 @@ Tworzy szkielet procesu w biezacym projekcie.
 ## Kroki
 1. Sprawdz, czy `requirements/` juz istnieje. Jesli tak, zatrzymaj sie i zapytaj, czy nadpisac szablony (domyslnie NIE, tylko dopisz brakujace pliki).
 2. Skopiuj `${CLAUDE_PLUGIN_ROOT}/templates/requirements/` do `./requirements/`.
-3. Jesli `CLAUDE.md` nie istnieje, skopiuj `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md`. Jesli istnieje, dopisz jego tresc na koncu pod naglowkiem `# Zasady pracy z wymaganiami (SDD)`, nie nadpisuj.
+3. `CLAUDE.md` - nigdy nie nadpisuj istniejacego:
+   - Jesli w `CLAUDE.md` jest juz naglowek `# Zasady pracy z wymaganiami (SDD)`, pomin ten krok (init uruchomiony
+     drugi raz nie dopisuje zasad ponownie).
+   - Jesli `CLAUDE.md` istnieje, dopisz na koncu tresc `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md` tak, jak jest -
+     szablon zaczyna sie od naglowka `# Zasady pracy z wymaganiami (SDD)`, nie dodawaj drugiego.
+   - Jesli `CLAUDE.md` nie ma, a repo zawiera kod (np. `src/`, `package.json`, `pyproject.toml`, `requirements.txt`,
+     `Dockerfile`): utworz `CLAUDE.md` z krotka sekcja `# Projekt` (nazwa, 1-2 zdania z README, jesli jest) i pod nia
+     tresc szablonu. Wymagania to czesc repo aplikacji, nie cale repo.
+   - Jesli `CLAUDE.md` nie ma i repo nie zawiera kodu (osobne repo wymagan): skopiuj szablon.
 4. Zapytaj o dwie rzeczy, po kolei, nie naraz:
    - nazwa projektu (wpisz do `SDD.yaml`)
    - poziom: `full` czy `light`. Argument `--light` pomija pytanie. Przy `light` usun `03-spec/PRD.md`, zostaw `SPEC.md`. Przy `full` odwrotnie.

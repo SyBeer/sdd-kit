@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.1] - 2026-09-27
+`/sdd:init` w repo istniejacej aplikacji (sprawdzone na fv-manager).
+- `CLAUDE.md` nigdy nie nadpisywany: istniejacy dostaje na koncu tresc szablonu, bez drugiego naglowka.
+- Init uruchomiony drugi raz nie dopisuje zasad ponownie (wykrywa naglowek `# Zasady pracy z wymaganiami (SDD)`).
+- Repo z kodem bez `CLAUDE.md`: nowy plik z krotka sekcja `# Projekt`, pod nia zasady SDD.
+
 ## [0.13.0] - 2026-09-27
 Moduly spoza katalogu modulow i zapamietany ostatni modul (uwagi usera: "ma to dzialac dla aktualnego modulu";
 wymagania dla istniejacej aplikacji, np. fv-manager, w jej repozytorium).
