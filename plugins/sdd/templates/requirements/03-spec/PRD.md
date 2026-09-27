@@ -14,7 +14,7 @@ Po co to robimy. Jedno zdanie o problemie, jedno o efekcie.
 
 ### R-001 <tytul>
 Opis:
-Zrodlo:            [B]/[P]/[D]/[AI] <plik z INDEX.md>[, sekcja/wiersz]
+Zrodlo:            [Biz]/[App]/[Dok]/[AI] <plik z INDEX.md>[, sekcja/wiersz]
 Zalozenia:         A-xxx
 Reguly:            BR-xxx
 Status:            robocze | do przegladu | zatwierdzone

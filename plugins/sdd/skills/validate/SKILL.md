@@ -18,7 +18,7 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
    Sciezka jak w punkcie 3: element podmyty przez zrodlo wyzsze w hierarchii uniewaznia
    wszystko, co na nim stoi, dopoki czlowiek nie rozstrzygnie.
 7. WARN: AC nietestowalne (brak konkretnego stanu / zdarzenia / obserwowalnego wyniku, slowa "odpowiednio", "szybko", "intuicyjnie")
-8. WARN: R z A `niepotwierdzone` ze zrodlem `[D]` lub `[AI]`
+8. WARN: R z A `niepotwierdzone` ze zrodlem `[Dok]` lub `[AI]`
 9. WARN: pojecie uzyte w PRD, ktorego nie ma w GLOSSARY
 10. WARN: **zrodlo przeczytane i nieuzyte** - pozycja w `00-intake/INDEX.md` ze statusem
     zrodla `aktualne`, ktorej nazwa pliku nie wystepuje w zadnym `Zrodlo` w GLOSSARY,
@@ -29,7 +29,7 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
     swiecilby stale, a stale swiecacy bloker przestaje byc czytany.
 11. WARN: D bez wypelnionego "Powod"
 12. WARN: R `zatwierdzone` w sekcji "Do przegladu" (zatwierdzone, ale dotkniete zmiana)
-13. INFO: A `niepotwierdzone` ze zrodlem `[P]`
+13. INFO: A `niepotwierdzone` ze zrodlem `[App]`
 14. INFO: Q `zaparkowane` bez warunku (to tez blad procesu, popraw)
 15. INFO: element modelu (pojecie, `BR`) ktorego nie cytuje zadne R - sierota w druga strone,
     albo model wyprzedza spec, albo wymaganie wypadlo.

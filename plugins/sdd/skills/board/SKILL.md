@@ -20,7 +20,7 @@ Tablica to WIDOK. Pliki w `requirements/` sa PRAWDA. Nigdy odwrotnie.
 ```json
 { "title": "...", "subtitle": "...", "lanes": ["Pas 1", "Pas 2"],
   "notes": [ { "id": "n01", "type": "ev|cmd|act|pol|rm|hot|space", "text": "...", "lane": "Pas 1",
-               "col": 0, "ref": "R-04", "source": "czat Base44, TZ, 2026-09-10 [B]",
+               "col": 0, "ref": "R-04", "source": "czat Base44, TZ, 2026-09-10 [Biz]",
                "file": "03-spec/PRD.md", "by": "agent",
                "created": "2026-09-26T17:40:00+02:00", "updated": "2026-09-26T17:40:00+02:00" } ] }
 ```
@@ -33,7 +33,7 @@ Samo przenumerowanie kolumn (wstawienie albo zamkniecie kolumny w pasie) nie zmi
 ## Tura warsztatu (`/sdd:board` podczas rozmowy)
 Po KAZDEJ wypowiedzi usera:
 1. Wyciagnij fakty: kto, co robi, co sie dzieje, jaka regula, co oglada.
-2. Dopisz karteczki do `board.json` (edytuj plik, zachowaj istniejace). Kazda z `source` (kto powiedzial, data, [B]) i `file` (gdzie trafi po warsztacie). `by: "agent"`.
+2. Dopisz karteczki do `board.json` (edytuj plik, zachowaj istniejace). Kazda z `source` (kto powiedzial, data, [Biz]) i `file` (gdzie trafi po warsztacie). `by: "agent"`.
 3. Luka, puste "dlaczego", sprzecznosc ze znanym zrodlem -> czerwona `hot` obok karteczki, ktorej dotyczy (ten sam `lane` i `col`). Tresc = pytanie, `ref` = nastepny wolny Q-xxx (sprawdz QUESTIONS.md).
 4. Odpowiedz tekstem KROTKO: co postawiles (jedno zdanie) i jedno pytanie doprecyzowujace. Pytaj o przeszlosc, nie o hipotezy.
 5. Pomylka w interpretacji: popraw lub usun karteczke, nie dopisuj obok.
@@ -43,13 +43,13 @@ User tez edytuje tablice w przegladarce: zaklada procesy (pasy), zmienia ich naz
 Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych nazw procesow ani usunietych karteczek.
 
 ## Synchronizacja po warsztacie (`/sdd:board sync`)
-1. Przeczytaj `board.json`. Karteczki z `by: "czlowiek"` lub zmienione recznie (brak `by`, `source` zaczynajace sie od "warsztat, dopisane w przegladarce") to slowa biznesu `[B]` o najwyzszej wiarygodnosci.
+1. Przeczytaj `board.json`. Karteczki z `by: "czlowiek"` lub zmienione recznie (brak `by`, `source` zaczynajace sie od "warsztat, dopisane w przegladarce") to slowa biznesu `[Biz]` o najwyzszej wiarygodnosci.
 2. Pomin karteczki `space` (odstepy) - nie trafiaja do plikow i nie dostaja `synced`.
    Zaproponuj mapowanie (i PYTAJ przed zapisem, 3-5 linijek na paczke):
    - `hot` -> wiersze w `QUESTIONS.md` (status `otwarte`, "Skad" = warsztat + data)
    - `act` -> `ACTORS.md`
    - `ev` -> stany w `ENTITIES.md`
-   - `pol` -> `RULES.md` jako BR-xxx (+ A niepotwierdzone, jesli zrodlo nie [B])
+   - `pol` -> `RULES.md` jako BR-xxx (+ A niepotwierdzone, jesli zrodlo nie [Biz])
    - `cmd`, `rm` -> kandydaci R do `PRD.md` (sekcja robocza) albo notatka w `session-YYYY-MM-DD.md`
 3. Wpisz `ref` z powrotem do karteczek, zeby tablica i pliki mialy te same numery.
    Kazdej karteczce przeniesionej do plikow ustaw `synced` = teraz (ISO, `date -Iseconds`) i `file` = plik, do ktorego trafila.

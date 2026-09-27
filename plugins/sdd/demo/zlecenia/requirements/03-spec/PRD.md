@@ -2,12 +2,12 @@
 
 ## 1. Cel
 Problem: spedytorzy moga dzis przyjac zlecenie od klienta bez sprawdzenia limitu kredytowego i blokad, a grupa nie chce
-zwiekszac ryzyka wynikajacego z zadluzenia klientow ([B] session-2026-09-26.md, Q-002, D-002).
+zwiekszac ryzyka wynikajacego z zadluzenia klientow ([Biz] session-2026-09-26.md, Q-002, D-002).
 Efekt: zlecenie jest zawierane tylko wtedy, gdy kontrahent nie ma blokady, a spolka z grupy ma dla klienta limit z wolnym
 saldem pokrywajacym fracht; zlecenia nowych spedytorow przechodza przez akceptacje team leadera (D-001, D-006, D-013).
 
 Metryka produktowa: 0 zlecen zawartych z kontrahentem z blokada albo ponad wolne saldo (weryfikacja na danych po uruchomieniu).
-Skala: ok. 40 000 zlecen miesiecznie ([B] session-2026-09-26.md, Q-009).
+Skala: ok. 40 000 zlecen miesiecznie ([Biz] session-2026-09-26.md, Q-009).
 
 ## 2. Aktorzy
 Zob. `02-domain/ACTORS.md`: Spedytor, Team leader, Manager, Administrator systemu, DR, HR, Szef sprzedazy,
@@ -33,7 +33,7 @@ Pierwsza wersja - swiadomie odlozone przez biznes (zaparkowane, nie blokuja go-l
 Poza systemem z decyzji biznesu:
 - Decyzja o zmianie klasy spedytora (kadry, szef sprzedazy) - system przechowuje tylko klase (D-010).
 - Ustalanie proporcji podzialu marzy - spedytorzy ustalaja miedzy soba, system zapisuje kwoty (D-030, D-031).
-- Konsekwencje dla spedytora za zlecenie u kontrahenta z ostrzezeniem (np. obnizka wynagrodzenia) - poza procesem; system tylko pokazuje ostrzezenie ([B] 01-interview/Q-round-2-wlasciciel-procesu-odp.md, Q-072, sponsor).
+- Konsekwencje dla spedytora za zlecenie u kontrahenta z ostrzezeniem (np. obnizka wynagrodzenia) - poza procesem; system tylko pokazuje ostrzezenie ([Biz] 01-interview/Q-round-2-wlasciciel-procesu-odp.md, Q-072, sponsor).
 Pola formularza zlecenia - przechodza z obecnej aplikacji bez opisu wymaganiami (D-037):
 - Klient: zrodlo klienta, zgoda na platnosc na skanach, dokumenty przez portal (Q-036).
 - Trasa: zlecenie z pliku, typ pojazdu, waga, numery rejestracyjne, miejsca zaladunku i rozladunku, pozycje ladunku,
@@ -47,7 +47,7 @@ podzial marzy (R-006).
 
 ### R-001 Utworzenie zlecenia wstepnego
 Opis:              Spedytor tworzy zlecenie z formularza, kopii, wlasnego szablonu albo "Pobierz" z Rynku; zawsze powstaje zlecenie wstepne z numerem tymczasowym 00000/_/rr. "Zapisz wstepnie" zapisuje ten sam rekord.
-Zrodlo:            [D] prototyp-proces-dodawania-zlecenia.md, §2 pkt 1, §3; [B] session-2026-09-26.md, Q-015 (D-014); [B] session-2026-09-27.md, Q-030, Q-031 (D-025, D-026); [B] 01-interview/Q-round-2-wlasciciel-procesu-odp.md, Q-071 (sponsor) (D-035)
+Zrodlo:            [Dok] prototyp-proces-dodawania-zlecenia.md, §2 pkt 1, §3; [Biz] session-2026-09-26.md, Q-015 (D-014); [Biz] session-2026-09-27.md, Q-030, Q-031 (D-025, D-026); [Biz] 01-interview/Q-round-2-wlasciciel-procesu-odp.md, Q-071 (sponsor) (D-035)
 Zalozenia:         A-001
 Reguly:            BR-001, BR-020, BR-021
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -61,7 +61,7 @@ Kryteria akceptacji:
 
 ### R-002 Uruchomienie zlecenia
 Opis:              "Uruchom" nadaje numer 000000/mm/rr i date utworzenia = dzien klikniecia; zlecenie spedytora klasy "nowy" trafia do akceptacji, "doswiadczonego" od razu staje sie spedycyjne (zawarcie).
-Zrodlo:            [D] prototyp-proces-dodawania-zlecenia.md, §2 pkt 2; [B] session-2026-09-26.md, Q-001, Q-010 (D-001, D-010); [B] session-2026-09-27.md, Q-024 (D-020)
+Zrodlo:            [Dok] prototyp-proces-dodawania-zlecenia.md, §2 pkt 2; [Biz] session-2026-09-26.md, Q-001, Q-010 (D-001, D-010); [Biz] session-2026-09-27.md, Q-024 (D-020)
 Zalozenia:         A-002, A-003
 Reguly:            BR-002, BR-003, BR-004, BR-011
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -74,7 +74,7 @@ Kryteria akceptacji:
 
 ### R-003 Akceptacja i odrzucenie zlecenia
 Opis:              Team leader, manager albo admin akceptuje zlecenie do akceptacji (staje sie spedycyjne, zuzywa saldo) albo je odrzuca (trwale usuniete bez sladu). Ryzyko: Q-063 (saldo spadlo w czasie oczekiwania) - otwarte, nie blokuje.
-Zrodlo:            [B] session-2026-09-26.md, Q-001, Q-008 (D-001, D-008); [B] session-2026-09-27.md, Q-024, Q-028 (D-020, D-023)
+Zrodlo:            [Biz] session-2026-09-26.md, Q-001, Q-008 (D-001, D-008); [Biz] session-2026-09-27.md, Q-024, Q-028 (D-020, D-023)
 Zalozenia:         A-004
 Reguly:            BR-005, BR-006, BR-007, BR-011
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -87,7 +87,7 @@ Kryteria akceptacji:
 
 ### R-004 Anulacja zlecenia
 Opis:              Zlecenie anuluje spedytor (tylko swoje), team leader (zlecenia swojego zespolu) albo manager (zlecenia swoich team leaderow i ich ludzi). Wstepne - bez kosztow, trwale kasowane; spedycyjne - zostaje jako anulowane do rozliczenia, koszty ponosi klient (zmiana decyzji, wg zapisow zlecenia) albo przewoznik (brak realizacji z jego winy). Ryzyko: Q-064 (saldo po anulacji) - otwarte, nie blokuje.
-Zrodlo:            [B] session-2026-09-26.md, Q-009, Q-023 (D-009, D-019); [B] session-2026-09-27.md, Q-026 (D-021), paczka 2 PRD (D-033)
+Zrodlo:            [Biz] session-2026-09-26.md, Q-009, Q-023 (D-009, D-019); [Biz] session-2026-09-27.md, Q-026 (D-021), paczka 2 PRD (D-033)
 Zalozenia:         -
 Reguly:            BR-018, BR-019, BR-032
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -103,7 +103,7 @@ Kryteria akceptacji:
 
 ### R-005 Szablon zlecenia
 Opis:              Spedytor zapisuje wzor zlecenia jako szablon na stale i uzywa go wielokrotnie; szablon widzi i uzywa tylko jego autor.
-Zrodlo:            [D] prototyp-proces-dodawania-zlecenia.md, §3; [B] session-2026-09-27.md, Q-031, Q-060 (D-026, D-027)
+Zrodlo:            [Dok] prototyp-proces-dodawania-zlecenia.md, §3; [Biz] session-2026-09-27.md, Q-031, Q-060 (D-026, D-027)
 Zalozenia:         -
 Reguly:            BR-001
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -115,7 +115,7 @@ Kryteria akceptacji:
 
 ### R-006 Podzial marzy
 Opis:              Spedytor prowadzacy moze na swoim zleceniu wlaczyc "Podzial marzy" i wpisac kwote dla kazdego pomagajacego spedytora. Limit sumy podzialu - Q-067 (otwarte, nie blokuje).
-Zrodlo:            [D] prototyp-proces-dodawania-zlecenia.md, §1 Fracht; [B] session-2026-09-27.md, Q-035, Q-062 (D-030, D-031)
+Zrodlo:            [Dok] prototyp-proces-dodawania-zlecenia.md, §1 Fracht; [Biz] session-2026-09-27.md, Q-035, Q-062 (D-030, D-031)
 Zalozenia:         -
 Reguly:            -
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -127,7 +127,7 @@ Kryteria akceptacji:
 
 ### R-007 Kontrola blokad i limitu przed zawarciem
 Opis:              Przy wyborze kontrahenta w formularzu i przy zawarciu zlecenia system nie pozwala pracowac, gdy: kontrahent ma blokade dowolnego rodzaju w spolce albo na calosci; spolka limitu nie ma limitu dla klienta; fracht przekracza wolne saldo. Ryzyko: Q-063 - otwarte, nie blokuje.
-Zrodlo:            [B] session-2026-09-26.md, Q-003, Q-006, Q-013, Q-018, Q-021 (D-003, D-006, D-013, D-016, D-018)
+Zrodlo:            [Biz] session-2026-09-26.md, Q-003, Q-006, Q-013, Q-018, Q-021 (D-003, D-006, D-013, D-016, D-018)
 Zalozenia:         -
 Reguly:            BR-008, BR-009, BR-010, BR-016
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -141,7 +141,7 @@ Kryteria akceptacji:
 
 ### R-008 Wykorzystanie i uwolnienie salda
 Opis:              Przy zawarciu wykorzystanie limitu rosnie o fracht klienta w PLN (sredni kurs NBP z dnia roboczego poprzedzajacego zawarcie). W pierwszej wersji zaplate odnotowuje recznie DR, co uwalnia te sama kwote PLN. Ryzyko: Q-064 (saldo po anulacji) - otwarte, nie blokuje.
-Zrodlo:            [B] session-2026-09-26.md, Q-012 (D-012); [B] session-2026-09-27.md, Q-024, Q-025 (D-020), paczka 3 PRD (AC-008-2)
+Zrodlo:            [Biz] session-2026-09-26.md, Q-012 (D-012); [Biz] session-2026-09-27.md, Q-024, Q-025 (D-020), paczka 3 PRD (AC-008-2)
 Zalozenia:         -
 Reguly:            BR-011, BR-012, BR-013
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -154,7 +154,7 @@ Kryteria akceptacji:
 
 ### R-009 Przebitka a limit
 Opis:              Przy przebitce spedytor wskazuje spolke z puli (domyslnie pracodawca); limit, saldo i blokady licza sie dla wskazanej spolki.
-Zrodlo:            [D] prototyp-proces-dodawania-zlecenia.md, §1 Klient; [B] session-2026-09-26.md, Q-007 (D-007)
+Zrodlo:            [Dok] prototyp-proces-dodawania-zlecenia.md, §1 Klient; [Biz] session-2026-09-26.md, Q-007 (D-007)
 Zalozenia:         A-005
 Reguly:            BR-014, BR-015
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -167,7 +167,7 @@ Kryteria akceptacji:
 
 ### R-010 Wniosek o limit
 Opis:              Wniosek sklada spedytor albo team leader; rodzaje: nadanie i zwiekszenie (jeden przycisk "Zwieksz limit"), odnowienie ("Odnow"). Wniosek trafia do DR w zakladce "Operacje" > "Limity"; DR przyznaje z kwota albo odrzuca (odmowa realizacji zlecenia).
-Zrodlo:            [D] wymagania-limity-i-blokady.md, §2; [B] session-2026-09-26.md, Q-004, Q-005, Q-011, Q-019 (D-004, D-005, D-011, D-017); [B] session-2026-09-27.md, Q-032 (D-028); [B] session-2026-09-27.md, runda 2, Q-073 (D-036)
+Zrodlo:            [Dok] wymagania-limity-i-blokady.md, §2; [Biz] session-2026-09-26.md, Q-004, Q-005, Q-011, Q-019 (D-004, D-005, D-011, D-017); [Biz] session-2026-09-27.md, Q-032 (D-028); [Biz] session-2026-09-27.md, runda 2, Q-073 (D-036)
 Zalozenia:         A-011, A-012
 Reguly:            BR-016, BR-026, BR-027
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -181,7 +181,7 @@ Kryteria akceptacji:
 
 ### R-011 Waznosc i odnowienie limitu
 Opis:              Limit wygasa po roku; wygasly limit dziala jak brak limitu. "Odnow" sklada wniosek o odnowienie, DR odnawia - nowa waznosc rok od dnia odnowienia.
-Zrodlo:            [B] session-2026-09-26.md, Q-016 (D-015); [B] session-2026-09-27.md, Q-032 (D-028), paczka 4 PRD (AC-011-3)
+Zrodlo:            [Biz] session-2026-09-26.md, Q-016 (D-015); [Biz] session-2026-09-27.md, Q-032 (D-028), paczka 4 PRD (AC-011-3)
 Zalozenia:         -
 Reguly:            BR-017
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -194,7 +194,7 @@ Kryteria akceptacji:
 
 ### R-012 Limit tylko dla klienta
 Opis:              Przewoznik nie ma sekcji limitow ani kolumny "Dostepny limit".
-Zrodlo:            [B] session-2026-09-26.md, Q-002 (D-002); [D] wymagania-limity-i-blokady.md, §3
+Zrodlo:            [Biz] session-2026-09-26.md, Q-002 (D-002); [Dok] wymagania-limity-i-blokady.md, §3
 Zalozenia:         -
 Reguly:            BR-028
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -206,7 +206,7 @@ Kryteria akceptacji:
 
 ### R-013 Blokady
 Opis:              DR ustawia, zmienia i zdejmuje blokade (platnosci, wspolpracy, dokumentow, pelna / "Brak blokady") w zakresie spolki albo calosci; powod wymagany; kazda zmiana w historii blokad; status w kolumnie listy kontrahentow, klik = historia.
-Zrodlo:            [D] wymagania-limity-i-blokady.md, §4; [B] session-2026-09-26.md, Q-018, Q-021 (D-016, D-018); [B] session-2026-09-27.md, Q-027 (D-022)
+Zrodlo:            [Dok] wymagania-limity-i-blokady.md, §4; [Biz] session-2026-09-26.md, Q-018, Q-021 (D-016, D-018); [Biz] session-2026-09-27.md, Q-027 (D-022)
 Zalozenia:         A-009
 Reguly:            BR-009, BR-024
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -220,7 +220,7 @@ Kryteria akceptacji:
 
 ### R-014 Ostrzezenia
 Opis:              DR dodaje ostrzezenie (typ z 6, powod wymagany) w zakresie spolki albo calosci; nie blokuje zlecen; w pierwszej wersji DR zdejmuje je recznie.
-Zrodlo:            [D] wymagania-limity-i-blokady.md, §5; [B] session-2026-09-26.md, Q-014; [B] session-2026-09-27.md, Q-027, Q-029 (D-022, D-024)
+Zrodlo:            [Dok] wymagania-limity-i-blokady.md, §5; [Biz] session-2026-09-26.md, Q-014; [Biz] session-2026-09-27.md, Q-027, Q-029 (D-022, D-024)
 Zalozenia:         A-010
 Reguly:            BR-025
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -233,7 +233,7 @@ Kryteria akceptacji:
 
 ### R-015 Status ryzyka
 Opis:              Kolor przy nazwie kontrahenta (naglowek kartoteki) liczony w kontekscie spolki: czerwony (blokada w zakresie spolki lub calosci; u klienta takze brak limitu), zolty (co najmniej jedno aktywne ostrzezenie), zielony (brak).
-Zrodlo:            [D] wymagania-limity-i-blokady.md, §6; [B] session-2026-09-26.md, Q-003, Q-018 (D-003, D-016); [B] session-2026-09-27.md, Q-029 (D-024), paczka 5 PRD (AC-015-3)
+Zrodlo:            [Dok] wymagania-limity-i-blokady.md, §6; [Biz] session-2026-09-26.md, Q-003, Q-018 (D-003, D-016); [Biz] session-2026-09-27.md, Q-029 (D-024), paczka 5 PRD (AC-015-3)
 Zalozenia:         A-008
 Reguly:            BR-008, BR-023
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -246,7 +246,7 @@ Kryteria akceptacji:
 
 ### R-016 Uprawnienia: dozwolone tylko to, co przyznano
 Opis:              Kazda rola wykonuje tylko czynnosci przyznane jej w decyzjach D-001..D-033; kazda inna operacja jest odrzucana, takze wywolana z pominieciem interfejsu. Zasada budowy (do constitution.md): nowa czynnosc bez decyzji o uprawnieniach jest domyslnie niedostepna dla wszystkich rol.
-Zrodlo:            [B] session-2026-09-27.md, Q-033 (D-029)
+Zrodlo:            [Biz] session-2026-09-27.md, Q-033 (D-029)
 Zalozenia:         -
 Reguly:            BR-031
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -258,7 +258,7 @@ Kryteria akceptacji:
 
 ### R-017 Klasa i zespol spedytora
 Opis:              Konto spedytora ma klase (nowy / doswiadczony), zespol i przelozonego (team leader -> manager). Klase zmienia HR na zlecenie szefa sprzedazy; klasa decyduje o sciezce akceptacji, hierarchia o prawach anulacji. Ryzyko: Q-066 (kto przypisuje do zespolu) - otwarte, nie blokuje.
-Zrodlo:            [B] session-2026-09-26.md, Q-010 (D-010); [B] session-2026-09-27.md, paczka 2 PRD (D-033); [D] prototyp-proces-dodawania-zlecenia.md, §2 pkt 2
+Zrodlo:            [Biz] session-2026-09-26.md, Q-010 (D-010); [Biz] session-2026-09-27.md, paczka 2 PRD (D-033); [Dok] prototyp-proces-dodawania-zlecenia.md, §2 pkt 2
 Zalozenia:         -
 Reguly:            BR-003, BR-004, BR-032
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)
@@ -271,7 +271,7 @@ Kryteria akceptacji:
 
 ### R-018 Historia zmian kontrahenta
 Opis:              Kazde utworzenie i zmiana danych kontrahenta zapisuje sie automatycznie w zakladce "Historia zmian": kto, co, data i godzina.
-Zrodlo:            [D] wymagania-limity-i-blokady.md, §7
+Zrodlo:            [Dok] wymagania-limity-i-blokady.md, §7
 Zalozenia:         A-013
 Reguly:            BR-029
 Status:            zatwierdzone (wlasciciel procesu, 2026-09-27)

@@ -15,7 +15,7 @@ Trasa: plik zlecenia (PDF/JPG/PNG), typy pojazdu (Firanka, Chlodnia, Cysterna, P
 miejsca zaladunku i rozladunku (lista) z pozycjami ladunku, dlugosc trasy (deklarowana i wyliczana), wymagania specjalne, uwagi ogolne;
 Fracht: fracht klienta + waluta, fracht przewoznika + waluta, termin platnosci (z kartoteki, "Odblokuj edycje"), podzial marzy (opcja; lista: spedytor pomagajacy + kwota, wpisuje spedytor prowadzacy - D-031), kary umowne, koszty anulacji, koszty postojowe;
 zalaczniki; kontakty (domyslnie rola "Kierowca").
-Zrodlo: [D] prototyp-proces-dodawania-zlecenia.md §1-3; [B] session-2026-09-26.md (D-001, D-007..D-009, D-011..D-013, D-019).
+Zrodlo: [Dok] prototyp-proces-dodawania-zlecenia.md §1-3; [Biz] session-2026-09-26.md (D-001, D-007..D-009, D-011..D-013, D-019).
 
 Stany:
 - `wstepne` - draft, numer tymczasowy; mozna zapisywac wielokrotnie; "Zapisz wstepnie" zapisuje ten sam rekord (D-025)
@@ -28,13 +28,13 @@ Stany:
 Przejscia:
 | Z | Do | Kto | Warunek / skutek | Zrodlo |
 |---|----|-----|------------------|--------|
-| [*] | wstepne | spedytor | formularz, kopia (D-035), szablon (D-026) albo "Pobierz" z Rynku (klient musi byc zarejestrowany) | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 1, §3; [B] session-2026-09-26.md, Q-015 (D-014) |
-| wstepne | do_akceptacji | spedytor klasy "nowy" | "Uruchom": numer docelowy, data utworzenia | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 2; [B] session-2026-09-26.md, Q-001 (D-001) |
-| wstepne | spedycyjne | spedytor klasy "doswiadczony" | "Uruchom": numer docelowy, data utworzenia | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 2 |
-| do_akceptacji | spedycyjne | team leader / manager / admin | akceptacja | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 2-3; [B] session-2026-09-26.md, Q-001 (D-001) |
-| do_akceptacji | (usuniete trwale) | team leader / manager / admin | odrzucenie, bez sladu | [B] session-2026-09-26.md, Q-008 (D-008); [B] session-2026-09-27.md, Q-028 (D-023) |
-| wstepne | (usuniete trwale) | spedytor (swoje) / team leader (swoj zespol) / manager (swoje zespoly) - D-033 | anulacja bez kosztow | [B] session-2026-09-26.md, Q-009, Q-026 (D-009, D-021) |
-| spedycyjne | anulowane | spedytor (swoje) / team leader (swoj zespol) / manager (swoje zespoly) - D-033 | rozliczenie, koszty ponosi strona winna | [B] session-2026-09-26.md, Q-009, Q-023, Q-026 (D-009, D-019, D-021) |
+| [*] | wstepne | spedytor | formularz, kopia (D-035), szablon (D-026) albo "Pobierz" z Rynku (klient musi byc zarejestrowany) | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 1, §3; [Biz] session-2026-09-26.md, Q-015 (D-014) |
+| wstepne | do_akceptacji | spedytor klasy "nowy" | "Uruchom": numer docelowy, data utworzenia | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 2; [Biz] session-2026-09-26.md, Q-001 (D-001) |
+| wstepne | spedycyjne | spedytor klasy "doswiadczony" | "Uruchom": numer docelowy, data utworzenia | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 2 |
+| do_akceptacji | spedycyjne | team leader / manager / admin | akceptacja | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 2-3; [Biz] session-2026-09-26.md, Q-001 (D-001) |
+| do_akceptacji | (usuniete trwale) | team leader / manager / admin | odrzucenie, bez sladu | [Biz] session-2026-09-26.md, Q-008 (D-008); [Biz] session-2026-09-27.md, Q-028 (D-023) |
+| wstepne | (usuniete trwale) | spedytor (swoje) / team leader (swoj zespol) / manager (swoje zespoly) - D-033 | anulacja bez kosztow | [Biz] session-2026-09-26.md, Q-009, Q-026 (D-009, D-021) |
+| spedycyjne | anulowane | spedytor (swoje) / team leader (swoj zespol) / manager (swoje zespoly) - D-033 | rozliczenie, koszty ponosi strona winna | [Biz] session-2026-09-26.md, Q-009, Q-023, Q-026 (D-009, D-019, D-021) |
 | spedycyjne | ? | brak - Q-025 | wykonanie transportu, zaplata | - |
 
 Zawarcie = wejscie w `spedycyjne` (D-020). Straznicy (sprawdzane przy wyborze kontrahenta, D-006, i przy zawarciu): brak blokady w zakresie spolki lub calosci (BR-007),
@@ -61,7 +61,7 @@ tylko klient: NUU, limity per spolka, kolumna "Dostepny limit" (D-002);
 tylko przewoznik: zakladka "Ubezpieczenia i licencje" (polisy OCP/OCS, licencja przewozowa).
 Stany: brak cyklu zycia w zrodlach; warunek biznesowy - klient musi byc zarejestrowany przed zleceniem (D-014).
 Status ryzyka (wyliczany, per kontekst spolki): czerwony / zolty / zielony - BR-019.
-Zrodlo: [D] wymagania-limity-i-blokady.md §1, §3-7; [D] prototyp-proces-dodawania-zlecenia.md §1; [B] session-2026-09-26.md (D-002, D-014, D-016).
+Zrodlo: [Dok] wymagania-limity-i-blokady.md §1, §3-7; [Dok] prototyp-proces-dodawania-zlecenia.md §1; [Biz] session-2026-09-26.md (D-002, D-014, D-016).
 Zakwestionowane:
 
 ## Limit kredytowy (klient x spolka z grupy)
@@ -73,10 +73,10 @@ Stany:
 Przejscia:
 | Z | Do | Kto | Warunek | Zrodlo |
 |---|----|-----|---------|--------|
-| brak | aktywny | DR | przyznanie po wniosku albo edycja w panelu admina | [B] session-2026-09-26.md, Q-005 (D-005); [D] wymagania-limity-i-blokady.md §2, §7 |
-| aktywny | aktywny | DR | zmiana kwoty (zwiekszenie po wniosku, edycja globalna) | [D] wymagania-limity-i-blokady.md §2, §7; [B] session-2026-09-26.md (D-005) |
-| aktywny | wygasly | system (po roku) | rok od przyznania | [B] session-2026-09-26.md, Q-016 (D-015) |
-| wygasly | aktywny | DR | odnowienie po wniosku "Odnow" | [B] session-2026-09-26.md, Q-016 (D-015); [B] session-2026-09-27.md, Q-032 (D-028) |
+| brak | aktywny | DR | przyznanie po wniosku albo edycja w panelu admina | [Biz] session-2026-09-26.md, Q-005 (D-005); [Dok] wymagania-limity-i-blokady.md §2, §7 |
+| aktywny | aktywny | DR | zmiana kwoty (zwiekszenie po wniosku, edycja globalna) | [Dok] wymagania-limity-i-blokady.md §2, §7; [Biz] session-2026-09-26.md (D-005) |
+| aktywny | wygasly | system (po roku) | rok od przyznania | [Biz] session-2026-09-26.md, Q-016 (D-015) |
+| wygasly | aktywny | DR | odnowienie po wniosku "Odnow" | [Biz] session-2026-09-26.md, Q-016 (D-015); [Biz] session-2026-09-27.md, Q-032 (D-028) |
 Saldo: zawarcie zlecenia -> wykorzystano += fracht klienta w PLN (sredni kurs NBP z dnia roboczego przed zawarciem); zaplata -> wykorzystano -= fracht (BR-009..BR-011).
 Zakwestionowane:
 
@@ -95,9 +95,9 @@ Stany: `oczekuje` (u DR w zakladce "Operacje" > "Limity" z licznikiem oczekujacy
 Przejscia:
 | Z | Do | Kto | Skutek | Zrodlo |
 |---|----|-----|--------|--------|
-| [*] | oczekuje | spedytor albo team leader | - | [B] session-2026-09-26.md, Q-004, Q-005 (D-004, D-005) |
-| oczekuje | przyznany | DR | limit i kwota w kartotece, znika "wniosek oczekuje" | [D] wymagania-limity-i-blokady.md §2; [B] session-2026-09-26.md (D-005, D-017) |
-| oczekuje | odrzucony | DR | spedytor nie moze zawrzec zlecenia - odmowa realizacji | [B] session-2026-09-26.md, Q-011 (D-011) |
+| [*] | oczekuje | spedytor albo team leader | - | [Biz] session-2026-09-26.md, Q-004, Q-005 (D-004, D-005) |
+| oczekuje | przyznany | DR | limit i kwota w kartotece, znika "wniosek oczekuje" | [Dok] wymagania-limity-i-blokady.md §2; [Biz] session-2026-09-26.md (D-005, D-017) |
+| oczekuje | odrzucony | DR | spedytor nie moze zawrzec zlecenia - odmowa realizacji | [Biz] session-2026-09-26.md, Q-011 (D-011) |
 Zakwestionowane:
 
 ```mermaid
@@ -114,9 +114,9 @@ Stany: `brak_blokady` (domyslnie, zielony tag), `zablokowany` (jeden z 4 rodzajo
 Przejscia:
 | Z | Do | Kto | Zrodlo |
 |---|----|-----|--------|
-| brak_blokady | zablokowany | DR | [D] wymagania-limity-i-blokady.md §4; [B] session-2026-09-27.md, Q-027 (D-022) |
-| zablokowany | zablokowany (inny rodzaj) | DR | [D] wymagania-limity-i-blokady.md §4; [B] session-2026-09-27.md, Q-027 (D-022) |
-| zablokowany | brak_blokady | DR | [D] wymagania-limity-i-blokady.md §4; [B] session-2026-09-27.md, Q-027 (D-022) |
+| brak_blokady | zablokowany | DR | [Dok] wymagania-limity-i-blokady.md §4; [Biz] session-2026-09-27.md, Q-027 (D-022) |
+| zablokowany | zablokowany (inny rodzaj) | DR | [Dok] wymagania-limity-i-blokady.md §4; [Biz] session-2026-09-27.md, Q-027 (D-022) |
+| zablokowany | brak_blokady | DR | [Dok] wymagania-limity-i-blokady.md §4; [Biz] session-2026-09-27.md, Q-027 (D-022) |
 Zakwestionowane:
 
 ```mermaid
@@ -134,8 +134,8 @@ Stany: `aktywne`, `zdjete`.
 Przejscia:
 | Z | Do | Kto | Zrodlo |
 |---|----|-----|--------|
-| [*] | aktywne | DR | [D] wymagania-limity-i-blokady.md §5 |
-| aktywne | zdjete | DR, recznie (zasady wygasania - Q-014, zaparkowane) | [B] session-2026-09-26.md, Q-014 |
+| [*] | aktywne | DR | [Dok] wymagania-limity-i-blokady.md §5 |
+| aktywne | zdjete | DR, recznie (zasady wygasania - Q-014, zaparkowane) | [Biz] session-2026-09-26.md, Q-014 |
 Zakwestionowane:
 
 ```mermaid
@@ -150,8 +150,8 @@ Stany: `opublikowana`, `pobrana` (stala sie zleceniem wstepnym).
 Przejscia:
 | Z | Do | Kto | Warunek | Zrodlo |
 |---|----|-----|---------|--------|
-| [*] | opublikowana | "Wystaw na gielde" z listy zlecen wstepnych/spedycyjnych; rola? Q-038; albo integracja Gielda A/Gielda B | - | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 5 |
-| opublikowana | pobrana | rola? Q-038 | klient zarejestrowany (D-014) | [D] prototyp-proces-dodawania-zlecenia.md §2 pkt 5; [B] session-2026-09-26.md, Q-015 |
+| [*] | opublikowana | "Wystaw na gielde" z listy zlecen wstepnych/spedycyjnych; rola? Q-038; albo integracja Gielda A/Gielda B | - | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 5 |
+| opublikowana | pobrana | rola? Q-038 | klient zarejestrowany (D-014) | [Dok] prototyp-proces-dodawania-zlecenia.md §2 pkt 5; [Biz] session-2026-09-26.md, Q-015 |
 Zakwestionowane:
 
 ```mermaid
@@ -163,14 +163,14 @@ stateDiagram-v2
 ## Szablon zlecenia
 Pola: nazwa, dane zlecenia do powtorzenia (zakres pol - brak w zrodlach), autor (spedytor), widocznosc: tylko autor (D-027).
 Stany: brak cyklu zycia w zrodlach - zapisany na stale, uzywany wielokrotnie; uzycie tworzy zlecenie wstepne.
-Zrodlo: [D] prototyp-proces-dodawania-zlecenia.md §3; [B] session-2026-09-27.md, Q-031, Q-060 (D-026, D-027).
+Zrodlo: [Dok] prototyp-proces-dodawania-zlecenia.md §3; [Biz] session-2026-09-27.md, Q-031, Q-060 (D-026, D-027).
 Zakwestionowane:
 
 ## Konto spedytora
 Pola: pracodawca (spolka z grupy), klasa (nowy / doswiadczony), pula spolek (konfiguracja), rola (spedytor / team_leader / manager / admin),
 zespol i przelozony (spedytor -> team leader -> manager; D-033; kto wpisuje - Q-066).
 Stany klasy: `nowy` -> `doswiadczony` (HR na zlecenie szefa sprzedazy, D-010).
-Zrodlo: [D] prototyp-proces-dodawania-zlecenia.md §1-2; [B] session-2026-09-26.md, Q-007, Q-010 (D-007, D-010).
+Zrodlo: [Dok] prototyp-proces-dodawania-zlecenia.md §1-2; [Biz] session-2026-09-26.md, Q-007, Q-010 (D-007, D-010).
 Zakwestionowane:
 
 ```mermaid

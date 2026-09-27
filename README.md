@@ -81,7 +81,7 @@ Na gorze obu stron sa zakladki Panel modułu | Tablica warsztatowa i przelacznik
     requirements/
       SDD.yaml              konfiguracja: poziom, role zatwierdzajace, backlog
       CHANGELOG.md          jedna linia na kazdy zapis automatyczny
-      00-intake/INDEX.md    katalog surowca: wiarygodnosc [B]/[P]/[D]/[AI], kierunek, status
+      00-intake/INDEX.md    katalog surowca: wiarygodnosc [Biz]/[App]/[Dok]/[AI], kierunek, status
       00-intake/porownanie-*.md  czytanie nowego zrodla "na zimno" przed zajrzeniem do modelu
       01-interview/         QUESTIONS.md, ASSUMPTIONS.md, DECISIONS.md, rundy, sesje
       02-domain/            GLOSSARY.md, ACTORS.md, ENTITIES.md, RULES.md

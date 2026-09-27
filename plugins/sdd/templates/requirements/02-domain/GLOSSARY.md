@@ -5,7 +5,7 @@ Jedno pojecie = jeden zbior rekordow: jesli dwa zrodla nazywaja ta sama nazwa in
 obiektow, to homonim do rozbicia na dwa hasla albo sprzecznosc - nie jedno haslo.
 Status: robocze | zakwestionowane (Q-xxx) | zatwierdzone (bramka przed /sdd:spec)
 
-Zrodlo: `[B]/[P]/[D]/[AI] <plik z INDEX.md>[, sekcja/wiersz]` - nazwa pliku obowiazkowa,
+Zrodlo: `[Biz]/[App]/[Dok]/[AI] <plik z INDEX.md>[, sekcja/wiersz]` - nazwa pliku obowiazkowa,
 bo na niej stoi kontrola pokrycia zrodel w /sdd:validate.
 
 | Pojecie | Definicja | Synonimy | Przyklad | Zrodlo | Status |

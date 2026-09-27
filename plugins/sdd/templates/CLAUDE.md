@@ -17,13 +17,14 @@ wymagan, zyje w `requirements/`. Skille: /sdd:intake, /sdd:interview, /sdd:domai
 
 ## 2. Hierarchia wiarygodnosci zrodel (od najwyzszej)
 
-1. wypowiedz biznesu (cytat, data, kto) - `[B]`
-2. dzialajacy system lub prototyp (zaobserwowane zachowanie) - `[P]`
-3. dokument spisany z kodu lub przez AI - `[D]`
+1. wypowiedz biznesu (cytat, data, kto) - `[Biz]`
+2. dzialajaca aplikacja, system lub prototyp (zaobserwowane zachowanie) - `[App]`
+3. dokument spisany z kodu lub przez AI - `[Dok]`
 4. interpretacja AI - `[AI]`
 
-Zapis zrodla wszedzie: `[B]/[P]/[D]/[AI] <plik z INDEX.md>[, sekcja/wiersz]`. Nazwa pliku
+Zapis zrodla wszedzie: `[Biz]/[App]/[Dok]/[AI] <plik z INDEX.md>[, sekcja/wiersz]`. Nazwa pliku
 jest obowiazkowa - na niej stoi kontrola pokrycia zrodel w /sdd:validate.
+Starsze pliki (dawniej): `[B]` = `[Biz]`, `[P]` = `[App]`, `[D]` = `[Dok]` - czytaj tak samo, nowe wpisy pisz nowymi oznaczeniami.
 
 Gdy zrodla sie roznia, wyzsze wygrywa, a roznica trafia do QUESTIONS.md ze statusem
 `sprzeczne`. Nigdy nie rozstrzygaj sprzecznosci sam.
@@ -32,8 +33,8 @@ Dwa zrodla na tym samym poziomie moga sie roznic kierunkiem: `intencja` (co miel
 zbudowac) kontra `as-built` (jak dziala teraz). Kierunek jest w `00-intake/INDEX.md`.
 Na pytanie "jak dziala" wygrywa `as-built`, na "co mielismy zbudowac" - `intencja`.
 
-Zgodnosc dwoch zrodel `[D]` NIE jest potwierdzeniem. Dwa dokumenty spisane z tej samej
-aplikacji powtarzaja ten sam blad. Potwierdza tylko `[B]`.
+Zgodnosc dwoch zrodel `[Dok]` NIE jest potwierdzeniem. Dwa dokumenty spisane z tej samej
+aplikacji powtarzaja ten sam blad. Potwierdza tylko `[Biz]`.
 
 ## 3. Identyfikatory
 

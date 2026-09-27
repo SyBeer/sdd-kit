@@ -639,13 +639,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(!n){
       var dr=draft&&draft.lane===lane?draft:null, col=dr?dr.col:ops.nextCol(board,lane);
       if(dr&&dr.newCol) ops.insertCol(board,lane,col);
-      n={id:'n'+Date.now().toString(36),lane:lane,col:col,source:'warsztat, dopisane w przeglądarce [B]',by:'człowiek'};
+      n={id:'n'+Date.now().toString(36),lane:lane,col:col,source:'warsztat, dopisane w przeglądarce [Biz]',by:'człowiek'};
       board.notes.push(n);
       if(dr&&dr.before&&byId(dr.before)) ops.moveNote(board,n.id,lane,col,dr.before);
       sel=n.id; draft=null;
     } else if(n.lane!==lane){ ops.placeNote(board,n.id,lane,ops.nextCol(board,lane)); } // stara kolumna znika, jesli pusta
     n.text=text;n.type=getType();n.lane=lane;n.ref=$('#f-ref').value.trim()||undefined;
-    if(!n.source){n.source='warsztat, dopisane w przeglądarce [B]';n.by='człowiek'}
+    if(!n.source){n.source='warsztat, dopisane w przeglądarce [Biz]';n.by='człowiek'}
     filledFor=undefined; commit().then(function(){ $('#ok').textContent='Zapisano ✓'; });
   };
   $('#del').onclick=function(){ if(!sel)return; ops.removeNote(board,sel); closeDrawer(); commit(); };

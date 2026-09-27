@@ -31,7 +31,7 @@ projektu, wiec masz historie i mozesz pracowac na kazdym komputerze.
 | Handover | Etap 6: zamiana specu na zadania dla zespolu. |
 | Board / tablica | Lokalna strona z karteczkami, odswiezana na zywo, gdy agent pisze. Wymaga Node.js (program do uruchamiania takich stron, zwykle juz jest, bo Claude Code go potrzebuje). |
 | R / Q / A / D | Numery: R-wymaganie, Q-pytanie, A-zalozenie, D-decyzja. Zeby dalo sie odwolac "chodzi o R-12". |
-| [B] [P] [D] [AI] | Skad wiemy: B-biznes powiedzial, P-widac w prototypie, D-z dokumentu, AI-domysl AI. B jest najpewniejsze. |
+| [Biz] [App] [Dok] [AI] | Skad wiemy: Biz - biznes powiedzial, App - widac w dzialajacej aplikacji albo prototypie, Dok - z dokumentu, AI - domysl AI. Biz jest najpewniejsze. |
 
 ## 3. Instalacja w 3 krokach (tylko osoba prowadzaca)
 

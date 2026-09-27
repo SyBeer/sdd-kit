@@ -13,10 +13,10 @@ przebiegi: pierwszy buduje punkt odniesienia, kolejne sprawdzaja sie z nim, a ni
 ## Tryb A: pliki (domyslny)
 1. Przeczytaj `requirements/SDD.yaml` i `CLAUDE.md` (hierarchia wiarygodnosci).
 2. Wylistuj pliki w `00-intake/`, ktorych nie ma w `INDEX.md`.
-3. Dla kazdego: przeczytaj, wpisz wiersz do `INDEX.md`: plik, data (z tresci lub metadanych), typ (mail / notatka ze spotkania / dokument procesu / zrzut ekranu / eksport z systemu / historia czatu z narzedziem no-code / inne), wiarygodnosc `[B]/[P]/[D]/[AI]`, kierunek, status zrodla, opis 1-2 zdania, uwagi.
+3. Dla kazdego: przeczytaj, wpisz wiersz do `INDEX.md`: plik, data (z tresci lub metadanych), typ (mail / notatka ze spotkania / dokument procesu / zrzut ekranu / eksport z systemu / historia czatu z narzedziem no-code / inne), wiarygodnosc `[Biz]/[App]/[Dok]/[AI]`, kierunek, status zrodla, opis 1-2 zdania, uwagi.
    - **kierunek**: `intencja` (dokument mowi, co mielismy zbudowac), `as-built` (opisuje stan
      dzialajacej aplikacji), `potwierdzenie` (biznes potwierdza albo rozstrzyga). Rozroznia
-     zrodla o tej samej wiarygodnosci - dwa dokumenty `[D]` o jednym module roznia sie
+     zrodla o tej samej wiarygodnosci - dwa dokumenty `[Dok]` o jednym module roznia sie
      najczesciej wlasnie tym. Jesli dokument sam zastrzega, ze bedzie nieaktualizowany,
      to `intencja` - zapisz to w uwagach.
    - **status zrodla**: na starcie `aktualne`. Pozostale wartosci (`zastapione przez <plik>`,
@@ -29,7 +29,7 @@ przebiegi: pierwszy buduje punkt odniesienia, kolejne sprawdzaja sie z nim, a ni
    - **nie ma `02-domain/GLOSSARY.md` z trescia** -> sekcja "Przebieg pierwszy",
    - **model istnieje** -> sekcja "Przebieg kolejny". Nie porownuj wtedy nowego zrodla ze
      starymi plikami: koszt rosnie kwadratowo, a to, co z nich wynikalo, jest juz w modelu.
-6. Kandydaci: jesli w materiale widzisz wprost sformulowane wymaganie lub decyzje biznesu `[B]`, dopisz w uwagach "kandydat R" lub "kandydat D". Nie twórz jeszcze R ani D.
+6. Kandydaci: jesli w materiale widzisz wprost sformulowane wymaganie lub decyzje biznesu `[Biz]`, dopisz w uwagach "kandydat R" lub "kandydat D". Nie twórz jeszcze R ani D.
 
 ## Przebieg pierwszy (model jeszcze nie istnieje)
 Sprzecznosci: jesli dwa zrodla mowia co innego o tym samym, NIE rozstrzygaj. Dodaj wiersz do `01-interview/QUESTIONS.md` ze statusem `sprzeczne`, kolumna "Skad" = oba zrodla, kolumna "Do kogo" = rola z `SDD.yaml` najblizsza tematowi.
@@ -60,7 +60,7 @@ zrodlo przez model i dopasujesz je do tego, co juz wiesz, zamiast zauwazyc, ze n
 
 | Klasa | Kiedy | Co robisz |
 |-------|-------|-----------|
-| `potwierdza` | zrodlo zgadza sie z elementem modelu | dopisz zrodlo do kolumny `Zrodlo` tego elementu. Jesli element stoi na `A niepotwierdzone`, a nowe zrodlo to `[B]` - zaproponuj potwierdzenie `A` (PYTASZ). Pamietaj: zgodnosc dwoch `[D]` nie jest potwierdzeniem |
+| `potwierdza` | zrodlo zgadza sie z elementem modelu | dopisz zrodlo do kolumny `Zrodlo` tego elementu. Jesli element stoi na `A niepotwierdzone`, a nowe zrodlo to `[Biz]` - zaproponuj potwierdzenie `A` (PYTASZ). Pamietaj: zgodnosc dwoch `[Dok]` nie jest potwierdzeniem |
 | `zamyka Q` | zrodlo odpowiada na pytanie otwarte lub zadane | zaproponuj `D-xxx` albo potwierdzenie `A` (PYTASZ). Jedyna klasa, ktora daje postep, nie prace - szukaj jej swiadomie |
 | `uzupelnia` | model nie ma czegos, co zrodlo ma | "kandydat R" lub "kandydat BR" w uwagach `INDEX.md`. Nie dopisuj do modelu sam - to robi /sdd:domain |
 | `sprzeczne` | konflikt, nowe zrodlo NIE jest wyzej w hierarchii | wiersz `sprzeczne` w `QUESTIONS.md`, "Skad" = `porownanie z modelem` + element modelu + nowe zrodlo |
@@ -80,12 +80,12 @@ zrodlo przez model i dopasujesz je do tego, co juz wiesz, zamiast zauwazyc, ze n
 
 ## Tryb B: `--message` (wklejona wiadomosc)
 1. Zapisz tresc do `00-intake/msg-YYYY-MM-DD-<krotki-slug>.md` z naglowkiem: kanal, nadawca (rola, nie nazwisko jesli nie trzeba), data.
-2. Dalej jak tryb A dla tego jednego pliku. Wiadomosc od biznesu to `[B]` i kierunek
+2. Dalej jak tryb A dla tego jednego pliku. Wiadomosc od biznesu to `[Biz]` i kierunek
    `potwierdzenie` - czyli przy istniejacym modelu najczesciej wyladuje w klasie
    `podmywa model` albo `zamyka Q`.
 
 ## Tryb C: historia czatu z narzedziem no-code (Base44, Lovable, v0 itp.)
-Kazde polecenie uzytkownika = osobny wiersz w `INDEX.md` z data i `[B]`. Odpowiedzi narzedzia = `[AI]`. Dzialajaca aplikacja, jesli dostepna, = `[P]`. Dokumentacja wygenerowana przez narzedzie = `[D]`. To trzy rozne zrodla, nie jedno.
+Kazde polecenie uzytkownika = osobny wiersz w `INDEX.md` z data i `[Biz]`. Odpowiedzi narzedzia = `[AI]`. Dzialajaca aplikacja, jesli dostepna, = `[App]`. Dokumentacja wygenerowana przez narzedzie = `[Dok]`. To trzy rozne zrodla, nie jedno.
 Kierunek: polecenia = `intencja`, dokumentacja z narzedzia = `as-built`, sama aplikacja = `as-built`.
 
 ## Na koniec

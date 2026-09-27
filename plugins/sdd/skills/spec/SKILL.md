@@ -16,7 +16,7 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
 2. Sekcje 1-4 PRD: cel, aktorzy (odwolanie), zakres, poza zakresem. "Poza zakresem" wypelnij z tego, co biznes wprost odrzucil lub zaparkowal.
 3. Wymagania R-xxx. Dla kazdego ZAPROPONUJ (3-5 linijek) i czekaj na "tak":
    - tytul, opis w jezyku ze slownika
-   - zrodlo z hierarchia `[B]/[P]/[D]/[AI]`; jesli tylko `[D]`/`[AI]`, dodaj A `niepotwierdzone`
+   - zrodlo z hierarchia `[Biz]/[App]/[Dok]/[AI]`; jesli tylko `[Dok]`/`[AI]`, dodaj A `niepotwierdzone`
    - reguly BR, zalozenia A
    - kryteria AC-xxx-n Given/When/Then; kazde testowalne (konkretny stan, zdarzenie, wynik obserwowalny)
    - status `robocze`, wlasciciel (rola)
@@ -26,7 +26,7 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
    podmyta przez zrodlo wyzsze w hierarchii - wymaganie na niej byloby zbudowane na piasku.
 5. Sekcja 6 "Do przegladu": przepisz z tego, co wygenerowaly kaskady w interview i z intake
    (elementy modelu oznaczone `zakwestionowane`).
-6. Zrodlo kazdego R zapisuj z nazwa pliku z `INDEX.md`: `[B] <plik>[, sekcja/wiersz]`.
+6. Zrodlo kazdego R zapisuj z nazwa pliku z `INDEX.md`: `[Biz] <plik>[, sekcja/wiersz]`.
    Bez nazwy pliku kontrola pokrycia zrodel w /sdd:validate nie ma czego szukac.
 
 ## Tryb `--agent`

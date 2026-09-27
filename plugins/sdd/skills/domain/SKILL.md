@@ -20,7 +20,7 @@ albo swiadomie do "Poza zakresem" w PRD.
 1. **GLOSSARY.md**: kazde pojecie biznesowe z surowca. Jedno pojecie = jedna definicja. Jesli biznes uzywa dwoch slow na to samo, jedno jest haslem, drugie synonimem. Jesli jedno slowo oznacza dwie rzeczy, rozbij na dwa hasla z dopiskiem. Zrodlo (z nazwa pliku) i przyklad obowiazkowe. Status `robocze`.
 2. **ACTORS.md**: role, nie osoby. "Co robi" i "czego nie wolno" z surowca. Brak "czego nie wolno" = pytanie (luka).
 3. **ENTITIES.md**: obiekty biznesowe, pola kluczowe, stany, przejscia z rola, diagram `stateDiagram-v2`. Przejscie bez roli = pytanie.
-4. **RULES.md**: reguly "jezeli... to..." z numerem BR-xxx, zrodlem, powiazanymi A i R. Regula ze zrodlem `[D]` lub `[AI]` dostaje automatycznie A `niepotwierdzone`. Kolumne `Wymagania` wypelniaj rzetelnie - to sciezka kaskady.
+4. **RULES.md**: reguly "jezeli... to..." z numerem BR-xxx, zrodlem, powiazanymi A i R. Regula ze zrodlem `[Dok]` lub `[AI]` dostaje automatycznie A `niepotwierdzone`. Kolumne `Wymagania` wypelniaj rzetelnie - to sciezka kaskady.
 5. **Test spojnosci** (wypisz wynik):
    - kazde pojecie uzyte w RULES i ENTITIES jest w GLOSSARY
    - kazda rola w RULES i przejsciach jest w ACTORS

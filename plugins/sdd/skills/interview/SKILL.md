@@ -14,7 +14,7 @@ Etap 2. Zamieniasz surowiec w rozstrzygniecia przez pytania, nie zgadywanie.
 Cztery reguly. Kazde pytanie ma w kolumnie "Skad" nazwe reguly i odnosnik.
 1. **Luka**: proces, encja lub regula wspomniana w surowcu, ale bez opisu zachowania (co sie dzieje w wyjatku, kto moze, kiedy).
 2. **Pusty powod**: decyzja D bez wypelnionego "Powod" albo z powodem oznaczonym `[AI]` (wniosek prowadzacego) -> pytanie "dlaczego".
-3. **Zalozenie bez biznesu**: A ze zrodlem `[P]`, `[D]` lub `[AI]` -> pytanie potwierdzajace.
+3. **Zalozenie bez biznesu**: A ze zrodlem `[App]`, `[Dok]` lub `[AI]` -> pytanie potwierdzajace.
 4. **Sprzecznosc**: wiersze `sprzeczne` w QUESTIONS.md -> pytanie "ktore prawdziwe" z cytatami obu zrodel.
 
 Zasady formulowania:
