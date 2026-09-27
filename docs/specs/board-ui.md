@@ -21,6 +21,10 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    Tablica nie traci szerokosci, gdy panel jest zamkniety. Etykieta "Pas" -> "Proces".
 3. Mieszczenie sie (dawny punkt 6): tablica na cala szerokosc; powiekszenie -, +, "Dopasuj" (tablica miesci sie w szerokosci okna),
    zakres 50-150%, zapamietane w przegladarce. Nazwy procesow przyklejone do lewej krawedzi przy przewijaniu w poziomie.
+   Zmiana 0.14.1 (uwaga usera: "przy scrollowaniu aplikacji w dol gora ekranu sie przenosi (znikaja zakladki), ale nie widac poziomego scrolla"):
+   szerokie okno (> 640 px) - strona sie nie przewija; zakladki, naglowek i pasek narzedzi stoja na gorze, tablica wypelnia
+   reszte wysokosci okna i przewija sie sama w obu kierunkach - poziomy pasek zawsze przy dolnej krawedzi okna.
+   Telefon bez zmian (przewija sie cala strona).
 4. Nowa karteczka: w kazdym procesie ostatnia pusta kolumna ma "+"; klik tworzy karteczke w tym procesie i kolumnie i otwiera panel.
    "+ Karteczka" z paska dodaje do pierwszego procesu, w pierwszej wolnej kolumnie.
    Zmiana 0.14.0 (uwaga usera: "pod kazda kolumna karteczek powinna byc opcja (+) tak jak na koncu procesu. Moze byc nizsze niz karteczka"):
@@ -80,6 +84,51 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    - Telefon (<= 640 px): bez zmian - panel wysuwa sie od dolu i chowa po zamknieciu.
    - Demo: panel tez stoi na stale (podglad karteczki), bez przyciskow edycji.
 
+12. Szkic nowej karteczki (0.14.1, uwaga usera: "przy kliknieciu na + powinna pojawic sie na ekranie pusta kartka w SZARYM kolorze"):
+   - Klik "+" (pod kolumna, w ostatniej kolumnie, "+ Karteczka") stawia na tablicy od razu szara karteczke-szkic
+     w miejscu, gdzie trafi (na koncu kolumny), zaznaczona i przewinieta do widoku; panel otwiera sie obok.
+   - Szkic pokazuje na zywo wpisywana tresc (pusty - "Nowa karteczka…"). Typ nie jest wybrany z gory;
+     wybor typu w panelu od razu zmienia kolor szkicu. Zmiana procesu w panelu przenosi szkic na koniec tego procesu.
+   - Zapisz bez typu -> komunikat "Wybierz typ"; po Zapisz szkic staje sie zwykla karteczka.
+   - "×", Escape albo klik innej karteczki usuwa szkic - nic nie trafia do board.json. Szkic nie jest krokiem Cofnij.
+
+13. Przesuwanie tablicy mysza (0.14.1, uwaga usera: "nad pustymi przestrzeniami powinna pojawiac sie ikona, ktora pozwoli
+    lapac i scrollowac ekran bez uzywania scrollbarow"):
+   - Kursory: karteczka - raczka (przeciagniecie przenosi karteczke), "+" i przyciski - palec,
+     puste tlo tablicy (takze obok nazwy procesu) - strzalki w 4 strony; podczas przesuwania - zacisnieta dlon.
+   - Wcisniecie i przeciagniecie na pustym tle przesuwa tablice w poziomie i pionie (jak mapa). Bez zaznaczania tekstu.
+   - Nie przesuwa: start na karteczce, przycisku, polu tekstowym. Przeciaganie karteczek dziala jak wczesniej.
+   - Dotyk (telefon, tablet): bez zmian - przewija przegladarka.
+
+14. Wstawianie pomiedzy (0.14.1, uwaga usera: "powinna byc tez opcja dodawania karteczek pomiedzy istniejacymi"; wybor: oba warianty):
+   - W kolumnie: miedzy dwiema karteczkami waska strefa; po najechaniu kreska z "+". Klik -> szkic (punkt 12) miedzy nimi,
+     po Zapisz karteczka stoi w tym miejscu kolumny.
+   - Miedzy kolumnami procesu: pionowa strefa miedzy dwiema kolumnami; po najechaniu kreska z "+". Klik -> nowa kolumna
+     ze szkicem, dalsze kolumny procesu przesuwaja sie w prawo (na ekranie od razu). Escape cofa to przesuniecie (nic nie zapisane).
+     Zapisz -> karteczka w nowej kolumnie, dalsze karteczki procesu `col` + 1. Jeden krok Cofnij.
+   - Przesuniecie kolumn nie oznacza karteczek jako zmienionych: `updated` (i stan ↻) zmienia sie przy zmianie tresci, typu,
+     procesu, ID albo gdy karteczke przeniesiono - przegladarka oznacza przeniesiona karteczke polem `_moved` (serwer je usuwa
+     przed zapisem). Sam numer `col` zmieniony przez wstawienie albo zamkniecie kolumny to uklad, nie zmiana.
+   - W demo brak stref wstawiania.
+
+15. Przenoszenie miedzy kolumny i zamykanie pustych kolumn (0.14.1, uwaga usera: "brakuje mozliwosci przesuniecia karteczek
+    i wlozenia ich miedzy istniejace kolumny. Zabranie karteczki powoduje powstanie pustego miejsca" - ma przesuwac w lewo):
+   - Przeciagniecie karteczki nad przerwe miedzy kolumnami pokazuje pionowa kreske; upuszczenie tworzy tam nowa kolumne
+     z ta karteczka, dalsze kolumny procesu przesuwaja sie w prawo. Dziala tez miedzy procesami (karteczka zmienia proces).
+   - Kolumna, z ktorej zabrano ostatnia karteczke (przeniesienie, zmiana procesu w panelu, Usun), znika - dalsze kolumny
+     tego procesu przesuwaja sie o 1 w lewo. Zamykana jest tylko ta kolumna; inne puste miejsca (np. zostawione przez agenta) zostaja.
+   - Jedno przeniesienie = jeden krok Cofnij. Przesuniete karteczki bez ↻ (AC-B28 - miejsce wzgledem innych bez zmian).
+
+16. Anuluj i odstep (0.14.1, uwaga usera: "przy tworzeniu nowej karteczki (szarej) powinien byc przycisk anuluj obok zapisz.
+    Dodatkowo powinna byc karteczka typu SPACE, zeby oddzielac od siebie elementy na wizualizacji"):
+   - Nowa karteczka (szkic): obok "Zapisz" przycisk "Anuluj" - dziala jak Escape (szkic znika, nic nie zapisane).
+   - Nowy typ `space` "odstęp" (puste miejsce): w panelu jako siodmy typ; tresc nieobowiazkowa.
+     Na tablicy: przezroczysty prostokat o rozmiarze karteczki z blada przerywana ramka (widac, gdzie kliknac), bez cienia,
+     bez znaczka synchronizacji i daty; tresc (jesli jest) blada. Przeciaganie, wstawianie, Cofnij - jak zwykla karteczka.
+   - Odstep to uklad tablicy, nie wymaganie: nie liczy sie do "N karteczek" procesu ani do paska "Pliki:",
+     `/sdd:board sync` go pomija (skill board). Stan synchronizacji `space`.
+   - W legendzie na gorze bez zmian (legenda to typy tresci).
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module.
 - Cofanie zmian agenta i historia miedzy sesjami przegladarki.
@@ -94,7 +143,7 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B8: `moveNote(b, id, lane, col, beforeId)` ustawia karteczke w procesie i kolumnie przed `beforeId`; bez `beforeId` - na koniec kolumny; kolejnosc innych karteczek bez zmian.
 - AC-B9: `stepNote(b, id, -1|1)` zamienia karteczke z sasiadem w tej samej kolumnie; na krawedzi nic nie robi.
 - AC-B10 (reczne): panel karteczki pokazuje 6 typow z kolorami i nazwami jak w legendzie; zaznaczony = typ karteczki; zmiana i Zapisz zmienia kolor karteczki; dziala strzalkami z klawiatury.
-- AC-B11: `stampNotes(prev, next, now)`: nowa karteczka -> created=updated=now; zmieniona tresc/typ/proces/kolumna/ID -> updated=now, created bez zmian; nietknieta -> daty bez zmian; daty podane przez agenta w `next` nie sa nadpisywane.
+- AC-B11: `stampNotes(prev, next, now)`: nowa karteczka -> created=updated=now; zmieniona tresc/typ/proces/ID albo przeniesiona (`_moved`, AC-B28) -> updated=now, created bez zmian; nietknieta -> daty bez zmian; daty podane przez agenta w `next` nie sa nadpisywane.
 - AC-B12: `fmtDate(iso)` -> "RRRR-MM-DD HH:MM" w czasie lokalnym; pusta/zla data -> "".
 - AC-B13 (reczne): karteczka pokazuje zrodlo, autora i date zmiany; panel pokazuje date utworzenia i zmiany; edycja w przegladarce zmienia date zmiany.
 - AC-B14: `syncState(note, inFile)`: brak synced -> board; updated > synced -> changed; inFile === false -> missing; inaczej synced (takze gdy brak ref/file).
@@ -107,6 +156,19 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B21 (reczne): w przegladarce: dodaj karteczke, zmien nazwe procesu, usun proces - Cofnij 3x przywraca tablice, Ponow 3x wraca; Cmd+Z w polu tekstowym cofa tekst, nie tablice; dopisanie karteczki przez agenta wylacza Cofnij z komunikatem; w demo brak przyciskow.
 - AC-B22 (reczne): kazda zajeta kolumna ma pod karteczkami niski "+"; klik otwiera panel nowej karteczki, po Zapisz karteczka stoi na dole tej kolumny; Cofnij ja usuwa; w demo brak "+".
 - AC-B23 (reczne): okno 1280 px: panel widoczny bez wybranej karteczki (podpowiedz + przyciski); klik karteczki przy prawej krawedzi - karteczka widoczna obok panelu; "»" zwija do paska, tablica szersza, stan po przeladowaniu zachowany; klik karteczki rozwija; Escape wraca do podpowiedzi; telefon 375 px - panel od dolu jak wczesniej; tryb ciemny czytelny.
+- AC-B24 (reczne): klik "+" pod kolumna -> szara karteczka na dole tej kolumny, panel obok; wpisywanie zmienia tekst szkicu; wybor typu zmienia kolor; Zapisz bez typu -> "Wybierz typ"; Escape usuwa szkic i board.json bez zmian; Zapisz -> karteczka w tym miejscu; tryb ciemny: szkic czytelny.
+- AC-B25 (reczne): okno 1280x800, tablica horizon-zlecenia: strona nie ma paska przewijania; zakladki i pasek narzedzi widoczne przy przewijaniu tablicy w dol; poziomy pasek tablicy widoczny bez przewijania strony; dol tablicy przy dolnej krawedzi okna; telefon 375 px - strona przewija sie jak wczesniej.
+- AC-B26 (reczne): kursor nad karteczka = grab, nad "+" = pointer, nad pustym tlem = all-scroll; przeciagniecie pustego tla o 200 px w lewo przesuwa tablice o 200 px w prawo (i w pionie analogicznie); przeciagniecie karteczki dalej ja przenosi; zadne klikniecie nie wywoluje sie po przesunieciu.
+- AC-B27: `insertCol(b, lane, col)` przesuwa w procesie `lane` karteczki z `col >= col` o 1 w prawo, inne procesy nietkniete; zwraca liczbe przesunietych.
+- AC-B28: `stampNotes`: zmiana samego `col` (np. po `insertCol`/`closeCol`, takze cofniecie) nie zmienia `updated`; karteczka z `_moved` dostaje `updated`=now, a `_moved` znika z wyniku; sasiad, ktorego przeniesiona karteczka minela, bez zmian; AC-B11 bez zmian dla tresci/typu/procesu/ID.
+- AC-B29 (reczne): najechanie miedzy karteczki kolumny pokazuje kreske z "+", klik -> szary szkic miedzy nimi, Zapisz -> karteczka tam; najechanie miedzy kolumny -> pionowa kreska z "+", klik -> dalsze kolumny w prawo i szkic w nowej kolumnie, Escape -> wszystko wraca, Zapisz -> zapisane, przesuniete karteczki bez ↻, Cofnij -> jak przed wstawieniem.
+- AC-B30: `closeCol(b, lane, col)`: gdy w kolumnie nie ma karteczek procesu - karteczki procesu z `col > col` o 1 w lewo, zwraca liczbe przesunietych; gdy kolumna zajeta - nic (0); inne procesy nietkniete.
+- AC-B31: `placeNote(b, id, lane, col, {before, newCol})`: przenosi karteczke i oznacza ja `_moved` (z `newCol` - najpierw `insertCol`), potem zamyka kolumne, z ktorej wyszla, jesli zostala pusta; wynik: kolejnosc karteczek w procesach bez dziur po przeniesieniu; `removeNote(b, id)` usuwa i zamyka pusta kolumne.
+- AC-B32 (reczne): przeciagniecie karteczki na kreske miedzy kolumnami innego procesu -> nowa kolumna tam, dalsze w prawo, w starym procesie kolumna znika (jesli byla jedyna), bez ↻ na przesunietych; Cofnij przywraca; przeciagniecie do zwyklej kolumny i Usun ostatniej karteczki w kolumnie tez zamykaja dziure.
+- AC-B33: `syncState` / `syncMap`: karteczka `type: "space"` ma stan 'space' niezaleznie od `synced`, `ref`, `file`.
+- AC-B35: `noteSync(note, map)` - stan do narysowania: odstep -> 'space'; zwykla karteczka ze stanem z serwera 'space' (typ wlasnie zmieniony z odstepu) albo nieznanym/brakujacym -> 'board'; znany stan -> ten stan. (Blad user 2026-09-27: zmiana odstepu na zdarzenie wywracala rysowanie - proces znikal z ekranu, zapis nie szedl.)
+- AC-B36 (reczne): blad rysowania tablicy nie blokuje zapisu (zapis idzie przed rysowaniem) i pokazuje komunikat; odstep zmieniony na zdarzenie zapisuje sie i rysuje z kolorem zdarzenia.
+- AC-B34 (reczne): nowa karteczka ma "Anuluj" obok "Zapisz" (istniejaca - nie), Anuluj usuwa szkic bez zapisu; typ "odstęp" zapisuje sie bez tresci, na tablicy przezroczysty z blada ramka, bez znaczka i daty, nie liczy sie do licznika procesu ani paska Pliki; da sie go przeciagnac i usunac; tryb ciemny czytelny.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

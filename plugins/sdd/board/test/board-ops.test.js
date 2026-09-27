@@ -113,7 +113,7 @@ test('AC-B11: stampNotes - daty utworzenia i zmiany', () => {
   ] };
   const next = JSON.parse(JSON.stringify(prev));
   next.notes[1].text = 'y2';                                  // zmieniona tresc
-  next.notes[2].col = 3;                                      // stara bez dat, przesunieta
+  next.notes[2].col = 0; next.notes[2]._moved = true;         // stara bez dat, przeniesiona w przegladarce (AC-B28)
   next.notes.push({ id: 'd', lane: 'A', col: 4, text: 'nowa', type: 'hot' });
   next.notes.push({ id: 'e', lane: 'A', col: 5, text: 'od agenta', created: T0, updated: T0 });
   ops.stampNotes(prev, next, NOW);
@@ -173,4 +173,96 @@ test('AC-B17: boardHint - jaka wskazowke pokazac', () => {
   assert.strictEqual(ops.boardHint({ lanes: ['A'] }), 'nonotes');
   assert.strictEqual(ops.boardHint({ lanes: ['A'], notes: [{ id: 'a', lane: 'A' }] }), null);
   assert.strictEqual(ops.boardHint({ lanes: [], notes: [{ id: 'a', lane: 'X' }] }), null);
+});
+
+test('AC-B27: insertCol - przesuwa dalsze kolumny procesu', () => {
+  const b = { lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0 }, { id: 'b', lane: 'A', col: 1 }, { id: 'c', lane: 'A', col: 1 },
+    { id: 'd', lane: 'A', col: 3 }, { id: 'e', lane: 'B', col: 1 },
+  ] };
+  assert.strictEqual(ops.insertCol(b, 'A', 1), 3);
+  assert.deepStrictEqual(b.notes.map(n => n.col), [0, 2, 2, 4, 1]);
+  assert.strictEqual(ops.insertCol(b, 'A', 9), 0);
+});
+
+test('AC-B28: stampNotes - numer kolumny bez zmiany miejsca nie jest zmiana', () => {
+  const T0 = '2026-09-26T10:00:00.000Z', NOW = '2026-09-27T12:00:00.000Z';
+  const base = () => ({ lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0, text: 'a', created: T0, updated: T0 },
+    { id: 'b', lane: 'A', col: 1, text: 'b', created: T0, updated: T0 },
+    { id: 'c', lane: 'A', col: 2, text: 'c', created: T0, updated: T0 },
+    { id: 'e', lane: 'B', col: 0, text: 'e', created: T0, updated: T0 },
+  ] });
+  const by = (b, id) => b.notes.find(n => n.id === id);
+  // wstawienie kolumny 1 z nowa karteczka
+  const prev = base(), next = base();
+  ops.insertCol(next, 'A', 1);
+  next.notes.push({ id: 'n', lane: 'A', col: 1, text: 'nowa' });
+  ops.stampNotes(prev, next, NOW);
+  assert.deepStrictEqual(['a', 'b', 'c', 'e'].map(id => by(next, id).updated), [T0, T0, T0, T0]);
+  assert.strictEqual(by(next, 'n').updated, NOW);
+  // cofniecie wstawienia: karteczka znika, kolumny wracaja
+  const back = base();
+  ops.stampNotes(next, back, NOW);
+  assert.deepStrictEqual(['a', 'b', 'c'].map(id => by(back, id).updated), [T0, T0, T0]);
+  // przeniesienie a za b (placeNote na nowa kolumne) - stempel tylko dla a, nie dla b, ktora a minela
+  const moved = base();
+  ops.placeNote(moved, 'a', 'A', 2, { newCol: true });
+  assert.strictEqual(by(moved, 'a')._moved, true);
+  ops.stampNotes(base(), moved, NOW);
+  assert.strictEqual(by(moved, 'a').updated, NOW);
+  assert.strictEqual('_moved' in by(moved, 'a'), false, '_moved nie trafia do pliku');
+  assert.deepStrictEqual(['b', 'c'].map(id => by(moved, id).updated), [T0, T0]);
+  // cofniecie przeniesienia: a wraca z dawna data, b i c bez stempla
+  const undo = base();
+  ops.stampNotes(moved, undo, NOW);
+  assert.deepStrictEqual(['a', 'b', 'c'].map(id => by(undo, id).updated), [T0, T0, T0]);
+});
+
+test('AC-B30: closeCol - zamyka tylko pusta kolumne procesu', () => {
+  const b = { lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0 }, { id: 'c', lane: 'A', col: 2 }, { id: 'd', lane: 'A', col: 3 }, { id: 'e', lane: 'B', col: 3 },
+  ] };
+  assert.strictEqual(ops.closeCol(b, 'A', 0), 0, 'kolumna zajeta - nic');
+  assert.strictEqual(ops.closeCol(b, 'A', 1), 2);
+  assert.deepStrictEqual(b.notes.map(n => n.col), [0, 1, 2, 3]);
+});
+
+test('AC-B31: placeNote i removeNote - bez dziur po przeniesieniu', () => {
+  const mk = () => ({ lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0 }, { id: 'b', lane: 'A', col: 1 }, { id: 'c', lane: 'A', col: 2 },
+    { id: 'x', lane: 'B', col: 0 }, { id: 'y', lane: 'B', col: 1 },
+  ] });
+  const cols = (b, lane) => b.notes.filter(n => n.lane === lane).map(n => n.id + n.col).join(' ');
+  // b miedzy x i y w procesie B (nowa kolumna 1)
+  let b = mk(); ops.placeNote(b, 'b', 'B', 1, { newCol: true });
+  assert.strictEqual(cols(b, 'A'), 'a0 c1');
+  assert.strictEqual(cols(b, 'B'), 'x0 y2 b1');
+  // c miedzy a i b w tym samym procesie
+  b = mk(); ops.placeNote(b, 'c', 'A', 1, { newCol: true });
+  assert.strictEqual(cols(b, 'A'), 'a0 b2 c1');
+  // a do kolumny c (zwykla kolumna) - kolumna 0 znika
+  b = mk(); ops.placeNote(b, 'a', 'A', 2, {});
+  assert.strictEqual(cols(b, 'A'), 'b0 c1 a1');
+  // przed konkretna karteczka
+  b = mk(); ops.placeNote(b, 'y', 'A', 1, { before: 'b' });
+  assert.deepStrictEqual(b.notes.filter(n => n.lane === 'A' && n.col === 1).map(n => n.id), ['y', 'b']);
+  // usuniecie jedynej karteczki w kolumnie
+  b = mk(); ops.removeNote(b, 'b');
+  assert.strictEqual(cols(b, 'A'), 'a0 c1');
+});
+
+test('AC-B33: odstep (space) ma wlasny stan synchronizacji', () => {
+  assert.strictEqual(ops.syncState({ type: 'space' }, null), 'space');
+  assert.strictEqual(ops.syncState({ type: 'space', synced: '2026-09-27T10:00:00Z', ref: 'R-1' }, false), 'space');
+  const b = { notes: [{ id: 's', type: 'space', synced: '2026-09-27T10:00:00Z', ref: 'R-1', file: 'x.md' }] };
+  assert.deepStrictEqual(ops.syncMap(b, () => null), { s: 'space' });
+});
+
+test('AC-B35: noteSync - stan do narysowania zawsze znany', () => {
+  assert.strictEqual(ops.noteSync({ id: 's', type: 'space' }, { s: 'synced' }), 'space');
+  assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, { a: 'space' }), 'board', 'odstep zmieniony na zdarzenie, serwer jeszcze nie przeliczyl');
+  assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, { a: 'cos-nowego' }), 'board');
+  assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, undefined), 'board');
+  for (const st of ['synced', 'changed', 'missing', 'board']) assert.strictEqual(ops.noteSync({ id: 'a', type: 'ev' }, { a: st }), st);
 });

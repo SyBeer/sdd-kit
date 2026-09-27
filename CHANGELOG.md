@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.14.1] - 2026-09-27
+Tablica warsztatowa - uwagi usera z pracy na horizon-zlecenia.
+- Szkic nowej karteczki: klik "+" stawia od razu szara karteczke w miejscu docelowym; tresc i kolor (typ) na zywo z panelu.
+  Typ nie jest wybrany z gory ("Wybierz typ"). Obok "Zapisz" przycisk "Anuluj" (= Escape, nic nie zapisane).
+- Wstawianie pomiedzy: kreska z "+" miedzy karteczkami kolumny i miedzy kolumnami procesu (nowa kolumna, dalsze w prawo).
+- Przeciagniecie karteczki na przerwe miedzy kolumnami tworzy tam nowa kolumne (takze w innym procesie).
+  Kolumna oprozniona przez przeniesienie, zmiane procesu albo Usun znika - dalsze kolumny dosuwaja sie w lewo.
+- Stan ↻ tylko dla karteczki, ktora naprawde przeniesiono (znacznik `_moved` z przegladarki, serwer go usuwa);
+  przenumerowanie kolumn nie oznacza karteczek jako zmienionych.
+- Nowy typ `space` "odstep": puste miejsce oddzielajace elementy; bez tresci, znaczka i daty; poza licznikami;
+  `/sdd:board sync` go pomija (skill board).
+- Szerokie okno: strona sie nie przewija - zakladki i pasek narzedzi zostaja, tablica ma oba paski przewijania na ekranie.
+- Przesuwanie tablicy mysza: przeciagniecie pustego tla (kursor strzalki / zacisnieta dlon); karteczka - raczka, "+" - palec.
+- Poprawki: odstep zmieniony na zdarzenie wywracal rysowanie (proces znikal z ekranu, zapis nie szedl) - stan rysowania
+  zawsze znany, zapis przed rysowaniem, blad rysowania z komunikatem; przewijanie do karteczki omija przyklejona nazwe procesu.
+- UWAGA przy aktualizacji: zrestartuj serwer tablicy (`sdd-board`) - logika zapisu zmienila sie po stronie serwera;
+  stary serwer z nowa strona zapisalby `_moved` do board.json.
+- Spec: `docs/specs/board-ui.md` punkty 3, 4, 12-16 (AC-B24..AC-B36); testy 70/70.
+
 ## [0.14.0] - 2026-09-27
 Tablica warsztatowa: cofanie zmian, "+" pod kazda kolumna, panel karteczki na stale (uwagi usera z warsztatu horizon-zlecenia).
 - "↶ Cofnij" / "↷ Ponów" w pasku oraz Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y (w polu tekstowym cofa tekst, nie tablice).

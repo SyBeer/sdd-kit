@@ -82,23 +82,59 @@
     const a = idx[p], c = idx[q], t = list[a]; list[a] = list[c]; list[c] = t;
   }
 
+  // Wstawienie kolumny: karteczki procesu od `col` w prawo przesuwaja sie o 1 (AC-B27).
+  function insertCol(b, lane, col) {
+    let moved = 0;
+    notes(b).forEach(function (n) { if (n.lane === lane && (n.col || 0) >= col) { n.col = (n.col || 0) + 1; moved++; } });
+    return moved;
+  }
+
+  // Pusta kolumna procesu znika - dalsze o 1 w lewo (AC-B30). Kolumna zajeta: nic.
+  function closeCol(b, lane, col) {
+    if (notes(b).some(function (n) { return n.lane === lane && (n.col || 0) === col; })) return 0;
+    let moved = 0;
+    notes(b).forEach(function (n) { if (n.lane === lane && (n.col || 0) > col) { n.col = (n.col || 0) - 1; moved++; } });
+    return moved;
+  }
+
+  // Przeniesienie z przegladarki (AC-B31): opcjonalnie nowa kolumna (newCol), miejsce przed `before`,
+  // potem zamkniecie kolumny, z ktorej karteczka wyszla, jesli zostala pusta.
+  function placeNote(b, id, lane, col, opt) {
+    opt = opt || {};
+    const n = notes(b).find(function (x) { return x.id === id; });
+    if (!n) return;
+    const from = { lane: n.lane, col: n.col || 0 };
+    if (opt.newCol) { insertCol(b, lane, col); if (from.lane === lane && from.col >= col) from.col++; }
+    moveNote(b, id, lane, col, opt.before);
+    n._moved = true;
+    closeCol(b, from.lane, from.col);
+  }
+
+  function removeNote(b, id) {
+    const n = notes(b).find(function (x) { return x.id === id; });
+    if (!n) return;
+    b.notes = notes(b).filter(function (x) { return x !== n; });
+    closeCol(b, n.lane, n.col || 0);
+  }
+
   // Daty karteczek (ISO): nowe dostaja created/updated, zmienione - updated. Daty podane w `next` (agent, klient) zostaja.
-  const TRACKED = ['text', 'type', 'lane', 'col', 'ref'];
+  // Przeniesienie liczy sie tylko z oznaczeniem `_moved` (przegladarka, placeNote) - sam numer `col` zmieniony przez
+  // wstawienie albo zamkniecie kolumny to uklad, nie zmiana (AC-B28). `_moved` nie trafia do pliku.
+  const TRACKED = ['text', 'type', 'lane', 'ref'];
   function changed(a, b) {
     return TRACKED.some(function (k) {
-      const x = k === 'col' ? (a[k] || 0) : (a[k] == null ? '' : a[k]);
-      const y = k === 'col' ? (b[k] || 0) : (b[k] == null ? '' : b[k]);
-      return x !== y;
+      return (a[k] == null ? '' : a[k]) !== (b[k] == null ? '' : b[k]);
     });
   }
   function stampNotes(prev, next, now) {
     const old = {};
     notes(prev || {}).forEach(function (n) { old[n.id] = n; });
     notes(next).forEach(function (n) {
-      const p = old[n.id];
+      const p = old[n.id], moved = n._moved === true;
+      delete n._moved;
       if (!p) { n.created = n.created || now; n.updated = n.updated || now; return; }
       if (!n.created && p.created) n.created = p.created;
-      if (changed(p, n) && n.updated === p.updated) n.updated = now;
+      if ((moved || changed(p, n)) && n.updated === p.updated) n.updated = now;
       else if (!n.updated && p.updated) n.updated = p.updated;
     });
     return next;
@@ -114,6 +150,7 @@
 
   // Stan synchronizacji z plikami: board (tylko na tablicy), changed (zmieniona po sync), missing (ID nie ma w pliku), synced.
   function syncState(n, inFile) {
+    if (n.type === 'space') return 'space'; // odstep to uklad tablicy, nie trafia do plikow (AC-B33)
     if (!n.synced) return 'board';
     const s = new Date(n.synced).getTime(), u = n.updated ? new Date(n.updated).getTime() : NaN;
     if (!isNaN(u) && !isNaN(s) && u > s) return 'changed';
@@ -121,11 +158,21 @@
     return 'synced';
   }
 
+  // Stan do narysowania karteczki (AC-B35): zawsze jeden ze znanych. Stan z serwera moze byc nieaktualny
+  // (np. odstep wlasnie zmieniony na zdarzenie ma jeszcze 'space') - wtedy 'board' do czasu przeliczenia.
+  const STATES = ['synced', 'changed', 'missing', 'board'];
+  function noteSync(n, map) {
+    if (n.type === 'space') return 'space';
+    const st = map && map[n.id];
+    return STATES.indexOf(st) >= 0 ? st : 'board';
+  }
+
   // readFile(sciezka wzgledem requirements/) -> tresc albo null. Kazdy plik czytany raz.
   function syncMap(b, readFile) {
     const cache = {}, out = {};
     const text = function (f) { if (!(f in cache)) cache[f] = readFile(f); return cache[f]; };
     notes(b).forEach(function (n) {
+      if (n.type === 'space') { out[n.id] = 'space'; return; }
       let inFile = null;
       if (n.synced && n.ref && n.file) {
         const t = text(n.file);
@@ -148,7 +195,7 @@
   // Cofnij / Ponow (AC-B19, AC-B20). Stan = board.json bez pol `_` (serwer dopisuje je do widoku).
   // Klucz tresci pomija daty updated tablicy i created/updated karteczek - roznia sie w echu wlasnego zapisu, bo nadaje je serwer.
   function snap(b) {
-    return JSON.stringify(b, function (k, v) { return this === b && k.charAt(0) === '_' ? undefined : v; });
+    return JSON.stringify(b, function (k, v) { return k.charAt(0) === '_' ? undefined : v; }); // takze _moved karteczek
   }
   function keyOf(s) {
     const b = JSON.parse(s);
@@ -193,5 +240,5 @@
     };
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, stampNotes, fmtDate, syncState, syncMap, createHistory };
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, createHistory };
 });
