@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.3] - 2026-09-27
+- Tablica: zmiana nazwy procesu nie oznacza juz jego karteczek jako "zmienione po synchronizacji" (↻).
+  `stampNotes` rozpoznaje zmiane nazwy po `lanes` (stara nazwa znika, nowa na tym samym miejscu); przeniesienie
+  karteczki do innego procesu dalej jest zmiana. (Zdarzenie 2026-09-27, horizon-zlecenia: zmiana nazwy procesu
+  "Przebitka, szablony, Rynek i konta" dala 11 falszywych ↻.)
+- Spec: `docs/specs/board-ui.md` AC-B39; testy 73/73.
+
 ## [0.14.2] - 2026-09-27
 - Tablica ostrzega o podmianie: serwer podaje w widoku `_file` (sciezka pliku tablicy, nie trafia do board.json);
   gdy karta dostanie tablice z innego pliku, a sama nie przelaczala modulu - staly pasek "Serwer pokazuje teraz inna
