@@ -219,6 +219,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   </form>
 </dialog>
 <script>
+  var BASE=SddUI.base(location.pathname); // '' albo /demo (zmiana 0.12.0)
 (function(){
   var $=function(s){return document.querySelector(s)};
   var STATUS={done:'gotowe',active:'w toku',todo:'nie zaczęte'};
@@ -235,7 +236,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var last=null, uplog=[];
   function api(url,opts){
     opts=opts||{}; opts.headers=Object.assign({'X-SDD':'1'},opts.headers||{});
-    return fetch(url,opts).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok) throw new Error(j.error||(r.status===404?'Serwer jest starszy niż strona - zatrzymaj go (Ctrl+C) i uruchom ponownie.':'HTTP '+r.status)); return j})});
+    return fetch(BASE+url,opts).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok) throw new Error(j.error||(r.status===404?'Serwer jest starszy niż strona - zatrzymaj go (Ctrl+C) i uruchom ponownie.':'HTTP '+r.status)); return j})});
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
@@ -507,7 +508,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   if(location.hash==='#nowy-modul'){ history.replaceState(null,'',location.pathname); $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
 
   function connect(){
-    var es=new EventSource('/progress-events');
+    var es=new EventSource(BASE+'/progress-events');
     es.onopen=function(){$('#conn').textContent='połączono'};
     es.onmessage=function(e){render(JSON.parse(e.data))};
     es.onerror=function(){$('#conn').textContent='rozłączono, ponawiam…'};

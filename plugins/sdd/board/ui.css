@@ -8,6 +8,10 @@ html{scrollbar-gutter:stable}
 .topbar a.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
 .topbar .tab[aria-current="page"]{color:var(--ink);background:var(--bg);border-color:var(--line);border-bottom-color:var(--bg)}
 .topbar .short{display:none}
+.topbar .right{display:flex;align-items:center;gap:12px;align-self:center}
+.topbar .xlink{color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap}
+.topbar .xlink:hover{color:var(--ink);text-decoration:underline}
+.topbar .xlink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .topbar .theme{display:flex;gap:2px;align-self:center}
 .topbar .theme label{position:relative;display:block;margin:0;cursor:pointer;line-height:0;font-size:inherit;color:inherit}
 .topbar .theme input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
@@ -24,7 +28,12 @@ html{scrollbar-gutter:stable}
 
 /* Pasek DEMO (0.11.0) pod gornym paskiem */
 .demobar{padding:8px 20px;border-bottom:1px solid var(--line);border-left:4px solid var(--act);background:var(--panel);color:var(--ink);font-size:14px;line-height:20px}
+.demobar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
 .demobar b{margin-right:4px}
+.demobar .dsw{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex:none}
+.demobar .dsw a,.demobar .dsw span{padding:2px 10px;text-decoration:none;color:var(--muted);font-weight:600}
+.demobar .dsw a:hover{color:var(--ink);background:var(--bg)}
+.demobar .dsw [aria-current]{color:var(--ink);background:var(--bg)}
 @media (max-width:640px){.demobar{padding:8px 12px}}
 
 /* Naglowek "Wymagania do modulu: X ▾" + menu modulow (panel i tablica) */

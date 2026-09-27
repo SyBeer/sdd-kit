@@ -56,7 +56,7 @@ if ($LASTEXITCODE -eq 0) { Ok "Paczka poprawna." } else { Bad "Kontrola paczki z
 $mk = claude plugin marketplace list 2>$null
 if ($mk -match $Market) { claude plugin marketplace update $Market 2>$null | Out-Null; Ok "Zrodlo '$Market' odswiezone." }
 else { claude plugin marketplace add $Source 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { Bad "Rejestracja zrodla nie powiodla sie."; exit 1 }; Ok "Zrodlo '$Market' zarejestrowane." }
-$inst = claude plugin list --installed 2>$null
+$inst = claude plugin list 2>$null
 if ($inst -match $Plugin) {
   if ($Update) { claude plugin update "$Plugin@$Market" 2>$null | Out-Null; Ok "Dodatek zaktualizowany." } else { Ok "Dodatek juz zainstalowany." }
 } else {
@@ -66,7 +66,7 @@ if ($inst -match $Plugin) {
 }
 
 Hr; Write-Host "KROK 4 z 6: czy dziala"
-if ((claude plugin list --installed 2>$null) -match $Plugin) { Ok "'$Plugin' jest na liscie zainstalowanych." } else { Bad "Nie widze '$Plugin'. Sprawdz: claude plugin list --installed" }
+if ((claude plugin list 2>$null) -match $Plugin) { Ok "'$Plugin' jest na liscie zainstalowanych." } else { Bad "Nie widze '$Plugin'. Sprawdz: claude plugin list" }
 if (Test-Path (Join-Path $PluginDir "board\server.js")) { Ok "Pliki tablicy sa na miejscu." }
 
 Hr; Write-Host "KROK 5 z 6: komenda 'sdd-board'"
@@ -76,10 +76,8 @@ $board = Join-Path $PluginDir "board"
 @echo off
 rem sdd-board            -> requirements\01-interview\board.json
 rem sdd-board plik.json  -> wskazany plik
-rem sdd-board --demo     -> przykladowa tablica Zlecen
-rem sdd-board --demo wynik -> gotowy modul po SDD, tylko podglad
-if "%~1"=="--demo" if "%~2"=="wynik" ( node "$board\server.js" --demo zlecenia 8012 & goto :eof )
-if "%~1"=="--demo" ( node "$board\server.js" "$board\example-zlecenia.json" 8012 ) else if "%~1"=="" ( node "$board\server.js" requirements\01-interview\board.json 8012 ) else ( node "$board\server.js" %1 8012 )
+rem demo zawsze pod http://localhost:8012/demo i /demo/start
+if "%~1"=="--demo" ( node "$board\server.js" requirements\01-interview\board.json 8012 ) else if "%~1"=="" ( node "$board\server.js" requirements\01-interview\board.json 8012 ) else ( node "$board\server.js" %1 8012 )
 "@ | Set-Content (Join-Path $BinDir "sdd-board.cmd") -Encoding ASCII
 Ok "Zapisano $BinDir\sdd-board.cmd"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -100,5 +98,5 @@ if (-not $Update) {
 
 Hr; Write-Host "GOTOWE"
 Write-Host "  W Claude Code: /sdd:init  /sdd:intake  /sdd:interview  /sdd:domain  /sdd:spec  /sdd:validate  /sdd:handover  /sdd:status  /sdd:board"
-Write-Host "  W PowerShell:  sdd-board   (postep -> http://localhost:8012, tablica -> /board)   sdd-board --demo   (przyklad Zlecen)   sdd-board --demo wynik   (gotowy modul po SDD)"
+Write-Host "  W PowerShell:  sdd-board   (postep -> http://localhost:8012, tablica -> /board)   demo: http://localhost:8012/demo i /demo/start"
 Write-Host "  Przewodnik po ludzku: $KitDir\START-TUTAJ.md"; Hr

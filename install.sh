@@ -103,7 +103,7 @@ else
     bad "Rejestracja zrodla nie powiodla sie:"; sed 's/^/      /' /tmp/sdd-market.log; exit 1; fi
 fi
 
-if claude plugin list --installed 2>/dev/null | grep -qi "$PLUGIN@$MARKET\|^ *$PLUGIN "; then
+if claude plugin list 2>/dev/null | grep -qi "$PLUGIN@$MARKET\|^ *$PLUGIN "; then
   if [ "$MODE" = "update" ]; then
     if claude plugin update "$PLUGIN@$MARKET" >/dev/null 2>&1; then ok "Dodatek zaktualizowany."; else ok "Dodatek juz aktualny."; fi
   else ok "Dodatek juz zainstalowany."; fi
@@ -114,8 +114,8 @@ fi
 
 # ---------------------------------------------------------------- 4. weryfikacja
 hr; say "KROK 4 z 6: czy dziala"
-if claude plugin list --installed 2>/dev/null | grep -qi "$PLUGIN"; then ok "'$PLUGIN' jest na liscie zainstalowanych."; else
-  bad "Nie widze '$PLUGIN' na liscie. Sprawdz: claude plugin list --installed"; fi
+if claude plugin list 2>/dev/null | grep -qi "$PLUGIN"; then ok "'$PLUGIN' jest na liscie zainstalowanych."; else
+  bad "Nie widze '$PLUGIN' na liscie. Sprawdz: claude plugin list"; fi
 [ -f "$PLUGIN_DIR/board/server.js" ] && ok "Pliki tablicy sa na miejscu."
 SK=$(ls "$PLUGIN_DIR/skills" | wc -l | tr -d ' '); ok "Skilli w paczce: $SK"
 
@@ -127,11 +127,9 @@ cat > "$BIN_DIR/sdd-board" <<EOF
 # Uruchamia tablice warsztatowa dla projektu w biezacym folderze.
 #   sdd-board            -> requirements/01-interview/board.json, port 8012
 #   sdd-board plik.json  -> wskazany plik
-#   sdd-board --demo     -> przykladowa tablica Zlecen (start warsztatu)
-#   sdd-board --demo wynik -> gotowy modul po SDD: panel 100% + tablica, tylko podglad
+#   sdd-board --demo     -> jak sdd-board; demo jest zawsze pod /demo (wynik) i /demo/start
 KIT="$KIT_DIR/plugins/$PLUGIN/board"
-if [ "\${1:-}" = "--demo" ] && [ "\${2:-}" = "wynik" ]; then exec node "\$KIT/server.js" --demo zlecenia "\${3:-8012}"; fi
-if [ "\${1:-}" = "--demo" ]; then exec node "\$KIT/server.js" "\$KIT/example-zlecenia.json" "\${2:-8012}"; fi
+if [ "\${1:-}" = "--demo" ]; then echo "Demo: http://localhost:8012/demo  (start warsztatu: /demo/start)"; exec node "\$KIT/server.js" requirements/01-interview/board.json 8012; fi
 exec node "\$KIT/server.js" "\${1:-requirements/01-interview/board.json}" "\${2:-8012}"
 EOF
 chmod +x "$BIN_DIR/sdd-board"
@@ -169,8 +167,7 @@ say "    /sdd:domain      slownik i model         /sdd:status     gdzie jestesmy
 say "    /sdd:board       tablica na zywo (start / sync / rebuild)"
 say "  W terminalu:"
 say "    sdd-board           postep projektu -> http://localhost:8012, tablica -> /board"
-say "    sdd-board --demo    przykladowa tablica Zlecen, zobacz jak to wyglada"
-say "    sdd-board --demo wynik  gotowy modul po SDD (panel 100% + tablica), tylko podglad"
+say "    demo:  http://localhost:8012/demo (gotowy modul po SDD)  i  /demo/start (poczatek warsztatu)"
 say "    bash install.sh --update      po zmianach w kicie"
 say "    bash install.sh --uninstall   usun"
 say "  Przewodnik po ludzku: $KIT_DIR/START-TUTAJ.md"

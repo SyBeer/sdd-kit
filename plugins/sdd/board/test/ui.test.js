@@ -102,3 +102,17 @@ test('AC-40: modMenu w demo - bez "Nowy moduł…" i "Zmień katalog modułów�
   const n = ui.modMenu([{ name: 'zlecenia', level: 'full' }], 'zlecenia');
   assert.ok(n.includes('newmod') && n.includes('chroot'));
 });
+
+test('AC-44: base() i tabs() z przedrostkiem kontekstu', () => {
+  assert.strictEqual(ui.base('/'), '');
+  assert.strictEqual(ui.base('/board'), '');
+  assert.strictEqual(ui.base('/demo'), '/demo');
+  assert.strictEqual(ui.base('/demo/board'), '/demo');
+  assert.strictEqual(ui.base('/demo/start'), '/demo/start');
+  assert.strictEqual(ui.base('/demonstracja'), '');
+  assert.deepStrictEqual(ui.tabs('panel', '/demo').map(x => x.href), ['/demo', '/demo/board']);
+  assert.deepStrictEqual(ui.tabs('board').map(x => x.href), ['/', '/board']);
+  const st = ui.tabs('board', '/demo/start');
+  assert.deepStrictEqual(st.map(x => x.href), ['/demo/start']);
+  assert.strictEqual(st[0].current, true);
+});

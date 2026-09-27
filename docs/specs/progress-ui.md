@@ -334,3 +334,49 @@ Dotychczasowe `sdd-board --demo` pokazuje tablice z poczatku warsztatu (`example
   (test w `test/ui.test.js`).
 - AC-39 (reczne): `sdd-board --demo wynik` -> panel ze 100%, pasek DEMO, menu modulu bez "Nowy moduł…" i
   "Zmień katalog modułów…"; tablica z procesami bez przyciskow edycji; karteczka otwiera sie do czytania, bez "Zapisz" i "Usuń".
+
+---
+
+# Zmiana 0.12.0 (2026-09-27): demo w tym samym serwerze - /demo i /demo/start
+
+Uwaga usera: "czy mozemy zaplanowac, zeby DEMO nie bylo osobnym serwisem, tylko z tej samej instancji odpalane?
+tak, zebym mogl uruchomic to w dwoch oknach przegladarki, ale nie z roznych adresow www". Decyzje: tablica startowa
+tez pod /demo/start; link do demo w gornym pasku. Zmienia zakres 0.11.0 punkty 1, 4, 5 (osobny tryb `--demo`).
+
+## Zakres
+1. Jeden serwer, trzy konteksty po przedrostku sciezki, kazdy z wlasnym stanem i wlasnymi klientami podgladu na zywo:
+   - `''` (Twoj modul): `/`, `/board`, `/api/...`, `/events`, `/progress-events` - bez zmian;
+   - `/demo` (wynik): `/demo`, `/demo/board` - modul z `plugins/sdd/demo/zlecenia/requirements/`;
+   - `/demo/start` (start warsztatu): `/demo/start` = tablica z `example-zlecenia.json`, bez plikow `requirements/`.
+   API kontekstu demo pod jego przedrostkiem: `/demo/api/progress`, `/demo/api/board`, `/demo/events`, `/demo/progress-events`,
+   `/demo/start/api/board`, `/demo/start/events`.
+2. Konteksty demo sa stale i tylko do odczytu: kazdy zapis (i `/api/dirs`) pod `/demo...` -> 403 "Demo - tylko podgląd.".
+   Wybor modulu, katalog modulow i zalaczniki dzialaja tylko w kontekscie Twoim; zmiana Twojego modulu nie rusza demo.
+   Demo nie czyta ani nie zapisuje `~/.sdd-kit/config.json`.
+3. Strony panelu i tablicy te same dla wszystkich kontekstow: przedrostek brany z adresu strony, wszystkie zapytania,
+   podglad na zywo i zakladki "Panel | Tablica" ida z przedrostkiem. W `/demo/start` jest tylko zakladka Tablica
+   (nie ma plikow, wiec nie ma panelu).
+4. Gorny pasek: w Twoim kontekscie link "Przykład ↗" (dlugi: "Przykład gotowego modułu ↗") otwiera `/demo` w nowym oknie.
+   W kontekscie demo w tym miejscu "← Twój moduł" (link do `/`). Pasek DEMO pod gornym paskiem ma przelacznik
+   "Start warsztatu | Wynik" miedzy `/demo/start` a `/demo`.
+5. Komenda: `sdd-board --demo` i `sdd-board --demo wynik` uruchamiaja zwykly serwer (jak `sdd-board`) i wypisuja
+   adresy demo; serwer zawsze wypisuje adres `/demo`. Tryb serwera `--demo` z 0.11.0 znika.
+6. Zajety port: zamiast bledu Node komunikat "Port N jest zajęty - pewnie działa już sdd-board. Demo jest pod
+   http://localhost:N/demo. Inny port: sdd-board <plik> <port>." i kod wyjscia 1.
+7. Instalator (sh i ps1): sprawdzenie pluginu przez `claude plugin list` (bez `--installed`, ktorego nie zna Claude Code 2.1.x).
+
+## Poza zakresem
+- Rozne moduly usera w dwoch oknach naraz (wybor modulu zostaje wspolny dla kontekstu Twojego).
+
+## Kryteria akceptacji (test w `plugins/sdd/board/test/demo.test.js`, serwer uruchamiany na wolnym porcie)
+- AC-41: jeden serwer: `/api/progress` - modul usera (lub `needsRoot`), `/demo/api/progress` - `demo: 'wynik'`, modul
+  `zlecenia`, gotowosc 100%; `/demo/start/api/board` - tablica startowa (`_demo: 'start'`); strony `/demo`, `/demo/board`,
+  `/demo/start` -> 200 HTML.
+- AC-42: pod `/demo` i `/demo/start` kazdy zapis (PUT board, POST/DELETE intake, POST root, modules, modules/select)
+  i GET `/demo/api/dirs` -> 403 "Demo - tylko podgląd."; w kontekscie usera PUT `/api/board` dalej dziala (204).
+- AC-43: POST `/api/modules/select` w kontekscie usera nie zmienia `/demo/api/progress` (modul dalej `zlecenia`).
+- AC-44: `SddUI.base(pathname)` -> `''`, `/demo`, `/demo/start`; `SddUI.tabs(page, base)` - hrefy z przedrostkiem,
+  w `/demo/start` tylko zakladka Tablica (test w `test/ui.test.js`).
+- AC-45: serwer na zajetym porcie konczy sie kodem 1 z komunikatem "Port N jest zajęty" (bez stosu bledu Node).
+- AC-46 (reczne): dwa okna na jednym porcie - `/` (horizon-zlecenia) i `/demo`; przelaczanie Start/Wynik, "Przykład ↗"
+  i "← Twój moduł" dzialaja; w demo brak przyciskow edycji jak w 0.11.0; szerokosc telefonu bez przewijania w bok.

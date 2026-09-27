@@ -67,8 +67,9 @@ Biznes nie instaluje nic.
    czerwone "nie wiemy" (to przyszle pytania).
 4. Biznes moze sam przesuwac i dopisywac karteczki w przegladarce. Agent to widzi.
 5. Po warsztacie wpisz `/sdd:board sync`. Agent zaproponuje, co z karteczek trafia do ktorego pliku, Ty mowisz tak.
-6. Chcesz zobaczyc, jak to wyglada, zanim zaczniesz? Uruchom serwer z plikiem przykladowym:
-   w terminalu: `sdd-board --demo`, potem http://localhost:8012/board
+6. Chcesz zobaczyc, jak to wyglada, zanim zaczniesz? Przy dzialajacym `sdd-board` otworz
+   http://localhost:8012/demo/start (poczatek warsztatu) i http://localhost:8012/demo (gotowy modul po SDD).
+   W panelu jest tez link "Przykład ↗" w gornym pasku.
 
 ## 4b. Panel modulu - gdzie jestesmy
 
@@ -89,7 +90,7 @@ Zmienisz go w tym samym menu: "Zmień katalog modułów…".
 
 ## 6. Gdy cos nie dziala
 
-- `claude plugin list --installed` pokazuje, czy 'sdd' jest zainstalowany.
+- `claude plugin list` pokazuje, czy 'sdd' jest zainstalowany.
 - `claude plugin validate plugins/sdd` sprawdza, czy paczka jest poprawna.
 - `claude plugin marketplace update sdd-kit` odswieza po zmianach w kicie.
 - W Claude Code `/plugin` otwiera panel, gdzie widac bledy dodatkow.

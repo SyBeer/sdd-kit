@@ -56,6 +56,7 @@ main{padding:0 20px 24px}
 .lname:hover{border-bottom-color:var(--muted)}
 /* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
 body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .ltools,body.demo .addnote,body.demo #order,body.demo #save,body.demo #del{display:none}
+body.demo-start header h1{display:none}
 body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
 .lane-title input{font:inherit;font-weight:700;font-size:16px;width:100%;padding:3px 5px;border:1px solid var(--ink);border-radius:3px;background:var(--panel);color:var(--ink)}
 .lmeta{font-size:12px;color:var(--muted)}
@@ -217,6 +218,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   <div class="src" id="src"></div>
 </aside>
 <script>
+  var BASE=SddUI.base(location.pathname); // '', /demo albo /demo/start (zmiana 0.12.0)
 (function(){
   var board=null, sel=null, draft=null, seen=new Set(), first=true;
   var editingLane=null, pendingRender=false, filledFor=undefined;
@@ -233,6 +235,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     pendingRender=false;
     setModule(board._module&&board._module.name,board._modules,board._demo);
     document.body.classList.toggle('demo',!!board._demo);
+    document.body.classList.toggle('demo-start',board._demo==='start'); // bez plikow - bez naglowka modulu
     $('#title').textContent=board.title||'Tablica';
     $('#subtitle').textContent=board.subtitle?' · '+board.subtitle:'';
     var laneSel=$('#f-lane'), keep=laneSel.value; laneSel.innerHTML='';
@@ -374,12 +377,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(t&&!saveErr) sayT=setTimeout(function(){ $('#msg').textContent=''; },6000);
   }
   function save(){
-    return fetch('/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return this===board&&k.charAt(0)==='_'?undefined:v})})
+    return fetch(BASE+'/api/board',{method:'PUT',headers:{'Content-Type':'application/json','X-SDD':'1'},body:JSON.stringify(board,function(k,v){return this===board&&k.charAt(0)==='_'?undefined:v})})
       .then(function(r){
         if(r.status===403) return r.json().catch(function(){return {}}).then(function(j){ throw Object.assign(new Error(j.error||'HTTP 403'),{ro:true}); });
         if(!r.ok) throw new Error('HTTP '+r.status); if(saveErr){ saveErr=false; say(''); } })
       .catch(function(e){
-        if(e.ro){ say(e.message); return fetch('/api/board').then(function(r){return r.json()}).then(function(b){ board=b; board.notes=board.notes||[]; board.lanes=board.lanes||[]; render(); }); } // demo: wracamy do stanu z serwera
+        if(e.ro){ say(e.message); return fetch(BASE+'/api/board').then(function(r){return r.json()}).then(function(b){ board=b; board.notes=board.notes||[]; board.lanes=board.lanes||[]; render(); }); } // demo: wracamy do stanu z serwera
         saveErr=true; say('Nie zapisałem tablicy: '+e.message+'. Sprawdź, czy serwer działa.'); });
   }
   function commit(){ render(); return save(); }
@@ -499,7 +502,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
 
   // ------------------------------------------------------------ na zywo
   function connect(){
-    var es=new EventSource('/events');
+    var es=new EventSource(BASE+'/events');
     es.onopen=function(){$('#conn').textContent='na żywo'};
     es.onmessage=function(e){
       board=JSON.parse(e.data); board.notes=board.notes||[]; board.lanes=board.lanes||[];

@@ -19,10 +19,19 @@
     return stored === 'light' || stored === 'dark' ? stored : (systemDark ? 'dark' : 'light');
   }
 
-  function tabs(page) {
+  // Przedrostek kontekstu z adresu strony: '' (Twoj modul), '/demo', '/demo/start' (zmiana 0.12.0).
+  function base(pathname) {
+    const m = /^\/demo(\/start)?(?=\/|$)/.exec(pathname || '');
+    return m ? m[0] : '';
+  }
+
+  function tabs(page, b) {
+    b = b || '';
+    // /demo/start nie ma plikow requirements/, wiec nie ma panelu
+    if (b === '/demo/start') return [{ href: b, label: 'Tablica warsztatowa', short: 'Tablica', current: true }];
     return [
-      { href: '/', label: 'Panel modułu', short: 'Panel', current: page === 'panel' },
-      { href: '/board', label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
+      { href: b || '/', label: 'Panel modułu', short: 'Panel', current: page === 'panel' },
+      { href: b + '/board', label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
     ];
   }
 
@@ -47,7 +56,7 @@
     return toggled && typeof toggled[key] === 'boolean' ? toggled[key] : key === current;
   }
 
-  const api = { pickTheme, tabs, modMenu, cardOpen, KEY };
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -69,15 +78,20 @@
   function render(bar) {
     const page = bar.getAttribute('data-page');
     const t = load();
+    const b = base(location.pathname);
+    // Twoj modul: link do przykladu w nowym oknie; demo: powrot do Twojego modulu (zmiana 0.12.0)
+    const link = b ? '<a class="xlink" href="/"><span class="long">← Twój moduł</span><span class="short">← Twój</span></a>'
+      : '<a class="xlink" href="/demo" target="_blank" rel="noopener"><span class="long">Przykład gotowego modułu ↗</span><span class="short">Przykład ↗</span></a>';
     bar.innerHTML =
-      '<div class="tabs">' + tabs(page).map(function (x) {
+      '<div class="tabs">' + tabs(page, b).map(function (x) {
         const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
         return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
       }).join('') + '</div>' +
+      '<div class="right">' + link +
       '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
         return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
           (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
-      }).join('') + '</div>';
+      }).join('') + '</div></div>';
     bar.addEventListener('change', function (e) {
       if (e.target.name !== 'sdd-theme') return;
       save(pickTheme(e.target.value, false)); apply();
@@ -97,6 +111,7 @@
     opts = opts || {};
     const menu = document.getElementById('modmenu'), btn = document.getElementById('modbtn');
     let cur = null, mods = [], demo = false;
+    if (!menu || !btn) return function (n, l, d) { demoBar(d || null); };
     const items = function () { return [].slice.call(menu.querySelectorAll('button')); };
     function open(on) {
       menu.hidden = !on; btn.setAttribute('aria-expanded', on);
@@ -111,7 +126,7 @@
       const name = b.getAttribute('data-mod');
       if (!name || name === cur) return;
       if (opts.onSelect) opts.onSelect(name);
-      fetch('/api/modules/select', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
+      fetch(base(location.pathname) + '/api/modules/select', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
         .then(function (r) { if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || ('HTTP ' + r.status)); }); })
         .catch(function (err) { alert(err.message); });
     };
@@ -125,22 +140,33 @@
     return function update(name, list, isDemo) {
       cur = name; mods = list || []; demo = !!isDemo;
       btn.querySelector('.mname').textContent = name || '…';
-      demoBar(demo);
+      demoBar(isDemo || null);
     };
   }
   api.modSwitch = modSwitch;
 
-  // Pasek "DEMO - tylko podglad" pod gornym paskiem (zmiana 0.11.0).
-  function demoBar(on) {
+  // Pasek "DEMO - tylko podglad" pod gornym paskiem (0.11.0) z przelacznikiem Start warsztatu | Wynik (0.12.0).
+  const DEMO_TEXT = {
+    start: 'Tak wygląda tablica na początku warsztatu: karteczki z pierwszej rozmowy, czerwone pytania, nic jeszcze w plikach.',
+    wynik: 'Tak wygląda moduł po przejściu SDD: wymagania zatwierdzone, walidacja 100%, model na tablicy.',
+  };
+  function demoBar(kind) {
     let el = document.getElementById('demobar');
-    if (!on) { if (el) el.remove(); return; }
-    if (el) return;
+    if (!kind) { if (el) el.remove(); return; }
     const bar = document.getElementById('topbar'); if (!bar) return;
-    el = document.createElement('div');
-    el.id = 'demobar'; el.className = 'demobar'; el.setAttribute('role', 'note');
-    el.innerHTML = '<b>DEMO - tylko podgląd.</b> Tak wygląda moduł po przejściu SDD: wymagania zatwierdzone, walidacja 100%, model na tablicy. Zmiany są wyłączone.';
-    bar.insertAdjacentElement('afterend', el);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'demobar'; el.className = 'demobar'; el.setAttribute('role', 'note');
+      bar.insertAdjacentElement('afterend', el);
+    }
+    if (el.getAttribute('data-kind') === kind) return;
+    el.setAttribute('data-kind', kind);
+    const sw = [['start', '/demo/start', 'Start warsztatu'], ['wynik', '/demo', 'Wynik']].map(function (x) {
+      return x[0] === kind ? '<span aria-current="page">' + x[2] + '</span>' : '<a href="' + x[1] + '">' + x[2] + '</a>';
+    }).join('');
+    el.innerHTML = '<span class="dsw">' + sw + '</span><span><b>DEMO - tylko podgląd.</b> ' + DEMO_TEXT[kind] + ' Zmiany są wyłączone.</span>';
   }
+  api.demoBar = demoBar;
 
   function init() { const bar = document.getElementById('topbar'); if (bar) render(bar); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

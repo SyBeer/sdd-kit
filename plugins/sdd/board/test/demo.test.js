@@ -56,7 +56,8 @@ test('AC-38: tablica demo - wszystkie typy karteczek, kazdy ref jest w swoim pli
   assert.deepStrictEqual(bad, []);
 });
 
-// ---------------------------------------------------------------- serwer w trybie demo
+// ---------------------------------------------------------------- serwer: konteksty /, /demo, /demo/start (0.12.0)
+const TEMPLATES = path.join(BOARD_DIR, '..', 'templates', 'requirements');
 function freePort() {
   return new Promise(res => {
     const s = http.createServer().listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
@@ -66,49 +67,105 @@ function call(port, method, url, body) {
   return new Promise((res, rej) => {
     const r = http.request({ host: '127.0.0.1', port, method, path: url,
       headers: { 'x-sdd': '1', Host: 'localhost:' + port, 'Content-Type': 'application/json' } }, resp => {
-      let d = ''; resp.on('data', c => { d += c; }); resp.on('end', () => res({ code: resp.statusCode, body: d }));
+      let d = ''; resp.on('data', c => { d += c; }); resp.on('end', () => res({ code: resp.statusCode, body: d, type: resp.headers['content-type'] || '' }));
     });
     r.on('error', rej);
     if (body !== undefined) r.write(body);
     r.end();
   });
 }
-async function startDemo() {
+// Katalog modulow usera z dwoma modulami (a, b); serwer startuje w module a.
+function userRoot() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-ctx-'));
+  ['a', 'b'].forEach(n => fs.cpSync(TEMPLATES, path.join(root, n, 'requirements'), { recursive: true }));
+  return root;
+}
+function spawnServer(args, cwd) {
+  return spawn(process.execPath, [path.join(BOARD_DIR, 'server.js')].concat(args),
+    { cwd, env: Object.assign({}, process.env, { SDD_CONFIG: path.join(cwd, 'config.json'), SDD_MODULES_ROOT: '' }) });
+}
+async function startServer() {
   const port = await freePort();
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-demo-home-'));
-  const cfg = path.join(home, 'config.json');
-  const proc = spawn(process.execPath, [path.join(BOARD_DIR, 'server.js'), '--demo', 'zlecenia', String(port)],
-    { cwd: home, env: Object.assign({}, process.env, { SDD_CONFIG: cfg, SDD_MODULES_ROOT: '' }) });
+  const root = userRoot();
+  const proc = spawnServer([path.join(root, 'a', 'requirements', '01-interview', 'board.json'), String(port)], root);
   await new Promise((res, rej) => {
     let out = '';
     proc.stdout.on('data', c => { out += c; if (/Panel:/.test(out)) res(); });
     proc.on('exit', code => rej(new Error('serwer zakonczyl sie: ' + code + ' ' + out)));
   });
-  return { port, proc, cfg };
+  return { port, proc };
 }
 
-test('AC-36: serwer --demo - tylko podglad, bez katalogu modulow usera', async () => {
-  const { port, proc, cfg } = await startDemo();
+test('AC-41: jeden serwer - Twoj modul, /demo (wynik) i /demo/start', async () => {
+  const { port, proc } = await startServer();
   try {
-    const p = JSON.parse((await call(port, 'GET', '/api/progress')).body);
-    assert.strictEqual(p.demo, true);
-    assert.strictEqual(p.needsRoot, false);
-    assert.strictEqual(p.module.name, 'zlecenia');
-    assert.strictEqual(p.modules.length, 1);
-    const writes = [
-      ['PUT', '/api/board', '{"lanes":[],"notes":[]}'],
-      ['POST', '/api/intake?name=a.md', 'x'],
-      ['DELETE', '/api/intake?name=a.md'],
-      ['POST', '/api/root', '{"path":"/tmp"}'],
-      ['POST', '/api/modules', '{"name":"x"}'],
-      ['POST', '/api/modules/select', '{"name":"x"}'],
-      ['GET', '/api/dirs?path=/tmp'],
-    ];
-    for (const [m, u, b] of writes) {
-      const r = await call(port, m, u, b);
-      assert.strictEqual(r.code, 403, m + ' ' + u);
-      assert.match(r.body, /Demo - tylko podgląd\./);
+    const u = JSON.parse((await call(port, 'GET', '/api/progress')).body);
+    assert.strictEqual(u.module.name, 'a');
+    assert.ok(!u.demo);
+    const d = JSON.parse((await call(port, 'GET', '/demo/api/progress')).body);
+    assert.strictEqual(d.demo, 'wynik');
+    assert.strictEqual(d.module.name, 'zlecenia');
+    assert.strictEqual(d.needsRoot, false);
+    assert.strictEqual(d.modules.length, 1);
+    assert.strictEqual(d.stages.find(s => s.key === 'validate').counts.readiness, 100);
+    const sb = JSON.parse((await call(port, 'GET', '/demo/start/api/board')).body);
+    assert.strictEqual(sb._demo, 'start');
+    assert.ok(sb.notes.length > 0);
+    const db = JSON.parse((await call(port, 'GET', '/demo/api/board')).body);
+    assert.strictEqual(db._demo, 'wynik');
+    for (const pg of ['/demo', '/demo/board', '/demo/start']) {
+      const r = await call(port, 'GET', pg);
+      assert.strictEqual(r.code, 200, pg);
+      assert.match(r.type, /text\/html/, pg);
     }
-    assert.strictEqual(fs.existsSync(cfg), false, 'demo nie zapisuje config.json');
   } finally { proc.kill(); }
+});
+
+test('AC-42: /demo i /demo/start tylko podglad, Twoj kontekst dalej zapisuje', async () => {
+  const { port, proc } = await startServer();
+  try {
+    for (const base of ['/demo', '/demo/start']) {
+      const writes = [
+        ['PUT', '/api/board', '{"lanes":[],"notes":[]}'],
+        ['POST', '/api/intake?name=a.md', 'x'],
+        ['DELETE', '/api/intake?name=a.md'],
+        ['POST', '/api/root', '{"path":"/tmp"}'],
+        ['POST', '/api/modules', '{"name":"x"}'],
+        ['POST', '/api/modules/select', '{"name":"b"}'],
+        ['GET', '/api/dirs?path=/tmp'],
+      ];
+      for (const [m, u, b] of writes) {
+        const r = await call(port, m, base + u, b);
+        assert.strictEqual(r.code, 403, m + ' ' + base + u);
+        assert.match(r.body, /Demo - tylko podgląd\./);
+      }
+    }
+    const ok = await call(port, 'PUT', '/api/board', '{"title":"t","lanes":["P"],"notes":[]}');
+    assert.strictEqual(ok.code, 204);
+  } finally { proc.kill(); }
+});
+
+test('AC-43: zmiana Twojego modulu nie rusza demo', async () => {
+  const { port, proc } = await startServer();
+  try {
+    const r = await call(port, 'POST', '/api/modules/select', '{"name":"b"}');
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(JSON.parse((await call(port, 'GET', '/api/progress')).body).module.name, 'b');
+    assert.strictEqual(JSON.parse((await call(port, 'GET', '/demo/api/progress')).body).module.name, 'zlecenia');
+  } finally { proc.kill(); }
+});
+
+test('AC-45: zajety port - czytelny komunikat i kod 1', async () => {
+  const blocker = http.createServer();
+  await new Promise(res => blocker.listen(0, '127.0.0.1', res));
+  const port = blocker.address().port;
+  const root = userRoot();
+  const proc = spawnServer([path.join(root, 'a', 'requirements', '01-interview', 'board.json'), String(port)], root);
+  let out = '';
+  proc.stdout.on('data', c => { out += c; }); proc.stderr.on('data', c => { out += c; });
+  const code = await new Promise(res => proc.on('exit', res));
+  blocker.close();
+  assert.strictEqual(code, 1);
+  assert.match(out, new RegExp('Port ' + port + ' jest zajęty'));
+  assert.doesNotMatch(out, /node:events|EADDRINUSE/);
 });

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.12.0] - 2026-09-27
+Demo w tym samym serwerze co Twoj modul (uwaga usera: "zebym mogl uruchomic to w dwoch oknach przegladarki,
+ale nie z roznych adresow www").
+- Jeden serwer, trzy konteksty: `/` i `/board` (Twoj modul), `/demo` i `/demo/board` (gotowy modul po SDD),
+  `/demo/start` (tablica z poczatku warsztatu). Kazdy z wlasnym stanem i podgladem na zywo; zmiana Twojego modulu
+  nie rusza demo. API demo pod przedrostkiem (`/demo/api/...`), kazdy zapis -> 403 "Demo - tylko podgląd.".
+- Gorny pasek: "Przykład gotowego modułu ↗" (nowe okno z `/demo`), w demo "← Twój moduł"; pasek DEMO z przelacznikiem
+  "Start warsztatu | Wynik". Strony te same, przedrostek z adresu (`SddUI.base`, `SddUI.tabs(page, base)`).
+- Tryb serwera `--demo` z 0.11.0 usuniety; `sdd-board --demo` uruchamia zwykly serwer i wypisuje adresy demo.
+- Zajety port: czytelny komunikat z adresem `/demo` zamiast bledu Node, kod wyjscia 1.
+- Instalatory i START-TUTAJ: `claude plugin list` bez `--installed` (Claude Code 2.1.x nie zna tej opcji -
+  falszywe "Nie widze 'sdd'").
+- Spec: `docs/specs/progress-ui.md`, zmiana 0.12.0 (AC-41..AC-46). Testy 56/56.
+- Po aktualizacji: `bash install.sh --update`, restart `sdd-board`.
+
 ## [0.11.0] - 2026-09-27
 Demo "wynik" - jak wyglada modul po przejsciu SDD (uwaga usera: "zeby operator mogl sobie podejrzec jaki ma osiagnac wynik").
 - `sdd-board --demo wynik` (serwer: `node server.js --demo [nazwa] [port]`): gotowy modul Zlecenia z
