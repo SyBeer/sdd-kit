@@ -233,7 +233,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   function render(){
     if(editingLane){ pendingRender=true; return; }
     pendingRender=false;
-    setModule(board._module&&board._module.name,board._modules,board._demo);
+    setModule(board._module&&(board._module.dir||board._module.name),board._modules,board._demo);
     document.body.classList.toggle('demo',!!board._demo);
     document.body.classList.toggle('demo-start',board._demo==='start'); // bez plikow - bez naglowka modulu
     $('#title').textContent=board.title||'Tablica';

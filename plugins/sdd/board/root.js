@@ -11,16 +11,27 @@ const configPath = (env = process.env) => env.SDD_CONFIG || path.join(os.homedir
 
 const inside = (p, parent) => p === parent || p.startsWith(parent + path.sep);
 
-function readRoot(file) {
+// config.json: modulesRoot, modules (foldery dodane recznie), lastModule (zmiana 0.13.0). Zapis laczy pola.
+function readConfig(file) {
   try {
-    const v = JSON.parse(fs.readFileSync(file, 'utf8')).modulesRoot;
-    return typeof v === 'string' && v ? v : null;
-  } catch (e) { return null; }
+    const c = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return c && typeof c === 'object' && !Array.isArray(c) ? c : {};
+  } catch (e) { return {}; }
+}
+function writeConfig(file, patch) {
+  const c = Object.assign(readConfig(file), patch);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(c, null, 2) + '\n');
+  return c;
+}
+
+function readRoot(file) {
+  const v = readConfig(file).modulesRoot;
+  return typeof v === 'string' && v ? v : null;
 }
 
 function saveRoot(file, dir) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify({ modulesRoot: dir }, null, 2) + '\n');
+  writeConfig(file, { modulesRoot: dir });
 }
 
 const expand = (p, home) => (p === '~' || p.startsWith('~/')) ? path.join(home, p.slice(1)) : p;
@@ -58,6 +69,21 @@ function checkRoot(input, { kitDir = KIT_DIR, home = os.homedir() } = {}) {
   return p;
 }
 
+// Dodaje istniejacy projekt (np. repo aplikacji) do listy modulow. Musi miec requirements/SDD.yaml.
+function addModule(file, input, { kitDir = KIT_DIR, home = os.homedir() } = {}) {
+  let p = expand(String(input || '').trim(), home);
+  if (!p || !path.isAbsolute(p)) throw new Error('Podaj ścieżkę bezwzględną, np. ' + path.join(home, 'repos', 'aplikacja') + '.');
+  p = path.resolve(p);
+  if (inside(p, path.resolve(kitDir))) throw new Error('To folder aplikacji sdd-kit (' + kitDir + '). Wymagania trzymaj poza nim.');
+  if (!fs.existsSync(p) || !fs.statSync(p).isDirectory()) throw new Error('Nie ma folderu ' + p + '.');
+  if (!fs.existsSync(path.join(p, 'requirements', 'SDD.yaml'))) {
+    throw new Error('W tym folderze nie ma requirements/. Otwórz Claude Code w ' + p + ' i wpisz /sdd:init, potem dodaj go tutaj.');
+  }
+  const mods = (readConfig(file).modules || []).filter(x => typeof x === 'string');
+  if (!mods.includes(p)) writeConfig(file, { modules: mods.concat(p) });
+  return p;
+}
+
 // Kolejnosc: SDD_MODULES_ROOT -> config -> rodzic istniejacego requirements/ projektu.
 function resolveRoot({ env = process.env, configFile = configPath(env), project = null, kitDir = KIT_DIR, exists = fs.existsSync } = {}) {
   const kit = path.resolve(kitDir);
@@ -76,4 +102,4 @@ function resolveRoot({ env = process.env, configFile = configPath(env), project 
   return { root: null, source: null, rejected: null };
 }
 
-module.exports = { KIT_DIR, configPath, inside, readRoot, saveRoot, checkRoot, resolveRoot, listDirs };
+module.exports = { KIT_DIR, configPath, inside, readConfig, writeConfig, readRoot, saveRoot, addModule, checkRoot, resolveRoot, listDirs };

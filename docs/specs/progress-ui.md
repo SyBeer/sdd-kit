@@ -380,3 +380,50 @@ tez pod /demo/start; link do demo w gornym pasku. Zmienia zakres 0.11.0 punkty 1
 - AC-45: serwer na zajetym porcie konczy sie kodem 1 z komunikatem "Port N jest zajęty" (bez stosu bledu Node).
 - AC-46 (reczne): dwa okna na jednym porcie - `/` (horizon-zlecenia) i `/demo`; przelaczanie Start/Wynik, "Przykład ↗"
   i "← Twój moduł" dzialaja; w demo brak przyciskow edycji jak w 0.11.0; szerokosc telefonu bez przewijania w bok.
+
+---
+
+# Zmiana 0.13.0 (2026-09-27): moduly spoza katalogu modulow i zapamietany ostatni modul
+
+Uwagi usera: (1) "ma to dzialac dla aktualnego modulu" - po restarcie serwer ma otworzyc modul, w ktorym skonczyl,
+a nie pierwszy alfabetycznie; (2) "takie samo cwiczenie ze zbieraniem wymagan moge zrobic dla istniejacej aplikacji,
+np. fv-manager, i SDD-kit tam powinno stworzyc repozytorium wymagan". Decyzja: w istniejacej aplikacji wymagania leza
+w jej repo (`<repo>/requirements/`); osobne repo wymagan (jak horizon-zlecenia) zostaje drugim wariantem.
+`/sdd:init` w repo z istniejacym CLAUDE.md i intake "stan obecny z kodu" - osobna zmiana, poza tym zakresem.
+
+## Zakres
+1. Modul = folder z `requirements/SDD.yaml`, gdziekolwiek na dysku. Lista modulow = podfoldery katalogu modulow
+   (jak dotad) + foldery dodane recznie, zapisane w `~/.sdd-kit/config.json` jako `modules: [sciezki]`.
+   Ten sam folder raz; folder, ktorego juz nie ma (albo bez `requirements/SDD.yaml`), znika z listy bez bledu.
+2. Menu modulu: "Dodaj istniejący projekt…" (nie w demo). Ekran jak wybor katalogu: pole sciezki + "Przeglądaj…".
+   Dodac mozna folder z `requirements/SDD.yaml`; bez niego komunikat: "W tym folderze nie ma requirements/.
+   Otwórz Claude Code w <folder> i wpisz /sdd:init, potem dodaj go tutaj." Folder w aplikacji sdd-kit - odmowa
+   (jak katalog modulow). Po dodaniu panel przelacza sie na ten modul.
+3. Modul w menu rozpoznawany po sciezce, nie po nazwie (dwa moduly moga miec ta sama nazwe folderu).
+   Modul spoza katalogu modulow ma w menu dopisek "poza katalogiem" i pelna sciezke w podpowiedzi.
+   `POST /api/modules/select` przyjmuje `{dir}` (i dalej `{name}` dla zgodnosci).
+4. Ostatni modul: kazde wybranie modulu w Twoim kontekscie (start, przelaczenie, nowy, dodany) zapisuje sciezke
+   `lastModule` w config.json. Start serwera: projekt z biezacego folderu (jak dotad) > `lastModule`, jesli dalej jest
+   na liscie > pierwszy modul z listy.
+5. Zapis config.json laczy pola (`modulesRoot`, `modules`, `lastModule`) - zmiana jednego nie kasuje pozostalych
+   (dotad zapis katalogu modulow nadpisywal plik).
+
+## Poza zakresem
+- Usuwanie modulu z listy z panelu (usuniety folder znika sam; reczna edycja config.json).
+- `/sdd:init` z panelu dla folderu bez `requirements/`.
+
+## Kryteria akceptacji
+- AC-47: `readConfig`/`writeConfig` - zapis `{lastModule}` zachowuje `modulesRoot` i `modules`; `saveRoot` zachowuje
+  `modules` i `lastModule` (test w `test/root.test.js`).
+- AC-48: `addModule(config, dir)` - folder z `requirements/SDD.yaml` trafia do `modules` raz (drugie dodanie bez
+  duplikatu); folder bez `requirements/` -> blad z "/sdd:init"; folder w aplikacji -> blad; sciezka wzgledna -> blad.
+- AC-49: `allModules(root, extra)` - moduly z katalogu + dodane, bez duplikatow (ten sam folder w obu), pomija
+  nieistniejace i bez SDD.yaml; dodane maja `external: true`, pole `dir` w kazdym (test w `test/modules.test.js`).
+- AC-50 (serwer): POST `/api/modules/add` z folderem spoza katalogu -> 200, `/api/progress` pokazuje ten modul
+  i ma go na liscie `modules` (z `dir`); config.json ma go w `modules` i jako `lastModule`.
+- AC-51 (serwer): restart serwera uruchomionego bez projektu w biezacym folderze otwiera `lastModule`;
+  gdy `lastModule` nie istnieje - pierwszy modul z listy.
+- AC-52: `SddUI.modMenu` - `data-dir` przy kazdym module, dopisek "poza katalogiem" przy `external`,
+  "Dodaj istniejący projekt…" (id `addproj`) poza demo, w demo brak (test w `test/ui.test.js`).
+- AC-53 (reczne): dodanie `~/_DEV_/repos/fv-manager` bez requirements/ -> komunikat z /sdd:init; dodanie folderu
+  z requirements/ -> panel przelacza sie na niego; restart serwera -> ten sam modul.

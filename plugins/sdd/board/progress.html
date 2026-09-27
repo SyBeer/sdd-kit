@@ -187,7 +187,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
 <input type="file" id="files" multiple hidden>
 <dialog id="browse" aria-labelledby="browseh">
   <h2 id="browseh">Wybierz katalog modułów</h2>
-  <p class="hint">Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit.</p>
+  <p class="hint" id="browsehint">Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit.</p>
   <div class="cur" id="browsecur"></div>
   <ul id="browselist"></ul>
   <p class="err" id="browseerr"></p>
@@ -265,8 +265,8 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     }).join('');
   }
 
-  var askRoot=location.hash==='#katalog';
-  if(askRoot) history.replaceState(null,'',location.pathname);
+  var askRoot=location.hash==='#katalog', askAdd=location.hash==='#dodaj-projekt';
+  if(askRoot||askAdd) history.replaceState(null,'',location.pathname);
   function rootScreen(p){
     $('#meta').textContent='';
     var cancel=!p.needsRoot;
@@ -280,13 +280,41 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       '<button class="b p" type="submit">Zapisz</button></div></form></div>';
     var f=$('#rootform'); f.elements.path.focus();
     if(cancel) $('#rootcancel').onclick=function(){ askRoot=false; render(last); };
-    $('#rootbrowse').onclick=function(){ browse(f.elements.path.value, true); $('#browse').showModal(); };
+    $('#rootbrowse').onclick=function(){ openBrowse('root', f.elements.path.value); };
     f.onsubmit=function(e){
       e.preventDefault();
       api('/api/root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:f.elements.path.value})})
         .then(function(){ askRoot=false; if(last) render(last); })
         .catch(function(err){ $('#rooterr').textContent=err.message; });
     };
+  }
+  // Istniejacy projekt spoza katalogu modulow, np. repo aplikacji (zmiana 0.13.0).
+  function addScreen(p){
+    $('#meta').textContent='';
+    $('#app').innerHTML='<div class="missing"><h2>Dodaj istniejący projekt</h2>'+
+      '<p>Wskaż folder projektu, np. repozytorium aplikacji. Wymagania są w jego podfolderze <code>requirements/</code>.</p>'+
+      '<form id="addform"><label for="addpath">Folder projektu</label>'+
+      '<div class="pick"><input id="addpath" name="path" required autocomplete="off" placeholder="~/repos/aplikacja">'+
+      '<button class="b" type="button" id="addbrowse">Przeglądaj…</button></div>'+
+      '<p class="hint">Nie ma w nim jeszcze <code>requirements/</code>? Otwórz Claude Code w tym folderze i wpisz <code>/sdd:init</code>, potem dodaj go tutaj.</p>'+
+      '<p class="err" id="adderr"></p><div class="row"><button class="b" type="button" id="addcancel">Anuluj</button>'+
+      '<button class="b p" type="submit">Dodaj</button></div></form></div>';
+    var f=$('#addform'); f.elements.path.focus();
+    $('#addcancel').onclick=function(){ askAdd=false; render(last); };
+    $('#addbrowse').onclick=function(){ openBrowse('add', f.elements.path.value); };
+    f.onsubmit=function(e){
+      e.preventDefault();
+      api('/api/modules/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:f.elements.path.value})})
+        .then(function(){ askAdd=false; if(last) render(last); })
+        .catch(function(err){ $('#adderr').textContent=err.message; });
+    };
+  }
+  var BROWSE={root:['Wybierz katalog modułów','Wskaż katalog do przechowywania danych - powinien być poza katalogiem sdd-kit.','#rootpath'],
+    add:['Wybierz folder projektu','Folder z requirements/ ma znacznik „moduł”. Folder aplikacji sdd-kit jest niedostępny.','#addpath']};
+  var browseFor='root';
+  function openBrowse(kind, value){
+    browseFor=kind; $('#browseh').textContent=BROWSE[kind][0]; $('#browsehint').textContent=BROWSE[kind][1];
+    browse(value, true); $('#browse').showModal();
   }
   // Okno "Przeglądaj…": serwer listuje podfoldery, panel tylko pokazuje (przegladarka nie zna sciezek dysku).
   var browsing=null;
@@ -314,20 +342,22 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   $('#browsecancel').onclick=function(){ $('#browse').close(); };
   $('#browseok').onclick=function(){
     if(!browsing||browsing.inKit) return;
-    var i=$('#rootpath'); if(i){ i.value=browsing.path; i.focus(); }
+    var i=$(BROWSE[browseFor][2]); if(i){ i.value=browsing.path; i.focus(); }
     $('#browse').close();
   };
 
   function render(p){
     var app=$('#app');
     // ekran juz stoi - nie kasuj tego, co user wpisuje, przy kazdym odswiezeniu z serwera
+    if(askAdd&&!p.demo){ renderModules(p); if(!$('#addform')) addScreen(p); return; }
     if(p.needsRoot||askRoot){ renderModules(p); if(!$('#rootform')) rootScreen(p); return; }
     if(!p.module){
       $('#meta').textContent='';
       renderModules(p);
       app.innerHTML='<div class="missing"><h2>Brak modułów</h2>'+
         '<p>W katalogu <code>'+esc(p.modulesRoot)+'</code> nie ma jeszcze żadnego modułu.</p>'+
-        '<div class="row"><button class="b" type="button" id="chroot2">Zmień katalog</button><button class="b p" type="button" id="newmod2">Nowy moduł…</button></div></div>';
+        '<div class="row"><button class="b" type="button" id="chroot2">Zmień katalog</button><button class="b" type="button" id="addproj2">Dodaj istniejący projekt…</button><button class="b p" type="button" id="newmod2">Nowy moduł…</button></div></div>';
+      $('#addproj2').onclick=function(){ askAdd=true; render(p); };
       $('#chroot2').onclick=function(){ askRoot=true; render(p); };
       $('#newmod2').onclick=openNew;
       return;
@@ -411,12 +441,13 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var setModule=SddUI.modSwitch({
     onSelect:function(){ uplog=[]; },
     onNew:function(){ openNew(); },
-    onRoot:function(){ askRoot=true; if(last) render(last); }
+    onRoot:function(){ askRoot=true; if(last) render(last); },
+    onAdd:function(){ askAdd=true; if(last) render(last); }
   });
   function openNew(){ $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
   function renderModules(p){
     last=p;
-    var cur=p.module?p.module.name:'';
+    var cur=p.module?(p.module.dir||p.module.name):'';
     if(shownModule!==null&&shownModule!==cur){ uplog=[]; filesOpen=null; qOpen=null; cardToggled={}; lastCurrent=null; }
     shownModule=cur;
     setModule(cur,p.modules,p.demo);

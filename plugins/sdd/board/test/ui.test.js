@@ -71,7 +71,9 @@ test('AC-U3, AC-U7: serwer - /ui.js, /ui.css, modul w widoku tablicy', async () 
   fs.mkdirSync(path.dirname(board), { recursive: true });
   fs.writeFileSync(board, '{"title":"t","lanes":[],"notes":[]}');
   const port = 4300 + Math.floor(Math.random() * 500);
-  const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), board, String(port)], { stdio: ['ignore', 'pipe', 'inherit'] });
+  // wlasny config - serwer zapisuje ostatni modul (0.13.0), nie ruszamy ~/.sdd-kit/config.json usera
+  const env = Object.assign({}, process.env, { SDD_CONFIG: path.join(dir, 'config.json') });
+  const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), board, String(port)], { env, stdio: ['ignore', 'pipe', 'inherit'] });
   try {
     await new Promise((ok, err) => { srv.stdout.once('data', ok); srv.once('exit', c => err(new Error('serwer zakonczyl sie: ' + c))); });
     const js = await get(port, '/ui.js');
@@ -115,4 +117,14 @@ test('AC-44: base() i tabs() z przedrostkiem kontekstu', () => {
   const st = ui.tabs('board', '/demo/start');
   assert.deepStrictEqual(st.map(x => x.href), ['/demo/start']);
   assert.strictEqual(st[0].current, true);
+});
+
+test('AC-52: modMenu - modul po sciezce, dopisek "poza katalogiem", Dodaj istniejacy projekt', () => {
+  const mods = [{ name: 'horizon', level: 'full', dir: '/r/horizon' }, { name: 'fv-manager', level: 'full', dir: '/x/fv-manager', external: true }];
+  const h = ui.modMenu(mods, '/x/fv-manager');
+  assert.ok(h.includes('data-dir="/x/fv-manager"') && h.includes('data-dir="/r/horizon"'));
+  assert.match(h, /data-dir="\/x\/fv-manager"[^>]*aria-checked="true"|aria-checked="true"[^>]*data-dir="\/x\/fv-manager"/);
+  assert.ok(h.includes('poza katalogiem'));
+  assert.ok(h.includes('id="addproj"'));
+  assert.ok(!ui.modMenu(mods, '/r/horizon', true).includes('addproj'));
 });

@@ -151,3 +151,31 @@ test('AC-29: serwer bez katalogu pyta o niego i niczego nie zaklada; POST /api/r
     srv.kill();
   }
 });
+
+// ---------------------------------------------------------------- zmiana 0.13.0
+const { readConfig, writeConfig, addModule } = require('../root');
+
+test('AC-47: config.json - zapis jednego pola nie kasuje pozostalych', () => {
+  const cfg = path.join(tmp(), 'config.json');
+  saveRoot(cfg, '/a/root');
+  writeConfig(cfg, { modules: ['/x/app'] });
+  writeConfig(cfg, { lastModule: '/x/app' });
+  assert.deepStrictEqual(readConfig(cfg), { modulesRoot: '/a/root', modules: ['/x/app'], lastModule: '/x/app' });
+  saveRoot(cfg, '/b/root');
+  assert.deepStrictEqual(readConfig(cfg), { modulesRoot: '/b/root', modules: ['/x/app'], lastModule: '/x/app' });
+  assert.deepStrictEqual(readConfig(path.join(tmp(), 'brak.json')), {});
+});
+
+test('AC-48: addModule - tylko folder z requirements/SDD.yaml, bez duplikatow, nie w aplikacji', () => {
+  const cfg = path.join(tmp(), 'config.json');
+  const base = tmp();
+  const app = createModule(base, { name: 'fv-manager', level: 'full' }, { git: false });
+  assert.strictEqual(addModule(cfg, app), app);
+  addModule(cfg, app + path.sep);
+  assert.deepStrictEqual(readConfig(cfg).modules, [app]);
+  const bare = path.join(base, 'goly'); fs.mkdirSync(bare);
+  assert.throws(() => addModule(cfg, bare), /\/sdd:init/);
+  assert.throws(() => addModule(cfg, 'wzgledna/sciezka'), /bezwzgl/);
+  assert.throws(() => addModule(cfg, path.join(KIT_DIR, 'plugins', 'sdd', 'demo', 'zlecenia')), /aplikacji/);
+  assert.throws(() => addModule(cfg, path.join(base, 'nie-ma')), /Nie ma folderu/);
+});

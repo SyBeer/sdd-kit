@@ -40,14 +40,19 @@
 
   // Menu modulow w naglowku "Wymagania do modulu: X ▾" (panel i tablica).
   // demo (0.11.0): bez "Nowy modul…" i "Zmien katalog…" - demo nie dotyka modulow usera.
+  // cur: sciezka modulu (0.13.0) albo nazwa (starsze wywolania); modul spoza katalogu - dopisek i sciezka w podpowiedzi.
+  const isCur = function (m, cur) { return !!cur && (m.dir ? m.dir === cur : false) || m.name === cur; };
   function modMenu(mods, cur, demo) {
     const list = (mods || []).slice();
-    if (cur && !list.some(function (m) { return m.name === cur; })) list.unshift({ name: cur });
+    if (cur && !list.some(function (m) { return isCur(m, cur); })) list.unshift({ name: cur });
     return '<div class="mh">Moduły</div><ul>' + list.map(function (m) {
-      const on = m.name === cur;
-      return '<li><button type="button" role="menuitemradio" aria-checked="' + on + '" data-mod="' + esc(m.name) + '"><span class="ck">' + (on ? '✓' : '') + '</span>' +
-        '<span class="nm">' + esc(m.name) + '</span><span class="lv">' + esc(LEVEL[m.level] || m.level || '') + '</span></button></li>';
+      const on = isCur(m, cur);
+      return '<li><button type="button" role="menuitemradio" aria-checked="' + on + '" data-mod="' + esc(m.name) + '"' +
+        (m.dir ? ' data-dir="' + esc(m.dir) + '" title="' + esc(m.dir) + '"' : '') + '><span class="ck">' + (on ? '✓' : '') + '</span>' +
+        '<span class="nm">' + esc(m.name) + (m.external ? ' <span class="ext">poza katalogiem</span>' : '') + '</span>' +
+        '<span class="lv">' + esc(LEVEL[m.level] || m.level || '') + '</span></button></li>';
     }).join('') + '</ul>' + (demo ? '' : '<div class="sep"></div><button type="button" role="menuitem" class="add" id="newmod"><span class="ck">+</span>Nowy moduł…</button>' +
+      '<button type="button" role="menuitem" class="add" id="addproj"><span class="ck">⤓</span>Dodaj istniejący projekt…</button>' +
       '<button type="button" role="menuitem" class="add" id="chroot"><span class="ck">⌂</span>Zmień katalog modułów…</button>');
   }
 
@@ -123,10 +128,11 @@
       open(false); btn.focus();
       if (b.id === 'newmod') { if (opts.onNew) opts.onNew(); return; }
       if (b.id === 'chroot') { if (opts.onRoot) opts.onRoot(); else location.href = '/#katalog'; return; }
-      const name = b.getAttribute('data-mod');
-      if (!name || name === cur) return;
+      if (b.id === 'addproj') { if (opts.onAdd) opts.onAdd(); else location.href = '/#dodaj-projekt'; return; }
+      const name = b.getAttribute('data-mod'), dir = b.getAttribute('data-dir');
+      if (!name || b.getAttribute('aria-checked') === 'true') return;
       if (opts.onSelect) opts.onSelect(name);
-      fetch(base(location.pathname) + '/api/modules/select', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
+      fetch(base(location.pathname) + '/api/modules/select', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify(dir ? { dir: dir } : { name: name }) })
         .then(function (r) { if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || ('HTTP ' + r.status)); }); })
         .catch(function (err) { alert(err.message); });
     };
@@ -137,9 +143,10 @@
       else if (e.key === 'Escape') { open(false); btn.focus(); }
     };
     document.addEventListener('click', function (e) { if (!menu.hidden && !e.target.closest('.modsw')) open(false); });
-    return function update(name, list, isDemo) {
-      cur = name; mods = list || []; demo = !!isDemo;
-      btn.querySelector('.mname').textContent = name || '…';
+    return function update(key, list, isDemo) {
+      cur = key; mods = list || []; demo = !!isDemo;
+      const m = mods.filter(function (x) { return isCur(x, key); })[0];
+      btn.querySelector('.mname').textContent = (m && m.name) || key || '…';
       demoBar(isDemo || null);
     };
   }

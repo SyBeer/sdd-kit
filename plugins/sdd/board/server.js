@@ -12,9 +12,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { readProgress } = require('./progress');
-const { listModules, createModule, saveIntake, removeIntake } = require('./modules');
+const { listModules, allModules, createModule, saveIntake, removeIntake } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
-const { KIT_DIR, configPath, inside, saveRoot, checkRoot, resolveRoot, listDirs } = require('./root');
+const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs } = require('./root');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -31,6 +31,7 @@ function reqOf(file) {
   return i > 0 ? parts.slice(0, i + 1).join(path.sep) : null;
 }
 
+const CONFIG = configPath();
 const START_REQ = process.env.SDD_REQ ? path.resolve(process.env.SDD_REQ) : (reqOf(boardArg) || path.resolve('requirements'));
 const resolved = resolveRoot({ project: START_REQ });
 let ROOT = resolved.root;
@@ -54,7 +55,8 @@ function contextOf(pathname) {
 function modulesOf(ctx) {
   if (ctx.demo === 'wynik') return listModules(path.dirname(path.dirname(DEMO_REQ))).filter(m => m.name === 'zlecenia');
   if (ctx.demo) return [];
-  return ROOT ? listModules(ROOT) : [];
+  // katalog modulow + foldery dodane recznie (zmiana 0.13.0)
+  return allModules(ROOT, readConfig(CONFIG).modules);
 }
 const moduleName = ctx => ctx.req ? path.basename(path.dirname(ctx.req)) : '';
 
@@ -76,8 +78,8 @@ function boardView(ctx) {
     try { return fs.readFileSync(f, 'utf8'); } catch (e) { return null; }
   });
   // naglowek "Wymagania do modulu" na tablicy; jak _sync - nie trafia do board.json
-  b._module = { name: moduleName(ctx) };
-  b._modules = modulesOf(ctx).map(m => ({ name: m.name, level: m.level }));
+  b._module = { name: moduleName(ctx), dir: ctx.req && !ctx.demo ? path.dirname(ctx.req) : '' };
+  b._modules = modulesOf(ctx).map(m => ({ name: m.name, level: m.level, dir: ctx.demo ? '' : m.dir, external: !!m.external }));
   b._demo = ctx.demo || false;
   return b;
 }
@@ -93,9 +95,9 @@ function writeBoard(ctx, b) {
 function progressPayload(ctx) {
   const p = ctx.req ? readProgress(ctx.req) : { exists: false };
   p.module = ctx.req ? { name: moduleName(ctx), dir: ctx.demo ? '' : path.dirname(ctx.req) } : null;
-  p.modules = modulesOf(ctx).map(m => ({ name: m.name, project: m.project, level: m.level }));
+  p.modules = modulesOf(ctx).map(m => ({ name: m.name, project: m.project, level: m.level, dir: ctx.demo ? '' : m.dir, external: !!m.external }));
   p.modulesRoot = ctx.demo ? null : ROOT;
-  p.needsRoot = !ctx.demo && !ROOT;
+  p.needsRoot = !ctx.demo && !ROOT && !ctx.req;
   p.kitDir = KIT_DIR;
   p.demo = ctx.demo || false;
   return p;
@@ -126,18 +128,28 @@ function watch(ctx) {
 }
 function selectModule(ctx, req) {
   ctx.req = req;
+  // Twoj modul: zapamietany na nastepny start (zmiana 0.13.0)
+  if (ctx === user && req && !inside(req, KIT_DIR)) {
+    try { writeConfig(CONFIG, { lastModule: path.dirname(req) }); } catch (e) { /* brak zapisu - bez pamieci */ }
+  }
   ctx.board = ctx.fixedBoard || (req ? path.join(req, '01-interview', 'board.json') : null);
   watch(ctx);
   send(ctx.progressClients, progressPayload(ctx));
   send(ctx.boardClients, boardView(ctx));
 }
-// Modul startowy: wskazany projekt (jesli nie lezy w aplikacji), inaczej pierwszy z katalogu, inaczej zaden.
+// Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
+// na liscie) > pierwszy z listy > zaden.
 function firstModule() {
-  const m = ROOT ? listModules(ROOT)[0] : null;
+  const m = modulesOf(user)[0];
+  return m ? path.join(m.dir, 'requirements') : null;
+}
+function lastModule() {
+  const last = readConfig(CONFIG).lastModule;
+  const m = typeof last === 'string' && modulesOf(user).find(x => x.dir === path.resolve(last));
   return m ? path.join(m.dir, 'requirements') : null;
 }
 const startInKit = inside(path.dirname(START_REQ), KIT_DIR);
-selectModule(user, !startInKit && fs.existsSync(START_REQ) ? START_REQ : firstModule());
+selectModule(user, !startInKit && fs.existsSync(START_REQ) ? START_REQ : (lastModule() || firstModule()));
 selectModule(demoWynik, DEMO_REQ);
 selectModule(demoStart, null);
 
@@ -245,12 +257,23 @@ const server = http.createServer((req, res) => {
       } catch (e) { json(res, 400, { error: e.message }); }
     });
   }
+  if (url === '/api/modules/add' && req.method === 'POST') {
+    return readBody(req, 64 * 1024, buf => {
+      try {
+        const dir = addModule(CONFIG, JSON.parse(String(buf || '{}')).path);
+        selectModule(user, path.join(dir, 'requirements'));
+        json(res, 200, { name: path.basename(dir), dir });
+      } catch (e) { json(res, 400, { error: e.message }); }
+    });
+  }
   if (url === '/api/modules/select' && req.method === 'POST') {
     return readBody(req, 64 * 1024, buf => {
-      let name = '';
-      try { name = JSON.parse(String(buf || '{}')).name; } catch (e) { /* zly JSON */ }
-      const m = modulesOf(user).find(x => x.name === name);
-      if (!m) return json(res, 404, { error: 'Nie ma modulu ' + name });
+      let body = {};
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { /* zly JSON */ }
+      // po sciezce (0.13.0), nazwa dla zgodnosci
+      const m = body.dir ? modulesOf(user).find(x => x.dir === path.resolve(String(body.dir)))
+        : modulesOf(user).find(x => x.name === body.name);
+      if (!m) return json(res, 404, { error: 'Nie ma modulu ' + (body.dir || body.name || '') });
       selectModule(user, path.join(m.dir, 'requirements'));
       json(res, 200, { name: m.name });
     });

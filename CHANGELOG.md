@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.0] - 2026-09-27
+Moduly spoza katalogu modulow i zapamietany ostatni modul (uwagi usera: "ma to dzialac dla aktualnego modulu";
+wymagania dla istniejacej aplikacji, np. fv-manager, w jej repozytorium).
+- Menu modulu: "Dodaj istniejący projekt…" - folder z `requirements/SDD.yaml` gdziekolwiek na dysku (pole + "Przeglądaj…").
+  Bez `requirements/` komunikat z `/sdd:init`; folder aplikacji sdd-kit odrzucony. Po dodaniu panel przelacza sie na modul.
+- Lista modulow = katalog modulow + dodane (`modules` w `~/.sdd-kit/config.json`); znikniete foldery pomijane.
+  Modul spoza katalogu z dopiskiem "poza katalogiem" i sciezka w podpowiedzi. Wybor modulu po sciezce (`{dir}`).
+- Ostatni modul (`lastModule`) zapamietany przy kazdym wyborze; start bez projektu w biezacym folderze otwiera go
+  (a gdy go nie ma - pierwszy z listy). Start z folderu projektu dalej ma pierwszenstwo.
+- `config.json` zapisywany z laczeniem pol - zmiana katalogu modulow nie kasuje pozostalych ustawien.
+- Test AC-U3/AC-U7 z wlasnym plikiem configu (nie dotyka configu usera).
+- Spec: `docs/specs/progress-ui.md`, zmiana 0.13.0 (AC-47..AC-53); testy 62/62.
+- Nastepnie (osobno): `/sdd:init` w repo z istniejacym CLAUDE.md i intake "stan obecny z kodu".
+
 ## [0.12.0] - 2026-09-27
 Demo w tym samym serwerze co Twoj modul (uwaga usera: "zebym mogl uruchomic to w dwoch oknach przegladarki,
 ale nie z roznych adresow www").

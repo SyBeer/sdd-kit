@@ -143,3 +143,20 @@ test('AC-24: removeIntake nie usuwa pliku, ktory jest juz w spisie', () => {
   assert.throws(() => removeIntake(req, 'spisany.md'), /w spisie/);
   assert.ok(fs.existsSync(path.join(req, '00-intake', 'spisany.md')));
 });
+
+// ---------------------------------------------------------------- zmiana 0.13.0
+const { allModules } = require('../modules');
+
+test('AC-49: allModules - katalog + dodane, bez duplikatow, pomija znikniete', () => {
+  const root = tmp(), other = tmp();
+  const a = createModule(root, { name: 'horizon', level: 'full' }, opts);
+  const app = createModule(other, { name: 'fv-manager', level: 'light' }, opts);
+  const gone = path.join(other, 'nie-ma');
+  const bare = path.join(other, 'goly'); fs.mkdirSync(bare);
+  const mods = allModules(root, [app, a, gone, bare, app]);
+  assert.deepStrictEqual(mods.map(m => [m.name, m.dir, !!m.external]),
+    [['fv-manager', app, true], ['horizon', a, false]]);
+  assert.strictEqual(mods[0].level, 'light');
+  assert.deepStrictEqual(allModules(null, [app]).map(m => m.name), ['fv-manager']);
+  assert.deepStrictEqual(allModules(root, undefined).map(m => m.name), ['horizon']);
+});

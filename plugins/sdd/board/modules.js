@@ -14,25 +14,45 @@ function yamlField(text, key) {
   return m ? m[1].trim() : '';
 }
 
+// Modul = folder z requirements/SDD.yaml; null, gdy go nie ma.
+function moduleInfo(dir) {
+  const yamlFile = path.join(dir, 'requirements', 'SDD.yaml');
+  let yaml;
+  try { yaml = fs.readFileSync(yamlFile, 'utf8'); } catch (e) { return null; }
+  const name = path.basename(dir);
+  const project = yamlField(yaml, 'project');
+  return {
+    name, dir,
+    project: /<[^>]+>/.test(project) || !project ? name : project,
+    level: yamlField(yaml, 'level') || 'full',
+  };
+}
+const byName = (a, b) => a.name.localeCompare(b.name) || a.dir.localeCompare(b.dir);
+
 function listModules(root) {
   let entries = [];
   try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch (e) { return []; }
   return entries
     .filter(e => e.isDirectory() && !e.name.startsWith('.'))
-    .map(e => {
-      const dir = path.join(root, e.name);
-      const yamlFile = path.join(dir, 'requirements', 'SDD.yaml');
-      if (!fs.existsSync(yamlFile)) return null;
-      const yaml = fs.readFileSync(yamlFile, 'utf8');
-      const project = yamlField(yaml, 'project');
-      return {
-        name: e.name, dir,
-        project: /<[^>]+>/.test(project) || !project ? e.name : project,
-        level: yamlField(yaml, 'level') || 'full',
-      };
-    })
+    .map(e => moduleInfo(path.join(root, e.name)))
     .filter(Boolean)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort(byName);
+}
+
+// Moduly z katalogu + dodane recznie spoza niego (zmiana 0.13.0). Ten sam folder raz, znikniete pomijane.
+function allModules(root, extra) {
+  const mods = listModules(root);
+  const seen = new Set(mods.map(m => m.dir));
+  (Array.isArray(extra) ? extra : []).forEach(d => {
+    if (typeof d !== 'string') return;
+    const dir = path.resolve(d);
+    if (seen.has(dir)) return;
+    const m = moduleInfo(dir);
+    if (!m) return;
+    seen.add(dir);
+    mods.push(Object.assign(m, { external: true }));
+  });
+  return mods.sort(byName);
 }
 
 const q = s => '"' + String(s).replace(/["\\\n]/g, ' ').trim() + '"';
@@ -130,4 +150,4 @@ function removeIntake(reqDir, name) {
   return rel;
 }
 
-module.exports = { listModules, createModule, saveIntake, removeIntake, cleanName, NAME_RE };
+module.exports = { listModules, allModules, createModule, saveIntake, removeIntake, cleanName, NAME_RE };
