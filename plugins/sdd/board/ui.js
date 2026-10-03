@@ -175,7 +175,49 @@
       if (!x || !el) return;
       el.textContent = x.text; el.title = x.title; el.href = x.href; el.hidden = false; el.classList.toggle('stale', x.stale);
     }).catch(function () {});
-    if (!b) claudeDock(bar.querySelector('.cl-btn'));
+    if (!b) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
+  }
+
+  // ---------------------------------------------------------------- nowa wersja z GitHuba (0.27.0, docs/specs/update.md)
+  function updateChip(bar) {
+    fetch('/api/update').then(function (r) { return r.ok ? r.json() : null; }).then(function (st) {
+      if (!st || !st.newer) return;
+      const ver = bar.querySelector('.ver'), wrap = document.createElement('span');
+      wrap.className = 'upd';
+      wrap.innerHTML = '<button type="button" class="upd-btn" aria-expanded="false" title="Dostępna nowa wersja sdd-kit">↑ ' + st.latest + '</button>' +
+        '<div class="upd-pop" role="dialog" aria-label="Nowa wersja sdd-kit" hidden>' +
+        '<p><b>Dostępna wersja ' + st.latest + '</b> (masz ' + st.current + ').</p>' +
+        '<p><a href="' + (st.url || '#') + '" target="_blank" rel="noopener">Co nowego ↗</a></p>' +
+        (st.canUpdate ? '<p class="upd-note">Pobierze nową wersję z GitHuba i zaktualizuje dodatek w Claude Code.</p>'
+          : '<p class="upd-note">' + String(st.reason || '').replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</p>') +
+        '<p class="upd-msg" hidden></p><pre class="upd-log" hidden></pre>' +
+        '<div class="upd-row">' + (st.canUpdate ? '<button type="button" class="upd-go">Aktualizuj</button>' : '') +
+        '<button type="button" class="upd-x">Później</button></div></div>';
+      (ver ? ver.parentNode : bar.querySelector('.right')).insertBefore(wrap, ver ? ver.nextSibling : null);
+      const btn = wrap.querySelector('.upd-btn'), pop = wrap.querySelector('.upd-pop');
+      function open(on) { pop.hidden = !on; btn.setAttribute('aria-expanded', on); }
+      btn.onclick = function () { open(pop.hidden); };
+      wrap.querySelector('.upd-x').onclick = function () { open(false); btn.focus(); };
+      pop.addEventListener('keydown', function (e) { if (e.key === 'Escape') { open(false); btn.focus(); } });
+      document.addEventListener('click', function (e) { if (!pop.hidden && !e.target.closest('.upd')) open(false); });
+      const go = wrap.querySelector('.upd-go'), msg = wrap.querySelector('.upd-msg'), log = wrap.querySelector('.upd-log');
+      if (go) go.onclick = function () {
+        go.disabled = true; msg.hidden = false; msg.textContent = 'Aktualizuję… (to może potrwać do minuty)'; log.hidden = true;
+        fetch('/api/update', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); })
+          .then(function (j) {
+            if (j.ok) {
+              msg.textContent = 'Zaktualizowano do ' + j.disk + '. Zrestartuj serwer sdd-board (Ctrl+C i sdd-board albo restart w HQAI) i sesję Claude Code, potem odśwież stronę.';
+              go.remove(); btn.textContent = '✓ ' + j.disk;
+            } else {
+              msg.textContent = 'Aktualizacja przerwana. Szczegóły poniżej.'; go.disabled = false;
+            }
+            log.textContent = (j.log || []).map(function (x) { return '$ ' + x.cmd + '\n' + x.output; }).join('\n\n');
+            log.hidden = !log.textContent || j.ok;
+          })
+          .catch(function (e) { msg.textContent = e.message; go.disabled = false; });
+      };
+    }).catch(function () {});
   }
 
   // ---------------------------------------------------------------- okno Claude Code (0.25.0, docs/specs/claude-dock.md)

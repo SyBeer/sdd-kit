@@ -25,36 +25,20 @@ jobs:
       - name: install.cmd z folderu (dwuklik)
         shell: cmd
         run: echo.| install.cmd --update
+      # Kroki "shell: powershell" GitHub uruchamia jako pliki .ps1 - przy Restricted bylyby zablokowane,
+      # wiec sprawdzenia ida przez cmd i powershell -ExecutionPolicy Bypass -File (jak install.cmd).
       - name: Sprawdzenie - dodatek, sdd-board.cmd, panel
-        shell: powershell
-        run: |
-          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-          $list = (claude plugin list 2>&1) -join "`n"; $list
-          if ($list -notmatch 'sdd@sdd-kit') { throw 'dodatek sdd nie jest zainstalowany' }
-          $cmd = Join-Path $HOME '.sdd-kit\bin\sdd-board.cmd'
-          if (-not (Test-Path $cmd)) { throw 'brak sdd-board.cmd' }
-          Get-Content $cmd
-          $proj = Join-Path $env:RUNNER_TEMP 'proj'
-          New-Item -ItemType Directory -Force $proj | Out-Null
-          Copy-Item -Recurse plugins\sdd\templates\requirements (Join-Path $proj 'requirements')
-          $p = Start-Process -FilePath cmd.exe -ArgumentList '/c', "`"$cmd`" requirements\01-interview\board.json 8019" -WorkingDirectory $proj -PassThru -WindowStyle Hidden
-          Start-Sleep 4
-          $v = Invoke-RestMethod http://127.0.0.1:8019/api/version; $v
-          $t = Invoke-RestMethod http://127.0.0.1:8019/api/term; $t
-          if (-not $v.running) { throw 'panel nie odpowiada' }
-          if ($t.available) { throw 'terminal na Windows powinien byc niedostepny' }
-          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\check-windows.ps1 -Panel
       - name: Odinstalowanie
         shell: cmd
         run: echo.| install.cmd --uninstall
-      - name: Jedna komenda (irm | iex) - tu z pliku z repo, ta sama droga co z GitHuba
-        shell: powershell
+      - name: Jedna komenda (irm | iex) przy zasadach Restricted - tu z pliku z repo, ta sama droga co z GitHuba
+        shell: cmd
         run: |
-          $env:SDD_REPO = '${{ github.repository }}'
-          "`n" | powershell -NoProfile -Command "Get-Content -Raw install.ps1 | Invoke-Expression"
-          if ($LASTEXITCODE -ne 0) { throw "instalator zakonczyl sie kodem $LASTEXITCODE" }
-          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-          if (((claude plugin list 2>&1) -join "`n") -notmatch 'sdd@sdd-kit') { throw 'dodatek sdd nie jest zainstalowany (iex)' }
+          echo.| powershell -NoProfile -Command "Get-Content -Raw install.ps1 | Invoke-Expression"
+          if errorlevel 1 exit /b 1
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\check-windows.ps1
       - name: Testy panelu na Windows (informacyjnie)
         continue-on-error: true
         shell: bash

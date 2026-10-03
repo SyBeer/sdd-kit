@@ -18,6 +18,7 @@ const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
 const info = require('./info');
 const terminal = require('./terminal');
+const update = require('./update');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -286,6 +287,24 @@ function termRoute(req, res, url) {
   });
 }
 
+// ---------------------------------------------------------------- nowa wersja (0.27.0, docs/specs/update.md)
+const checker = update.createChecker({ url: process.env.SDD_RELEASES_URL, disabled: process.env.SDD_UPDATE_CHECK === '0' });
+let updating = false;
+const KIT_ROOT = process.env.SDD_KIT_DIR || path.resolve(__dirname, '..', '..', '..');  // folder kitu, z ktorego dziala panel
+function updatePlanNow() {
+  const src = update.marketSource(update.knownFile());
+  return { src, plan: update.updatePlan(src, src && src.type === 'directory' ? update.gitState(src.path) : null,
+    { dir: KIT_ROOT, state: update.gitState(KIT_ROOT) }) };
+}
+async function updateState(force) {
+  const rel = await checker.latest(force);
+  const current = diskVersion();
+  const { src, plan } = updatePlanNow();
+  return { current, latest: rel ? rel.version : null, url: rel ? rel.url : null,
+    newer: !!rel && update.newer(rel.version, current), source: src ? src.type : null,
+    canUpdate: !plan.error, reason: plan.error || null };
+}
+
 // Wspolne pliki panelu i tablicy (sciezka = nazwa pliku obok server.js).
 const ASSETS = { '/board-ops.js': 'text/javascript', '/ui.js': 'text/javascript', '/ui.css': 'text/css' };
 
@@ -311,6 +330,22 @@ const server = http.createServer((req, res) => {
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
   if (url === '/module' || url === '/guide' || url === '/config') return sendHtml(res, INFO_UI);
 
+  // Nowa wersja z GitHuba (0.27.0, docs/specs/update.md)
+  if (url === '/api/update' && req.method === 'GET') {
+    if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+    return updateState(u.searchParams.get('force') === '1').then(st => json(res, 200, st));
+  }
+  if (url === '/api/update' && req.method === 'POST') {
+    if (ctx.demo) return json(res, 403, { error: READ_ONLY });
+    if (updating) return json(res, 409, { error: 'Aktualizacja już trwa.' });
+    const { plan } = updatePlanNow();
+    if (plan.error) return json(res, 409, { error: plan.error });
+    updating = true;
+    return update.runPlan(plan.steps, process.env).then(r => {
+      updating = false;
+      json(res, 200, Object.assign(r, { disk: diskVersion(), plugin: pluginVersion(), running: VERSION }));
+    });
+  }
   if (url === '/api/version' && req.method === 'GET') return json(res, 200, { running: VERSION, disk: diskVersion(), plugin: pluginVersion() });
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));

@@ -12,8 +12,9 @@ const KIT = path.join(__dirname, '..', '..');
 const PS1 = path.join(KIT, 'install.ps1');
 function findPwsh() {
   if (process.env.SDD_PWSH) return process.env.SDD_PWSH;
-  const r = spawnSync('pwsh', ['-NoProfile', '-c', '1']);
-  return r.status === 0 ? 'pwsh' : null;
+  // pelna sciezka - testy podmieniaja PATH na atrapy
+  const r = spawnSync('pwsh', ['-NoProfile', '-c', '[Environment]::ProcessPath'], { encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.trim() : null;
 }
 const PWSH = findPwsh();
 const skip = PWSH ? false : 'brak PowerShell 7 (pwsh)';

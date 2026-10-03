@@ -1,6 +1,18 @@
 # Changelog
 
-## [Niewydane]
+## [0.27.0] - 2026-10-03
+- Sprawdzanie nowej wersji i aktualizacja z panelu (prosba usera). Serwer co 6 h pyta GitHuba o najnowsze wydanie
+  (`releases/latest`); gdy jest nowsze od kitu na dysku, w gornym pasku pojawia sie "↑ X" -> okienko z "Co nowego ↗"
+  i "Aktualizuj". Aktualizacja: `git pull --ff-only` w folderze kitu (zrodlo w Claude Code i folder panelu, tylko gdy
+  sa korzeniem repo Git bez niezapisanych zmian), potem `claude plugin marketplace update` i `claude plugin update`;
+  na koniec komunikat o restarcie sdd-board i sesji Claude Code. Kit z ZIP-a (bez Git) albo z niezapisanymi zmianami
+  -> powod i co zrobic zamiast przycisku. Bez sieci - cisza. `SDD_UPDATE_CHECK=0` wylacza sprawdzanie.
+  Spec: `docs/specs/update.md` (AC-UP1..AC-UP8); testy `test/update.test.js` (prawdziwy Git, lokalny serwer zamiast GitHuba).
+- Test instalacji w GitHub Actions: pierwszy przebieg na prawdziwym Windows potwierdzil, ze `install.cmd` instaluje kit
+  przy zasadach skryptow Restricted i Claude Code z npm (wszystkie 6 krokow). Poprawione same testy: sprawdzenia na
+  Windows ida przez `powershell -ExecutionPolicy Bypass -File scripts/ci/check-windows.ps1` (kroki "shell: powershell"
+  blokowala ustawiona w tescie zasada Restricted); testy instalatora szukaja pwsh po pelnej sciezce (na macOS w Actions
+  pwsh jest, a atrapy podmieniaja PATH).
 - Okno Claude Code w tablicy: sesja zapisuje transkrypt i dziala `/resume`, takze gdy serwer tablicy uruchomila
   inna sesja Claude. Terminal usuwa teraz wszystkie zmienne sesji (`CLAUDE_CODE_*`, `CLAUDE_PID`, `CLAUDE_EFFORT`),
   nie tylko `CLAUDECODE` - odziedziczone `CLAUDE_CODE_CHILD_SESSION` wylaczalo zapis ("Transcript saving is off").
