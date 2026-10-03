@@ -17,7 +17,9 @@ function findPwsh() {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 const PWSH = findPwsh();
-const skip = PWSH ? false : 'brak PowerShell 7 (pwsh)';
+// Atrapy claude i git to skrypty bash - na Windows instalator sprawdza GitHub Actions na prawdziwym claude.
+const skip = process.platform === 'win32' ? 'Windows: atrapy bash - instalacje sprawdza .github/workflows/install.yml'
+  : (PWSH ? false : 'brak PowerShell 7 (pwsh)');
 
 const FAKE_CLAUDE = `#!/bin/bash
 echo "$*" >> "$CLAUDE_LOG"

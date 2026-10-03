@@ -84,7 +84,7 @@ function boardView(ctx) {
     if (!ctx.req) return null;
     const f = path.resolve(ctx.req, String(rel));
     if (!f.startsWith(ctx.req + path.sep)) return null;
-    try { return fs.readFileSync(f, 'utf8'); } catch (e) { return null; }
+    try { return fs.readFileSync(f, 'utf8').replace(/\r\n?/g, '\n'); } catch (e) { return null; }
   });
   // naglowek "Wymagania do modulu" na tablicy; jak _sync - nie trafia do board.json
   b._module = { name: moduleName(ctx), dir: ctx.req && !ctx.demo ? path.dirname(ctx.req) : '' };
@@ -170,7 +170,7 @@ function configView(ctx) {
   const demo = !!ctx.demo;
   let sdd = null;
   if (ctx.req) {
-    const y = fs.existsSync(sddFile(ctx)) ? fs.readFileSync(sddFile(ctx), 'utf8') : '';
+    const y = fs.existsSync(sddFile(ctx)) ? fs.readFileSync(sddFile(ctx), 'utf8').replace(/\r\n?/g, '\n') : '';
     sdd = { project: info.yamlField(y, 'project'), level: info.yamlField(y, 'level') || 'full', owners: info.parseOwners(y),
       gate: info.yamlField(y, 'gate_blocking_status'), backlog: info.yamlField(y, 'backlog') || 'none',
       file: demo ? '' : sddFile(ctx), approvesAllowed: info.APPROVES, backlogsAllowed: info.BACKLOGS };
@@ -200,7 +200,7 @@ function saveSdd(ctx, body) {
   if (!keys.length) return { code: 400, error: 'Brak zmian.' };
   const file = sddFile(ctx);
   if (!file || !fs.existsSync(file)) return { code: 409, error: 'Brak SDD.yaml w tym module.' };
-  let y = fs.readFileSync(file, 'utf8');
+  let y = fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n');
   try {
     y = info.yamlSet(y, body);
     if (body.owners) {

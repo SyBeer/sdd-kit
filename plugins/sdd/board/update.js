@@ -45,9 +45,7 @@ function marketSource(file) {
 // folder wewnatrz innego repo (np. kopia pluginu w ~/.claude) nie jest kitem z Git.
 function gitState(dir) {
   const top = spawnSync('git', ['-C', dir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
-  let same = false;
-  try { same = top.status === 0 && fs.realpathSync(top.stdout.trim()) === fs.realpathSync(dir); } catch (e) { same = false; }
-  if (!same) return { isRepo: false, clean: false };
+  if (top.status !== 0 || !same(top.stdout.trim(), dir)) return { isRepo: false, clean: false };
   const r = spawnSync('git', ['-C', dir, 'status', '--porcelain'], { encoding: 'utf8' });
   return { isRepo: true, clean: r.status === 0 && r.stdout.trim() === '' };
 }
@@ -74,18 +72,27 @@ function dirty(dir) {
   return 'W folderze kitu (' + dir + ') są niezapisane zmiany - aktualizacja by je nadpisała. ' +
     'Zapisz je (git commit) albo zaktualizuj ręcznie: git pull.';
 }
-function same(a, b) { try { return fs.realpathSync(a) === fs.realpathSync(b); } catch (e) { return path.resolve(a) === path.resolve(b); } }
+// Ta sama sciezka? Windows: git podaje C:/Users/..., Node C:\\Users\\RUNNER~1\\... (nazwy 8.3) - realpath.native
+// rozwija obie postaci, wielkosc liter bez znaczenia (AC-W6).
+function same(a, b) {
+  const norm = p => {
+    let r;
+    try { r = fs.realpathSync.native(p); } catch (e) { r = path.resolve(p); }
+    return process.platform === 'win32' ? r.replace(/\//g, '\\').toLowerCase() : r;
+  };
+  return norm(a) === norm(b);
+}
 
 // claude: Windows przez cmd (claude.cmd / .exe), reszta przez powloke logowania (PATH z Homebrew, bez aliasow).
 function command(step, env) {
   if (step[0] !== 'claude') return { cmd: step[0], args: step.slice(1), opts: {} };
   const args = step.slice(1);
+  // cmd /s /c "<polecenie>": /s zdejmuje zewnetrzne cudzyslowy, wiec cale polecenie w jednej parze (Windows)
+  const viaCmd = line => ({ cmd: 'cmd.exe', args: ['/d', '/s', '/c', '"' + line + '"'], opts: { windowsVerbatimArguments: true } });
   if (env.SDD_CLAUDE_BIN) {
-    return process.platform === 'win32'
-      ? { cmd: 'cmd.exe', args: ['/d', '/s', '/c', '"' + env.SDD_CLAUDE_BIN + '" ' + args.join(' ')], opts: { windowsVerbatimArguments: true } }
-      : { cmd: env.SDD_CLAUDE_BIN, args, opts: {} };
+    return process.platform === 'win32' ? viaCmd('"' + env.SDD_CLAUDE_BIN + '" ' + args.join(' ')) : { cmd: env.SDD_CLAUDE_BIN, args, opts: {} };
   }
-  if (process.platform === 'win32') return { cmd: 'cmd.exe', args: ['/d', '/s', '/c', 'claude ' + args.join(' ')], opts: { windowsVerbatimArguments: true } };
+  if (process.platform === 'win32') return viaCmd('claude ' + args.join(' '));
   return { cmd: env.SHELL || '/bin/zsh', args: ['-l', '-c', 'exec claude "$@"', 'claude'].concat(args), opts: {} };
 }
 

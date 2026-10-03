@@ -39,8 +39,7 @@ jobs:
           echo.| powershell -NoProfile -Command "Get-Content -Raw install.ps1 | Invoke-Expression"
           if errorlevel 1 exit /b 1
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\check-windows.ps1
-      - name: Testy panelu na Windows (informacyjnie)
-        continue-on-error: true
+      - name: Testy panelu na Windows
         shell: bash
         run: node --test --test-reporter=spec --test-timeout=30000 plugins/sdd/board/test/*.test.js scripts/test/*.test.js
 

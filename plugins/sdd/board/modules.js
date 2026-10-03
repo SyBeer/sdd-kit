@@ -18,7 +18,7 @@ function yamlField(text, key) {
 function moduleInfo(dir) {
   const yamlFile = path.join(dir, 'requirements', 'SDD.yaml');
   let yaml;
-  try { yaml = fs.readFileSync(yamlFile, 'utf8'); } catch (e) { return null; }
+  try { yaml = fs.readFileSync(yamlFile, 'utf8').replace(/\r\n?/g, '\n'); } catch (e) { return null; }
   const name = path.basename(dir);
   const project = yamlField(yaml, 'project');
   return {
@@ -65,14 +65,16 @@ function createModule(root, { name, level, approver, sponsor }, opts = {}) {
 
   const req = path.join(dir, 'requirements');
   fs.mkdirSync(dir, { recursive: true });
-  fs.cpSync(path.join(TEMPLATES, 'requirements'), req, { recursive: true });
+  const tpl = opts.templates || TEMPLATES;
+  fs.cpSync(path.join(tpl, 'requirements'), req, { recursive: true });
   fs.rmSync(path.join(req, '03-spec', level === 'light' ? 'PRD.md' : 'SPEC.md'), { force: true });
-  fs.copyFileSync(path.join(TEMPLATES, 'CLAUDE.md'), path.join(dir, 'CLAUDE.md'));
+  fs.copyFileSync(path.join(tpl, 'CLAUDE.md'), path.join(dir, 'CLAUDE.md'));
 
   let owners = '  - role: ' + q(approver || 'wlasciciel procesu') + '\n    approves: [R, D, GLOSSARY, BR]\n';
   if (sponsor && sponsor.trim()) owners += '  - role: ' + q(sponsor) + '\n    approves: [PRD]\n';
   const yamlFile = path.join(req, 'SDD.yaml');
-  const yaml = fs.readFileSync(yamlFile, 'utf8')
+  // szablon z CRLF (kit sklonowany na Windows) - inaczej wzorce z \n nie trafiaja i role zostaja z szablonu (AC-W3)
+  const yaml = fs.readFileSync(yamlFile, 'utf8').replace(/\r\n?/g, '\n')
     .replace(/^project:.*$/m, 'project: ' + q(name))
     .replace(/^level:\s*\w+/m, 'level: ' + level)
     .replace(/^(owners:.*\n)(?:[ \t]+.*\n)*/m, '$1' + owners);
@@ -158,4 +160,4 @@ function removeIntake(reqDir, name) {
   return rel;
 }
 
-module.exports = { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile, cleanName, NAME_RE };
+module.exports = { moduleInfo, listModules, allModules, createModule, saveIntake, removeIntake, intakeFile, cleanName, NAME_RE };

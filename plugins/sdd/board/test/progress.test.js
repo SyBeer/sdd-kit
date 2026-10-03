@@ -316,7 +316,7 @@ test('AC-59: fingerprint - zmienia sie tylko od plikow, ktore sprawdza walidacja
   // konce linii
   const dec = path.join(req, '01-interview', 'DECISIONS.md');
   const txt = fs.readFileSync(dec, 'utf8');
-  fs.writeFileSync(dec, txt.replace(/\n/g, '\r\n'));
+  fs.writeFileSync(dec, txt.replace(/\r?\n/g, '\r\n'));
   assert.strictEqual(fingerprint(req), f0);
   fs.writeFileSync(dec, txt);
   // zmiana wymagan

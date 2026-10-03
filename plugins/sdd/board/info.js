@@ -8,8 +8,9 @@ const { readProgress, STAGES } = require('./progress');
 const APPROVES = ['R', 'D', 'GLOSSARY', 'BR', 'PRD'];
 const BACKLOGS = ['none', 'linear', 'jira', 'file'];
 
+// CRLF (Windows) -> \n jak w progress.js (0.27.1, AC-W4)
 function read(file) {
-  try { return fs.readFileSync(file, 'utf8'); } catch (e) { return ''; }
+  try { return fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n'); } catch (e) { return ''; }
 }
 function yamlField(text, key) {
   const m = text.match(new RegExp('^' + key + ':\\s*"?([^"#\\n]*?)"?\\s*(#.*)?$', 'm'));

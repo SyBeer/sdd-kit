@@ -38,7 +38,7 @@ function sddRelevant(text) {
 function fingerprint(req) {
   const h = crypto.createHash('sha256');
   tracked(req).forEach(rel => {
-    const text = fs.readFileSync(path.join(req, rel), 'utf8').replace(/\r\n/g, '\n');
+    const text = fs.readFileSync(path.join(req, rel), 'utf8').replace(/\r+\n/g, '\n');  // CRLF (i \r\r\n) -> LF
     h.update(rel + '\n');
     h.update(rel === 'SDD.yaml' ? sddRelevant(text) : text);
     h.update('\n\0\n');

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.27.1] - 2026-10-03
+- Panel na Windows (test na prawdziwym Windows w GitHub Actions: 13 ze 153 testow nie przechodzilo).
+  Konce linii CRLF (Git na Windows zapisuje tak domyslnie) - panel czyta je jak LF: poprawne statusy etapow, liczby
+  w zakladce Modul, role i poziom nowego modulu, ten sam odcisk wymagan co na Macu (takze przy `\r\r\n`).
+  Sciezki w szczegolach etapow zawsze z `/` (bylo `03-spec\PRD.md`). Aktualizacja z panelu rozpoznaje folder kitu
+  jako repo Git takze na Windows (sciezki `C:/...` z gita vs `C:\...\RUNNER~1` z Node) i wola `claude` przez
+  `cmd /s /c` z poprawnymi cudzyslowami. Testy instalatora z atrapami bash pomijane na Windows; krok "Testy panelu
+  na Windows" w Actions blokujacy.
+- Spec: `docs/specs/windows.md` (AC-W1..AC-W7); testy `test/crlf.test.js` (kopie modulu i szablonow z CRLF);
+  caly zestaw przechodzi takze w klonie z `core.autocrlf=true`.
+
 ## [0.27.0] - 2026-10-03
 - Sprawdzanie nowej wersji i aktualizacja z panelu (prosba usera). Serwer co 6 h pyta GitHuba o najnowsze wydanie
   (`releases/latest`); gdy jest nowsze od kitu na dysku, w gornym pasku pojawia sie "↑ X" -> okienko z "Co nowego ↗"

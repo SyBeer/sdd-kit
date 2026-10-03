@@ -38,8 +38,9 @@ const STAGES = [
       "Powstanie tabela śledzenia: wymaganie → zadanie → test."] },
 ];
 
+// Konce linii Windows (CRLF, Git na Windows) -> \n: parsery dziela tekst po '\n' (zmiana 0.27.1, AC-W1).
 function read(file) {
-  try { return fs.readFileSync(file, 'utf8'); } catch (e) { return ''; }
+  try { return fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n'); } catch (e) { return ''; }
 }
 
 // Pierwsza tabela markdown w tekscie -> wiersze jako obiekty kluczowane naglowkiem (male litery).
@@ -240,7 +241,7 @@ function spec(req, level) {
     agentFiles: listFiles(path.join(req, '03-spec', 'agent')).length,
   };
   const status = reqs.length === 0 ? 'todo' : approved === reqs.length ? 'done' : 'active';
-  const rel = path.join('03-spec', path.basename(file));
+  const rel = '03-spec/' + path.basename(file);  // sciezka do wyswietlenia: zawsze z / (Windows dawal \, AC-W5)
   const rItem = r => ({ id: r.id, title: r.title, status: r.status, note: r.desc });
   const details = {
     requirements: list(rel, reqs.map(rItem)),
