@@ -1,8 +1,9 @@
 # Changelog
 
-## [Niewydane]
+## [0.27.2] - 2026-10-03
 - Test AC-W1 (CRLF) porownuje liste plikow Intake bez kolejnosci - kopia z CRLF ma inne daty plikow, a lista idzie
   od najnowszego; na Windows w Actions wynik zalezal od kolejnosci zapisu (raz zielony, raz czerwony). Panel bez zmian.
+- Wydanie testowe aktualizacji z panelu (przycisk "↑ 0.27.2" przy kicie 0.27.1).
 
 ## [0.27.1] - 2026-10-03
 - Panel na Windows (test na prawdziwym Windows w GitHub Actions: 13 ze 153 testow nie przechodzilo).
