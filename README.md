@@ -1,27 +1,33 @@
 # sdd-kit
 
-Nowy tutaj? Otworz START-TUTAJ.md, potem uruchom `bash install.sh` (kreator).
+Nowy tutaj? Otworz START-TUTAJ.md, potem uruchom kreator: Mac `bash install.sh`, Windows dwuklik `install.cmd`.
 
 Plugin Claude Code do zbierania i analizy wymagan biznesowych metoda Spec-Driven Development.
 Uniwersalny: firma (OLG), klient (CGBlue), dom. Jeden proces, dwa poziomy ceremonii (full / light).
 
 ## Instalacja (osoba prowadzaca, ma Claude Code)
 
-macOS / Linux, z rozpakowanego folderu:
+Wymagane: Claude Code. Zalecane: Node.js (panel i tablica), Git (historia wymagan, pobranie kitu).
 
-    bash install.sh
+**macOS / Linux** - jedna komenda w Terminalu:
 
-Windows (PowerShell):
+    curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | bash
 
-    .\install.ps1
+albo z rozpakowanego folderu: `bash install.sh`.
 
-Jedna komenda z GitHuba (po wrzuceniu repo):
+**Windows** - jedna komenda w PowerShell (Start -> wpisz "PowerShell"):
 
-    curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | SDD_REPO=SyBeer/sdd-kit bash
+    irm https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.ps1 | iex
 
-Instalator: sprawdza Claude Code, Git, Node.js -> rejestruje kit jako zrodlo dodatkow -> instaluje
+albo z rozpakowanego folderu: dwuklik `install.cmd` (lub `.\install.cmd` w PowerShell).
+Nie trzeba zmieniac zasad wykonywania skryptow - instalator omija blokade tylko na czas swojego dzialania.
+Brak Claude Code na Windows: `irm https://claude.ai/install.ps1 | iex`, potem nowe okno PowerShell.
+
+Instalator: sprawdza Claude Code, Node.js, Git -> rejestruje kit jako zrodlo dodatkow -> instaluje
 dodatek 'sdd' -> weryfikuje -> dodaje komende terminalowa `sdd-board` -> opcjonalnie zaklada projekt.
-Aktualizacja: `bash install.sh --update`. Usuniecie: `bash install.sh --uninstall`.
+Aktualizacja: `bash install.sh --update` / `.\install.cmd --update`.
+Usuniecie: `bash install.sh --uninstall` / `.\install.cmd --uninstall`.
+Okno Claude w panelu (terminal) dziala na macOS i Linuksie; na Windows uruchamiasz Claude Code w osobnym oknie.
 
 Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwierdza dokumenty.
 

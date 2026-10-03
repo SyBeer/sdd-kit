@@ -35,12 +35,19 @@ projektu, wiec masz historie i mozesz pracowac na kazdym komputerze.
 
 ## 3. Instalacja w 3 krokach (tylko osoba prowadzaca)
 
-1. Otworz terminal (Mac: Terminal, Windows: PowerShell) i wejdz do tego folderu: `cd sciezka/do/sdd-kit`
-2. Uruchom kreator: Mac/Linux `bash install.sh`, Windows `.\install.ps1`
+Najpierw Claude Code (jesli go nie masz): https://docs.claude.com/en/docs/claude-code/setup
+Windows: w PowerShell `irm https://claude.ai/install.ps1 | iex`, potem zamknij i otworz PowerShell na nowo.
+
+1. Otworz terminal: Mac - aplikacja Terminal; Windows - PowerShell (Start -> wpisz "PowerShell").
+2. Wklej jedna komende (kit pobierze sie sam):
+   - Mac: `curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | bash`
+   - Windows: `irm https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.ps1 | iex`
+
+   Masz kit jako folder (ZIP)? Mac: `cd sciezka/do/sdd-kit` i `bash install.sh`. Windows: dwuklik `install.cmd`.
 3. Odpowiadaj na pytania. Kreator sprawdza, co masz, wyjasnia kazdy krok, na koncu daje sciage.
 
 Po instalacji masz w terminalu komende `sdd-board` (tablica) i w Claude Code komendy `/sdd:...`.
-Na drugim komputerze: skopiuj folder (albo sklonuj z GitHub) i powtorz punkty 1-3.
+Na drugim komputerze powtorz punkty 1-3. Na Windows po instalacji otworz nowe okno PowerShell, zeby dzialalo `sdd-board`.
 Biznes nie instaluje nic.
 
 ## 4. Pierwszy dzien z kitem, krok po kroku
@@ -90,6 +97,9 @@ Zmienisz go w tym samym menu: "Zmień katalog modułów…".
 
 ## 6. Gdy cos nie dziala
 
+- Windows: "uruchamianie skryptow jest wylaczone w tym systemie" - uzyj `install.cmd` albo komendy `irm ... | iex` z punktu 3
+  (nie `.\install.ps1`); obie omijaja blokade tylko na czas instalacji.
+- Windows: "claude nie jest rozpoznawane" - zamknij i otworz PowerShell po instalacji Claude Code.
 - `claude plugin list` pokazuje, czy 'sdd' jest zainstalowany.
 - `claude plugin validate plugins/sdd` sprawdza, czy paczka jest poprawna.
 - `claude plugin marketplace update sdd-kit` odswieza po zmianach w kicie.

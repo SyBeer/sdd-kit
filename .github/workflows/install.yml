@@ -1,0 +1,77 @@
+# Instalacja na prawdziwym Windows i macOS (spec: docs/specs/install.md, AC-I7).
+# Prawdziwy Claude Code (npm, czyli claude.ps1 na Windows), bez atrap. Windows: domyslny Windows PowerShell 5.1
+# i zasady wykonywania skryptow ustawione jak na zwyklym komputerze (Restricted).
+name: install
+on:
+  push:
+    paths: ['install.*', '.gitattributes', 'plugins/**', 'scripts/**', '.github/workflows/install.yml']
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Claude Code (npm) i blokada skryptow jak na domowym Windows
+        shell: powershell
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Restricted -Force
+          Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Restricted -Force -ErrorAction SilentlyContinue
+          Get-ExecutionPolicy -List | Format-Table -AutoSize
+          $PSVersionTable.PSVersion
+      - name: install.cmd z folderu (dwuklik)
+        shell: cmd
+        run: echo.| install.cmd --update
+      - name: Sprawdzenie - dodatek, sdd-board.cmd, panel
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          $list = (claude plugin list 2>&1) -join "`n"; $list
+          if ($list -notmatch 'sdd@sdd-kit') { throw 'dodatek sdd nie jest zainstalowany' }
+          $cmd = Join-Path $HOME '.sdd-kit\bin\sdd-board.cmd'
+          if (-not (Test-Path $cmd)) { throw 'brak sdd-board.cmd' }
+          Get-Content $cmd
+          $proj = Join-Path $env:RUNNER_TEMP 'proj'
+          New-Item -ItemType Directory -Force $proj | Out-Null
+          Copy-Item -Recurse plugins\sdd\templates\requirements (Join-Path $proj 'requirements')
+          $p = Start-Process -FilePath cmd.exe -ArgumentList '/c', "`"$cmd`" requirements\01-interview\board.json 8019" -WorkingDirectory $proj -PassThru -WindowStyle Hidden
+          Start-Sleep 4
+          $v = Invoke-RestMethod http://127.0.0.1:8019/api/version; $v
+          $t = Invoke-RestMethod http://127.0.0.1:8019/api/term; $t
+          if (-not $v.running) { throw 'panel nie odpowiada' }
+          if ($t.available) { throw 'terminal na Windows powinien byc niedostepny' }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+      - name: Odinstalowanie
+        shell: cmd
+        run: echo.| install.cmd --uninstall
+      - name: Jedna komenda (irm | iex) - tu z pliku z repo, ta sama droga co z GitHuba
+        shell: powershell
+        run: |
+          $env:SDD_REPO = '${{ github.repository }}'
+          "`n" | powershell -NoProfile -Command "Get-Content -Raw install.ps1 | Invoke-Expression"
+          if ($LASTEXITCODE -ne 0) { throw "instalator zakonczyl sie kodem $LASTEXITCODE" }
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          if (((claude plugin list 2>&1) -join "`n") -notmatch 'sdd@sdd-kit') { throw 'dodatek sdd nie jest zainstalowany (iex)' }
+      - name: Testy panelu na Windows (informacyjnie)
+        continue-on-error: true
+        shell: bash
+        run: node --test --test-reporter=spec --test-timeout=30000 plugins/sdd/board/test/*.test.js scripts/test/*.test.js
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: install.sh --update
+        run: bash install.sh --update
+      - name: Sprawdzenie
+        run: |
+          claude plugin list | tee /dev/stderr | grep -q 'sdd@sdd-kit'
+          test -x "$HOME/.local/bin/sdd-board"
+      - name: Testy
+        run: node --test --test-timeout=30000 plugins/sdd/board/test/*.test.js scripts/test/*.test.js

@@ -5,11 +5,11 @@
 #   bash install.sh                      z rozpakowanego folderu
 #   bash install.sh --update             odswiez po zmianach w kicie
 #   bash install.sh --uninstall          usun dodatek i pomocnika
-#   curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | SDD_REPO=SyBeer/sdd-kit bash
+#   curl -fsSL https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.sh | bash
 #                                        jedna komenda z GitHuba
 set -u
 
-SDD_REPO="${SDD_REPO:-}"                 # np. zelu/sdd-kit
+SDD_REPO="${SDD_REPO:-SyBeer/sdd-kit}"   # inne repo: SDD_REPO=uzytkownik/nazwa
 MARKET="sdd-kit"
 PLUGIN="sdd"
 HOME_KIT="$HOME/.sdd-kit"

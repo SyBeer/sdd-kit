@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.26.0] - 2026-10-03
+- Instalacja na Windows naprawiona (zgloszenie usera: instalator nie dzialal). Jedna komenda w PowerShell
+  `irm https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.ps1 | iex` albo dwuklik `install.cmd` (nowy).
+  Przyczyny: blokada skryptow .ps1 (takze claude.ps1 z npm) - teraz Bypass tylko dla procesu instalatora;
+  uruchomienie bez folderu (`$PSScriptRoot` puste) przerywalo skrypt; `--update` z argumentow trafial do adresu repo;
+  Git wymagany bez potrzeby; bledy `claude plugin` ukryte - teraz wypisane z komenda do powtorzenia. `sdd-board.cmd`
+  przyjmuje plik i port, dziala od razu w tym samym oknie. Repo domyslne `SyBeer/sdd-kit` (Windows i macOS:
+  `curl -fsSL .../install.sh | bash` bez `SDD_REPO=`). README i START-TUTAJ: instrukcja dla Mac i Windows, sekcja bledow.
+- Instalacja jedna komenda, gdy `~\.sdd-kit` juz istnieje (np. `bin\` po instalacji z ZIP-a): `git init` + `pull`
+  zamiast `git clone`, ktory odmawial przy niepustym folderze. `install.cmd` zwraca kod wyjscia instalatora.
+- Test na prawdziwym Windows i macOS w GitHub Actions (`.github/workflows/install.yml`): Windows PowerShell 5.1,
+  zasady skryptow Restricted jak na domowym komputerze, prawdziwy Claude Code z npm; install.cmd, panel przez
+  sdd-board.cmd, odinstalowanie, ponowna instalacja przez `irm | iex`.
+- Spec: `docs/specs/install.md` (AC-I1..AC-I8); testy `scripts/test/install.test.js` - instalator Windows sprawdzany
+  w PowerShell 7 z atrapami claude i git (`SDD_PWSH=<sciezka do pwsh>`, bez pwsh pomijane).
+
 ## [0.25.0] - 2026-10-03
 - Release Notes na GitHubie: skrypt `scripts/github-release.js <wersja>` (albo `--from <wersja>`, `--dry-run`) zaklada
   lub aktualizuje GitHub Release z trescia sekcji CHANGELOG tej wersji; Latest tylko najwyzsza wersja; token z
