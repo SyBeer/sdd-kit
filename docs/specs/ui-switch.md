@@ -76,4 +76,10 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - AC-U15: `versionBadge({running, disk, plugin})`: plugin rozny od disk -> `stale: true`, tekst z "plugin nieaktualny", dymek z
   obiema wersjami, `claude plugin update sdd@sdd-kit` i restartem sesji; plugin pusty -> bez ostrzezenia; serwer i plugin
   nieaktualne naraz -> oba napisy; zachowanie AC-U10 bez zmian.
+- AC-U16 (zmiana 0.25.0, user: "po kliknieciu na wersji niech wyswietli sie strona z github z Release Notes"):
+  `versionBadge` zwraca `href` = `https://github.com/SyBeer/sdd-kit/releases/tag/v<running>`; dymek konczy sie linia
+  "Kliknij: opis zmian tej wersji na GitHubie". Wersja w pasku jest linkiem (`<a class="ver">`, nowa karta,
+  `rel="noopener"`), wyglada jak dotad (podkreslenie przy najechaniu); ostrzezenia AC-U10/AC-U15 bez zmian.
+  Strona Release istnieje dla wersji wypchnietych na GitHub (docs/specs/github-release.md).
+- AC-U17 (reczne): klik wersji w pasku na panelu i tablicy otwiera w nowej karcie strone Release tej wersji.
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.

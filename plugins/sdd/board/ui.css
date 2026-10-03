@@ -12,7 +12,8 @@ html{scrollbar-gutter:stable}
 .topbar .tab[aria-current="page"]{color:var(--ink);background:var(--bg);border-color:var(--line);border-bottom-color:var(--bg)}
 .topbar .short{display:none}
 .topbar .right{display:flex;align-items:center;gap:12px;align-self:center}
-.topbar .ver{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.topbar .ver{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;text-decoration:none}
+.topbar .ver:hover{text-decoration:underline}
 .topbar .ver.stale{color:var(--hot,#e8503f);font-weight:700}
 .topbar .ver[hidden]{display:none}
 /* Srednia szerokosc: krotki link do przykladu, zeby wersja nie zabierala miejsca zakladkom (0.18.1) */
@@ -67,3 +68,36 @@ h1 .lbl{margin-right:4px;font-weight:500;color:var(--muted);font-size:18px}
 .modmenu .add{color:var(--ink);font-weight:600}
 @media (max-width:640px){.modmenu{position:fixed;top:auto;left:16px;right:16px;min-width:0;margin-top:6px}}
 @media (max-width:640px){.topbar + header,.demobar + header{padding-left:16px;padding-right:16px}}
+
+/* Okno Claude Code z prawej (0.25.0, docs/specs/claude-dock.md). Strona zweza sie o szerokosc okna. */
+.topbar .cl-btn{font:inherit;font-size:13px;font-weight:600;padding:3px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+.topbar .cl-btn:hover{border-color:var(--ink)}
+.topbar .cl-btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.topbar .cl-btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+html.claude-on{padding-right:var(--claude-w)}
+/* Okno zawsze czarne jak terminal, niezaleznie od motywu strony (zmiana 0.25.0, prosba usera) - wlasne tokeny okna */
+.cdock{--panel:#000;--bg:#141414;--ink:#e6e6e6;--muted:#8c8c8c;--line:#2e2e2e;--sel:#3a3d41;color-scheme:dark}
+.cdock{position:fixed;top:0;right:0;bottom:0;width:var(--claude-w);z-index:40;display:none;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+html.claude-on .cdock{display:flex}
+html.claude-on #drawer{right:var(--claude-w)}
+.cdock .cd-grip{position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:1}
+.cdock .cd-grip:hover,.cdock.resizing .cd-grip{background:var(--line)}
+.cdock.resizing{user-select:none}
+.cdock .cd-head{display:flex;align-items:center;gap:8px;height:47px;flex:none;padding:0 8px 0 14px;border-bottom:1px solid var(--line);font-size:14px}
+.cdock .cd-cwd{flex:1;min-width:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cdock .cd-head button{font:inherit;font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);cursor:pointer;white-space:nowrap}
+.cdock .cd-head button:hover{border-color:var(--ink)}
+.cdock .cd-head .cd-x{border:0;background:none;font-size:22px;line-height:1;padding:2px 6px;color:var(--muted)}
+.cdock .cd-head .cd-x:hover{color:var(--ink)}
+.cdock .cd-head button[hidden]{display:none}
+.cdock .cd-msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
+.cdock .cd-msg[hidden]{display:none}
+.cdock .cd-term{flex:1;min-height:0;padding:6px 4px 6px 10px;overflow:hidden}
+.cdock .cd-term .xterm{height:100%}
+/* Waskie okno: Claude na calym ekranie nad strona */
+@media (max-width:900px){
+  html.claude-on{padding-right:0}
+  html.claude-on #drawer{right:0}
+  .cdock{width:100vw;left:0}
+  .cdock .cd-grip{display:none}
+}

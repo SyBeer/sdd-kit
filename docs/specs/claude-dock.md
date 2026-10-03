@@ -1,0 +1,59 @@
+# Spec: Okno Claude Code w aplikacji sdd-kit
+
+Status: zatwierdzony zakres 2026-10-03 (user: "w aplikacji SDD-kit z prawej strony wyswietlic/osadzic okno claude";
+wybor z trzech opcji: terminal z Claude Code)
+Wersja docelowa: 0.25.0
+
+## Cel
+Warsztat i praca nad modulem bez przelaczania okien: tablica albo panel po lewej, Claude Code (ze skillami `/sdd:…`)
+po prawej, w folderze biezacego modulu. claude.ai nie da sie osadzic (blokada ramek), wiec okno to prawdziwy terminal
+z `claude` uruchomionym przez serwer kitu.
+
+## Zakres
+1. Serwer (`board/terminal.js` + `board/pty-helper.py`):
+   - Terminal przez modul `pty` z Pythona 3 (stdlib, jest na macOS i Linuksie) - kit dalej bez zaleznosci npm.
+     Brak Pythona albo Windows -> `available: false` i komunikat w oknie, reszta aplikacji dziala.
+   - Jedna sesja na serwer, katalog roboczy = folder modulu (rodzic `requirements/`) z chwili startu sesji.
+     Sesja zyje na serwerze: przejscie Panel <-> Tablica <-> inne zakladki i przeladowanie strony nie przerywa Claude.
+   - Polecenie: `$SHELL -l -c 'exec claude'` (powloka logowania daje PATH z Homebrew, bez aliasow z .zshrc);
+     zmiana przez `SDD_CLAUDE_CMD`. Zmienne `CLAUDECODE*` usuniete (serwer uruchomiony z Claude Code nie blokuje
+     zagniezdzenia), `TERM=xterm-256color`.
+   - Bufor ostatnich 512 KB wyjscia - nowe okno odtwarza ekran po podlaczeniu.
+   - Koniec serwera konczy sesje (helper konczy `claude`, gdy zamknie sie jego wejscie).
+   - API (tylko Twoj modul, demo -> 403): `GET /api/term` stan; `POST /api/term/start {cols, rows}`;
+     `POST /api/term/input {data}`; `POST /api/term/resize {cols, rows}`; `POST /api/term/stop`;
+     `GET /term-events` (SSE: `{replay, d}` base64, zdarzenie `exit`).
+   - Bezpieczenstwo (terminal = wykonanie polecen): zapisy jak dotad tylko z naglowkiem `X-SDD: 1` i Host lokalny;
+     strumien i stan tez tylko przy Host lokalnym (ochrona przed DNS rebinding); serwer slucha tylko na 127.0.0.1.
+     Sesja startuje wylacznie po kliknieciu "Uruchom Claude" - nigdy sama.
+2. Przegladarka (`board/ui.js`, `board/ui.css`; wszystkie strony z gornym paskiem, nie w demo):
+   - Przycisk "Claude" w gornym pasku otwiera / zamyka okno z prawej; stan otwarcia i szerokosc pamietane
+     (localStorage `sdd-claude`, try/catch), wiec okno zostaje otwarte po przejsciu na inna zakladke.
+   - Okno: naglowek "Claude Code · <folder modulu>", przyciski Uruchom / Zakoncz / zamknij okno; terminal xterm.js
+     (CDN jsdelivr, ladowany przy pierwszym otwarciu); offline -> komunikat zamiast terminala.
+   - Szerokosc przeciagana uchwytem po lewej krawedzi (320 px .. 70% okna, domyslnie 520 px). Strona zweza sie
+     o szerokosc okna (tablica i jej panel karteczki przesuwaja sie w lewo, nic nie jest zasloniete).
+   - Ponizej 900 px okno zajmuje caly ekran nad strona (przycisk zamyka).
+   - Okno zawsze czarne (naglowek i terminal), niezaleznie od motywu strony - wlasne tokeny `.cdock`
+     (zmiana 2026-10-03, user: "zeby claude mial czarny styl").
+   - Klawisze w terminalu nie uruchamiaja skrotow tablicy (Escape, Cmd+Z, Cmd+D, Cmd+Enter trafiaja do Claude).
+   - Sesja zakonczona -> "Sesja zakończona (kod N)" i przycisk Uruchom ponownie. Sesja z innego modulu ->
+     naglowek pokazuje jej folder.
+
+## Kryteria akceptacji
+- AC-T1: `TermSession` uruchamia polecenie w pty o zadanym rozmiarze (`stty size` -> "30 100"), `write` trafia na
+  wejscie, `exit` zwraca kod, `running` false po zakonczeniu.
+- AC-T2: `resize(120, 40)` zmienia rozmiar terminalu widziany przez program (`stty size` -> "40 120").
+- AC-T3: `buffer()` zwraca dotychczasowe wyjscie; limit obcina od poczatku (zostaja ostatnie bajty).
+- AC-T4: `stop()` konczy dlugo dzialajacy program (zdarzenie `exit` < 3 s).
+- AC-T5: srodowisko programu bez `CLAUDECODE`, z `TERM=xterm-256color`.
+- AC-T6: `claudeArgv(env)`: domyslnie `[SHELL, '-l', '-c', 'exec claude']` (`/bin/zsh` bez SHELL);
+  `SDD_CLAUDE_CMD` podmienia polecenie.
+- AC-T7 (serwer): start bez `X-SDD` -> 403; `GET /term-events` z obcym Host -> 403; `/demo/api/term/start` -> 403;
+  start w module -> `GET /api/term` `{running: true, cwd: <folder modulu>}`, strumien odtwarza wyjscie, stop -> `running: false`.
+- AC-T8: `dockWidth(stored, viewport)`: domyslnie 520, ograniczone do 320 .. 70% okna, liczby z localStorage
+  nieprawidlowe -> domyslna.
+- AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
+  /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
+  panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez
+  poziomego przewijania.

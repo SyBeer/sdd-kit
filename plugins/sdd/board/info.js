@@ -198,7 +198,8 @@ const SECTIONS = [
   { title: 'Panel i serwer', items: [
     'Serwer uruchamiasz komendą sdd-board w folderze modułu (albo z HQAI); zostaw okno terminala otwarte.',
     'Panel, tablica i te zakładki odświeżają się same, gdy Claude zmienia pliki.',
-    'Komend wymagających rozmowy nie uruchamia się z panelu - kopiujesz je do Claude Code.'] },
+    'Komend wymagających rozmowy nie uruchamia się z panelu - kopiujesz je do Claude Code.',
+    'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.'] },
 ];
 // Warianty komend (AC-C20): tylko to, co jest w skills/<nazwa>/SKILL.md - test pilnuje zgodnosci.
 const VARIANTS = {

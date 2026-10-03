@@ -97,6 +97,8 @@
 
   // Wersja w pasku (AC-U10): stary serwer po aktualizacji pluginu -> ostrzezenie o restarcie.
   // AC-U15 (0.21.0): plugin w Claude Code w innej wersji niz kit na dysku -> ostrzezenie o aktualizacji pluginu.
+  // AC-U16 (0.25.0): wersja jest linkiem do Release Notes tej wersji na GitHubie.
+  const RELEASES = 'https://github.com/SyBeer/sdd-kit/releases/tag/v';
   function versionBadge(v) {
     if (!v || !v.running) return null;
     const server = !!v.disk && v.disk !== v.running;
@@ -109,10 +111,17 @@
       ' potem restart sesji Claude Code.');
     return { stale: server || plugin,
       text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : ''),
-      title: tips.length ? tips.join('\n') : 'sdd-kit ' + v.running };
+      title: (tips.length ? tips.join('\n') : 'sdd-kit ' + v.running) + '\nKliknij: opis zmian tej wersji na GitHubie',
+      href: RELEASES + v.running };
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, KEY };
+  // Szerokosc okna Claude (AC-T8): zapisana albo 520 px, w zakresie 320 px .. 70% okna.
+  function dockWidth(stored, viewport) {
+    const n = parseInt(stored, 10), max = Math.floor(viewport * 0.7);
+    return Math.max(320, Math.min(n > 0 ? n : 520, max));
+  }
+
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -143,7 +152,8 @@
         const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
         return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
       }).join('') + '</div>' +
-      '<div class="right"><span class="ver" hidden></span>' + link +
+      '<div class="right">' + (b ? '' : '<button type="button" class="cl-btn" aria-pressed="false" title="Claude Code w oknie z prawej, w folderze modułu">Claude</button>') +
+      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + link +
       '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
         return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
           (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
@@ -163,8 +173,153 @@
     fetch(b + '/api/version').then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
       const x = versionBadge(v), el = bar.querySelector('.ver');
       if (!x || !el) return;
-      el.textContent = x.text; el.title = x.title; el.hidden = false; el.classList.toggle('stale', x.stale);
+      el.textContent = x.text; el.title = x.title; el.href = x.href; el.hidden = false; el.classList.toggle('stale', x.stale);
     }).catch(function () {});
+    if (!b) claudeDock(bar.querySelector('.cl-btn'));
+  }
+
+  // ---------------------------------------------------------------- okno Claude Code (0.25.0, docs/specs/claude-dock.md)
+  // Terminal xterm.js z prawej; sesja zyje na serwerze, okno tylko sie podlacza (SSE + POST).
+  const DOCK_KEY = 'sdd-claude';
+  const XTERM = 'https://cdn.jsdelivr.net/npm/';
+  const XTERM_FILES = ['@xterm/xterm@5.5.0/css/xterm.min.css', '@xterm/xterm@5.5.0/lib/xterm.min.js', '@xterm/addon-fit@0.10.0/lib/addon-fit.min.js'];
+  let xtermReady = null;
+  function loadXterm() {
+    if (xtermReady) return xtermReady;
+    xtermReady = XTERM_FILES.reduce(function (p, f) {
+      return p.then(function () {
+        return new Promise(function (ok, fail) {
+          const css = /\.css$/.test(f), el = document.createElement(css ? 'link' : 'script');
+          if (css) { el.rel = 'stylesheet'; el.href = XTERM + f; } else el.src = XTERM + f;
+          el.onload = ok; el.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(el);
+        });
+      });
+    }, Promise.resolve());
+    xtermReady.catch(function () { xtermReady = null; });
+    return xtermReady;
+  }
+  function dockPrefs() { try { return JSON.parse(localStorage.getItem(DOCK_KEY)) || {}; } catch (e) { return {}; } }
+  function saveDock(p) { try { localStorage.setItem(DOCK_KEY, JSON.stringify(p)); } catch (e) {} }
+
+  function claudeDock(btn) {
+    if (!btn) return;
+    const root = document.documentElement, prefs = dockPrefs();
+    let term = null, fit = null, es = null, state = {}, pending = '', sending = false, rtimer = null;
+    const dock = document.createElement('aside');
+    dock.className = 'cdock'; dock.setAttribute('aria-label', 'Claude Code');
+    dock.innerHTML = '<div class="cd-grip" title="Przeciągnij, żeby zmienić szerokość"></div>' +
+      '<div class="cd-head"><b>Claude Code</b><span class="cd-cwd"></span>' +
+      '<button type="button" class="cd-run" hidden>Uruchom Claude</button><button type="button" class="cd-stop" hidden>Zakończ</button>' +
+      '<button type="button" class="cd-x" aria-label="Zamknij okno" title="Zamknij okno (Claude działa dalej)">×</button></div>' +
+      '<p class="cd-msg" hidden></p><div class="cd-term"></div>';
+    document.body.appendChild(dock);
+    const q = function (s) { return dock.querySelector(s); };
+    // Klawisze w terminalu nie uruchamiaja skrotow strony (Escape, Cmd+Z, Cmd+D, Cmd+Enter).
+    dock.addEventListener('keydown', function (e) { e.stopPropagation(); });
+
+    function width() { return dockWidth(prefs.w, window.innerWidth); }
+    function layout() { root.style.setProperty('--claude-w', width() + 'px'); }
+    function msg(t) { const m = q('.cd-msg'); m.textContent = t || ''; m.hidden = !t; }
+    function api(url, body) {
+      return fetch(url, { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+    }
+    function show(s) {
+      state = s || state;
+      const run = !!state.running;
+      q('.cd-run').hidden = run || !state.available; q('.cd-stop').hidden = !run;
+      q('.cd-run').textContent = state.exitCode != null && !run ? 'Uruchom ponownie' : 'Uruchom Claude';
+      const dir = run ? state.cwd : state.module, c = q('.cd-cwd');
+      c.textContent = dir ? '· ' + dir.split('/').filter(Boolean).pop() + (run && state.module && state.module !== state.cwd ? ' (inny moduł)' : '') : '';
+      c.title = dir || '';
+      if (!state.available) msg('Terminal niedostępny: serwer potrzebuje Pythona 3 (macOS / Linux). Uruchom Claude Code w osobnym oknie, w folderze modułu.');
+      else if (!run && state.exitCode != null) msg('Sesja zakończona (kod ' + state.exitCode + ').');
+      else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (state.module ? ' ' + state.module : '') + '.');
+      else msg('');
+    }
+    // Serwer bez /api/term = dziala na starym kodzie (pliki przegladarki sa juz nowe) - powiedz to zamiast pustego terminala.
+    function refresh() {
+      return fetch('/api/term').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(show).catch(function () {
+        q('.cd-run').hidden = true; q('.cd-stop').hidden = true;
+        msg('Serwer sdd-board nie obsługuje jeszcze okna Claude (działa na starszym kodzie). Zrestartuj serwer: Ctrl+C i sdd-board albo restart w HQAI, potem odśwież stronę.');
+      });
+    }
+    function theme() {
+      if (!term) return;
+      // tokeny okna (.cdock) - zawsze czarne
+      const cs = getComputedStyle(dock), v = function (n) { return cs.getPropertyValue(n).trim(); };
+      term.options.theme = { background: v('--panel'), foreground: v('--ink'), cursor: v('--ink'), cursorAccent: v('--panel'), selectionBackground: v('--sel') };
+    }
+    function sendResize() {
+      clearTimeout(rtimer);
+      rtimer = setTimeout(function () { if (term && state.running) api('/api/term/resize', { cols: term.cols, rows: term.rows }).catch(function () {}); }, 120);
+    }
+    function refit() { if (fit && root.classList.contains('claude-on')) { try { fit.fit(); } catch (e) {} sendResize(); } }
+    function flush() {
+      if (sending || !pending) return;
+      const data = pending; pending = ''; sending = true;
+      api('/api/term/input', { data: data }).catch(function () {}).then(function () { sending = false; flush(); });
+    }
+    function connect() {
+      if (es) return;
+      es = new EventSource('/term-events');
+      es.onmessage = function (e) {
+        const j = JSON.parse(e.data);
+        if (j.replay) { term.reset(); show(j.state); }
+        if (j.d) term.write(Uint8Array.from(atob(j.d), function (c) { return c.charCodeAt(0); }));
+        if (j.replay && state.running) sendResize();
+      };
+      es.addEventListener('exit', function () { refresh(); });
+      es.onopen = function () { refresh(); };
+    }
+    function setup() {
+      return loadXterm().then(function () {
+        if (term) return;
+        term = new window.Terminal({ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 13, cursorBlink: true, scrollback: 5000 });
+        fit = new window.FitAddon.FitAddon();
+        term.loadAddon(fit);
+        term.open(q('.cd-term'));
+        theme();
+        term.onData(function (d) { if (state.running) { pending += d; flush(); } });
+        refit(); connect();
+      }).catch(function () {
+        msg('Nie udało się załadować terminala (xterm.js z cdn.jsdelivr.net). Sprawdź połączenie z internetem i otwórz okno ponownie.');
+      });
+    }
+    function open(on) {
+      root.classList.toggle('claude-on', on); btn.setAttribute('aria-pressed', on);
+      prefs.open = on; saveDock(prefs);
+      if (on) { layout(); refresh(); setup().then(function () { refit(); if (term) term.focus(); }); }
+      else if (es) { es.close(); es = null; }
+      window.dispatchEvent(new Event('resize'));
+    }
+    btn.onclick = function () { open(!root.classList.contains('claude-on')); };
+    q('.cd-x').onclick = function () { open(false); btn.focus(); };
+    q('.cd-run').onclick = function () {
+      setup().then(function () {
+        if (!term) return;
+        try { fit.fit(); } catch (e) {}
+        return api('/api/term/start', { cols: term.cols, rows: term.rows }).then(function (s) { show(s); connect(); term.focus(); });
+      }).catch(function (e) { msg(e.message); });
+    };
+    q('.cd-stop').onclick = function () {
+      if (!confirm('Zakończyć sesję Claude Code? Rozmowa w terminalu zostanie przerwana.')) return;
+      api('/api/term/stop').catch(function (e) { msg(e.message); });
+    };
+    // Szerokosc: uchwyt po lewej krawedzi
+    q('.cd-grip').addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      e.preventDefault(); this.setPointerCapture(e.pointerId); dock.classList.add('resizing');
+      const move = function (ev) { prefs.w = dockWidth(window.innerWidth - ev.clientX, window.innerWidth); layout(); };
+      const up = function () {
+        this.removeEventListener('pointermove', move); this.removeEventListener('pointerup', up);
+        dock.classList.remove('resizing'); saveDock(prefs); refit(); window.dispatchEvent(new Event('resize'));
+      };
+      this.addEventListener('pointermove', move); this.addEventListener('pointerup', up);
+    });
+    window.addEventListener('resize', function () { if (root.classList.contains('claude-on')) { layout(); clearTimeout(dock.rt); dock.rt = setTimeout(refit, 80); } });
+    if (prefs.open) open(true);
   }
 
   // Obsluga przelacznika modulu: #modbtn (z .mname) + #modmenu w .modsw.

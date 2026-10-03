@@ -17,6 +17,7 @@ const { listModules, allModules, createModule, saveIntake, removeIntake, intakeF
 const { stampNotes, syncMap } = require('./board-ops');
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
 const info = require('./info');
+const terminal = require('./terminal');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -247,6 +248,44 @@ function sse(req, res, set, first) {
   req.on('close', () => set.delete(res));
 }
 
+// ---------------------------------------------------------------- okno Claude Code (0.25.0, docs/specs/claude-dock.md)
+// Jedna sesja na serwer, w folderze modulu z chwili startu. Tylko Twoj modul, tylko Host lokalny.
+const term = new terminal.TermSession();
+const termClients = new Set();
+const termSend = (res, obj, ev) => res.write((ev ? 'event: ' + ev + '\n' : '') + 'data: ' + JSON.stringify(obj) + '\n\n');
+term.on('data', c => { const d = c.toString('base64'); termClients.forEach(r => termSend(r, { d })); });
+term.on('exit', code => termClients.forEach(r => termSend(r, { code }, 'exit')));
+function termState() {
+  return Object.assign(term.state(), { available: terminal.available(), module: user.req ? path.dirname(user.req) : null });
+}
+['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { term.stop(); if (sig !== 'exit') process.exit(0); }));
+function termRoute(req, res, url) {
+  if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+  if (url === '/api/term' && req.method === 'GET') return json(res, 200, termState());
+  if (url === '/term-events') {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+    termSend(res, { replay: true, d: term.buffer().toString('base64'), state: termState() });
+    termClients.add(res);
+    return req.on('close', () => termClients.delete(res));
+  }
+  if (req.method !== 'POST') return json(res, 404, { error: 'Nie ma takiego adresu.' });
+  return readBody(req, 1024 * 1024, buf => {
+    let body = {};
+    try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+    if (url === '/api/term/start') {
+      if (!terminal.available()) return json(res, 501, { error: 'Terminal niedostępny: potrzebny Python 3 (macOS / Linux).' });
+      if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
+      try { term.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows }); }
+      catch (e) { return json(res, 500, { error: e.message }); }
+      return json(res, 200, termState());
+    }
+    if (url === '/api/term/input') { term.write(String(body.data || '')); return json(res, 200, { ok: true }); }
+    if (url === '/api/term/resize') { term.resize(body.cols, body.rows); return json(res, 200, { ok: true }); }
+    if (url === '/api/term/stop') { term.stop(); return json(res, 200, { ok: true }); }
+    json(res, 404, { error: 'Nie ma takiego adresu.' });
+  });
+}
+
 // Wspolne pliki panelu i tablicy (sciezka = nazwa pliku obok server.js).
 const ASSETS = { '/board-ops.js': 'text/javascript', '/ui.js': 'text/javascript', '/ui.css': 'text/css' };
 
@@ -261,6 +300,10 @@ const server = http.createServer((req, res) => {
   const write = req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE';
   if (write && !allowedWrite(req)) return json(res, 403, { error: 'Zapis tylko z panelu sdd-board.' });
   if (ctx.demo && (write || url === '/api/dirs' || url === '/api/root/preview')) return json(res, 403, { error: READ_ONLY });
+  if (url === '/api/term' || url.startsWith('/api/term/') || url === '/term-events') {
+    if (ctx.demo) return json(res, 403, { error: READ_ONLY });
+    return termRoute(req, res, url);
+  }
 
   // /demo/start ma tylko tablice (bez plikow requirements/)
   if (ctx.demo === 'start' && (url === '/' || url === '/board')) return sendHtml(res, UI);

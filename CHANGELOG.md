@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.25.0] - 2026-10-03
+- Release Notes na GitHubie: skrypt `scripts/github-release.js <wersja>` (albo `--from <wersja>`, `--dry-run`) zaklada
+  lub aktualizuje GitHub Release z trescia sekcji CHANGELOG tej wersji; Latest tylko najwyzsza wersja; token z
+  `GITHUB_TOKEN` albo `git credential`. Uzupelnione Releases 0.19.0..0.24.0. Krok w procedurze wydania po pushu na GitHub.
+- Spec: `docs/specs/github-release.md` (AC-G1..AC-G5); testy `scripts/test/github-release.test.js` 4/4.
+- Wersja w gornym pasku (panel, tablica, wszystkie zakladki) jest linkiem do Release Notes tej wersji na GitHubie
+  (nowa karta); dymek "Kliknij: opis zmian tej wersji na GitHubie"; ostrzezenia o nieaktualnym serwerze/pluginie bez zmian.
+  Spec: `docs/specs/ui-switch.md` AC-U16..AC-U17; testy 130/130.
+- Okno Claude Code z prawej strony (panel, tablica, wszystkie zakladki): przycisk "Claude" w gornym pasku, terminal xterm.js
+  z prawdziwym `claude` w folderze modulu (skille /sdd:… dostepne obok tablicy). Sesja zyje na serwerze - przejscie miedzy
+  zakladkami i przeladowanie strony jej nie przerywa (odtworzenie ekranu z bufora 512 KB). Uruchom / Zakoncz, szerokosc
+  przeciagana (320 px .. 70% okna, pamietana), strona i panel karteczki zwezaja sie obok okna; ponizej 900 px okno na caly
+  ekran; okno zawsze czarne jak terminal (niezaleznie od motywu strony); klawisze w terminalu nie uruchamiaja skrotow tablicy. pty z Pythona 3 (`board/pty-helper.py`) -
+  bez zaleznosci npm; Windows / brak Pythona -> komunikat. Polecenie: `$SHELL -l -c 'exec claude'`, zmiana przez
+  `SDD_CLAUDE_CMD`. Bezpieczenstwo: start tylko po kliknieciu, zapisy z `X-SDD` i Host lokalny, strumien tylko z Host
+  lokalnego, demo bez terminala; koniec serwera (takze kill -9) konczy Claude. Serwer na starym kodzie (brak /api/term,
+  a strony juz nowe) -> komunikat o restarcie zamiast pustego terminala z samym kursorem (zgloszenie usera).
+- Spec: `docs/specs/claude-dock.md` (AC-T1..AC-T9); testy 138/138.
+
 ## [0.24.0] - 2026-10-03
 - Krok "zatwierdz slownik" przed /sdd:spec (uwaga usera: kit kazal robic /sdd:spec, a ten odmawial przez niezatwierdzony
   slownik). Nowy tryb `/sdd:domain zatwierdz`: hasla paczkami, rola z SDD.yaml, "zatwierdzam" -> `zatwierdzone (<rola>, data)`.

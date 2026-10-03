@@ -175,3 +175,13 @@ test('AC-U15: versionBadge - plugin w Claude Code nieaktualny', () => {
   assert.strictEqual(both.stale, true);
   assert.match(both.text, /serwer nieaktualny/); assert.match(both.text, /plugin nieaktualny/);
 });
+
+test('AC-U16: versionBadge - link do Release Notes na GitHubie', () => {
+  const ok = ui.versionBadge({ running: '0.24.0', disk: '0.24.0' });
+  assert.strictEqual(ok.href, 'https://github.com/SyBeer/sdd-kit/releases/tag/v0.24.0');
+  assert.match(ok.title, /Kliknij: opis zmian tej wersji na GitHubie$/);
+  const st = ui.versionBadge({ running: '0.23.1', disk: '0.24.0' });
+  assert.strictEqual(st.href, 'https://github.com/SyBeer/sdd-kit/releases/tag/v0.23.1');
+  assert.match(st.title, /Zrestartuj serwer[\s\S]*Kliknij: opis zmian/);
+  assert.strictEqual(st.stale, true);
+});
