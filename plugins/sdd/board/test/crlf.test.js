@@ -29,7 +29,9 @@ function crlfCopy(src) {
   return dst;
 }
 // rozmiar i data pliku roznia sie z natury (CRLF ma wiecej bajtow) - poza porownaniem
-const strip = p => JSON.parse(JSON.stringify(p, (k, v) => (k === 'dir' || k === 'size' || k === 'mtime' ? undefined : v)));
+// Lista plikow Intake idzie od najnowszego, a kopia ma inne daty - porownanie bez kolejnosci (Windows w Actions).
+const strip = p => JSON.parse(JSON.stringify(p, (k, v) => (k === 'dir' || k === 'size' || k === 'mtime' ? undefined
+  : k === 'files' && Array.isArray(v) ? v.slice().sort((a, b) => String(a.name).localeCompare(String(b.name))) : v)));
 
 test('AC-W1: postep modulu z CRLF taki sam jak z LF', () => {
   const lf = readProgress(DEMO_REQ), cr = readProgress(crlfCopy(DEMO_REQ));
