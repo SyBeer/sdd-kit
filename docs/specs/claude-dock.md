@@ -46,7 +46,9 @@ z `claude` uruchomionym przez serwer kitu.
 - AC-T2: `resize(120, 40)` zmienia rozmiar terminalu widziany przez program (`stty size` -> "40 120").
 - AC-T3: `buffer()` zwraca dotychczasowe wyjscie; limit obcina od poczatku (zostaja ostatnie bajty).
 - AC-T4: `stop()` konczy dlugo dzialajacy program (zdarzenie `exit` < 3 s).
-- AC-T5: srodowisko programu bez `CLAUDECODE`, z `TERM=xterm-256color`.
+- AC-T5: srodowisko programu bez `CLAUDECODE`, z `TERM=xterm-256color`. Bez zmiennych sesji Claude Code
+  (`CLAUDE_CODE_*`, `CLAUDE_PID`, `CLAUDE_EFFORT`), gdy serwer tablicy uruchomila inna sesja Claude - inaczej
+  `CLAUDE_CODE_CHILD_SESSION` wylacza zapis transkryptu (brak `/resume`). Inne zmienne (np. `CLAUDE_CONFIG_DIR`) zostaja.
 - AC-T6: `claudeArgv(env)`: domyslnie `[SHELL, '-l', '-c', 'exec claude']` (`/bin/zsh` bez SHELL);
   `SDD_CLAUDE_CMD` podmienia polecenie.
 - AC-T7 (serwer): start bez `X-SDD` -> 403; `GET /term-events` z obcym Host -> 403; `/demo/api/term/start` -> 403;

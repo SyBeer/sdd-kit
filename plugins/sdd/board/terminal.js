@@ -25,7 +25,8 @@ function claudeArgv(env) {
 
 function childEnv(env) {
   const e = Object.assign({}, env || process.env);
-  Object.keys(e).forEach(k => { if (/^CLAUDECODE/.test(k)) delete e[k]; });
+  // Zmienne sesji Claude Code, ktora uruchomila serwer: CLAUDE_CODE_CHILD_SESSION wylacza zapis transkryptu.
+  Object.keys(e).forEach(k => { if (/^(CLAUDECODE|CLAUDE_CODE_|CLAUDE_PID$|CLAUDE_EFFORT$)/.test(k)) delete e[k]; });
   e.TERM = 'xterm-256color';
   e.COLORTERM = 'truecolor';
   return e;

@@ -8,7 +8,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
-const { TermSession, claudeArgv, available } = require('../terminal');
+const { TermSession, claudeArgv, available, childEnv } = require('../terminal');
 const ui = require('../ui');
 
 const skip = available() ? false : 'brak Pythona 3 z modulem pty';
@@ -74,6 +74,16 @@ test('AC-T5: srodowisko bez CLAUDECODE, z TERM=xterm-256color', { skip }, async 
     env: Object.assign({}, process.env, { CLAUDECODE: '1' }) });
   await done;
   assert.match(s.buffer().toString(), /\[\]\[xterm-256color\]/);
+});
+
+test('AC-T5: childEnv usuwa zmienne sesji Claude Code (zapis transkryptu, /resume)', () => {
+  const e = childEnv({ PATH: '/bin', CLAUDECODE: '1', CLAUDE_CODE_CHILD_SESSION: '1', CLAUDE_CODE_SESSION_ID: 'x',
+    CLAUDE_CODE_ENTRYPOINT: 'cli', CLAUDE_PID: '123', CLAUDE_EFFORT: 'high', CLAUDE_CONFIG_DIR: '/cfg' });
+  ['CLAUDECODE', 'CLAUDE_CODE_CHILD_SESSION', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_PID', 'CLAUDE_EFFORT']
+    .forEach(k => assert.strictEqual(e[k], undefined, k));
+  assert.strictEqual(e.PATH, '/bin');
+  assert.strictEqual(e.CLAUDE_CONFIG_DIR, '/cfg');
+  assert.strictEqual(e.TERM, 'xterm-256color');
 });
 
 test('AC-T6: claudeArgv - powloka logowania, SDD_CLAUDE_CMD', () => {

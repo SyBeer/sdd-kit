@@ -1,5 +1,10 @@
 # Changelog
 
+## [Niewydane]
+- Okno Claude Code w tablicy: sesja zapisuje transkrypt i dziala `/resume`, takze gdy serwer tablicy uruchomila
+  inna sesja Claude. Terminal usuwa teraz wszystkie zmienne sesji (`CLAUDE_CODE_*`, `CLAUDE_PID`, `CLAUDE_EFFORT`),
+  nie tylko `CLAUDECODE` - odziedziczone `CLAUDE_CODE_CHILD_SESSION` wylaczalo zapis ("Transcript saving is off").
+
 ## [0.26.0] - 2026-10-03
 - Instalacja na Windows naprawiona (zgloszenie usera: instalator nie dzialal). Jedna komenda w PowerShell
   `irm https://raw.githubusercontent.com/SyBeer/sdd-kit/main/install.ps1 | iex` albo dwuklik `install.cmd` (nowy).
