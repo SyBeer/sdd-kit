@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.24.0] - 2026-10-03
+- Krok "zatwierdz slownik" przed /sdd:spec (uwaga usera: kit kazal robic /sdd:spec, a ten odmawial przez niezatwierdzony
+  slownik). Nowy tryb `/sdd:domain zatwierdz`: hasla paczkami, rola z SDD.yaml, "zatwierdzam" -> `zatwierdzone (<rola>, data)`.
+  /sdd:domain nie proponuje /sdd:spec przy niezatwierdzonym slowniku; bramka /sdd:spec liczy status kazdego hasla
+  (nie linie legendy) i zamiast samej odmowy proponuje zatwierdzanie. Panel: karta Domain z `/sdd:domain zatwierdz`
+  i "Hasła do zatwierdzenia: N". Szablon GLOSSARY.md: legenda "Statusy hasel (kolumna Status)" zamiast "Status: ...";
+  szablon CLAUDE.md: zasada o nastepnym kroku; przewodnik: nowy wariant.
+- Spec: `docs/specs/progress-ui.md` zmiana 0.24.0 (AC-71..AC-73); testy 125/125.
+
 ## [0.23.1] - 2026-10-03
 - Tablica: pod przyciskami Zapisz / Duplikuj / Usuń podpowiedz "⌘D / Ctrl+D – duplikowanie karteczki" (tylko przy
   istniejacej karteczce, nie w demo). Spec: `docs/specs/board-ui.md` punkt 20.

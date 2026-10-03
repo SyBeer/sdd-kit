@@ -209,7 +209,9 @@ const VARIANTS = {
   '/sdd:interview': [
     ['/sdd:interview live', 'Warsztat na żywo: jedno pytanie naraz, odpowiedź zapisywana od razu (dobrze działa razem z tablicą).'],
     ['/sdd:interview async', 'Rundy w plikach: pytania do każdej roli w Q-round-N-<rola>.md z terminem; potem wklejasz odpowiedzi.']],
-  '/sdd:domain': [['/sdd:domain', 'Także przebudowa modelu, gdy /sdd:intake zgłosi, że nowe źródło podważa słownik, encje albo reguły.']],
+  '/sdd:domain': [
+    ['/sdd:domain', 'Także przebudowa modelu, gdy /sdd:intake zgłosi, że nowe źródło podważa słownik, encje albo reguły.'],
+    ['/sdd:domain zatwierdz', 'Zatwierdzanie słownika przez biznes: hasła paczkami, „zatwierdzam” - bez tego /sdd:spec nie ruszy.']],
   '/sdd:spec': [
     ['/sdd:spec', 'Domyślnie: dokument wymagań (PRD) dla biznesu - wymagania proponowane paczkami, każde z Twoim „tak”.'],
     ['/sdd:spec --agent', 'Pliki dla agenta, który będzie budował (03-spec/agent/): generowane z zatwierdzonych wymagań.'],

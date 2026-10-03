@@ -46,6 +46,8 @@ aplikacji powtarzaja ten sam blad. Potwierdza tylko `[Biz]`.
 
 - Nie pisz wymagania bez zrodla. Bez zrodla = zalozenie `A-xxx` ze statusem `niepotwierdzone`.
 - Nie zmieniaj statusu na `potwierdzone` / `zatwierdzone` bez jawnej zgody czlowieka.
+- Nastepny krok podawaj zgodnie z bramkami: slownik (GLOSSARY) z haslami niezatwierdzonymi -> `/sdd:domain zatwierdz`,
+  nie /sdd:spec (jego bramka odmowi). Panel (`sdd-board`) pokazuje ten sam krok.
 - Nie sugeruj odpowiedzi w pytaniu. Pytaj o przeszlosc ("co robiles ostatnio, gdy..."),
   nie o hipotezy ("czy chcialbys...").
 - Nie edytuj plikow oznaczonych `GENEROWANE`.

@@ -8,7 +8,10 @@ description: Buduje PRD (cel, zakres, poza zakresem, wymagania R-xxx z zrodlem, 
 Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowane.
 
 ## Bramki (odmow i wyjasnij, jesli nie spelnione)
-- `SDD.yaml level: full` i GLOSSARY ma status `zatwierdzone` (przy `light` bramka pominieta)
+- `SDD.yaml level: full` i kazde haslo w tabeli GLOSSARY ma w kolumnie Status `zatwierdzone` (przy `light` bramka
+  pominieta). Linia legendy nad tabela ("Statusy hasel: ...") to nie status - licz tylko wiersze tabeli.
+  Gdy bramka nie przechodzi: nie koncz na odmowie - wypisz hasla niezatwierdzone (ile, ktore) i zaproponuj przejscie
+  zatwierdzania od razu, jak `/sdd:domain zatwierdz` (rola z SDD.yaml, paczki, "zatwierdzam"); po zatwierdzeniu wroc do spec.
 - brak Q ze statusem `sprzeczne`
 
 ## Tryb domyslny: PRD

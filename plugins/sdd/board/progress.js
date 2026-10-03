@@ -315,6 +315,17 @@ function readProgress(reqDir) {
     vs.howto = ['Skopiuj komendę i wklej ją w Claude Code.', 'AI sprawdzi aktualne wymagania i zapisze nowy raport z odciskiem wymagań.',
       'Gdy gotowość wróci do 100%, etap znów będzie gotowy.'];
   }
+  // Slownik niezatwierdzony (zmiana 0.24.0, AC-71): krok zatwierdzania zamiast proponowania /sdd:spec, ktory by odmowil.
+  const ds = stages.find(s => s.key === 'domain');
+  const waitGl = ds ? ds.counts.terms - ds.counts.approved : 0;
+  if (ds && ds.counts.terms > 0 && waitGl > 0) {
+    ds.command = '/sdd:domain zatwierdz';
+    ds.desc = 'Słownik pojęć czeka na zatwierdzenie przez biznes - bez tego /sdd:spec nie ruszy.';
+    ds.howto = ['Skopiuj komendę i wklej ją w Claude Code.',
+      'Hasła do zatwierdzenia: ' + waitGl + ' - AI pokaże je paczkami, z definicją i źródłem.',
+      'Zatwierdza rola z SDD.yaml (np. właściciel procesu): „zatwierdzam …” albo poprawka definicji.',
+      'Gdy wszystkie hasła są zatwierdzone, następny krok to /sdd:spec.'];
+  }
   const hs = stages.find(s => s.key === 'handover');
   if (hs && hs.stale) {
     hs.desc = 'Wymagania zmieniły się po przekazaniu - wygeneruj pliki dla agenta i przekaż zadania ponownie.';

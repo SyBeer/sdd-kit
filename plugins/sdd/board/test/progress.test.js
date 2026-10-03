@@ -411,3 +411,43 @@ test('AC-66: handover bez odcisku - validate po handover nie szkodzi, spec po ha
   assert.strictEqual(h.status, 'active');
   assert.strictEqual(h.stale, true);
 });
+
+// ---- Zmiana 0.24.0: krok "zatwierdz slownik" (AC-71, AC-72)
+test('AC-71: Domain z niezatwierdzonymi haslami -> /sdd:domain zatwierdz', () => {
+  const req = freshProject();
+  write(req, '00-intake/mail.md', 'tresc');
+  append(req, '00-intake/INDEX.md', '| mail.md | 2026-10-03 | mail | [Biz] | Proces | |\n');
+  append(req, '01-interview/QUESTIONS.md', '| Q-001 | Kto? | odpowiedziane | sponsor | mail | | D-001 |\n');
+  append(req, '01-interview/DECISIONS.md', '\n## D-001 | 2026-10-03 | X\nDecyzja: y\nPowod: z\n');
+  append(req, '02-domain/GLOSSARY.md', [
+    '| Faktura | Dokument | | FV | [Dok] mail | zatwierdzone (sponsor, 2026-10-03) |',
+    '| Korekta | Zmiana | | KOR | [Dok] mail | robocze |',
+    '| Nota | Obciazenie | | NO | [Dok] mail | robocze |',
+  ].join('\n') + '\n');
+  let p = readProgress(req), d = stage(p, 'domain');
+  assert.strictEqual(d.status, 'active');
+  assert.strictEqual(d.command, '/sdd:domain zatwierdz');
+  assert.match(d.howto.join(' '), /do zatwierdzenia: 2\b/);
+  assert.strictEqual(p.next.key, 'domain');
+  assert.strictEqual(p.next.command, '/sdd:domain zatwierdz');
+  // wszystkie zatwierdzone -> zwykla komenda, dalej spec
+  const g = path.join(req, '02-domain/GLOSSARY.md');
+  fs.writeFileSync(g, fs.readFileSync(g, 'utf8').replace(/\| robocze \|/g, '| zatwierdzone |'));
+  p = readProgress(req); d = stage(p, 'domain');
+  assert.strictEqual(d.status, 'done');
+  assert.strictEqual(d.command, '/sdd:domain');
+  // brak hasel -> /sdd:domain
+  assert.strictEqual(stage(readProgress(freshProject()), 'domain').command, '/sdd:domain');
+});
+
+test('AC-72: szablon slownika bez mylacej linii Status, skille spec i domain z krokiem zatwierdzania', () => {
+  const tpl = fs.readFileSync(path.join(TEMPLATES, '02-domain', 'GLOSSARY.md'), 'utf8');
+  assert.ok(!/^Status:/m.test(tpl), 'linia legendy wygladala jak status pliku');
+  const SK = path.join(__dirname, '..', '..', 'skills');
+  const spec = fs.readFileSync(path.join(SK, 'spec', 'SKILL.md'), 'utf8');
+  const domain = fs.readFileSync(path.join(SK, 'domain', 'SKILL.md'), 'utf8');
+  assert.match(spec, /kazde haslo/i);
+  assert.match(spec, /\/sdd:domain zatwierdz/);
+  assert.match(domain, /\/sdd:domain zatwierdz/);
+  assert.match(domain, /nie proponuj \/sdd:spec/i);
+});

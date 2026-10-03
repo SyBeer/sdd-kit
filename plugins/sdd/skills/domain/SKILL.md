@@ -51,8 +51,22 @@ Gdy intake zglosil przebudowe albo oznaczyl elementy jako `zakwestionowane`:
 - Pierwsze utworzenie plikow: piszesz sam.
 - Zmiana istniejacej definicji w GLOSSARY lub reguly BR: PYTASZ (3-5 linijek, co i dlaczego).
 - Zdjecie statusu `zakwestionowane`: PYTASZ.
-- Status GLOSSARY `zatwierdzone` ustawia tylko czlowiek. Przypomnij: bez zatwierdzonego slownika /sdd:spec odmowi pracy.
+- Status hasla `zatwierdzone` ustawia tylko czlowiek - przez tryb `/sdd:domain zatwierdz` ponizej.
+
+## Zatwierdzanie slownika (`/sdd:domain zatwierdz`)
+Krok miedzy modelem a /sdd:spec: bramka /sdd:spec wymaga, zeby kazde haslo w tabeli GLOSSARY bylo `zatwierdzone`.
+1. Kto zatwierdza: rola z `SDD.yaml` z `approves` zawierajacym GLOSSARY. Zapytaj, kto jest przy komputerze / kto
+   odpowiada (rola, nie osoba) - bez tego nic nie zatwierdzasz.
+2. Pokaz hasla inne niz `zatwierdzone` paczkami po 5-10: pojecie, definicja, synonimy, zrodlo; `zakwestionowane`
+   osobno, z pytaniem Q-xxx, ktore je podwazylo (te zatwierdza sie dopiero po rozstrzygnieciu Q).
+3. User odpowiada: "zatwierdzam <hasla albo wszystkie>" albo poprawka definicji. Poprawka - jak zmiana definicji
+   wyzej (3-5 linijek, kaskada), potem ponowne pytanie o zatwierdzenie.
+4. Po "zatwierdzam": status `zatwierdzone (<rola>, YYYY-MM-DD)`, linia w CHANGELOG
+   (`YYYY-MM-DD | domain | zatwierdzone hasla: ... | <rola>`).
+5. Na koniec: ile zatwierdzonych / ile zostalo. Wszystkie zatwierdzone -> nastepny krok /sdd:spec.
 
 ## Na koniec
 CHANGELOG + 5 linijek: ile pojec, aktorow, encji, regul, ile brakow poszlo do pytan,
 ile elementow zostaje `zakwestionowane`.
+Nastepny krok: dopoki jakiekolwiek haslo nie jest `zatwierdzone`, podaj `/sdd:domain zatwierdz` z liczba hasel do
+zatwierdzenia - nie proponuj /sdd:spec (jego bramka odmowi). /sdd:spec dopiero przy calym slowniku zatwierdzonym.

@@ -554,3 +554,31 @@ Cel: z listy "Wrzucone pliki" na karcie Intake da sie otworzyc/zachowac surowiec
 - AC-69: `GET /api/intake?name=...` -> 200, tresc pliku, `Content-Disposition: attachment` z nazwa (`filename*=UTF-8''...`);
   zla nazwa -> 404; obcy Host -> 403; `/demo/api/intake?name=...` pobiera plik demo.
 - AC-70 (reczne): klik w nazwe pliku na karcie Intake zapisuje plik w Pobranych.
+
+# Zmiana 0.24.0 (2026-10-03): krok "zatwierdz slownik" przed /sdd:spec
+
+Uwaga usera: "SDD-kit ktorys raz z rzedu napisal mi, ze mam zrobic /sdd:spec, ale zamiast to robic pisze, ze slowniki sa
+niezatwierdzone. Zrob tak, zeby pojawial sie odpowiedni krok w procesie." Przyczyna: w procesie nie bylo kroku zatwierdzania
+slownika - /sdd:domain konczyl sie przypomnieniem, agent proponowal /sdd:spec, a bramka /sdd:spec odmawiala. Dodatkowo
+linia legendy w GLOSSARY.md ("Status: robocze | ...") wygladala jak status calego pliku.
+
+## Zakres
+1. Skill domain: tryb `/sdd:domain zatwierdz` - niezatwierdzone hasla paczkami po 5-10 (pojecie, definicja, zrodlo),
+   pytanie, kto zatwierdza (rola z SDD.yaml `approves: GLOSSARY`), po "zatwierdzam ..." status
+   `zatwierdzone (<rola>, YYYY-MM-DD)`; poprawki definicji wg zasad /sdd:domain. "Na koniec" /sdd:domain: dopoki jakies
+   haslo nie jest zatwierdzone, nastepny krok to `/sdd:domain zatwierdz` (nigdy /sdd:spec).
+2. Skill spec: bramka = kazde haslo w tabeli GLOSSARY ma status `zatwierdzone` (linia legendy to nie status). Gdy bramka
+   nie przechodzi - lista niezatwierdzonych hasel i propozycja przejscia zatwierdzania od razu (jak /sdd:domain zatwierdz),
+   zamiast samej odmowy.
+3. Zasada w szablonie CLAUDE.md: nastepny krok podawaj zgodnie z bramkami (niezatwierdzony slownik -> /sdd:domain zatwierdz).
+4. Panel: karta Domain z haslami, z ktorych nie wszystkie sa zatwierdzone - komenda `/sdd:domain zatwierdz`, opis kroku
+   i instrukcja "Hasła do zatwierdzenia: N"; bez hasel - `/sdd:domain` jak dotad.
+5. Szablon GLOSSARY.md: legenda "Statusy haseł (kolumna Status): ..." zamiast "Status: ...".
+6. Przewodnik: wariant `/sdd:domain zatwierdz`.
+
+## Kryteria akceptacji
+- AC-71: `readProgress` - Domain z haslami, nie wszystkie zatwierdzone: `command` = `/sdd:domain zatwierdz`, `howto` zawiera
+  liczbe hasel czekajacych; wszystkie zatwierdzone albo brak hasel - `command` = `/sdd:domain`; `next` przejmuje komende.
+- AC-72: szablon GLOSSARY.md nie ma linii zaczynajacej sie od "Status:"; skill spec opisuje bramke jako status kazdego hasla
+  i propozycje zatwierdzania; skill domain ma tryb `zatwierdz` i zakaz proponowania /sdd:spec przy niezatwierdzonym slowniku.
+- AC-73 (reczne): fv-manager (9 hasel roboczych) - panel: Domain, `/sdd:domain zatwierdz`, "Hasła do zatwierdzenia: 9".
