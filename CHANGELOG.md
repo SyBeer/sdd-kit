@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.23.0] - 2026-10-03
+- Tablica: kopiowanie karteczek. "Duplikuj" w panelu karteczki i Cmd/Ctrl+D - kopia pod oryginalem, panel na kopii;
+  przeciagniecie z wcisnietym Option (Alt) kopiuje zamiast przenosic (do kolumny, innego procesu, na przerwe = nowa kolumna).
+  Kopia bez numeru (ref), synchronizacji i odpowiedzi - "tylko na tablicy", do plikow przez /sdd:board sync. Jeden krok Cofnij.
+- Spec: `docs/specs/board-ui.md` punkt 20 (AC-B50, AC-B51); testy 123/123.
+
 ## [0.22.0] - 2026-09-27
 Czytelniejsza zakladka "Jak to dziala" (spec: `docs/specs/info-config.md`, AC-C22..AC-C23).
 - Sekcje przewodnika (Tablica i panel, Zrodla, Identyfikatory, Tablica warsztatowa, Panel i serwer) jako listy punktowane.

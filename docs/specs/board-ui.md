@@ -177,6 +177,16 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
      "‹ Poprzednie · 3 z 18 · Następne ›" i "Zakończ"; kazdy krok przewija tablice do pytania, otwiera je w panelu
      i ustawia kursor w polu odpowiedzi. Wlacza "Pokaż pytania", jesli byly schowane.
 
+20. Kopiowanie karteczek (0.23.0, uwaga usera: "potrzebuje, zebys zrobil kopiowanie karteczek"):
+   - Panel istniejacej karteczki: przycisk "Duplikuj" (obok "Usuń"). Skrot Cmd/Ctrl+D przy zaznaczonej karteczce (nie w polu
+     tekstowym). Kopia staje pod oryginalem, w tej samej kolumnie; panel przechodzi na kopie.
+   - Przeciaganie z wcisnietym Option (Alt): upuszczenie kopiuje zamiast przenosic - do kolumny, przed karteczke albo na
+     przerwe miedzy kolumnami (nowa kolumna), takze do innego procesu. Kursor pokazuje kopiowanie (+). Oryginal zostaje.
+   - Kopia: ta sama tresc, typ, proces; nowe ID karteczki; BEZ `ref` (numer R/Q/BR nalezy do oryginalu - dwie karteczki nie
+     moga udawac tego samego elementu w plikach), bez `synced`, `file`, odpowiedzi; `by: "człowiek"`, `source` oryginalu
+     z dopiskiem "(kopia)"; daty nowe. Stan: "tylko na tablicy" - do plikow trafi przez `/sdd:board sync` jak nowa karteczka.
+   - Jeden krok Cofnij. W demo brak.
+
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module.
 - Cofanie zmian agenta i historia miedzy sesjami przegladarki.
@@ -230,6 +240,8 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B47: `answerState(note, questions)`: `hot` z `answer` i pytaniem w pliku otwartym/zadanym/sprzecznym albo bez pytania w pliku -> 'pending'; z `answer` i pytaniem zamknietym -> 'recorded'; bez `answer`, pusta odpowiedz albo nie `hot` -> null. `pendingAnswers(board, questions)` - karteczki 'pending'.
 - AC-B48: `questionOrder(board, questions)`: id karteczek `hot` w kolejnosci: sprzeczne, blokujace, zadane, otwarte (w grupie po ID pytania), pytania spoza pliku, na koncu odpowiedziane na tablicy i zamkniete w pliku.
 - AC-B49 (reczne): horizon-zlecenia (kopia): panel pytania ma Odpowiedz i Kto; zapis bez "Kto" -> komunikat; z "Kto" -> znacznik na karteczce i licznik w pasku; Przegląd pytań prowadzi po kolei z kursorem w odpowiedzi; Cofnij cofa odpowiedz; oznaczenie Q w pliku jako odpowiedziane -> karteczka szara z odpowiedzia; tryb ciemny czytelny.
+- AC-B50: `copyNote(b, id, now, dest)`: bez `dest` - kopia zaraz pod oryginalem w tej samej kolumnie; z `dest` {lane, col, before, newCol} - w tym miejscu (newCol - wstawiona kolumna, dalsze w prawo); kopia ma tresc, typ, proces, nowe unikalne `id`, `by: "człowiek"`, `source` + " (kopia)", `created`=`updated`=now i nie ma `ref`, `synced`, `file`, `answer`, `answeredBy`, `answeredAt`; oryginal bez zmian; zwraca id kopii; nieznane id -> null.
+- AC-B51 (reczne): Duplikuj i Cmd+D - kopia pod oryginalem, panel na kopii, znaczek "tylko na tablicy"; Option+przeciagniecie do innej kolumny/procesu i na przerwe - kopia tam, oryginal zostaje; Cofnij usuwa kopie; w demo brak przycisku.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.
 

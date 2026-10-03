@@ -60,7 +60,7 @@ main{padding:0 20px 24px}
 .lname{background:none;border:0;padding:0;text-align:left;font-weight:700;font-size:17px;line-height:1.2;cursor:text;border-bottom:1px dashed transparent;word-break:break-word}
 .lname:hover{border-bottom-color:var(--muted)}
 /* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
-body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo #p-addnote,body.demo #p-addlane,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del{display:none}
+body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo #p-addnote,body.demo #p-addlane,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del,body.demo #dup{display:none}
 body.demo-start header h1{display:none}
 body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
 .lane-title input{font:inherit;font-weight:700;font-size:16px;width:100%;padding:3px 5px;border:1px solid var(--ink);border-radius:3px;background:var(--panel);color:var(--ink)}
@@ -304,6 +304,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   <div class="row">
     <button class="b p" id="save">Zapisz</button>
     <button class="b" id="cancel" hidden>Anuluj</button>
+    <button class="b" id="dup" title="Kopia pod oryginałem (⌘D / Ctrl+D). Kopia w inne miejsce: przeciągnij z wciśniętym Option (Alt).">Duplikuj</button>
     <button class="b danger" id="del">Usuń</button>
     <span class="ok" id="ok"></span>
   </div>
@@ -399,13 +400,15 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       add.title=c===last?'Nowa karteczka w procesie „'+lane+'”':'Nowa karteczka pod tą kolumną';add.setAttribute('aria-label',add.title);
       (function(real){ add.onclick=function(){ newNote(lane,real); }; })(real);
       if(!isNew) col.appendChild(add);
-      col.addEventListener('dragover',function(e){ e.preventDefault(); this.classList.add('over'); mark(dropTarget(this,e)); });
+      col.addEventListener('dragover',function(e){ e.preventDefault(); e.dataTransfer.dropEffect=e.altKey?'copy':'move'; this.classList.add('over'); mark(dropTarget(this,e)); });
       col.addEventListener('dragleave',function(e){ if(!this.contains(e.relatedTarget)){ this.classList.remove('over'); mark(null); } });
       col.addEventListener('drop',function(e){
         e.preventDefault(); this.classList.remove('over'); mark(null);
         var id=e.dataTransfer.getData('text/plain'); if(!byId(id)) return;
         var t=dropTarget(this,e);
-        ops.placeNote(board,id,this.dataset.lane,parseInt(this.dataset.col,10),{before:t.before}); // pusta kolumna zrodlowa znika (0.14.1)
+        var dest={lane:this.dataset.lane,col:parseInt(this.dataset.col,10),before:t.before};
+        if(e.altKey&&!board._demo){ var cid=ops.copyNote(board,id,new Date().toISOString(),dest); commit(); say('Skopiowano karteczkę (Option + przeciągnięcie).'); return; } // kopia (0.23.0)
+        ops.placeNote(board,id,dest.lane,dest.col,{before:dest.before}); // pusta kolumna zrodlowa znika (0.14.1)
         commit();
       });
       cols.appendChild(col);
@@ -422,11 +425,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     var b=document.createElement('button');b.className='ins-v';b.title='Wstaw kolumnę tutaj – dalsze przesuną się w prawo';b.setAttribute('aria-label',b.title);
     b.innerHTML='<span>+</span>'; b.onclick=function(){ newNote(lane,col,{newCol:true}); };
     // upuszczenie karteczki na przerwe = nowa kolumna z ta karteczka, dalsze w prawo (0.14.1)
-    b.addEventListener('dragover',function(e){ e.preventDefault(); b.classList.add('over'); });
+    b.addEventListener('dragover',function(e){ e.preventDefault(); e.dataTransfer.dropEffect=e.altKey?'copy':'move'; b.classList.add('over'); });
     b.addEventListener('dragleave',function(){ b.classList.remove('over'); });
     b.addEventListener('drop',function(e){
       e.preventDefault(); e.stopPropagation(); b.classList.remove('over');
       var id=e.dataTransfer.getData('text/plain'); if(!byId(id)) return;
+      if(e.altKey&&!board._demo){ ops.copyNote(board,id,new Date().toISOString(),{lane:lane,col:col,newCol:true}); commit(); say('Skopiowano karteczkę do nowej kolumny.'); return; }
       ops.placeNote(board,id,lane,col,{newCol:true}); commit();
     });
     return b;
@@ -466,7 +470,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     }
     if(n.type==='space'){
       el.title='Odstęp – puste miejsce na tablicy, nie trafia do plików';
-      el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id)});
+      el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id); e.dataTransfer.effectAllowed='copyMove';});
       el.addEventListener('click',function(){ openNote(n.id); });
       return el;
     }
@@ -483,7 +487,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     var st=syncOf(n);
     if(st!=='board'){ var sb=document.createElement('span'); sb.className='sync '+st; sb.textContent=SYNC[st][0]; el.appendChild(sb); }
     el.title=['Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
-    el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id)});
+    el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id); e.dataTransfer.effectAllowed='copyMove';});
     el.addEventListener('click',function(){ openNote(n.id); });
     return el;
   }
@@ -577,6 +581,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(!(e.metaKey||e.ctrlKey)||e.altKey||typing(e.target)) return;
     var k=e.key.toLowerCase();
     if(k==='z'&&!e.shiftKey){ e.preventDefault(); undo(); }
+    else if(k==='d'&&!e.shiftKey&&sel){ e.preventDefault(); duplicate(); }
     else if((k==='z'&&e.shiftKey)||(k==='y'&&e.ctrlKey&&!e.metaKey)){ e.preventDefault(); redo(); }
   });
 
@@ -660,8 +665,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     filledFor=n?n.id:null; $('#ok').textContent='';
     $('#cancel').hidden=!!n;
     $('#f-ans').value=n&&n.answer||''; $('#f-by').value=n&&n.answeredBy||'';
-    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; ansBox(); return; }
-    $('#del').hidden=false;
+    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; ansBox(); return; }
+    $('#del').hidden=false; $('#dup').hidden=false;
     $('#ph').textContent=('Karteczka '+(n.ref||'')).trim();
     $('#f-text').value=n.text||'';setType(n.type||'ev');$('#f-lane').value=n.lane;$('#f-ref').value=n.ref||'';
     ansBox(); fillMeta(n);
@@ -702,6 +707,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     filledFor=undefined; commit().then(function(){ $('#ok').textContent='Zapisano ✓'; });
   };
   $('#del').onclick=function(){ if(!sel)return; ops.removeNote(board,sel); closeDrawer(); commit(); };
+  // Kopiowanie karteczki (0.23.0): kopia pod oryginalem, panel przechodzi na kopie
+  function duplicate(){
+    if(!sel||draft||board._demo||!byId(sel)) return;
+    var id=ops.copyNote(board,sel,new Date().toISOString()); commit(); openNote(id);
+    say('Skopiowano – kopia stoi pod oryginałem, bez numeru (trafi do plików przez /sdd:board sync).');
+  }
+  $('#dup').onclick=duplicate;
   $('#close').onclick=closeDrawer;
   $('#cancel').onclick=closeDrawer; // Anuluj przy nowej karteczce = Escape (0.14.1)
   $('#up').onclick=function(){ if(sel){ ops.stepNote(board,sel,-1); commit(); } };

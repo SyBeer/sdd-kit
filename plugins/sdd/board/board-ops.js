@@ -110,6 +110,24 @@
     closeCol(b, from.lane, from.col);
   }
 
+  // Kopia karteczki (AC-B50): tresc, typ, proces; bez ref, synchronizacji i odpowiedzi - numer w plikach ma oryginal.
+  // Bez dest - zaraz pod oryginalem; dest {lane, col, before, newCol} - we wskazanym miejscu (Option+przeciagniecie).
+  function copyNote(b, id, now, dest) {
+    const list = notes(b), n = list.find(function (x) { return x.id === id; });
+    if (!n) return null;
+    const base = 'n' + Date.now().toString(36) + 'c';
+    let nid = base, k = 2;
+    while (list.some(function (x) { return x.id === nid; })) nid = base + (k++);
+    const c = { id: nid, type: n.type, text: n.text, lane: n.lane, col: n.col || 0, by: 'człowiek',
+      source: (n.source ? n.source + ' ' : '') + '(kopia)', created: now, updated: now };
+    if (!dest) { list.splice(list.indexOf(n) + 1, 0, c); return nid; }
+    if (dest.newCol) insertCol(b, dest.lane, dest.col);
+    c.lane = dest.lane; c.col = dest.col;
+    list.push(c);
+    moveNote(b, nid, dest.lane, dest.col, dest.before);
+    return nid;
+  }
+
   function removeNote(b, id) {
     const n = notes(b).find(function (x) { return x.id === id; });
     if (!n) return;
@@ -329,5 +347,5 @@
     };
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
+  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, copyNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
 });

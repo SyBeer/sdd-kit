@@ -303,3 +303,44 @@ test('AC-B37: boardSwitched - wykrywa tablice z innego pliku', () => {
   assert.deepStrictEqual(ops.boardSwitched('/a/board.json', { _file: '/x/example.json' }), { from: '/a/board.json', to: '/x/example.json' });
   assert.strictEqual(ops.boardSwitched('/a/board.json', {}), null, 'stary serwer bez _file - nie ostrzegaj na slepo');
 });
+
+test('AC-B50: copyNote - kopia pod oryginalem albo we wskazanym miejscu, bez ref i synchronizacji', () => {
+  const NOW = '2026-10-03T12:00:00.000Z';
+  const mk = () => ({ lanes: ['A', 'B'], notes: [
+    { id: 'a', lane: 'A', col: 0, type: 'pol', text: 'Regula', ref: 'BR-001', source: '[Biz] warsztat', by: 'agent',
+      file: '02-domain/RULES.md', synced: 'x', created: 't0', updated: 't0' },
+    { id: 'b', lane: 'A', col: 0, type: 'ev', text: 'Zdarzenie' },
+    { id: 'c', lane: 'A', col: 1, type: 'cmd', text: 'Komenda' },
+    { id: 'h', lane: 'B', col: 0, type: 'hot', text: 'Pytanie', ref: 'Q-001', answer: 'tak', answeredBy: 'sponsor', answeredAt: 't1' },
+  ] });
+  let b = mk();
+  const id = ops.copyNote(b, 'a', NOW);
+  const k = b.notes.find(n => n.id === id);
+  assert.notStrictEqual(id, 'a');
+  assert.deepStrictEqual(b.notes.filter(n => n.lane === 'A' && n.col === 0).map(n => n.id), ['a', id, 'b'], 'zaraz pod oryginalem');
+  assert.deepStrictEqual([k.text, k.type, k.lane, k.col, k.by, k.source, k.created, k.updated], ['Regula', 'pol', 'A', 0, 'człowiek', '[Biz] warsztat (kopia)', NOW, NOW]);
+  for (const f of ['ref', 'synced', 'file']) assert.strictEqual(f in k, false, f);
+  assert.strictEqual(b.notes.find(n => n.id === 'a').ref, 'BR-001', 'oryginal bez zmian');
+  // w inne miejsce: inny proces, przed karteczka
+  b = mk();
+  const id2 = ops.copyNote(b, 'c', NOW, { lane: 'B', col: 0, before: 'h' });
+  assert.deepStrictEqual(b.notes.filter(n => n.lane === 'B' && n.col === 0).map(n => n.id), [id2, 'h']);
+  assert.strictEqual(b.notes.find(n => n.id === 'c').lane, 'A', 'oryginal zostaje');
+  // nowa kolumna
+  b = mk();
+  const id3 = ops.copyNote(b, 'b', NOW, { lane: 'A', col: 1, newCol: true });
+  assert.strictEqual(b.notes.find(n => n.id === id3).col, 1);
+  assert.strictEqual(b.notes.find(n => n.id === 'c').col, 2);
+  // pytanie: bez odpowiedzi i numeru
+  b = mk();
+  const qid = ops.copyNote(b, 'h', NOW);
+  const q = b.notes.find(n => n.id === qid);
+  for (const f of ['ref', 'answer', 'answeredBy', 'answeredAt']) assert.strictEqual(f in q, false, f);
+  assert.strictEqual(q.source, '(kopia)');
+  // unikalne id przy wielu kopiach naraz
+  b = mk();
+  const ids = [ops.copyNote(b, 'a', NOW), ops.copyNote(b, 'a', NOW), ops.copyNote(b, 'a', NOW)];
+  assert.strictEqual(new Set(b.notes.map(n => n.id)).size, b.notes.length);
+  assert.strictEqual(ids.length, 3);
+  assert.strictEqual(ops.copyNote(b, 'nie-ma', NOW), null);
+});
