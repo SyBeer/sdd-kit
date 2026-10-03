@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.23.1] - 2026-10-03
+- Tablica: pod przyciskami Zapisz / Duplikuj / Usuń podpowiedz "⌘D / Ctrl+D – duplikowanie karteczki" (tylko przy
+  istniejacej karteczce, nie w demo). Spec: `docs/specs/board-ui.md` punkt 20.
+
 ## [0.23.0] - 2026-10-03
 - Tablica: kopiowanie karteczek. "Duplikuj" w panelu karteczki i Cmd/Ctrl+D - kopia pod oryginalem, panel na kopii;
   przeciagniecie z wcisnietym Option (Alt) kopiuje zamiast przenosic (do kolumny, innego procesu, na przerwe = nowa kolumna).

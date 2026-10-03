@@ -185,6 +185,8 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    - Kopia: ta sama tresc, typ, proces; nowe ID karteczki; BEZ `ref` (numer R/Q/BR nalezy do oryginalu - dwie karteczki nie
      moga udawac tego samego elementu w plikach), bez `synced`, `file`, odpowiedzi; `by: "człowiek"`, `source` oryginalu
      z dopiskiem "(kopia)"; daty nowe. Stan: "tylko na tablicy" - do plikow trafi przez `/sdd:board sync` jak nowa karteczka.
+   - Pod przyciskami Zapisz / Duplikuj / Usuń podpowiedz "⌘D / Ctrl+D – duplikowanie karteczki" (0.23.1, uwaga usera);
+     tylko przy istniejacej karteczce, jak przycisk Duplikuj.
    - Jeden krok Cofnij. W demo brak.
 
 ## Poza zakresem

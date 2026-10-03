@@ -60,7 +60,7 @@ main{padding:0 20px 24px}
 .lname{background:none;border:0;padding:0;text-align:left;font-weight:700;font-size:17px;line-height:1.2;cursor:text;border-bottom:1px dashed transparent;word-break:break-word}
 .lname:hover{border-bottom-color:var(--muted)}
 /* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
-body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo #p-addnote,body.demo #p-addlane,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del,body.demo #dup{display:none}
+body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo #p-addnote,body.demo #p-addlane,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del,body.demo #dup,body.demo #dupkey{display:none}
 body.demo-start header h1{display:none}
 body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
 .lane-title input{font:inherit;font-weight:700;font-size:16px;width:100%;padding:3px 5px;border:1px solid var(--ink);border-radius:3px;background:var(--panel);color:var(--ink)}
@@ -117,6 +117,8 @@ body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:trans
 .note .ans{font-size:12px;font-style:italic;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .note.answered{outline:3px solid var(--rm);outline-offset:1px}
 .idhint{margin-top:3px}
+.dupkey{margin-top:6px}
+.dupkey[hidden]{display:none}
 .ansbox{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
 .ansbox[hidden]{display:none}
 .qbar .rv{display:inline-flex;gap:6px;align-items:center}
@@ -308,6 +310,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     <button class="b danger" id="del">Usuń</button>
     <span class="ok" id="ok"></span>
   </div>
+  <p class="hint dupkey" id="dupkey" hidden>⌘D / Ctrl+D – duplikowanie karteczki</p>
   <div class="src" id="src"></div>
   </div>
 </aside>
@@ -665,8 +668,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     filledFor=n?n.id:null; $('#ok').textContent='';
     $('#cancel').hidden=!!n;
     $('#f-ans').value=n&&n.answer||''; $('#f-by').value=n&&n.answeredBy||'';
-    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; ansBox(); return; }
-    $('#del').hidden=false; $('#dup').hidden=false;
+    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; $('#dupkey').hidden=true; ansBox(); return; }
+    $('#del').hidden=false; $('#dup').hidden=false; $('#dupkey').hidden=false;
     $('#ph').textContent=('Karteczka '+(n.ref||'')).trim();
     $('#f-text').value=n.text||'';setType(n.type||'ev');$('#f-lane').value=n.lane;$('#f-ref').value=n.ref||'';
     ansBox(); fillMeta(n);
