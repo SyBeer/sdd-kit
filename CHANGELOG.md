@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.0] - 2026-10-04
 - `/sdd:board processes` (skill board): procesy dzialajacej aplikacji na tablicy - pasy wg celu uzytkownika,
   karteczki act/cmd/pol/ev/rm ze zrodlem `[App] plik:linia`, decyzje `[Biz]` wygrywaja z kodem ("docelowo; dzis ..."),
   rozjazdy kod vs dokumentacja jako `hot` z kolejnym Q. Tylko board.json; do plikow przez `sync`. Wzor: warsztat fv-manager 2026-10-03.
