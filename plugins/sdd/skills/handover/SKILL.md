@@ -63,6 +63,9 @@ zmienna `REDMINE_API_KEY` i Pek kluczy macOS (`redmine-api-key`). **Nie otwieraj
      w jakim zespol wypelnia to pole w istniejacych zadaniach (zajrzyj do 1-2 zadan projektu); domyslnie kazde
      kryterium jako `**AC-xxx-n**`, `**Given** ...`, `**When** ...`, `**Then** ...` w osobnych liniach, kryteria
      rozdzielone pusta linia. Tabela w opisie zostaje - pole jest dla testerow UAT.
+     Ten uklad czyta tez wtyczka UAT w Redmine (`uat_tests`, repo redmine-UAT-plugin): przy "Gotowy do UAT" kazde
+     kryterium staje sie przypadkiem "Test UAT" z tytulem `AC-xxx-n: <Then>`. Nie zaczynaj linii w kryteriach od
+     punktu listy (`- `, `1. `) - wtyczka uznalaby ja za osobny przypadek.
    - `attachments` (opcjonalnie) = pliki z `requirements/` dotyczace wymagania - zwykle zrzuty ekranu i dokumenty
      z `00-intake/` wskazane w zrodle R albo w INDEX.md. Skrypt je wysle i dolaczy; w opisie wstaw obraz po nazwie
      pliku (bez sciezki). Pliki, ktore zadanie juz ma, nie ida drugi raz. Nie dolaczaj surowca z danymi osobowymi

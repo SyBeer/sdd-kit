@@ -224,7 +224,7 @@ const SECTIONS = [
     'Panel, tablica i te zakładki odświeżają się same, gdy Claude zmienia pliki.',
     'Komend wymagających rozmowy nie uruchamia się z panelu - kopiujesz je do Claude Code.',
     'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.'] },
-  // Integracja z Redmine (0.28.8, prosba usera: "dopisz w Jak to dziala sposob dzialania integracji z Redmine")
+  // Integracja z Redmine (0.28.8; wtyczka UAT 0.28.14, AC-RM20; prosba usera: "dopisz w Jak to dziala sposob dzialania integracji z Redmine")
   { title: 'Integracja z Redmine', items: [
     '**Ustawienie** – Konfiguracja: backlog „redmine”, adres Redmine, projekt (można wkleić adres projektu z przeglądarki) i klucz API. W SDD.yaml modułu dodatkowo: redmine_ac_field (pole na kryteria akceptacji, np. „Kryteria akceptacji”), opcjonalnie redmine_tracker, redmine_status_start, redmine_status_done.',
     '**Klucz API** – zapisany w ~/.sdd-kit/.env na tym komputerze (Mac i Windows). Czyta go tylko sdd-kit; Claude go nie otwiera, a panel pokazuje tylko, czy jest ustawiony. Klucz bierzesz z Redmine: Moje konto → Klucz dostępu do API.',
@@ -232,6 +232,7 @@ const SECTIONS = [
     '**Ponowne przekazanie** – po zmianie wymagań aktualizuje te same zadania (numery z TRACEABILITY.md), nie zakłada nowych i nie dubluje załączników. Zadań usuniętych z wymagań nie zamyka – wypisuje je do decyzji.',
     '**Pliki lokalne** – zostają: 04-validation/redmine-RRRR-MM-DD.json (co wysłano) i TRACEABILITY.md (wymaganie → kryterium → #zadanie w Redmine → test). Wymagania w plikach są dalej prawdą; zadanie w Redmine to ich kopia dla zespołu.',
     '**Agent budujący aplikację** – pracuje na plikach 03-spec/agent/*/tasks.md, nie na opisach w Redmine. Status zmienia przez /sdd:handover status #numer: start („W realizacji”), done („Code review”, z commitem i kryteriami). Komentarz ma dopisek „Wygenerowane przez AI [Claude Code]”. Statusy UAT, zamknięcie i odrzucenie ustawia człowiek.',
+    '**Testy UAT (wtyczka w Redmine)** – osobny projekt, nie część sdd-kit: wtyczka uat_tests instalowana w samym Redmine (github.com/SyBeer/redmine-UAT-plugin). Gdy człowiek ustawi zadanie na „Gotowy do UAT”, wtyczka robi z pola „Kryteria akceptacji” podzadania typu „Test UAT” – jedno kryterium AC-xxx-n to jeden przypadek do kliknięcia przez biznes – i nie pozwala zaakceptować UAT, dopóki któryś przypadek nie jest zaliczony. Format kryteriów z /sdd:handover jest z nią zgodny. Agent kończy na „Code review”; „Gotowy do UAT” wymaga linku do środowiska testowego, więc ustawia go człowiek.',
     '**Gdy coś nie działa** – Redmine może wymagać pola kryteriów przy zmianie statusu (ustaw redmine_ac_field i powtórz /sdd:handover); „Redmine nie pozwolił na przejście” oznacza, że przepływ pracy Twojej roli w Redmine nie dopuszcza tej zmiany.'] },
 ];
 // Warianty komend (AC-C20): tylko to, co jest w skills/<nazwa>/SKILL.md - test pilnuje zgodnosci.

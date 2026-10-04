@@ -331,6 +331,15 @@ test('AC-C24: przewodnik - sekcja o integracji z Redmine', () => {
     'redmine_ac_field', 'czeka na zgodę', 'UAT'].forEach(w => assert.ok(t.includes(w), 'brak: ' + w));
 });
 
+test('AC-RM20: przewodnik i skill handover - wtyczka UAT w Redmine', () => {
+  const t = info.guide().sections.find(x => x.title === 'Integracja z Redmine').items.join('\n');
+  ['uat_tests', 'Gotowy do UAT', 'Test UAT', 'github.com/SyBeer/redmine-UAT-plugin', 'nie część sdd-kit']
+    .forEach(w => assert.ok(t.includes(w), 'brak: ' + w));
+  const sk = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'handover', 'SKILL.md'), 'utf8');
+  assert.match(sk, /wtyczka UAT/);
+  assert.match(sk, /Nie zaczynaj linii w kryteriach od\s+punktu listy/);
+});
+
 test('AC-C25: spis tresci Jak to dziala - slug i karta z linkami pod Od czego zaczac', () => {
   assert.strictEqual(ui.slug('Integracja z Redmine'), 'integracja-z-redmine');
   assert.strictEqual(ui.slug('Źródła i wiarygodność'), 'zrodla-i-wiarygodnosc');

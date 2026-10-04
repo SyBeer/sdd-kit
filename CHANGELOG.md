@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- Redmine - wtyczka UAT (pytanie usera, czy jest czescia sdd-kit): nie, to osobny projekt `redmine-UAT-plugin`
+  (wtyczka `uat_tests` w samym Redmine). Jak to dziala, sekcja Integracja z Redmine: punkt o wtyczce - przypadki
+  "Test UAT" z pola "Kryteria akceptacji" przy "Gotowy do UAT", blokada akceptacji, adres repo. Zgodnosc formatu
+  sprawdzona parserem wtyczki 0.5.0: jedno kryterium = jeden przypadek, tytul `AC-xxx-n: <Then>`. Skill handover:
+  bez punktow listy na poczatku linii w kryteriach. Spec: `docs/specs/redmine.md` AC-RM20.
+
 ## [0.28.13] - 2026-10-04
 - Panel: Domain nie jest juz "gotowe", gdy walidacja znalazla pojecia uzywane w PRD, ktorych nie ma w slowniku (pytanie
   usera: hasla niepotwierdzone, a Domain GOTOWE). Panel liczyl tylko wiersze GLOSSARY, a pojecia spoza slownika nie sa

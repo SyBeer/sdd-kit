@@ -98,3 +98,25 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
   Nazwa w `redmine_ac_field` rozpoznawana tez w pustym projekcie.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.
+
+# Zmiana 0.28.14 (2026-10-04): wtyczka UAT po stronie Redmine
+
+Pytanie usera: "czy plugin do REDMINE jest czescia SDD-KIT?" - nie: wtyczka `uat_tests` (repo `redmine-UAT-plugin`,
+Ruby, dziala wewnatrz Redmine) to osobny projekt. sdd-kit wypelnia pole "Kryteria akceptacji", wtyczka przy statusie
+"Gotowy do UAT" robi z niego podzadania "Test UAT" i blokuje akceptacje, dopoki ktorys przypadek nie jest zaliczony.
+
+Zgodnosc formatu (sprawdzona 2026-10-04 parserem `UatTests.parse_cases` z wtyczki 0.5.0, offline): domyslny uklad
+pola z `/sdd:handover` (`**AC-xxx-n**`, potem linie `**Given** ...`, `**When** ...`, `**Then** ...`) daje jeden
+przypadek na kryterium, tytul `AC-xxx-n: <tresc Then>`, tresc z Given/When/Then. Punkt listy bez wciecia (`- `, `1. `)
+na poczatku linii wtyczka traktuje jako nowy przypadek - w kryteriach go nie uzywamy.
+
+## Zakres
+1. Przewodnik (Jak to dziala, sekcja Integracja z Redmine): punkt o wtyczce UAT - co robi, ze to osobny projekt
+   instalowany w Redmine, adres repo; agent konczy na "Code review", "Gotowy do UAT" ustawia czlowiek (wtyczka wymaga
+   wtedy linku do srodowiska UAT).
+2. Skill handover: przy `acceptance` - zgodnosc z wtyczka UAT (jedno kryterium = jeden przypadek testowy, bez linii
+   zaczynajacych sie od `- ` / `1. `).
+
+## Kryteria akceptacji
+- AC-RM20: sekcja przewodnika zawiera "uat_tests", "Gotowy do UAT", "Test UAT", adres
+  `github.com/SyBeer/redmine-UAT-plugin`; skill handover wspomina wtyczke UAT i zakaz punktow listy w kryteriach.
