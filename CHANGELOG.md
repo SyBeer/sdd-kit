@@ -10,6 +10,10 @@
   w panelu (Konfiguracja, pola przy wyborze redmine). Klucz API nigdy w plikach: `REDMINE_API_KEY` albo Pek kluczy
   macOS (`redmine-api-key`); bez klucza skrypt podaje, jak go ustawic. Spec: `docs/specs/redmine.md` (AC-RM1..AC-RM9);
   testy `test/redmine.test.js` na lokalnym serwerze udajacym REST API Redmine.
+- Sprawdzone na prawdziwym Redmine (192.168.1.4:3001, projekt "Pilotaż DEV", zadania testowe #13-#15): zalozenie,
+  relacje "poprzedza", ponowny handover aktualizuje te same zadania (bez duplikatow i bez podwojnych relacji).
+  Poprawki z testu: domyslny tracker to funkcjonalnosc/zadanie, nie pierwszy z listy ("Błąd") - AC-RM10; w opisie
+  pusta linia przed lista kryteriow i po niej (Textile).
 
 ## [0.28.3] - 2026-10-04
 - Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie

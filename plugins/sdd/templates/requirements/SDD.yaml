@@ -11,4 +11,4 @@ backlog: none          # none | linear | jira | redmine | file
 # Przy backlog: redmine (klucz API NIE tutaj - REDMINE_API_KEY albo Pek kluczy macOS):
 # redmine_url: "https://redmine.firma.pl"
 # redmine_project: "identyfikator-projektu"
-# redmine_tracker: "Feature"   # opcjonalnie; brak = pierwszy tracker projektu
+# redmine_tracker: "Feature"   # opcjonalnie; brak = tracker typu funkcjonalnosc/zadanie (nigdy Bug)

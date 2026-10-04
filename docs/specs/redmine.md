@@ -13,7 +13,7 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
 1. Konfiguracja (SDD.yaml, plaskie klucze jak reszta pliku):
    - `backlog: redmine`;
    - `redmine_url` - adres Redmine (`https://...` albo `http://...`), `redmine_project` - identyfikator projektu
-     (male litery, cyfry, `-`, `_`), `redmine_tracker` - nazwa trackera (opcjonalnie; brak = pierwszy tracker projektu);
+     (male litery, cyfry, `-`, `_`), `redmine_tracker` - nazwa trackera (opcjonalnie; brak = pierwszy tracker typu funkcjonalnosc / zadanie, AC-RM10);
    - klucz API: zmienna `REDMINE_API_KEY`, a na macOS - gdy jej brak - Pek kluczy (`security find-generic-password
      -s redmine-api-key -w`). Klucz nigdy w plikach, w wyjsciu skryptu ani w czacie.
    - Panel, zakladka Konfiguracja: `redmine` na liscie backlogow; przy `redmine` pola "Adres Redmine" i "Projekt
@@ -53,5 +53,8 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
   je z Konfiguracji; `BACKLOGS` zawiera `redmine`.
 - AC-RM8: skill handover opisuje `redmine` (check, plik zadan, dry-run, zgoda, push, numery do TRACEABILITY,
   klucz poza plikami).
+- AC-RM10 (po pierwszym prawdziwym Redmine: pierwszy tracker projektu to "Błąd"): bez `redmine_tracker` wybierany
+  pierwszy tracker typu funkcjonalnosc / zadanie (Feature, Funkcjonalność, Story, Zadanie, Task, Wymaganie), nigdy
+  "Bug" / "Błąd", chyba ze innego nie ma; nazwa z konfiguracji wygrywa (bez wielkosci liter), nieznana -> blad z lista.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.

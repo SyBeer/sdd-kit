@@ -17,7 +17,7 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
 
 ## Redmine (`backlog: redmine`)
 Konfiguracja w `SDD.yaml`: `redmine_url` (adres), `redmine_project` (identyfikator z adresu `/projects/<identyfikator>`),
-opcjonalnie `redmine_tracker` (nazwa; brak = pierwszy tracker projektu). Adres i projekt da sie tez ustawic w panelu
+opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadanie, nigdy "Bug"). Adres i projekt da sie tez ustawic w panelu
 (Konfiguracja). Klucz API nigdy w plikach: zmienna `REDMINE_API_KEY` albo Pek kluczy macOS (usluga `redmine-api-key`).
 1. Brak `redmine_url` / `redmine_project` -> zapytaj o nie i wpisz do `SDD.yaml` (PYTASZ). Brak klucza (komunikat
    skryptu) -> przekaz userowi komendy z komunikatu; nie pros o wklejenie klucza do czatu ani do plikow.
@@ -25,8 +25,9 @@ opcjonalnie `redmine_tracker` (nazwa; brak = pierwszy tracker projektu). Adres i
    tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij.
 3. Plik zadan `04-validation/redmine-YYYY-MM-DD.json`: `{ "tasks": [ { "key": "T-01", "subject": "[R-xxx] tytul",
    "description": "...", "after": ["T-00"], "issue": 123 } ] }`.
-   - `description`: 2 zdania opisu, linia `Wymaganie: R-xxx`, lista kryteriow `* AC-xxx-n: ...` (doslownie z PRD),
-     linia `Zrodlo: 03-spec/PRD.md` - zwykle linie i `* `, bez tabel (Redmine renderuje Textile albo Markdown);
+   - `description`: 2 zdania opisu, linia `Wymaganie: R-xxx`, pusta linia, lista kryteriow `* AC-xxx-n: ...`
+     (doslownie z PRD), pusta linia, `Zrodlo: 03-spec/PRD.md`. Puste linie przed lista i po niej sa obowiazkowe -
+     bez nich Textile (domyslne formatowanie Redmine) nie pokaze listy; bez tabel i naglowkow (dziala w Textile i Markdown);
    - `after` = zaleznosci z `plan.md` (klucze zadan); skrypt zalozy relacje "poprzedza";
    - `issue` = numer z poprzedniego `TRACEABILITY.md`, gdy to zadanie bylo juz przekazane - wtedy aktualizacja
      zamiast nowego zadania (ponowny handover nie dubluje).

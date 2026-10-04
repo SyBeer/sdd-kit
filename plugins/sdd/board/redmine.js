@@ -26,6 +26,15 @@ function readConfig(yaml) {
   return { url, project, tracker: yamlField(yaml, 'redmine_tracker') };
 }
 
+// Tracker: z konfiguracji (nazwa, bez wielkosci liter) albo pierwszy "funkcjonalnosc / zadanie" - zadania z wymagan
+// nie moga trafic jako bledy tylko dlatego, ze "Bug" jest w projekcie pierwszy (AC-RM10, prawdziwy Redmine 2026-10-04).
+const FEATURE = /feature|funkcjonaln|story|user story|zadanie|task|wymaganie|requirement/i;
+const BUG = /bug|b[lł][aą]d|defect|incident/i;
+function pickTracker(trackers, name) {
+  if (name) return trackers.find(t => t.name.toLowerCase() === String(name).toLowerCase()) || null;
+  return trackers.find(t => FEATURE.test(t.name) && !BUG.test(t.name)) || trackers.find(t => !BUG.test(t.name)) || trackers[0] || null;
+}
+
 // Tresc zapytania o zadanie (AC-RM2): nowe z projektem i trackerem, aktualizacja tylko temat i opis.
 function issueBody(task, projectId, trackerId) {
   const issue = task.issue ? {} : { project_id: projectId, tracker_id: trackerId };
@@ -65,7 +74,7 @@ async function project(call, cfg) {
   if (r.status === 404) throw new Error('Nie ma projektu "' + cfg.project + '" w ' + cfg.url + ' albo nie masz do niego dostepu (404).');
   if (r.status !== 200 || !r.data || !r.data.project) throw new Error('Redmine: ' + r.status + ' ' + errs(r.data));
   const p = r.data.project, trackers = p.trackers || [];
-  const tracker = cfg.tracker ? trackers.find(t => t.name.toLowerCase() === cfg.tracker.toLowerCase()) : trackers[0];
+  const tracker = pickTracker(trackers, cfg.tracker);
   if (!tracker) throw new Error(cfg.tracker ? 'Projekt nie ma trackera "' + cfg.tracker + '" - dostepne: ' + trackers.map(t => t.name).join(', ') : 'Projekt nie ma zadnego trackera.');
   return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker };
 }
@@ -122,4 +131,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 
-module.exports = { readConfig, issueBody, apiKey, push, project };
+module.exports = { readConfig, pickTracker, issueBody, apiKey, push, project };

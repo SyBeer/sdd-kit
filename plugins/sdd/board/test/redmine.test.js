@@ -28,7 +28,7 @@ function fakeRedmine(opts) {
         const send = (code, obj) => { rq.writeHead(code, { 'Content-Type': 'application/json' }); rq.end(obj ? JSON.stringify(obj) : ''); };
         if (req.headers['x-redmine-api-key'] !== KEY) return send(401);
         if (req.method === 'GET' && req.url.startsWith('/projects/faktury.json'))
-          return send(200, { project: { id: 7, name: 'Faktury', identifier: 'faktury', trackers: [{ id: 2, name: 'Feature' }, { id: 1, name: 'Bug' }] } });
+          return send(200, { project: { id: 7, name: 'Faktury', identifier: 'faktury', trackers: [{ id: 1, name: 'Bug' }, { id: 2, name: 'Feature' }] } });
         if (req.method === 'GET' && req.url.startsWith('/projects/')) return send(404);
         if (req.method === 'POST' && req.url === '/issues.json') {
           if (opts.failSecond && next === 101) return send(422, { errors: ['Subject cannot be blank'] });
@@ -77,6 +77,18 @@ test('AC-RM1: readConfig - adres, projekt, tracker, walidacja', () => {
   assert.throws(() => rm.readConfig('redmine_url: "https://a"\nredmine_project: "Zle Id"\n'), /redmine_project/);
 });
 
+test('AC-RM10: domyslny tracker - funkcjonalnosc/zadanie, nie blad', () => {
+  const T = names => names.map((n, i) => ({ id: i + 1, name: n }));
+  assert.strictEqual(rm.pickTracker(T(['Błąd', 'Funkcjonalność', 'Zadanie']), '').name, 'Funkcjonalność');
+  assert.strictEqual(rm.pickTracker(T(['Bug', 'Support', 'Feature']), '').name, 'Feature');
+  assert.strictEqual(rm.pickTracker(T(['Błąd', 'Wsparcie', 'Zadanie']), '').name, 'Zadanie');
+  assert.strictEqual(rm.pickTracker(T(['Bug', 'Story']), '').name, 'Story');
+  assert.strictEqual(rm.pickTracker(T(['Błąd', 'Wsparcie']), '').name, 'Wsparcie');
+  assert.strictEqual(rm.pickTracker(T(['Bug']), '').name, 'Bug');
+  assert.strictEqual(rm.pickTracker(T(['Błąd', 'Funkcjonalność']), 'błąd').name, 'Błąd');
+  assert.strictEqual(rm.pickTracker(T(['Bug']), 'Feature'), null);
+});
+
 test('AC-RM2: issueBody - nowe zadanie z projektem i trackerem, aktualizacja bez nich', () => {
   const t = { key: 'T-01', subject: 'S', description: 'D' };
   assert.deepStrictEqual(rm.issueBody(t, 7, 2), { issue: { project_id: 7, tracker_id: 2, subject: 'S', description: 'D' } });
@@ -90,7 +102,7 @@ test('AC-RM3: check - projekt, trackery, wybrany tracker; 401 i 404 po polsku', 
     assert.strictEqual(r.code, 0, r.err);
     const j = JSON.parse(r.out);
     assert.strictEqual(j.project.name, 'Faktury');
-    assert.deepStrictEqual(j.trackers.map(t => t.name), ['Feature', 'Bug']);
+    assert.deepStrictEqual(j.trackers.map(t => t.name), ['Bug', 'Feature']);
     assert.strictEqual(j.tracker.name, 'Feature');
     assert.strictEqual(s.log[0].key, KEY);
     r = await run(['check', '--req', moduleWith(s.url, 'redmine_tracker: "Bug"\n')], { REDMINE_API_KEY: KEY });
@@ -177,4 +189,5 @@ test('AC-RM8: skill handover opisuje Redmine', () => {
   assert.match(sk, /`redmine`/);
   ['redmine.js', 'check', '--dry-run', 'push', 'REDMINE_API_KEY', 'TRACEABILITY'].forEach(w => assert.ok(sk.includes(w), 'brak: ' + w));
   assert.match(sk, /nie pro[sś] o wklejenie klucza/i);
+  assert.match(sk, /pusta linia, lista kryteriow/);
 });
