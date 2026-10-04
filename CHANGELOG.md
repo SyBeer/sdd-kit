@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.12] - 2026-10-04
 - Tytul karty przegladarki z nazwa modulu (prosba usera): "SDD: fv-manager" na kazdej stronie (Panel, Tablica, Moduł,
   Jak to działa, Konfiguracja); demo - "SDD: Demo"; bez modulu - "SDD". Ustawiany przy kazdej zmianie modulu, takze
   z innej karty; panel nie nadpisuje go juz nazwa projektu. Spec: `docs/specs/ui-switch.md` AC-U19.
