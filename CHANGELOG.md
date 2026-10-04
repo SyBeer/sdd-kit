@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.2] - 2026-10-04
 - Okno Claude Code: dol ekranu Claude nie ucieka juz poza okno (uwaga usera). Przyczyny: (1) przy dwoch kartach
   (np. Panel i Tablica o roznej wysokosci) rozmiar jednej sesji ustawiala karta, ktora podlaczyla sie ostatnio -
   teraz ustawia go karta, w ktorej pracujesz (aktywacja, fokus w terminalu, pisanie); (2) komunikat nad terminalem
