@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- `/sdd:board processes`: karteczki odtworzone z plikow wymagan (BR, R, D, A, istniejace Q, role z ACTORS, stany
+  z ENTITIES) dostaja `ref`, `file` (plik, w ktorym sa) i `synced` - panel pokazuje ✓ zamiast "tylko na tablicy"
+  (uwaga usera). Karteczki tylko z kodu, "docelowo" i nowe Q - bez `synced` i `file`, do plikow przez `sync`.
+  `file` znaczy zawsze "tu to jest" (wczesniej instrukcja kazala wpisywac plik docelowy). Podsumowanie podaje,
+  ile karteczek jest w plikach, a ile tylko na tablicy. Spec: `docs/specs/board-ui.md` punkt 21 (AC-B52, AC-B53).
+
 ## [0.28.0] - 2026-10-04
 - `/sdd:board processes` (skill board): procesy dzialajacej aplikacji na tablicy - pasy wg celu uzytkownika,
   karteczki act/cmd/pol/ev/rm ze zrodlem `[App] plik:linia`, decyzje `[Biz]` wygrywaja z kodem ("docelowo; dzis ..."),

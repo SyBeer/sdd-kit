@@ -188,6 +188,14 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
    - Pod przyciskami Zapisz / Duplikuj / Usuń podpowiedz "⌘D / Ctrl+D – duplikowanie karteczki" (0.23.1, uwaga usera);
      tylko przy istniejacej karteczce, jak przycisk Duplikuj.
    - Jeden krok Cofnij. W demo brak.
+21. Stan "w plikach" po `/sdd:board processes` (zmiana 0.28.1, uwaga usera: karteczki odtworzone z dokumentacji
+   pokazywaly "tylko na tablicy"):
+   - karteczka, ktora odpowiada elementowi juz zapisanemu w plikach (BR, R, D, A, istniejace Q, rola z ACTORS, stan
+     z ENTITIES): `ref` = jego numer (przy rolach i stanach bez numeru - brak), `file` = plik, w ktorym jest,
+     `synced` = teraz -> panel pokazuje ✓ i sam sprawdza, czy `ref` jest w `file` (inaczej "!");
+   - karteczka tylko z kodu `[App]`, nowe pytanie z kolejnym wolnym Q, karteczka "(docelowo; dzis ...)": bez `synced`
+     i bez `file` -> "tylko na tablicy", do plikow przez `/sdd:board sync`;
+   - `file` znaczy zawsze "tu to jest", nigdy "tu to trafi"; podsumowanie podaje, ile karteczek jest w plikach, ile tylko na tablicy.
 
 ## Poza zakresem
 - Zmiana formatu board.json, wiele tablic w module.
@@ -243,6 +251,11 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 - AC-B48: `questionOrder(board, questions)`: id karteczek `hot` w kolejnosci: sprzeczne, blokujace, zadane, otwarte (w grupie po ID pytania), pytania spoza pliku, na koncu odpowiedziane na tablicy i zamkniete w pliku.
 - AC-B49 (reczne): horizon-zlecenia (kopia): panel pytania ma Odpowiedz i Kto; zapis bez "Kto" -> komunikat; z "Kto" -> znacznik na karteczce i licznik w pasku; Przegląd pytań prowadzi po kolei z kursorem w odpowiedzi; Cofnij cofa odpowiedz; oznaczenie Q w pliku jako odpowiedziane -> karteczka szara z odpowiedzia; tryb ciemny czytelny.
 - AC-B50: `copyNote(b, id, now, dest)`: bez `dest` - kopia zaraz pod oryginalem w tej samej kolumnie; z `dest` {lane, col, before, newCol} - w tym miejscu (newCol - wstawiona kolumna, dalsze w prawo); kopia ma tresc, typ, proces, nowe unikalne `id`, `by: "człowiek"`, `source` + " (kopia)", `created`=`updated`=now i nie ma `ref`, `synced`, `file`, `answer`, `answeredBy`, `answeredAt`; oryginal bez zmian; zwraca id kopii; nieznane id -> null.
+- AC-B52: skill `board`, sekcja `processes`: `synced` i `file` tylko dla elementow juz w plikach; karteczki z kodu i nowe
+  Q bez `synced` i `file`; brak instrukcji "docelowy plik"; podsumowanie z liczba w plikach / tylko na tablicy.
+- AC-B53: `syncMap` dla tablicy po `processes`: BR z `synced` i `file` = RULES.md, gdzie BR jest -> `synced`; rola z
+  `synced` i `file` = ACTORS.md bez `ref` -> `synced`; karteczka z kodu bez `synced` -> `board`; nowe Q, ktorego nie ma
+  w QUESTIONS.md, gdyby dostalo `synced` -> `missing` (dlatego nie dostaje).
 - AC-B51 (reczne): Duplikuj i Cmd+D - kopia pod oryginalem, panel na kopii, znaczek "tylko na tablicy"; Option+przeciagniecie do innej kolumny/procesu i na przerwe - kopia tam, oryginal zostaje; Cofnij usuwa kopie; w demo brak przycisku.
 - AC-B6 (reczne): w przegladarce: zaloz proces, zmien nazwe, przesun, usun z karteczkami; plik board.json odpowiada widokowi.
 - AC-B7 (reczne): klik karteczki otwiera karteczke w panelu z prawej (od 0.14.0 panel stoi na stale - AC-B23), Escape konczy edycje; "Dopasuj" miesci tablice bez poziomego paska; na telefonie brak przewijania strony w poziomie.

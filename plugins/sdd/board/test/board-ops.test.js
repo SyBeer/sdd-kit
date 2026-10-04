@@ -344,3 +344,36 @@ test('AC-B50: copyNote - kopia pod oryginalem albo we wskazanym miejscu, bez ref
   assert.strictEqual(ids.length, 3);
   assert.strictEqual(ops.copyNote(b, 'nie-ma', NOW), null);
 });
+
+// ---- Zmiana 0.28.1: stan "w plikach" po /sdd:board processes (AC-B52, AC-B53)
+test('AC-B52: skill board processes - synced i file tylko dla elementow juz w plikach', () => {
+  const fs = require('fs'), path = require('path');
+  const sk = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'board', 'SKILL.md'), 'utf8');
+  const sec = sk.split('## Procesy z dzialajacej aplikacji')[1].split('\n## ')[0];
+  assert.match(sec, /juz w plikach[\s\S]{0,400}?`synced` = teraz/);
+  assert.match(sec, /bez `synced` i bez `file`/);
+  assert.doesNotMatch(sec, /docelowy plik/);
+  assert.match(sec, /w plikach.*tylko na tablicy/);
+});
+
+test('AC-B53: syncMap po processes - element z plikow synced, karteczka z kodu board, nowe Q z synced byloby missing', () => {
+  const now = '2026-10-04T10:00:00+02:00';
+  const files = {
+    '02-domain/RULES.md': '| BR-004 | Jezeli cena paliwa pusta, to blad | [Biz] |',
+    '02-domain/ACTORS.md': '| Kierowca | wpisuje odczyt |',
+    '01-interview/QUESTIONS.md': '| Q-007 | Kto? | otwarte |',
+  };
+  const b = { lanes: ['Odczyt'], notes: [
+    { id: 'br', lane: 'Odczyt', col: 2, type: 'pol', text: 'Jezeli cena pusta, to blad', ref: 'BR-004', file: '02-domain/RULES.md', synced: now, created: now, updated: now },
+    { id: 'act', lane: 'Odczyt', col: 0, type: 'act', text: 'Kierowca', file: '02-domain/ACTORS.md', synced: now, created: now, updated: now },
+    { id: 'app', lane: 'Odczyt', col: 1, type: 'cmd', text: 'Wpisz odczyt licznika', source: '[App] src/main.py:120', created: now, updated: now },
+    { id: 'qnew', lane: 'Odczyt', col: 1, type: 'hot', text: 'Kiedy ostatnio?', ref: 'Q-012', created: now, updated: now },
+    { id: 'qbad', lane: 'Odczyt', col: 1, type: 'hot', text: 'Kiedy ostatnio?', ref: 'Q-012', file: '01-interview/QUESTIONS.md', synced: now, created: now, updated: now },
+  ] };
+  const m = ops.syncMap(b, f => (f in files ? files[f] : null));
+  assert.strictEqual(m.br, 'synced');
+  assert.strictEqual(m.act, 'synced');
+  assert.strictEqual(m.app, 'board');
+  assert.strictEqual(m.qnew, 'board');
+  assert.strictEqual(m.qbad, 'missing');
+});

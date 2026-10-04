@@ -87,8 +87,15 @@ Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D an
    -> `rm` (co oglada). Kazda karteczka w swojej kolumnie. Tresc jezykiem biznesu ("Wpisz cene paliwa recznie"),
    nie nazwa trasy; regula w formie "Jezeli ..., to ...".
 5. `source` = `[App] <plik>:<linia>` albo `[App]/[Dok] <plik z INDEX.md>, sekcja`. Gdy jest decyzja `[Biz]`
-   (D-xxx), dopisz ja na poczatku - wygrywa z kodem. `ref` = BR-xxx, jesli karteczka to istniejaca regula.
-   `file` = docelowy plik wg mapowania z `sync` (act -> ACTORS, ev -> ENTITIES, pol -> RULES, cmd/rm -> PRD).
+   (D-xxx), dopisz ja na poczatku - wygrywa z kodem.
+   Stan "w plikach" (✓ na tablicy) zalezy od tego, czy element juz jest w plikach wymagan - sprawdz to dla kazdej karteczki:
+   - **juz w plikach** (regula BR-xxx w RULES.md, wymaganie R w PRD, decyzja D, zalozenie A, istniejace Q, rola
+     z ACTORS.md, stan z ENTITIES.md): `ref` = jego numer (rola i stan nie maja numeru - bez `ref`), `file` = plik,
+     w ktorym jest, `synced` = teraz. Panel pokaze ✓ i sam sprawdzi, czy `ref` naprawde jest w `file`;
+   - **tylko z kodu** (`[App]` bez odpowiednika w plikach), "(docelowo; dzis ...)" i nowe pytania z punktu 7:
+     bez `synced` i bez `file`. Panel pokaze "tylko na tablicy", do plikow przeniesie je `/sdd:board sync`.
+   `file` znaczy zawsze "tu to jest" - nigdy "tu to trafi". Nowemu Q nie dawaj `synced`: numeru nie ma jeszcze
+   w QUESTIONS.md, wiec panel pokazalby "!".
 6. Decyzja mowi co innego niz kod -> karteczka opisuje stan docelowy z dopiskiem "(docelowo; dzis ...)".
    Funkcje oznaczone w PRD jako poza zakresem (makiety itp.) pomijasz.
 7. Rozjazd kod vs dokumentacja, funkcja opisana, a nieobecna w kodzie, zachowanie bez zrodla `[Biz]` budzace
@@ -98,7 +105,8 @@ Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D an
    `id` unikalne, `by: "agent"`, `created` = `updated` = teraz (`date -Iseconds`). Tytul/podtytul tablicy:
    nazwa aplikacji + wersja + "as-built", jesli byly domyslne.
 9. Linia w `CHANGELOG.md` (liczba procesow, karteczek, numery Q) i odpowiedz: lista pasow po 1 zdaniu,
-   co oznaczyles "docelowo", jakie `hot`, jedno pytanie o przeszlosc.
+   ile karteczek jest juz w plikach (✓), a ile tylko na tablicy (do `sync`), co oznaczyles "docelowo", jakie `hot`,
+   jedno pytanie o przeszlosc.
 
 ## Gdzie stawiac pytanie (`hot`)
 1. Powiazane ID pytania to R/BR/D/A z kolumn "Skad" i "Wplyw" w QUESTIONS.md.
