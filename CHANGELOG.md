@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.6] - 2026-10-04
 - Konfiguracja, klucz API Redmine (zgloszenie usera: "uruchamia sie Passwords, pyta o login; nie zapisaly sie dane
   adresu Redmine"): (1) jeden przycisk "Zapisz ustawienia modulu" zapisuje backlog, adres, projekt i klucz naraz -
   wczesniej "Zapisz klucz" przerysowywal zakladke i gubil niezapisane pola (backlog wracal do poprzedniego, adres
