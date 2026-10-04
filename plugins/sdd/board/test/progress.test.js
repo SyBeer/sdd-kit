@@ -451,3 +451,66 @@ test('AC-72: szablon slownika bez mylacej linii Status, skille spec i domain z k
   assert.match(domain, /\/sdd:domain zatwierdz/);
   assert.match(domain, /nie proponuj \/sdd:spec/i);
 });
+
+// ---- Zmiana 0.28.13: pojecia spoza slownika z raportu walidacji (AC-74..AC-76)
+function allApprovedGlossary(req) {
+  append(req, '02-domain/GLOSSARY.md', '| Faktura | Dokument | | FV | [Dok] mail | zatwierdzone (sponsor, 2026-10-04) |\n');
+}
+const W9 = '| # | Kontrola | Wynik | Pozycje |\n|---|---|---|---|\n' +
+  '| 8 | R z A niepotwierdzone | PASS | - |\n| 9 | Pojęcia w PRD spoza GLOSSARY | WARN | „Pojazd nieaktywny” (R-019, D-025), „Stan licznika” (R-009) |\n';
+function report(req, body) {
+  write(req, '04-validation/validate-2026-10-04.md', '# Walidacja\n\n' + body + '\nGotowość: **100%**\nOdcisk wymagan: ' + fingerprint(req) + '\n');
+}
+
+test('AC-74: WARN 9 w aktualnym raporcie -> Domain w toku z lista pojec spoza slownika', () => {
+  const req = freshProject();
+  allApprovedGlossary(req);
+  report(req, W9);
+  const p = readProgress(req), d = stage(p, 'domain');
+  assert.strictEqual(d.status, 'active');
+  assert.strictEqual(d.counts.missing, 2);
+  assert.deepStrictEqual(d.details.missing.items.map(i => i.title), ['Pojazd nieaktywny', 'Stan licznika']);
+  assert.match(d.details.missing.file, /^04-validation\/validate-2026-10-04\.md$/);
+  assert.strictEqual(d.command, '/sdd:domain');
+  assert.match(d.howto.join(' '), /Pojazd nieaktywny/);
+  assert.match(d.howto.join(' '), /Stan licznika/);
+  // PASS w tym samym wierszu -> gotowe
+  report(req, W9.replace('| WARN |', '| PASS |'));
+  const d2 = stage(readProgress(req), 'domain');
+  assert.strictEqual(d2.status, 'done');
+  assert.strictEqual(d2.counts.missing, undefined);
+  // bez cudzyslowow - cala komorka jako jedna pozycja
+  report(req, '| 9 | Pojęcia spoza słownika | WARN | Pojazd, Licznik |\n');
+  assert.deepStrictEqual(stage(readProgress(req), 'domain').details.missing.items.map(i => i.title), ['Pojazd, Licznik']);
+
+  // demo (etapy do Validate gotowe): WARN 9 cofa aktualny krok na Domain
+  const demo = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-w9-')), 'requirements');
+  fs.cpSync(path.join(__dirname, '..', '..', 'demo', 'zlecenia', 'requirements'), demo, { recursive: true });
+  const rf = path.join(demo, '04-validation', 'validate-2026-09-27.md');
+  fs.writeFileSync(rf, fs.readFileSync(rf, 'utf8').replace(/^\| 9 \|.*$/m, '| 9 | Pojecie w PRD spoza GLOSSARY | WARN | "kartoteka" |'));
+  const pd = readProgress(demo);
+  assert.strictEqual(pd.next.key, 'domain');
+  assert.strictEqual(pd.next.command, '/sdd:domain');
+  assert.match(pd.next.howto.join(' '), /kartoteka/);
+});
+
+test('AC-75: raport nieaktualny po zmianie slownika - wiersz 9 sie nie liczy', () => {
+  const req = freshProject();
+  allApprovedGlossary(req);
+  report(req, W9);
+  append(req, '02-domain/GLOSSARY.md', '| Pojazd nieaktywny | Wycofany | | | [Biz] D-025 | robocze |\n');
+  let d = stage(readProgress(req), 'domain');
+  assert.strictEqual(d.status, 'active');
+  assert.strictEqual(d.command, '/sdd:domain zatwierdz');
+  assert.strictEqual(d.counts.missing, undefined);
+  const g = path.join(req, '02-domain/GLOSSARY.md');
+  fs.writeFileSync(g, fs.readFileSync(g, 'utf8').replace('| robocze |', '| zatwierdzone |'));
+  d = stage(readProgress(req), 'domain');
+  assert.strictEqual(d.status, 'done');
+});
+
+test('AC-76: skill validate opisuje format wiersza 9', () => {
+  const v = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'validate', 'SKILL.md'), 'utf8');
+  assert.match(v, /wiersz kontroli 9/i);
+  assert.match(v, /„/);
+});

@@ -582,3 +582,33 @@ linia legendy w GLOSSARY.md ("Status: robocze | ...") wygladala jak status caleg
 - AC-72: szablon GLOSSARY.md nie ma linii zaczynajacej sie od "Status:"; skill spec opisuje bramke jako status kazdego hasla
   i propozycje zatwierdzania; skill domain ma tryb `zatwierdz` i zakaz proponowania /sdd:spec przy niezatwierdzonym slowniku.
 - AC-73 (reczne): fv-manager (9 hasel roboczych) - panel: Domain, `/sdd:domain zatwierdz`, "Hasła do zatwierdzenia: 9".
+
+# Zmiana 0.28.13 (2026-10-04): Domain nie jest "gotowe", gdy walidacja znalazla pojecia spoza slownika
+
+Uwaga usera: "claude wykryl, ze sa 4 nowe hasla w slowniku niepotwierdzone, a mimo tego DOMAIN byl w statusie GOTOWE".
+Przyczyna: panel liczy tylko wiersze tabeli GLOSSARY. Pojecie uzyte w PRD, ktorego w slowniku nie ma (kontrola 9
+walidacji, test spojnosci /sdd:domain), nie jest ani robocze, ani zatwierdzone - panel go nie widzi. fv-manager:
+walidacja (przebieg 7) dala WARN 9 ("Pojazd nieaktywny", "Stan licznika"), a Domain pokazywal "gotowe" az do
+dopisania hasel. Wykrycie pojecia wymaga czytania tekstu ze zrozumieniem - robi to Claude; panel czyta wynik z raportu.
+
+## Zakres
+1. Panel czyta z ostatniego raportu `04-validation/validate-*.md` wiersz tabeli kontroli 9 (pierwsza komorka `9`
+   albo nazwa kontroli z "GLOSSARY" / "słownik"). Wynik `WARN` w aktualnym raporcie (odcisk zgodny albo - bez odcisku -
+   raport nie jest nieaktualny wg CHANGELOG) -> Domain `active`, licznik `missing` (pojecia spoza slownika), lista pojec
+   z komorki "Pozycje": teksty w cudzyslowach „…”, "…", `…`; bez cudzyslowow - jedna pozycja z cala komorka.
+2. Raport nieaktualny (np. po dopisaniu hasel do GLOSSARY, ktory zmienia odcisk) - wiersz 9 nie liczy sie; Domain jak
+   dotad z hasel (nowe hasla robocze -> `/sdd:domain zatwierdz`).
+3. Komenda kroku `/sdd:domain`, opis i instrukcja z liczba i lista pojec (max 5 w instrukcji, reszta w liscie licznika).
+   Pierwszenstwo przed `/sdd:domain zatwierdz` - najpierw hasla musza trafic do slownika.
+4. Skill validate: wiersz kontroli 9 zaczyna sie numerem `9`, pojecia przy WARN w cudzyslowach „…” (panel je czyta).
+
+## Kryteria akceptacji (testy w `plugins/sdd/board/test/progress.test.js`)
+- AC-74: wszystkie hasla zatwierdzone + aktualny raport z wierszem `| 9 | Pojęcia w PRD spoza GLOSSARY | WARN | „A” (R-1), „B” |`
+  -> Domain `active`, `counts.missing` = 2, `details.missing` = A, B, `command` = `/sdd:domain`, howto wymienia A i B,
+  `next.key` = domain. Ten sam wiersz z `PASS` -> Domain `done`, brak `missing`.
+- AC-75: po zmianie GLOSSARY (raport nieaktualny) wiersz 9 WARN nie liczy sie - Domain z hasel (robocze -> `zatwierdz`,
+  wszystkie zatwierdzone -> `done`).
+- AC-76: skill validate opisuje format wiersza 9 (numer `9`, pojecia w „…”).
+- AC-77 (reczne): kopia fv-manager z raportem przebiegu 7 (WARN 9) - panel: Domain "w toku", 2 pojecia spoza slownika.
+  Sprawdzone 2026-10-04 (stan z commita 5585fc1): Domain `active`, `missing: 2` (Pojazd nieaktywny, Stan licznika),
+  krok `/sdd:domain`; biezacy fv-manager (przebieg 8, PASS) - Domain `done`.

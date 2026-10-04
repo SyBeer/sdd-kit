@@ -265,7 +265,21 @@ function validate(req) {
   const counts = { reports: reports.length, readiness, last };
   // nieaktualny raport nigdy nie zamyka etapu, nawet przy 100% (zmiana 0.18.0, AC-60, AC-61)
   if (stale) return { status: 'active', stale: true, counts };
-  return { status: readiness === 100 ? 'done' : 'active', counts };
+  return { status: readiness === 100 ? 'done' : 'active', counts, missingTerms: missingTerms(text) };
+}
+
+// Kontrola 9 walidacji - pojecia w PRD spoza GLOSSARY (zmiana 0.28.13, AC-74). Panel nie widzi pojec, ktorych nie ma
+// w slowniku; wynik bierze z wiersza raportu: `| 9 | ... | WARN | „A” (R-1), „B” |`. Zwraca liste pojec albo null.
+function missingTerms(text) {
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+  const row = text.split('\n').filter(l => /^\s*\|/.test(l)).map(cells)
+    .find(c => c.length >= 3 && (c[0] === '9' || /GLOSSARY|słownik|slownik/i.test(c[1] || '')) && c.some(x => /^WARN\b/i.test(x)));
+  if (!row) return null;
+  const at = row.findIndex(x => /^WARN\b/i.test(x));
+  const pos = row.slice(at + 1).join(' | ').trim();
+  const quoted = (pos.match(/„[^”"\n]+[”"]|"[^"\n]+"|`[^`\n]+`/g) || []).map(q => q.slice(1, -1).trim()).filter(Boolean);
+  const terms = quoted.length ? quoted : [pos || 'pojęcia spoza słownika (szczegóły w raporcie)'];
+  return terms.filter((t, i) => terms.indexOf(t) === i);
 }
 
 // Etap nieaktualny (0.18.0 walidacja, 0.19.0 handover): odcisk w pliku inny niz biezacy; bez odcisku (starsze pliki) -
@@ -319,7 +333,20 @@ function readProgress(reqDir) {
   // Slownik niezatwierdzony (zmiana 0.24.0, AC-71): krok zatwierdzania zamiast proponowania /sdd:spec, ktory by odmowil.
   const ds = stages.find(s => s.key === 'domain');
   const waitGl = ds ? ds.counts.terms - ds.counts.approved : 0;
-  if (ds && ds.counts.terms > 0 && waitGl > 0) {
+  // Pojecia spoza slownika z aktualnego raportu walidacji (0.28.13, AC-74): pierwszenstwo przed zatwierdzaniem.
+  const miss = results.validate.missingTerms;
+  if (ds && miss && miss.length) {
+    const rel = '04-validation/' + results.validate.counts.last;
+    ds.status = 'active';
+    ds.counts = Object.assign({}, ds.counts, { missing: miss.length });
+    ds.details = Object.assign({}, ds.details, { missing: list(rel, miss.map(t => ({ id: '', title: t, status: 'brak w słowniku',
+      note: 'raport walidacji, kontrola 9: pojęcie użyte w PRD, którego nie ma w GLOSSARY' }))) });
+    ds.desc = 'Walidacja znalazła pojęcia używane w wymaganiach, których nie ma w słowniku - trzeba je dopisać i zatwierdzić.';
+    ds.howto = ['Skopiuj komendę i wklej ją w Claude Code.',
+      'Pojęcia spoza słownika (' + miss.length + '): ' + miss.slice(0, 5).join(', ') + (miss.length > 5 ? ' i ' + (miss.length - 5) + ' więcej' : '') +
+        ' - AI dopisze je do GLOSSARY jako robocze, z definicją i źródłem.',
+      'Potem zatwierdzasz nowe hasła (/sdd:domain zatwierdz) i uruchamiasz ponownie /sdd:validate.'];
+  } else if (ds && ds.counts.terms > 0 && waitGl > 0) {
     ds.command = '/sdd:domain zatwierdz';
     ds.desc = 'Słownik pojęć czeka na zatwierdzenie przez biznes - bez tego /sdd:spec nie ruszy.';
     ds.howto = ['Skopiuj komendę i wklej ją w Claude Code.',

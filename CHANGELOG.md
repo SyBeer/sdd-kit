@@ -1,5 +1,14 @@
 # Changelog
 
+## [Niewydane]
+- Panel: Domain nie jest juz "gotowe", gdy walidacja znalazla pojecia uzywane w PRD, ktorych nie ma w slowniku (pytanie
+  usera: hasla niepotwierdzone, a Domain GOTOWE). Panel liczyl tylko wiersze GLOSSARY, a pojecia spoza slownika nie sa
+  w nim ani robocze, ani zatwierdzone. Teraz czyta wiersz kontroli 9 z aktualnego raportu walidacji: WARN -> Domain
+  "w toku", licznik "spoza słownika" z lista pojec, krok `/sdd:domain` (przed zatwierdzaniem). Po dopisaniu hasel raport
+  staje sie nieaktualny i Domain wraca do liczenia hasel (`/sdd:domain zatwierdz`). Skill validate: format wiersza 9
+  (numer `9`, pojecia w „…”). Demo: hasla "Kartoteka" i "Sredni kurs NBP" dopisane - raport demo mial ten sam WARN.
+  Spec: `docs/specs/progress-ui.md` AC-74..AC-77.
+
 ## [0.28.12] - 2026-10-04
 - Tytul karty przegladarki z nazwa modulu (prosba usera): "SDD: fv-manager" na kazdej stronie (Panel, Tablica, Moduł,
   Jak to działa, Konfiguracja); demo - "SDD: Demo"; bez modulu - "SDD". Ustawiany przy kazdej zmianie modulu, takze
