@@ -84,7 +84,19 @@ function yamlSet(text, changes) {
     if (BACKLOGS.indexOf(changes.backlog) < 0) throw new Error('backlog: dozwolone ' + BACKLOGS.join(', ') + '.');
     out = setLine(out, 'backlog', changes.backlog);
   }
-  // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml
+  // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml.
+  // Wklejony adres projektu (.../projects/<id>) - rozdzielamy sami (AC-RM14).
+  changes = Object.assign({}, changes);
+  const projOf = v => { const m = String(v || '').match(/(?:^|\/)projects\/([^/?#\s]+)/); return m ? m[1] : String(v || '').trim(); };
+  if ('redmine_url' in changes) {
+    const m = String(changes.redmine_url || '').trim().match(/^(.*?)\/projects\/([^/?#\s]+)/);
+    if (m) {
+      changes.redmine_url = m[1];
+      const p = projOf(changes.redmine_project);
+      if (!p || !/^[a-z0-9][a-z0-9_-]*$/.test(p)) changes.redmine_project = m[2];
+    }
+  }
+  if ('redmine_project' in changes) changes.redmine_project = projOf(changes.redmine_project);
   if ('redmine_url' in changes) {
     const u = String(changes.redmine_url || '').trim().replace(/\/+$/, '');
     if (!/^https?:\/\/[^\s/"]+[^\s"]*$/.test(u)) throw new Error('redmine_url: adres musi zaczynać się od http:// albo https://, np. https://redmine.firma.pl.');

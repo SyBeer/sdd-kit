@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- Konfiguracja Redmine (zgloszenie usera: blad przy wklejonym adresie projektu, kluczyk aplikacji Hasla w polu projektu):
+  wklejony adres projektu (`http://.../projects/pilotaz-dev`) w polu adresu albo projektu panel rozdziela sam na adres
+  serwera i identyfikator (AC-RM14); pole klucza bez maski - kazda maska (pole hasla, `-webkit-text-security`) wlaczala
+  w Safari logowanie z aplikacji Hasla; klucz widac tylko przy wklejaniu, po zapisie pole jest puste. Pola Redmine
+  z `autocomplete="off"` i znacznikami dla menedzerow hasel.
+
 ## [0.28.6] - 2026-10-04
 - Konfiguracja, klucz API Redmine (zgloszenie usera: "uruchamia sie Passwords, pyta o login; nie zapisaly sie dane
   adresu Redmine"): (1) jeden przycisk "Zapisz ustawienia modulu" zapisuje backlog, adres, projekt i klucz naraz -

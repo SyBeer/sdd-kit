@@ -73,5 +73,9 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
   Zadanie z `acceptance` -> `custom_fields: [{ id, value }]` przy tworzeniu i aktualizacji; bez `redmine_ac_field`
   albo bez `acceptance` - bez `custom_fields`. Skill: kryteria w uklad zespolu, kazde z naglowkiem `**AC-xxx-n**`,
   kryteria rozdzielone pusta linia; w opisie tabela zostaje.
+- AC-RM14 (0.28.7, zgloszenie usera: wkleil adres projektu w pole adresu i "/projects/x" w pole projektu -> blad):
+  `yamlSet` rozdziela adres projektu `.../projects/<id>[/...]` na `redmine_url` (czesc przed `/projects/`) i
+  `redmine_project` (gdy projekt nie podany albo tez wskazuje adres); z projektu zdejmuje `/projects/`, `projects/`
+  i caly adres; zly identyfikator po tym - blad jak dotad.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.

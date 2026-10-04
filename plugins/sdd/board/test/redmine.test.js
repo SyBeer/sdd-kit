@@ -284,6 +284,15 @@ test('AC-RM7: konfiguracja - backlog redmine, adres i projekt przez yamlSet', ()
   assert.match(out, /^redmine_url: "https:\/\/rm\.firma\.pl"$/m);
   assert.match(out, /^redmine_project: "faktury"$/m);
   assert.throws(() => info.yamlSet(y, { redmine_url: 'rm.firma.pl' }), /redmine_url/);
+  // AC-RM14: wklejony adres projektu i "/projects/x" - panel rozdziela sam (zgloszenie usera 0.28.7)
+  const both = info.yamlSet(y, { redmine_url: 'http://192.168.1.4:3001/projects/pilotaz-dev', redmine_project: '/projects/pilotaz-dev' });
+  assert.match(both, /^redmine_url: "http:\/\/192\.168\.1\.4:3001"$/m);
+  assert.match(both, /^redmine_project: "pilotaz-dev"$/m);
+  const onlyUrl = info.yamlSet(y, { redmine_url: 'https://rm.firma.pl/redmine/projects/faktury/issues?x=1' });
+  assert.match(onlyUrl, /^redmine_url: "https:\/\/rm\.firma\.pl\/redmine"$/m);
+  assert.match(onlyUrl, /^redmine_project: "faktury"$/m);
+  assert.match(info.yamlSet(y, { redmine_project: 'projects/abc' }), /^redmine_project: "abc"$/m);
+  assert.match(info.yamlSet(y, { redmine_project: 'https://rm.firma.pl/projects/abc-1/issues' }), /^redmine_project: "abc-1"$/m);
   assert.throws(() => info.yamlSet(y, { redmine_project: 'Zle Id' }), /redmine_project/);
 });
 

@@ -76,8 +76,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg
 input[type=text],select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .row input[type=text]{flex:1 1 240px}
-/* klucz API: tekst z kropkami zamiast pola hasla - przegladarka i Hasla nie biora go za logowanie (0.28.6) */
-input.secret{-webkit-text-security:disc;font-family:ui-monospace,Menlo,monospace}
+/* klucz API: zwykly tekst bez maski - maska (pole hasla albo -webkit-text-security) wlacza w Safari logowanie z aplikacji Hasla (0.28.7) */
 button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
 button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 button.b.danger{border-color:var(--hot);color:var(--hot)}
@@ -240,13 +239,13 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
           c.sdd.backlogsAllowed.map(function(b){return '<option'+(b===c.sdd.backlog?' selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
         // Redmine (0.28.4): adres i projekt; klucz API poza plikami (REDMINE_API_KEY albo Pek kluczy)
         '<div id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'>'+
-          '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
-          '<label class="field"><span>Projekt w Redmine <small>identyfikator z adresu /projects/&lt;identyfikator&gt;</small></span><input type="text" id="f-rmproj" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+
+          '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" name="sdd-rm-url" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
+          '<label class="field"><span>Projekt w Redmine <small>identyfikator, np. pilotaz-dev; możesz wkleić adres projektu z przeglądarki</small></span><input type="text" id="f-rmproj" name="sdd-rm-project" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+
           // Klucz API (0.28.5, docs/specs/secrets.md): zapis do ~/.sdd-kit/.env, panel widzi tylko, skad jest
           '<div class="field"><span>Klucz API Redmine <small>'+esc(KEYSRC[c.redmineKey]||'brak')+'</small></span>'+
-          (demo?'':'<div class="row"><input type="text" class="secret" id="f-rmkey" name="sdd-rm-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="'+(c.redmineKey==='none'?'wklej klucz z Redmine: Moje konto → Klucz dostępu do API':'nowy klucz (zastąpi obecny)')+'">'+
+          (demo?'':'<div class="row"><input type="text" id="f-rmkey" name="sdd-rm-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="'+(c.redmineKey==='none'?'wklej klucz z Redmine: Moje konto → Klucz dostępu do API':'nowy klucz (zastąpi obecny)')+'">'+
             (c.redmineKey==='file'?'<button class="b" type="button" id="delkey">Usuń klucz</button>':'')+'</div>')+
-          '<p class="hint">Zapisuje go przycisk „Zapisz ustawienia modułu” niżej. Klucz trafia do <code>~/.sdd-kit/.env</code> na tym komputerze - czyta go tylko sdd-kit, Claude go nie otwiera i nie widzi w panelu. Nie trafia do repo.</p>'+
+          '<p class="hint">Klucz widać tylko podczas wklejania - po zapisie pole jest puste. Zapisuje go przycisk „Zapisz ustawienia modułu” niżej. Klucz trafia do <code>~/.sdd-kit/.env</code> na tym komputerze - czyta go tylko sdd-kit, Claude go nie otwiera i nie widzi w panelu. Nie trafia do repo.</p>'+
           '<p class="err" id="keyerr">'+esc(msg.keyerr||'')+'</p>'+(msg.keyok?'<p class="ok">'+esc(msg.keyok)+'</p>':'')+'</div>'+
         '</div>'+
         '<div class="field"><span>Role i co zatwierdzają <small>rola, nie osoba; nazwy użytej już w plikach nie da się tu zmienić ani usunąć</small></span><div id="owners"></div>'+
