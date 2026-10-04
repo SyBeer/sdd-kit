@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.3] - 2026-10-04
 - Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie
   rozmowy"). Gdy w folderze modulu jest zapisana rozmowa Claude Code (`~/.claude/projects/<folder>/*.jsonl`), okno
   pokazuje "Wznów rozmowę" (`claude --continue` - ostatnia rozmowa w tym folderze, z historia) i "Nowa rozmowa";
