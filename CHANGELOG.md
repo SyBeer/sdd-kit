@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.7] - 2026-10-04
 - Konfiguracja Redmine (zgloszenie usera: blad przy wklejonym adresie projektu, kluczyk aplikacji Hasla w polu projektu):
   wklejony adres projektu (`http://.../projects/pilotaz-dev`) w polu adresu albo projektu panel rozdziela sam na adres
   serwera i identyfikator (AC-RM14); pole klucza bez maski - kazda maska (pole hasla, `-webkit-text-security`) wlaczala
