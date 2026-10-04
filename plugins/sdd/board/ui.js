@@ -93,6 +93,14 @@
   // Zrodla w nawiasach ([Biz], [App], [Dok], [AI]) i **tekst** pogrubione; wejscie juz escapowane (0.22.0, AC-C23).
   const MARKS = /\[(Biz|App|Dok|AI)\]/g;
   function marks(html) { return String(html).replace(MARKS, '<strong>[$1]</strong>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
+  // Tytul karty przegladarki (AC-U19): modul pierwszy - przy wielu kartach przegladarka ucina koniec.
+  const PAGES = { panel: 'Panel', board: 'Tablica', module: 'Moduł', guide: 'Jak to działa', config: 'Konfiguracja' };
+  function tabTitle(mod, page, demo) {
+    const p = PAGES[page] || 'SDD';
+    if (demo) return 'Demo · ' + p;
+    return mod ? mod + ' · ' + p : p + ' · SDD';
+  }
+
   // Kotwica z tytulu karty (AC-C25): male litery, bez polskich znakow, '-' zamiast reszty.
   function slug(t) {
     return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[łŁ]/g, 'l').toLowerCase()
@@ -126,7 +134,7 @@
     return Math.max(320, Math.min(n > 0 ? n : 520, max));
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, slug, KEY };
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, slug, tabTitle, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -448,6 +456,8 @@
       cur = key; mods = list || []; demo = !!isDemo;
       const m = mods.filter(function (x) { return isCur(x, key); })[0];
       btn.querySelector('.mname').textContent = (m && m.name) || key || '…';
+      const bar = document.getElementById('topbar');
+      if (bar) document.title = tabTitle((m && m.name) || '', bar.getAttribute('data-page'), !!isDemo);
       demoBar(isDemo || null);
     };
   }

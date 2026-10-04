@@ -201,3 +201,16 @@ test('AC-U18: ikona aplikacji - pliki, naglowki stron', () => {
   const srv = fs.readFileSync(path.join(B, 'server.js'), 'utf8');
   ['/favicon.svg', '/favicon.png', '/favicon.ico', '/apple-touch-icon.png'].forEach(u => assert.ok(srv.includes("'" + u + "'"), 'serwer: ' + u));
 });
+
+test('AC-U19: tytul karty z nazwa modulu', () => {
+  assert.strictEqual(ui.tabTitle('fv-manager', 'board'), 'fv-manager · Tablica');
+  assert.strictEqual(ui.tabTitle('fv-manager', 'panel'), 'fv-manager · Panel');
+  assert.strictEqual(ui.tabTitle('fv-manager', 'guide'), 'fv-manager · Jak to działa');
+  assert.strictEqual(ui.tabTitle('fv-manager', 'config'), 'fv-manager · Konfiguracja');
+  assert.strictEqual(ui.tabTitle('fv-manager', 'module'), 'fv-manager · Moduł');
+  assert.strictEqual(ui.tabTitle('zlecenia', 'board', true), 'Demo · Tablica');
+  assert.strictEqual(ui.tabTitle('', 'board'), 'Tablica · SDD');
+  assert.strictEqual(ui.tabTitle(null, 'panel'), 'Panel · SDD');
+  const prog = fs.readFileSync(path.join(__dirname, '..', 'progress.html'), 'utf8');
+  assert.doesNotMatch(prog, /document\.title=\(p\.project/, 'panel nie nadpisuje tytulu nazwa projektu');
+});

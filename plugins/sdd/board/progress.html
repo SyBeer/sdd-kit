@@ -413,7 +413,6 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
     }
     renderModules(p);
     $('#meta').textContent='poziom '+(LEVEL[p.level]||p.level)+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
-    document.title=(p.project||'SDD')+' · postęp';
 
     var allDone=p.next.key==='done';
     var html='<section class="next'+(allDone?' alldone':'')+'"><div><div class="lbl">'+(allDone?'Status':'Aktualny krok')+'</div>'+
