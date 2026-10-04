@@ -126,8 +126,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
   var BASE=SddUI.base(location.pathname);
   var $=function(s){return document.querySelector(s)};
   var LEVEL={full:'pełny',light:'lekki'};
-  var TITLES={module:'Moduł',guide:'Jak to działa',config:'Konfiguracja'};
-  document.title=TITLES[PAGE]+' · SDD';
+  document.title='SDD';  // po wczytaniu modulu: "SDD: <modul>" (SddUI.tabTitle, AC-U19)
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function api(url,opts){
     opts=opts||{}; opts.headers=Object.assign({'X-SDD':'1','Content-Type':'application/json'},opts.headers||{});

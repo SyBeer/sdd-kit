@@ -1,10 +1,9 @@
 # Changelog
 
 ## [Niewydane]
-- Tytul karty przegladarki z nazwa modulu (prosba usera): "fv-manager · Tablica", "fv-manager · Panel",
-  "... · Jak to działa" itd.; demo - "Demo · <strona>"; bez modulu - "<strona> · SDD". Modul pierwszy, bo przy wielu
-  kartach przegladarka ucina koniec. Ustawiany przy kazdej zmianie modulu, takze z innej karty; panel nie nadpisuje
-  go juz nazwa projektu. Spec: `docs/specs/ui-switch.md` AC-U19.
+- Tytul karty przegladarki z nazwa modulu (prosba usera): "SDD: fv-manager" na kazdej stronie (Panel, Tablica, Moduł,
+  Jak to działa, Konfiguracja); demo - "SDD: Demo"; bez modulu - "SDD". Ustawiany przy kazdej zmianie modulu, takze
+  z innej karty; panel nie nadpisuje go juz nazwa projektu. Spec: `docs/specs/ui-switch.md` AC-U19.
 
 ## [0.28.11] - 2026-10-04
 - Ikona aplikacji (prosba usera: "zeby w przegladarce latwo bylo ja wyluskac"): ciemny kwadrat z czterema

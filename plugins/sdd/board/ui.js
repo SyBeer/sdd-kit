@@ -93,12 +93,10 @@
   // Zrodla w nawiasach ([Biz], [App], [Dok], [AI]) i **tekst** pogrubione; wejscie juz escapowane (0.22.0, AC-C23).
   const MARKS = /\[(Biz|App|Dok|AI)\]/g;
   function marks(html) { return String(html).replace(MARKS, '<strong>[$1]</strong>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
-  // Tytul karty przegladarki (AC-U19): modul pierwszy - przy wielu kartach przegladarka ucina koniec.
-  const PAGES = { panel: 'Panel', board: 'Tablica', module: 'Moduł', guide: 'Jak to działa', config: 'Konfiguracja' };
+  // Tytul karty przegladarki (AC-U19, user): "SDD: <modul>" na kazdej stronie; demo "SDD: Demo"; bez modulu "SDD".
   function tabTitle(mod, page, demo) {
-    const p = PAGES[page] || 'SDD';
-    if (demo) return 'Demo · ' + p;
-    return mod ? mod + ' · ' + p : p + ' · SDD';
+    if (demo) return 'SDD: Demo';
+    return mod ? 'SDD: ' + mod : 'SDD';
   }
 
   // Kotwica z tytulu karty (AC-C25): male litery, bez polskich znakow, '-' zamiast reszty.

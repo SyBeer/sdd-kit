@@ -87,8 +87,8 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
   Serwer: `/favicon.svg` (image/svg+xml), `/favicon.png` 32x32 i `/favicon.ico` (PNG; przegladarki pytaja o ten adres
   same), `/apple-touch-icon.png` 180x180. Kazda strona (panel, tablica, info; takze demo) ma w `<head>`
   `<link rel="icon">` SVG i PNG oraz `apple-touch-icon`. Reczne: ikona na karcie w Safari i Chrome.
-- AC-U19 (0.28.12, user: "dodaj nazwe modulu w tytule karty"): `tabTitle(modul, strona, demo)` -> "<modul> · <strona>"
-  (Panel, Tablica, Moduł, Jak to działa, Konfiguracja); demo -> "Demo · <strona>"; bez modulu -> "<strona> · SDD".
-  Modul pierwszy (przegladarka ucina koniec przy wielu kartach). Ustawiany przy kazdej zmianie modulu (przelacznik
+- AC-U19 (0.28.12, user: "dodaj nazwe modulu w tytule karty", potem: "kazda strona ma nazwe modulu: SDD: + fv-manager"):
+  `tabTitle(modul, strona, demo)` -> "SDD: <modul>" na kazdej stronie (Panel, Tablica, Moduł, Jak to działa,
+  Konfiguracja); demo -> "SDD: Demo"; bez modulu -> "SDD". Ustawiany przy kazdej zmianie modulu (przelacznik
   modulu w `modSwitch`), takze po zmianie modulu w innej karcie; panel nie nadpisuje go nazwa projektu.
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.

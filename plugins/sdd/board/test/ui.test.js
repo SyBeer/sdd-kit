@@ -203,14 +203,10 @@ test('AC-U18: ikona aplikacji - pliki, naglowki stron', () => {
 });
 
 test('AC-U19: tytul karty z nazwa modulu', () => {
-  assert.strictEqual(ui.tabTitle('fv-manager', 'board'), 'fv-manager · Tablica');
-  assert.strictEqual(ui.tabTitle('fv-manager', 'panel'), 'fv-manager · Panel');
-  assert.strictEqual(ui.tabTitle('fv-manager', 'guide'), 'fv-manager · Jak to działa');
-  assert.strictEqual(ui.tabTitle('fv-manager', 'config'), 'fv-manager · Konfiguracja');
-  assert.strictEqual(ui.tabTitle('fv-manager', 'module'), 'fv-manager · Moduł');
-  assert.strictEqual(ui.tabTitle('zlecenia', 'board', true), 'Demo · Tablica');
-  assert.strictEqual(ui.tabTitle('', 'board'), 'Tablica · SDD');
-  assert.strictEqual(ui.tabTitle(null, 'panel'), 'Panel · SDD');
+  ['panel', 'board', 'module', 'guide', 'config'].forEach(p => assert.strictEqual(ui.tabTitle('fv-manager', p), 'SDD: fv-manager'));
+  assert.strictEqual(ui.tabTitle('zlecenia', 'board', true), 'SDD: Demo');
+  assert.strictEqual(ui.tabTitle('', 'board'), 'SDD');
+  assert.strictEqual(ui.tabTitle(null, 'panel'), 'SDD');
   const prog = fs.readFileSync(path.join(__dirname, '..', 'progress.html'), 'utf8');
   assert.doesNotMatch(prog, /document\.title=\(p\.project/, 'panel nie nadpisuje tytulu nazwa projektu');
 });
