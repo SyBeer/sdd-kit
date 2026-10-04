@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.10] - 2026-10-04
 - Okno Claude: ostatnia linia nie jest juz ucieta (zrzut usera, Safari). Przyczyna: strony maja `box-sizing:
   border-box`, a dopasowanie xterm liczylo wysokosc kontenera razem z odstepami (12 px za duzo) - zaleznie od
   wysokosci okna raz wychodzil wiersz za duzo. Odstepy przeniesione na sam terminal; przeliczenie wierszy takze po
