@@ -16,6 +16,7 @@ const KEY_HELP = 'Brak klucza API Redmine (klucz: Redmine -> Moje konto -> Klucz
   '  (macOS: dziala tez Pek kluczy - security add-generic-password -s redmine-api-key -a "$USER" -w).\n' +
   'Nie wklejaj klucza do czatu ani do plikow projektu.';
 
+const UAT_FIELD = 'Link do środowiska UAT';
 // Konfiguracja z SDD.yaml (AC-RM1).
 function readConfig(yaml) {
   const url = yamlField(yaml, 'redmine_url').replace(/\/+$/, '');
@@ -27,9 +28,13 @@ function readConfig(yaml) {
   // Format opisu (AC-RM11): Markdown domyslnie (tabele i obrazy dzialaja), Textile dla starszych instalacji
   const format = yamlField(yaml, 'redmine_format') || 'markdown';
   if (format !== 'markdown' && format !== 'textile') throw new Error('redmine_format: markdown albo textile - jest: ' + format);
+  // Link do srodowiska UAT (AC-RM21): wartosc pola wlasnego w kazdym zadaniu; pole domyslnie "Link do srodowiska UAT"
+  const uatLink = yamlField(yaml, 'redmine_uat_link');
+  if (uatLink && !/^https?:\/\/\S+$/.test(uatLink)) throw new Error('redmine_uat_link musi byc adresem http:// albo https:// - jest: ' + uatLink);
   // Pole wlasne na kryteria akceptacji (AC-RM13): nazwa albo numer; puste = tylko opis
   return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format, acField: yamlField(yaml, 'redmine_ac_field'),
-    statusStart: yamlField(yaml, 'redmine_status_start'), statusDone: yamlField(yaml, 'redmine_status_done') };
+    statusStart: yamlField(yaml, 'redmine_status_start'), statusDone: yamlField(yaml, 'redmine_status_done'),
+    uatLink, uatField: uatLink ? yamlField(yaml, 'redmine_uat_field') || UAT_FIELD : '' };
 }
 
 // Tracker: z konfiguracji (nazwa, bez wielkosci liter) albo pierwszy "funkcjonalnosc / zadanie" - zadania z wymagan
@@ -49,11 +54,14 @@ function withMark(text) {
   return t.includes('Wygenerowane przez AI [Claude Code]') ? t : (t ? t + '\n\n' : '') + MARK;
 }
 
-function issueBody(task, projectId, trackerId, acFieldId) {
+function issueBody(task, projectId, trackerId, acFieldId, uat) {
   const issue = task.issue ? {} : { project_id: projectId, tracker_id: trackerId };
   issue.subject = task.subject;
   issue.description = withMark(task.description);
-  if (acFieldId && task.acceptance != null) issue.custom_fields = [{ id: acFieldId, value: task.acceptance }];
+  const cf = [];
+  if (acFieldId && task.acceptance != null) cf.push({ id: acFieldId, value: task.acceptance });
+  if (uat && uat.id && uat.link) cf.push({ id: uat.id, value: uat.link });  // AC-RM21
+  if (cf.length) issue.custom_fields = cf;
   return { issue };
 }
 
@@ -66,10 +74,12 @@ async function projectFields(call, projectId) {
   ((r.data && r.data.issues) || []).forEach(i => (i.custom_fields || []).forEach(c => { seen[c.id] = c.name; }));
   return Object.keys(seen).map(id => ({ id: +id, name: seen[id] }));
 }
-async function acFieldOf(call, cfg, projectId, trackerId, fields) {
-  if (!cfg.acField) return null;
-  if (/^\d+$/.test(cfg.acField)) return { id: +cfg.acField, name: '' };
-  const want = cfg.acField.toLowerCase();
+async function acFieldOf(call, cfg, projectId, trackerId, fields, key) {
+  key = key || 'acField';
+  const val = cfg[key];
+  if (!val) return null;
+  if (/^\d+$/.test(val)) return { id: +val, name: '' };
+  const want = val.toLowerCase();
   const hit = (fields || []).find(f => f.name.toLowerCase() === want);
   if (hit) return hit;
   for (const q of ['&tracker_id=' + trackerId, '']) {
@@ -77,8 +87,9 @@ async function acFieldOf(call, cfg, projectId, trackerId, fields) {
     const found = ((r.data && r.data.issues) || []).map(i => (i.custom_fields || []).find(c => c.name.toLowerCase() === want)).find(Boolean);
     if (found) return { id: found.id, name: found.name };
   }
-  throw new Error('Nie znalazlem pola "' + cfg.acField + '" w zadaniach projektu (nazwe pola widac tylko w istniejacych zadaniach). ' +
-    'Wpisz w SDD.yaml numer pola zamiast nazwy, np. redmine_ac_field: 1 (numer: Administracja -> Pola wlasne, w adresie /custom_fields/<numer>).');
+  const yamlKey = key === 'uatField' ? 'redmine_uat_field' : 'redmine_ac_field';
+  throw new Error('Nie znalazlem pola "' + val + '" w zadaniach projektu (nazwe pola widac tylko w istniejacych zadaniach). ' +
+    'Wpisz w SDD.yaml numer pola zamiast nazwy, np. ' + yamlKey + ': 1 (numer: Administracja -> Pola wlasne, w adresie /custom_fields/<numer>).');
 }
 
 // Zalaczniki zadania (AC-RM12): sciezki wzgledem requirements/, tylko pliki wewnatrz tego folderu.
@@ -124,7 +135,9 @@ async function project(call, cfg) {
   // Pola wlasne projektu: Redmine 4.2+ podaje je przy projekcie (bez admina); starsze - z zadan projektu (AC-RM19)
   const fields = Array.isArray(p.issue_custom_fields) ? p.issue_custom_fields.map(f => ({ id: f.id, name: f.name })) : null;
   const acField = await acFieldOf(call, cfg, p.id, tracker.id, fields);
-  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker, acField, fields };
+  const uatField = await acFieldOf(call, cfg, p.id, tracker.id, fields, 'uatField');
+  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker, acField,
+    uatField, fields };
 }
 
 // Zadania po kolei, potem relacje "poprzedza" (AC-RM4). Blad -> wyjatek z tym, co juz zalozono (AC-RM5).
@@ -136,7 +149,8 @@ async function push(call, cfg, tasks, dry, req) {
   const info = await project(call, cfg);
   for (let n = 0; n < tasks.length; n++) {
     const t = tasks[n];
-    const body = issueBody(t, info.project.id, info.tracker.id, info.acField && info.acField.id);
+    const body = issueBody(t, info.project.id, info.tracker.id, info.acField && info.acField.id,
+      info.uatField && { id: info.uatField.id, link: cfg.uatLink });
     let todo = files[n];
     if (todo.length && t.issue) {  // ponowny handover: pliki, ktore zadanie juz ma, pomijamy
       const g = await call('GET', '/issues/' + t.issue + '.json?include=attachments');
@@ -192,7 +206,7 @@ async function setStatus(call, cfg, id, want, note) {
     // Pole wymagane przy zmianie statusu (przeplyw pracy) - AC-RM18, prawdziwy Redmine usera 2026-10-04
     const e = errs(u.data), req = /nie mo[zż]e by[cć] puste|can'?t be blank|cannot be blank/i.test(e);
     throw new Error('Zadanie #' + id + ': Redmine ' + u.status + ' ' + e + (req ? '. Redmine wymaga tego pola przy zmianie statusu - ' +
-      'uzupelnij je w zadaniu albo ustaw redmine_ac_field w SDD.yaml i powtorz /sdd:handover (uzupelni istniejace zadania).' : ''));
+      'uzupelnij je w zadaniu albo ustaw redmine_ac_field / redmine_uat_link w SDD.yaml i powtorz /sdd:handover (uzupelni istniejace zadania).' : ''));
   }
   const g = await call('GET', '/issues/' + id + '.json');
   const now = g.data && g.data.issue && g.data.issue.status;
@@ -234,8 +248,14 @@ async function main(argv) {
     delete info.fields;
     const out = Object.assign(info, { format: cfg.format, customFields: fields });
     const ac = fields.find(f => /kryteri|acceptance/i.test(f.name));
-    if (!info.acField && ac) out.warning = 'Projekt ma pole "' + ac.name + '", a redmine_ac_field nie jest ustawione - zadania beda bez kryteriow w tym polu ' +
-      '(Redmine moze wymagac go przy zmianie statusu). Dopisz w SDD.yaml: redmine_ac_field: "' + ac.name + '"';
+    const warn = [];
+    if (!info.acField && ac) warn.push('Projekt ma pole "' + ac.name + '", a redmine_ac_field nie jest ustawione - zadania beda bez kryteriow w tym polu ' +
+      '(Redmine moze wymagac go przy zmianie statusu). Dopisz w SDD.yaml: redmine_ac_field: "' + ac.name + '"');
+    const uat = fields.find(f => /uat/i.test(f.name) && /link|adres|url|[sś]rodowisk/i.test(f.name));
+    if (!info.uatField && uat) warn.push('Projekt ma pole "' + uat.name + '", a redmine_uat_link nie jest ustawione - zadania beda bez linku do ' +
+      'srodowiska UAT (Redmine moze go wymagac w przeplywie). Dopisz w SDD.yaml: redmine_uat_link: "<adres srodowiska UAT>"' +
+      (uat.name === UAT_FIELD ? '' : ' i redmine_uat_field: "' + uat.name + '"'));
+    if (warn.length) out.warning = warn.join(' ');
     return console.log(JSON.stringify(out, null, 2));
   }
   if (cmd === 'status') return console.log(JSON.stringify(await setStatus(call, cfg, id, args[2], note), null, 2));

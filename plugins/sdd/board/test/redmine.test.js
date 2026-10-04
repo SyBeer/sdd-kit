@@ -90,9 +90,9 @@ function tasksFile(req, t) { const f = path.join(req, '04-validation', 'redmine-
 
 test('AC-RM1: readConfig - adres, projekt, tracker, walidacja', () => {
   assert.deepStrictEqual(rm.readConfig('redmine_url: "https://rm.firma.pl/"\nredmine_project: "faktury"\nredmine_tracker: "Feature"\n'),
-    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown', acField: '', statusStart: '', statusDone: '' });
+    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown', acField: '', statusStart: '', statusDone: '', uatLink: '', uatField: '' });
   assert.deepStrictEqual(rm.readConfig('redmine_url: http://10.0.0.5:3000\nredmine_project: a_b-1\n'),
-    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown', acField: '', statusStart: '', statusDone: '' });
+    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown', acField: '', statusStart: '', statusDone: '', uatLink: '', uatField: '' });
   assert.throws(() => rm.readConfig('redmine_project: "x"\n'), /redmine_url/);
   assert.throws(() => rm.readConfig('redmine_url: "https://a"\n'), /redmine_project/);
   assert.throws(() => rm.readConfig('redmine_url: "ftp://a"\nredmine_project: "x"\n'), /redmine_url/);
@@ -268,6 +268,40 @@ test('AC-RM19: pola wlasne z projektu (Redmine 4.2+), takze bez zadan', async ()
     assert.deepStrictEqual(JSON.parse(r.out).acField, { id: 6, name: 'Kryteria akceptacji' });
     assert.ok(!s.log.some(x => x.url.startsWith('/issues.json')), 'pola z projektu - bez przegladania zadan');
   } finally { s.close(); }
+});
+
+test('AC-RM21: link do srodowiska UAT - redmine_uat_link w nowych i aktualizowanych zadaniach', async () => {
+  const LINK = 'http://ha.local:8123/app/fv';
+  // pole z projektu (Redmine 4.2+): domyslna nazwa "Link do srodowiska UAT" albo redmine_uat_field (nazwa / numer)
+  const s = await fakeRedmine({ projectFields: true, noIssues: true });
+  try {
+    const req = moduleWith(s.url, 'redmine_ac_field: "Kryteria akceptacji"\nredmine_uat_link: "' + LINK + '"\nredmine_uat_field: "link uat"\n');
+    let r = await run(['check', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out).uatField, { id: 8, name: 'Link UAT' });
+    const t = { tasks: [{ key: 'T-01', subject: 'S1', description: 'D1', acceptance: 'A1' },
+      { key: 'T-02', subject: 'S2', description: 'D2', issue: 55 }] };
+    r = await run(['push', tasksFile(req, t), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(s.log.find(x => x.method === 'POST' && x.url === '/issues.json').body.issue.custom_fields,
+      [{ id: 6, value: 'A1' }, { id: 8, value: LINK }]);
+    assert.deepStrictEqual(s.log.find(x => x.method === 'PUT').body.issue.custom_fields, [{ id: 8, value: LINK }]);
+    // nazwa pola, ktorej nie ma w projekcie -> blad z prosba o numer
+    r = await run(['check', '--req', moduleWith(s.url, 'redmine_uat_link: "' + LINK + '"\nredmine_uat_field: "Brak"\n')], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /redmine_uat_field/);
+  } finally { s.close(); }
+  // bez redmine_uat_link - bez pola; check podpowiada, gdy projekt ma pole z linkiem UAT
+  const s2 = await fakeRedmine({ projectFields: true, noIssues: true });
+  try {
+    const req = moduleWith(s2.url, 'redmine_ac_field: "Kryteria akceptacji"\n');
+    let r = await run(['check', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.match(JSON.parse(r.out).warning, /redmine_uat_link/);
+    r = await run(['push', tasksFile(req, { tasks: [{ key: 'T-01', subject: 'S', description: 'D' }] }), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.strictEqual(s2.log.find(x => x.url === '/issues.json').body.issue.custom_fields, undefined);
+  } finally { s2.close(); }
+  assert.throws(() => rm.readConfig('redmine_url: "http://a"\nredmine_project: "p"\nredmine_uat_link: "ftp://x"\n'), /redmine_uat_link/);
 });
 
 test('AC-RM2: issueBody - nowe zadanie z projektem i trackerem, aktualizacja bez nich', () => {

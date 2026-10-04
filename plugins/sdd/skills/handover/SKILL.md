@@ -25,7 +25,9 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
 ## Redmine (`backlog: redmine`)
 Konfiguracja w `SDD.yaml`: `redmine_url` (adres), `redmine_project` (identyfikator z adresu `/projects/<identyfikator>`),
 opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadanie, nigdy "Bug"),
-`redmine_format` (`markdown` / `textile`) i `redmine_ac_field` (pole wlasne na kryteria akceptacji - nazwa albo numer). Adres i projekt da sie tez ustawic w panelu
+`redmine_format` (`markdown` / `textile`), `redmine_ac_field` (pole wlasne na kryteria akceptacji - nazwa albo numer)
+i `redmine_uat_link` (adres srodowiska UAT - skrypt wpisuje go w kazde zakladane i aktualizowane zadanie do pola
+`redmine_uat_field`, domyslnie "Link do środowiska UAT"; nazwa albo numer). Adres i projekt da sie tez ustawic w panelu
 (Konfiguracja). Klucz API: panel (Konfiguracja -> Klucz API Redmine) zapisuje go w `~/.sdd-kit/.env`; dziala tez
 zmienna `REDMINE_API_KEY` i Pek kluczy macOS (`redmine-api-key`). **Nie otwieraj, nie wypisuj i nie kopiuj
 `~/.sdd-kit/.env`** ani wyniku Peku kluczy - klucz czyta tylko skrypt; ustawia go czlowiek.
@@ -34,8 +36,9 @@ zmienna `REDMINE_API_KEY` i Pek kluczy macOS (`redmine-api-key`). **Nie otwieraj
    nie pros o wklejenie klucza do czatu ani do plikow.
 2. `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js" check --req requirements` -> nazwa projektu, trackery, wybrany
    tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij. `warning` (projekt ma pole na kryteria,
-   a `redmine_ac_field` nie jest ustawione) -> zaproponuj dopisanie go do SDD.yaml (PYTASZ) przed zalozeniem zadan -
-   Redmine moze wymagac tego pola przy zmianie statusu.
+   a `redmine_ac_field` nie jest ustawione; albo pole z linkiem UAT, a `redmine_uat_link` nie jest ustawione) ->
+   zaproponuj dopisanie do SDD.yaml (PYTASZ, adres srodowiska UAT podaje czlowiek) przed zalozeniem zadan -
+   Redmine moze wymagac tych pol w przeplywie pracy.
 3. Plik zadan `04-validation/redmine-YYYY-MM-DD.json`: `{ "tasks": [ { "key": "T-01", "subject": "[R-xxx] tytul",
    "description": "...", "after": ["T-00"], "issue": 123, "attachments": ["00-intake/ekran-zlecenia.png"] } ] }`.
    - `description` w formacie z `check` (`format`; `redmine_format` w SDD.yaml, domyslnie `markdown`). Markdown:

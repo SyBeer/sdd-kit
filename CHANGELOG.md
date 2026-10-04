@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Niewydane]
+- Redmine - link do srodowiska UAT z SDD.yaml (prosba usera: "dodaj link UAT do SDD.yaml w sdd-kit"): nowy klucz
+  `redmine_uat_link` (opcjonalnie `redmine_uat_field`, domyslnie pole "Link do środowiska UAT"). /sdd:handover wpisuje
+  link w kazde zakladane i aktualizowane zadanie; `check` pokazuje pole i ostrzega, gdy projekt ma pole z linkiem UAT,
+  a klucza brak. Powod: pole stalo sie obowiazkowe w przeplywie Redmine i zadania bez niego nie przechodzily dalej.
+  Spec: `docs/specs/redmine.md` AC-RM21.
 - Redmine - wtyczka UAT (pytanie usera, czy jest czescia sdd-kit): nie, to osobny projekt `redmine-UAT-plugin`
   (wtyczka `uat_tests` w samym Redmine). Jak to dziala, sekcja Integracja z Redmine: punkt o wtyczce - przypadki
   "Test UAT" z pola "Kryteria akceptacji" przy "Gotowy do UAT", blokada akceptacji, adres repo. Zgodnosc formatu

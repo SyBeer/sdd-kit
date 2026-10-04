@@ -120,3 +120,21 @@ na poczatku linii wtyczka traktuje jako nowy przypadek - w kryteriach go nie uzy
 ## Kryteria akceptacji
 - AC-RM20: sekcja przewodnika zawiera "uat_tests", "Gotowy do UAT", "Test UAT", adres
   `github.com/SyBeer/redmine-UAT-plugin`; skill handover wspomina wtyczke UAT i zakaz punktow listy w kryteriach.
+
+# Zmiana (niewydane, 2026-10-04): link do srodowiska UAT z SDD.yaml
+
+Prosba usera (projekt fv-manager): "dodaj link UAT do SDD.yaml w sdd-kit". Powod: w prawdziwym Redmine pole
+"Link do środowiska UAT" stalo sie obowiazkowe w przeplywie (zadania bez niego "nie spelniaja kryteriow flow");
+/sdd:handover go nie wypelnial i 16 zadan trzeba bylo uzupelnic recznie.
+
+## Zakres
+1. SDD.yaml: `redmine_uat_link` (adres http/https) i opcjonalnie `redmine_uat_field` (nazwa albo numer pola,
+   domyslnie "Link do środowiska UAT"). Pole odnajdywane jak `redmine_ac_field` (z projektu albo z zadan).
+2. push: link w `custom_fields` kazdego nowego i aktualizowanego zadania (obok kryteriow).
+3. check: `uatField` w wyniku; `warning`, gdy projekt ma pole z linkiem UAT, a `redmine_uat_link` nie jest ustawione.
+4. Szablon SDD.yaml, skill handover i przewodnik (Integracja z Redmine) opisuja nowe klucze.
+
+## Kryteria akceptacji
+- AC-RM21: z `redmine_uat_link` i `redmine_uat_field` check zwraca `uatField`, push wpisuje link w nowe (POST) i
+  aktualizowane (PUT) zadania; nieznana nazwa pola - blad z prosba o numer (`redmine_uat_field`); bez
+  `redmine_uat_link` zadania sa bez pola, a check podpowiada klucz; adres inny niz http/https - blad w readConfig.
