@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.9] - 2026-10-04
 - Jak to dziala: karta "Na tej stronie" pod "Od czego zacząć" - linki do kazdej karty (Proces, Komendy, Folder
   requirements/, sekcje przewodnika, w tym Integracja z Redmine); karty z kotwicami `SddUI.slug(tytul)` (AC-C25).
 
