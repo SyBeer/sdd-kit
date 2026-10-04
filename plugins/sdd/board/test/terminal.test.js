@@ -8,7 +8,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
-const { TermSession, claudeArgv, available, childEnv } = require('../terminal');
+const { TermSession, claudeArgv, available, childEnv, historyDir, hasHistory } = require('../terminal');
 const ui = require('../ui');
 
 const skip = available() ? false : 'brak Pythona 3 z modulem pty';
@@ -104,6 +104,19 @@ test('AC-T6: claudeArgv - powloka logowania, SDD_CLAUDE_CMD', () => {
     ['/bin/bash', '-l', '-c', 'exec /opt/x/claude --model opus']);
 });
 
+test('AC-T11: wznowienie rozmowy - --continue, folder historii Claude Code', () => {
+  assert.deepStrictEqual(claudeArgv({ SHELL: '/bin/zsh' }, { resume: true }), ['/bin/zsh', '-l', '-c', 'exec claude --continue']);
+  assert.deepStrictEqual(claudeArgv({ SHELL: '/bin/zsh', SDD_CLAUDE_CMD: 'x --y' }, { resume: true }), ['/bin/zsh', '-l', '-c', 'exec x --y --continue']);
+  const cfg = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-cc-'));
+  const env = { CLAUDE_CONFIG_DIR: cfg };
+  assert.strictEqual(historyDir('/Users/tomek/_DEV_/repos/fv-manager', env), path.join(cfg, 'projects', '-Users-tomek--DEV--repos-fv-manager'));
+  assert.strictEqual(hasHistory('/Users/a/mod', env), false);
+  fs.mkdirSync(historyDir('/Users/a/mod', env), { recursive: true });
+  assert.strictEqual(hasHistory('/Users/a/mod', env), false);
+  fs.writeFileSync(path.join(historyDir('/Users/a/mod', env), 'abc.jsonl'), '{}\n');
+  assert.strictEqual(hasHistory('/Users/a/mod', env), true);
+});
+
 test('AC-T8: dockWidth - domyslna 520, zakres 320 .. 70% okna', () => {
   assert.strictEqual(ui.dockWidth(null, 1600), 520);
   assert.strictEqual(ui.dockWidth('abc', 1600), 520);
@@ -147,9 +160,13 @@ test('AC-T7: serwer - zabezpieczenia, start w folderze modulu, odtworzenie, stop
   const port = await freePort();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-term-'));
   fs.cpSync(TEMPLATES, path.join(root, 'a', 'requirements'), { recursive: true });
+  // zapisana rozmowa Claude Code dla folderu modulu (AC-T12)
+  const ccfg = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-ccfg-'));
+  const hdir = path.join(ccfg, 'projects', fs.realpathSync(path.join(root, 'a')).replace(/[^A-Za-z0-9]/g, '-'));
+  fs.mkdirSync(hdir, { recursive: true }); fs.writeFileSync(path.join(hdir, 'x.jsonl'), '{}\n');
   const proc = spawn(process.execPath, [path.join(BOARD_DIR, 'server.js'), path.join(root, 'a', 'requirements', '01-interview', 'board.json'), String(port)],
     { cwd: root, env: Object.assign({}, process.env, { SDD_CONFIG: path.join(root, 'config.json'), SDD_MODULES_ROOT: '',
-      SDD_CLAUDE_CMD: 'sh -c "pwd; echo hello-term; sleep 30"' }) });
+      SDD_CLAUDE_CMD: "sh -c 'pwd; echo hello-term; echo args: $0 $@; sleep 30'", CLAUDE_CONFIG_DIR: ccfg }) });
   await new Promise((res, rej) => {
     let out = '';
     proc.stdout.on('data', c => { out += c; if (/Panel:/.test(out)) res(); });
@@ -173,6 +190,16 @@ test('AC-T7: serwer - zabezpieczenia, start w folderze modulu, odtworzenie, stop
     const text = Buffer.from(first.d, 'base64').toString();
     assert.match(text, /hello-term/);
     assert.ok(text.includes(fs.realpathSync(path.join(root, 'a'))) || text.includes(path.join(root, 'a')), text);
+    assert.strictEqual((await call(port, 'POST', '/api/term/stop', {})).code, 200);
+    await new Promise(r => setTimeout(r, 500));
+    // AC-T12: wznowienie - historia w folderze CLAUDE_CONFIG_DIR, start z --continue
+    st = JSON.parse((await call(port, 'GET', '/api/term')).body);
+    assert.strictEqual(st.canResume, true);
+    assert.strictEqual((await call(port, 'POST', '/api/term/start', { cols: 80, rows: 24, resume: true })).code, 200);
+    await new Promise(r => setTimeout(r, 600));
+    const s2 = await stream(port, 400);
+    const f2 = JSON.parse(s2.split('\n').find(l => l.startsWith('data: ')).slice(6));
+    assert.match(Buffer.from(f2.d, 'base64').toString(), /args:.*--continue/);
     assert.strictEqual((await call(port, 'POST', '/api/term/stop', {})).code, 200);
     await new Promise(r => setTimeout(r, 500));
     st = JSON.parse((await call(port, 'GET', '/api/term')).body);

@@ -18,9 +18,21 @@ function python(env) {
 function available(env) { return process.platform !== 'win32' && !!python(env); }
 
 // Powloka logowania: PATH z Homebrew i ~/.zprofile, bez aliasow z .zshrc (np. claude=ccs).
-function claudeArgv(env) {
+// opts.resume: --continue - ostatnia rozmowa w folderze modulu (po restarcie serwera, AC-T11).
+function claudeArgv(env, opts) {
   env = env || process.env;
-  return [env.SHELL || '/bin/zsh', '-l', '-c', 'exec ' + (env.SDD_CLAUDE_CMD || 'claude')];
+  const cmd = (env.SDD_CLAUDE_CMD || 'claude') + (opts && opts.resume ? ' --continue' : '');
+  return [env.SHELL || '/bin/zsh', '-l', '-c', 'exec ' + cmd];
+}
+
+// Gdzie Claude Code zapisuje rozmowy dla folderu: projects/<sciezka, kazdy znak spoza [A-Za-z0-9] -> '-'>.
+function historyDir(cwd, env) {
+  env = env || process.env;
+  const base = env.CLAUDE_CONFIG_DIR || path.join(require('os').homedir(), '.claude');
+  return path.join(base, 'projects', String(cwd).replace(/[^A-Za-z0-9]/g, '-'));
+}
+function hasHistory(cwd, env) {
+  try { return fs.readdirSync(historyDir(cwd, env)).some(f => /\.jsonl$/.test(f)); } catch (e) { return false; }
 }
 
 function childEnv(env) {
@@ -60,7 +72,7 @@ class TermSession extends EventEmitter {
     this.chunks = []; this.bytes = 0; this.exitCode = null;
     this.cwd = o.cwd; this.startedAt = new Date().toISOString();
     this.size = { cols: size(o.cols, 80), rows: size(o.rows, 24) };
-    const argv = o.argv || claudeArgv(o.env);
+    const argv = o.argv || claudeArgv(o.env, { resume: o.resume });
     const p = spawn(py, [HELPER, String(size(o.cols, 80)), String(size(o.rows, 24))].concat(argv),
       { cwd: o.cwd, env: childEnv(o.env), stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
     this.proc = p;
@@ -89,4 +101,4 @@ class TermSession extends EventEmitter {
   stop() { if (this.proc) this.proc.kill('SIGTERM'); }
 }
 
-module.exports = { TermSession, claudeArgv, available, python, childEnv };
+module.exports = { TermSession, claudeArgv, historyDir, hasHistory, available, python, childEnv };

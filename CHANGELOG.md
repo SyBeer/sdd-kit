@@ -1,5 +1,11 @@
 # Changelog
 
+## [Niewydane]
+- Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie
+  rozmowy"). Gdy w folderze modulu jest zapisana rozmowa Claude Code (`~/.claude/projects/<folder>/*.jsonl`), okno
+  pokazuje "Wznów rozmowę" (`claude --continue` - ostatnia rozmowa w tym folderze, z historia) i "Nowa rozmowa";
+  bez zapisanej rozmowy jak dotad "Uruchom Claude". Spec: `docs/specs/claude-dock.md` AC-T11, AC-T12.
+
 ## [0.28.2] - 2026-10-04
 - Okno Claude Code: dol ekranu Claude nie ucieka juz poza okno (uwaga usera). Przyczyny: (1) przy dwoch kartach
   (np. Panel i Tablica o roznej wysokosci) rozmiar jednej sesji ustawiala karta, ktora podlaczyla sie ostatnio -

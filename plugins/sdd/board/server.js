@@ -257,7 +257,11 @@ const termSend = (res, obj, ev) => res.write((ev ? 'event: ' + ev + '\n' : '') +
 term.on('data', c => { const d = c.toString('base64'); termClients.forEach(r => termSend(r, { d })); });
 term.on('exit', code => termClients.forEach(r => termSend(r, { code }, 'exit')));
 function termState() {
-  return Object.assign(term.state(), { available: terminal.available(), module: user.req ? path.dirname(user.req) : null });
+  const mod = user.req ? path.dirname(user.req) : null;
+  // zapisana rozmowa Claude Code w folderze modulu -> mozna wznowic po restarcie serwera (AC-T12)
+  let canResume = false;
+  if (mod) { try { canResume = terminal.hasHistory(fs.realpathSync(mod)); } catch (e) { canResume = false; } }
+  return Object.assign(term.state(), { available: terminal.available(), module: mod, canResume });
 }
 ['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { term.stop(); if (sig !== 'exit') process.exit(0); }));
 function termRoute(req, res, url) {
@@ -276,7 +280,7 @@ function termRoute(req, res, url) {
     if (url === '/api/term/start') {
       if (!terminal.available()) return json(res, 501, { error: 'Terminal niedostępny: potrzebny Python 3 (macOS / Linux).' });
       if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
-      try { term.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows }); }
+      try { term.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true }); }
       catch (e) { return json(res, 500, { error: e.message }); }
       return json(res, 200, termState());
     }

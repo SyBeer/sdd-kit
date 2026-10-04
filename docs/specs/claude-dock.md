@@ -62,6 +62,13 @@ z `claude` uruchomionym przez serwer kitu.
   przeliczana przy kazdej zmianie wysokosci okna Claude (pojawienie / znikniecie komunikatu nad terminalem,
   ResizeObserver), nie tylko przy zmianie okna przegladarki. Reczne: dwie karty o roznej wysokosci - aktywna karta
   ma caly ekran Claude bez ucinania; komunikat nad terminalem nie wypycha dolu poza okno.
+- AC-T11 (zmiana 0.28.3, user: "kazdy restart serwera czysci historie rozmowy z Claude"): `claudeArgv(env, {resume:true})`
+  -> polecenie z `--continue` (wznawia ostatnia rozmowe w folderze modulu; takze z `SDD_CLAUDE_CMD`).
+  `historyDir(cwd, env)` = `<CLAUDE_CONFIG_DIR albo ~/.claude>/projects/<cwd, kazdy znak spoza [A-Za-z0-9] -> '-'>`;
+  `hasHistory(cwd, env)` - jest tam co najmniej jeden plik `.jsonl`.
+- AC-T12 (serwer): `GET /api/term` -> `canResume` (rozmowa w folderze modulu jest); `POST /api/term/start {resume:true}`
+  uruchamia z `--continue`. Przegladarka: przy `canResume` i braku sesji przyciski "Wznów rozmowę" i "Nowa rozmowa",
+  bez - "Uruchom Claude". Reczne: rozmowa, restart serwera, "Wznów rozmowę" -> ta sama rozmowa z historia.
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez

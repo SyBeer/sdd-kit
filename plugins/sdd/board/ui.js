@@ -252,7 +252,8 @@
     dock.className = 'cdock'; dock.setAttribute('aria-label', 'Claude Code');
     dock.innerHTML = '<div class="cd-grip" title="Przeciągnij, żeby zmienić szerokość"></div>' +
       '<div class="cd-head"><b>Claude Code</b><span class="cd-cwd"></span>' +
-      '<button type="button" class="cd-run" hidden>Uruchom Claude</button><button type="button" class="cd-stop" hidden>Zakończ</button>' +
+      '<button type="button" class="cd-run" hidden>Uruchom Claude</button><button type="button" class="cd-new" hidden>Nowa rozmowa</button>' +
+      '<button type="button" class="cd-stop" hidden>Zakończ</button>' +
       '<button type="button" class="cd-x" aria-label="Zamknij okno" title="Zamknij okno (Claude działa dalej)">×</button></div>' +
       '<p class="cd-msg" hidden></p><div class="cd-term"></div>';
     document.body.appendChild(dock);
@@ -276,13 +277,18 @@
     function show(s) {
       state = s || state;
       const run = !!state.running;
+      // Zapisana rozmowa w folderze modulu: "Wznów rozmowę" (claude --continue) i "Nowa rozmowa" (AC-T12)
+      const resume = !run && !!state.canResume;
       q('.cd-run').hidden = run || !state.available; q('.cd-stop').hidden = !run;
-      q('.cd-run').textContent = state.exitCode != null && !run ? 'Uruchom ponownie' : 'Uruchom Claude';
+      q('.cd-new').hidden = !resume || !state.available;
+      q('.cd-run').textContent = resume ? 'Wznów rozmowę' : state.exitCode != null && !run ? 'Uruchom ponownie' : 'Uruchom Claude';
+      q('.cd-run').title = resume ? 'Ostatnia rozmowa z Claude w tym folderze (claude --continue)' : '';
       const dir = run ? state.cwd : state.module, c = q('.cd-cwd');
       c.textContent = dir ? '· ' + dir.split('/').filter(Boolean).pop() + (run && state.module && state.module !== state.cwd ? ' (inny moduł)' : '') : '';
       c.title = dir || '';
       if (!state.available) msg('Terminal niedostępny: serwer potrzebuje Pythona 3 (macOS / Linux). Uruchom Claude Code w osobnym oknie, w folderze modułu.');
       else if (!run && state.exitCode != null) msg('Sesja zakończona (kod ' + state.exitCode + ').');
+      else if (!run && resume) msg('W tym module jest zapisana rozmowa z Claude - możesz ją wznowić albo zacząć nową.');
       else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (state.module ? ' ' + state.module : '') + '.');
       else msg('');
     }
@@ -365,13 +371,15 @@
     }
     btn.onclick = function () { open(!root.classList.contains('claude-on')); };
     q('.cd-x').onclick = function () { open(false); btn.focus(); };
-    q('.cd-run').onclick = function () {
+    function start(resume) {
       setup().then(function () {
         if (!term) return;
         try { fit.fit(); } catch (e) {}
-        return api('/api/term/start', { cols: term.cols, rows: term.rows }).then(function (s) { show(s); connect(); term.focus(); });
+        return api('/api/term/start', { cols: term.cols, rows: term.rows, resume: resume }).then(function (s) { show(s); connect(); term.focus(); });
       }).catch(function (e) { msg(e.message); });
-    };
+    }
+    q('.cd-run').onclick = function () { start(!!state.canResume); };
+    q('.cd-new').onclick = function () { start(false); };
     q('.cd-stop').onclick = function () {
       if (!confirm('Zakończyć sesję Claude Code? Rozmowa w terminalu zostanie przerwana.')) return;
       api('/api/term/stop').catch(function (e) { msg(e.message); });
