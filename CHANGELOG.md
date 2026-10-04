@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.11] - 2026-10-04
 - Ikona aplikacji (prosba usera: "zeby w przegladarce latwo bylo ja wyluskac"): ciemny kwadrat z czterema
   karteczkami w kolorach tablicy. `favicon.svg` (zrodlo), `favicon.png` 32x32 (Safari), `apple-touch-icon.png` 180x180,
   `/favicon.ico` (PNG); linki w `<head>` panelu, tablicy i zakladek info (takze demo). PNG generuje
