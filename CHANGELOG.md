@@ -1,5 +1,11 @@
 # Changelog
 
+## [Niewydane]
+- Ikona aplikacji (prosba usera: "zeby w przegladarce latwo bylo ja wyluskac"): ciemny kwadrat z czterema
+  karteczkami w kolorach tablicy. `favicon.svg` (zrodlo), `favicon.png` 32x32 (Safari), `apple-touch-icon.png` 180x180,
+  `/favicon.ico` (PNG); linki w `<head>` panelu, tablicy i zakladek info (takze demo). PNG generuje
+  `scripts/make-icons.js` (bez zaleznosci). Spec: `docs/specs/ui-switch.md` AC-U18.
+
 ## [0.28.10] - 2026-10-04
 - Okno Claude: ostatnia linia nie jest juz ucieta (zrzut usera, Safari). Przyczyna: strony maja `box-sizing:
   border-box`, a dopasowanie xterm liczylo wysokosc kontenera razem z odstepami (12 px za duzo) - zaleznie od

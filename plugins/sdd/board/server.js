@@ -315,9 +315,16 @@ async function updateState(force) {
 
 // Wspolne pliki panelu i tablicy (sciezka = nazwa pliku obok server.js).
 const ASSETS = { '/board-ops.js': 'text/javascript', '/ui.js': 'text/javascript', '/ui.css': 'text/css' };
+// Ikona aplikacji (0.28.11, AC-U18): adres -> [plik, typ]; /favicon.ico to PNG (przegladarki pytaja o ten adres same)
+const ICONS = { '/favicon.svg': ['favicon.svg', 'image/svg+xml'], '/favicon.png': ['favicon.png', 'image/png'],
+  '/favicon.ico': ['favicon.png', 'image/png'], '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'] };
 
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://localhost');
+  if (ICONS[u.pathname]) {
+    res.writeHead(200, { 'Content-Type': ICONS[u.pathname][1], 'Cache-Control': 'max-age=86400' });
+    return fs.createReadStream(path.join(__dirname, ICONS[u.pathname][0])).pipe(res);
+  }
   if (ASSETS[u.pathname]) {
     res.writeHead(200, { 'Content-Type': ASSETS[u.pathname] + '; charset=utf-8' });
     return fs.createReadStream(path.join(__dirname, u.pathname.slice(1))).pipe(res);

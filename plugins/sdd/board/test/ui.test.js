@@ -185,3 +185,19 @@ test('AC-U16: versionBadge - link do Release Notes na GitHubie', () => {
   assert.match(st.title, /Zrestartuj serwer[\s\S]*Kliknij: opis zmian/);
   assert.strictEqual(st.stale, true);
 });
+
+test('AC-U18: ikona aplikacji - pliki, naglowki stron', () => {
+  const B = path.join(__dirname, '..');
+  const png = n => { const b = fs.readFileSync(path.join(B, n)); return { sig: b.slice(1, 4).toString(), w: b.readUInt32BE(16), h: b.readUInt32BE(20) }; };
+  assert.match(fs.readFileSync(path.join(B, 'favicon.svg'), 'utf8'), /^<svg[^>]*viewBox="0 0 32 32"/);
+  assert.deepStrictEqual(png('favicon.png'), { sig: 'PNG', w: 32, h: 32 });
+  assert.deepStrictEqual(png('apple-touch-icon.png'), { sig: 'PNG', w: 180, h: 180 });
+  ['index.html', 'progress.html', 'info.html'].forEach(f => {
+    const h = fs.readFileSync(path.join(B, f), 'utf8').split('</head>')[0];
+    assert.match(h, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/, f);
+    assert.match(h, /<link rel="icon" href="\/favicon\.png" sizes="32x32" type="image\/png">/, f);
+    assert.match(h, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png">/, f);
+  });
+  const srv = fs.readFileSync(path.join(B, 'server.js'), 'utf8');
+  ['/favicon.svg', '/favicon.png', '/favicon.ico', '/apple-touch-icon.png'].forEach(u => assert.ok(srv.includes("'" + u + "'"), 'serwer: ' + u));
+});

@@ -82,4 +82,9 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
   `rel="noopener"`), wyglada jak dotad (podkreslenie przy najechaniu); ostrzezenia AC-U10/AC-U15 bez zmian.
   Strona Release istnieje dla wersji wypchnietych na GitHub (docs/specs/github-release.md).
 - AC-U17 (reczne): klik wersji w pasku na panelu i tablicy otwiera w nowej karcie strone Release tej wersji.
+- AC-U18 (0.28.11, user: "dodaj ikone do aplikacji SDD-kit, zeby w przegladarce latwo bylo ja wyluskac"): ikona -
+  ciemny zaokraglony kwadrat z czterema karteczkami w kolorach tablicy (zdarzenie, komenda, kto, pytanie).
+  Serwer: `/favicon.svg` (image/svg+xml), `/favicon.png` 32x32 i `/favicon.ico` (PNG; przegladarki pytaja o ten adres
+  same), `/apple-touch-icon.png` 180x180. Kazda strona (panel, tablica, info; takze demo) ma w `<head>`
+  `<link rel="icon">` SVG i PNG oraz `apple-touch-icon`. Reczne: ikona na karcie w Safari i Chrome.
 - AC-U8 (reczne): na tablicy naglowek jak w panelu; zmiana modulu z tablicy pokazuje jego tablice i przelacza panel; "Nowy moduł…" otwiera formularz w panelu.
