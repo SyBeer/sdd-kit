@@ -124,3 +124,8 @@ Tokeny kolorow z `:root` jak panel (ui.css + strony); bez nowych kolorow. Tresc 
   (Claude go nie czyta), przekazanie (zgoda przed zapisem, dopisek AI), ponowne przekazanie (aktualizacja, bez
   duplikatow), pliki lokalne (redmine-*.json, TRACEABILITY.md), agent budujacy (`/sdd:handover status` start/done,
   UAT i zamkniecie czlowiek), typowe bledy.
+- AC-C25 (0.28.9, user: "dopisz w Jak to dziala odnosniki na gorze strony do konkretnych informacji, ponizej Od czego
+  zaczac"): karta "Na tej stronie" zaraz pod "Od czego zacząć" - link do kazdej kolejnej karty (Proces w sześciu
+  krokach, Komendy, Folder requirements/, kazda sekcja przewodnika, w tym Integracja z Redmine); karty maja `id`
+  z `SddUI.slug(tytul)` (male litery, bez polskich znakow, `-` zamiast reszty), link `#id` przewija do karty.
+  Reczne: klik w link przewija do karty, 375 px bez poziomego przewijania.

@@ -1,5 +1,9 @@
 # Changelog
 
+## [Niewydane]
+- Jak to dziala: karta "Na tej stronie" pod "Od czego zacząć" - linki do kazdej karty (Proces, Komendy, Folder
+  requirements/, sekcje przewodnika, w tym Integracja z Redmine); karty z kotwicami `SddUI.slug(tytul)` (AC-C25).
+
 ## [0.28.8] - 2026-10-04
 - Redmine - status zadania przez agenta (prosba usera): `/sdd:handover status #<id> start|done [opis]` ->
   `redmine.js status` / `comment`. start = `redmine_status_start` (domyslnie "W realizacji" / In Progress), done =

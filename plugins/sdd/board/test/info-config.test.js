@@ -330,3 +330,15 @@ test('AC-C24: przewodnik - sekcja o integracji z Redmine', () => {
   ['~/.sdd-kit/.env', 'Claude go nie otwiera', '/sdd:handover status', 'Wygenerowane przez AI [Claude Code]', 'TRACEABILITY.md',
     'redmine_ac_field', 'czeka na zgodę', 'UAT'].forEach(w => assert.ok(t.includes(w), 'brak: ' + w));
 });
+
+test('AC-C25: spis tresci Jak to dziala - slug i karta z linkami pod Od czego zaczac', () => {
+  assert.strictEqual(ui.slug('Integracja z Redmine'), 'integracja-z-redmine');
+  assert.strictEqual(ui.slug('Źródła i wiarygodność'), 'zrodla-i-wiarygodnosc');
+  assert.strictEqual(ui.slug('Folder requirements/'), 'folder-requirements');
+  assert.strictEqual(ui.slug('Proces w sześciu krokach'), 'proces-w-szesciu-krokach');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  const guide = html.slice(html.indexOf('function renderGuide'), html.indexOf('function renderGuide') + 4000);
+  assert.ok(guide.indexOf('Od czego zacząć') < guide.indexOf('Na tej stronie'), 'spis pod Od czego zaczac');
+  assert.ok(guide.indexOf('Na tej stronie') < guide.indexOf('<h2>Proces w sześciu krokach'), 'spis przed reszta');
+  assert.match(guide, /id="'\+SddUI\.slug\(/);
+});

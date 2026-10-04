@@ -93,6 +93,11 @@
   // Zrodla w nawiasach ([Biz], [App], [Dok], [AI]) i **tekst** pogrubione; wejscie juz escapowane (0.22.0, AC-C23).
   const MARKS = /\[(Biz|App|Dok|AI)\]/g;
   function marks(html) { return String(html).replace(MARKS, '<strong>[$1]</strong>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
+  // Kotwica z tytulu karty (AC-C25): male litery, bez polskich znakow, '-' zamiast reszty.
+  function slug(t) {
+    return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[łŁ]/g, 'l').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
   function abbr(code) { return ABBR[code] ? code + ' – ' + ABBR[code] : String(code); }
 
   // Wersja w pasku (AC-U10): stary serwer po aktualizacji pluginu -> ostrzezenie o restarcie.
@@ -121,7 +126,7 @@
     return Math.max(320, Math.min(n > 0 ? n : 520, max));
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, KEY };
+  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, slug, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

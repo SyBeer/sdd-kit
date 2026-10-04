@@ -40,6 +40,11 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg
 .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
 .card.wide{grid-column:1 / -1}
 .card h2{margin:0 0 8px;font-size:16px}
+.card[id]{scroll-margin-top:12px}
+.toc ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 8px}
+.toc a{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;font-size:13.5px;background:var(--bg)}
+.toc a:hover{border-color:var(--ink)}
+.toc a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .card h3{margin:14px 0 6px;font-size:14px}
 .card p{margin:0 0 6px}
 .muted,.card .hint{color:var(--muted);font-size:13.5px}
@@ -204,16 +209,20 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     if(g.starts) h+='<section class="card wide"><h2>Od czego zacząć</h2><p class="hint">Są dwie drogi - obie kończą się w tych samych plikach i w tym samym procesie.</p><div class="starts">'+
       g.starts.map(function(st,i){return '<div class="start"><h3>'+(i+1)+'. '+esc(st.title)+'</h3><p class="muted">'+esc(st.lead)+'</p><ol>'+
         st.steps.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></div>'}).join('')+'</div></section>';
-    h+='<section class="card wide"><h2>Proces w sześciu krokach</h2><p class="hint">Każdy krok uruchamiasz komendą w Claude Code, w folderze modułu. Panel pokazuje, który krok jest teraz.</p><ol class="stages">'+
+    // Spis tresci pod "Od czego zaczac" (0.28.9, AC-C25): link do kazdej karty ponizej
+    var cards=[['Proces w sześciu krokach'],['Komendy'],['Folder requirements/']].concat(g.sections.map(function(s){return [s.title]}));
+    h+='<nav class="card wide toc" aria-label="Na tej stronie"><h2>Na tej stronie</h2><ul>'+
+      cards.map(function(c){return '<li><a href="#'+SddUI.slug(c[0])+'">'+esc(c[0])+'</a></li>'}).join('')+'</ul></nav>';
+    h+='<section class="card wide" id="'+SddUI.slug('Proces w sześciu krokach')+'"><h2>Proces w sześciu krokach</h2><p class="hint">Każdy krok uruchamiasz komendą w Claude Code, w folderze modułu. Panel pokazuje, który krok jest teraz.</p><ol class="stages">'+
       g.stages.map(function(s){return '<li><span class="nm">'+esc(s.name)+' <code>'+esc(s.command)+'</code></span><span>'+esc(s.desc)+'</span>'+
         (s.howto&&s.howto.length?'<ol>'+s.howto.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')+'</li>'}).join('')+'</ol></section>';
-    h+='<section class="card wide"><h2>Komendy</h2><div class="scroll"><table class="tbl"><thead><tr><th>Komenda</th><th>Co robi</th><th>Kiedy</th></tr></thead><tbody>'+
+    h+='<section class="card wide" id="'+SddUI.slug('Komendy')+'"><h2>Komendy</h2><div class="scroll"><table class="tbl"><thead><tr><th>Komenda</th><th>Co robi</th><th>Kiedy</th></tr></thead><tbody>'+
       g.skills.map(function(s){var vs=s.variants||[];
         return '<tr'+(vs.length?' class="hasvar"':'')+'><td><code>'+esc(s.command)+'</code></td><td>'+esc(s.desc)+'</td><td class="muted">'+esc(s.when)+'</td></tr>'+
         vs.map(function(v,i){return '<tr class="var'+(i===vs.length-1?' last':'')+'"><td><code>'+esc(v.command)+'</code></td><td colspan="2">'+esc(v.desc)+'</td></tr>'}).join('')}).join('')+'</tbody></table></div></section>';
-    h+='<section class="card wide"><h2>Folder requirements/</h2><dl class="kv">'+
+    h+='<section class="card wide" id="'+SddUI.slug('Folder requirements/')+'"><h2>Folder requirements/</h2><dl class="kv">'+
       g.folders.map(function(f){return '<dt><code>'+esc(f.path)+'</code></dt><dd>'+esc(f.desc)+'</dd>'}).join('')+'</dl></section>';
-    g.sections.forEach(function(s){ h+='<section class="card"><h2>'+esc(s.title)+'</h2><ul class="list bullets">'+s.items.map(function(i){return '<li>'+SddUI.marks(esc(i))+'</li>'}).join('')+'</ul></section>'; });
+    g.sections.forEach(function(s){ h+='<section class="card" id="'+SddUI.slug(s.title)+'"><h2>'+esc(s.title)+'</h2><ul class="list bullets">'+s.items.map(function(i){return '<li>'+SddUI.marks(esc(i))+'</li>'}).join('')+'</ul></section>'; });
     $('#app').innerHTML=h+'</div>';
   }
 
