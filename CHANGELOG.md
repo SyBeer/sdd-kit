@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.13] - 2026-10-04
 - Panel: Domain nie jest juz "gotowe", gdy walidacja znalazla pojecia uzywane w PRD, ktorych nie ma w slowniku (pytanie
   usera: hasla niepotwierdzone, a Domain GOTOWE). Panel liczyl tylko wiersze GLOSSARY, a pojecia spoza slownika nie sa
   w nim ani robocze, ani zatwierdzone. Teraz czyta wiersz kontroli 9 z aktualnego raportu walidacji: WARN -> Domain
