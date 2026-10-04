@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.5] - 2026-10-04
 - Klucze API w `~/.sdd-kit/.env` - tak samo na macOS i Windows (uwaga usera: "konfiguracja klucza w pliku env;
   Claude go nie czyta, aplikacja tak"). Panel, Konfiguracja: pole "Klucz API Redmine" (Zapisz / Usun) - serwer
   zapisuje klucz w pliku (600), a pokazuje tylko, skad jest (plik / zmienna / Pek kluczy / brak), nigdy wartosc.
