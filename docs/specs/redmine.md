@@ -77,5 +77,24 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
   `yamlSet` rozdziela adres projektu `.../projects/<id>[/...]` na `redmine_url` (czesc przed `/projects/`) i
   `redmine_project` (gdy projekt nie podany albo tez wskazuje adres); z projektu zdejmuje `/projects/`, `projects/`
   i caly adres; zly identyfikator po tym - blad jak dotad.
+- AC-RM15 (0.28.8, user: "dodaj zmiane statusu w Redmine przez agenta; dopisz, ze wygenerowane przez AI [Claude Code]"):
+  `redmine.js status <id> <start|done|"nazwa statusu"> [--note "..."]` - status z `/issue_statuses.json`; `start` / `done`
+  = `redmine_status_start` / `redmine_status_done` z SDD.yaml, bez nich pierwszy pasujacy: start - W realizacji / W toku /
+  In Progress, done - Code review / Do przegladu / Resolved / Rozwiazany; status zamykajacy (`is_closed`) -> odmowa
+  (zamyka czlowiek); nieznana nazwa -> blad z lista statusow. PUT `{ issue: { status_id, notes } }`, potem GET zadania:
+  status inny niz zadany -> blad "Redmine nie pozwolil na przejscie" (przeplyw pracy roli). Wynik JSON `{ id, url, status }`.
+- AC-RM16: `redmine.js comment <id> --note "..."` - sam komentarz (PUT `notes`). Kazdy komentarz od agenta (status
+  i comment) konczy sie linia `_Wygenerowane przez AI [Claude Code]_`; opis zadania z `push` - ta sama linia na koncu
+  (bez dublowania przy ponownym przekazaniu).
+- AC-RM17: skill handover - wariant `/sdd:handover status #<id> start|done [opis]` dla agenta budujacego (numer z
+  TRACEABILITY.md, przy done w opisie commit i kryteria AC); zakaz statusow UAT i zamykajacych; info.js - wariant
+  w przewodniku; szablon CLAUDE.md - kiedy agent zmienia status.
+- AC-RM18 (prawdziwy Redmine usera: pole "Kryteria akceptacji" wymagane przy zmianie statusu, 422 "nie moze byc puste"):
+  `check` zwraca `customFields` (pola widziane w zadaniach projektu) i `warning`, gdy projekt ma pole z "kryteri" /
+  "acceptance" w nazwie, a `redmine_ac_field` nie jest ustawione; blad 422 "nie moze byc puste" / "can't be blank"
+  przy zmianie statusu -> komunikat z wyjasnieniem i co zrobic. Skill: przy `warning` zaproponuj dopisanie pola (PYTASZ).
+- AC-RM19 (projekt usera bez zadan - `check` nie widzial pol): pola wlasne z `GET /projects/<id>.json?include=trackers,
+  issue_custom_fields` (Redmine 4.2+, bez admina); starsze wersje bez `issue_custom_fields` - z zadan projektu jak dotad.
+  Nazwa w `redmine_ac_field` rozpoznawana tez w pustym projekcie.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.

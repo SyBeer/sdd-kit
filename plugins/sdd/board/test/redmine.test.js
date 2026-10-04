@@ -17,7 +17,7 @@ const YAML = 'project: "x"\nbacklog: redmine\nredmine_url: "URL"\nredmine_projec
 // Udawany Redmine: projekt "faktury" (id 7) z trackerami, zapis zadan i relacji, log zapytan.
 function fakeRedmine(opts) {
   opts = opts || {};
-  const log = [];
+  const log = [], state = {};
   let next = 100;
   return new Promise(res => {
     const s = http.createServer((req, rq) => {
@@ -30,14 +30,28 @@ function fakeRedmine(opts) {
         const send = (code, obj) => { rq.writeHead(code, { 'Content-Type': 'application/json' }); rq.end(obj ? JSON.stringify(obj) : ''); };
         if (req.headers['x-redmine-api-key'] !== KEY) return send(401);
         if (req.method === 'GET' && req.url.startsWith('/projects/faktury.json'))
-          return send(200, { project: { id: 7, name: 'Faktury', identifier: 'faktury', trackers: [{ id: 1, name: 'Bug' }, { id: 2, name: 'Feature' }] } });
+          return send(200, { project: Object.assign({ id: 7, name: 'Faktury', identifier: 'faktury', trackers: [{ id: 1, name: 'Bug' }, { id: 2, name: 'Feature' }] },
+            opts.projectFields ? { issue_custom_fields: [{ id: 6, name: 'Kryteria akceptacji' }, { id: 8, name: 'Link UAT' }] } : {}) });
         if (req.method === 'GET' && req.url.startsWith('/projects/')) return send(404);
         if (req.method === 'POST' && req.url === '/issues.json') {
           if (opts.failSecond && next === 101) return send(422, { errors: ['Subject cannot be blank'] });
           return send(201, { issue: { id: next++, subject: JSON.parse(body).issue.subject } });
         }
+        if (req.method === 'PUT' && opts.statusNeedsField && /^\/issues\/74\.json$/.test(req.url)) return send(422, { errors: ['Kryteria akceptacji nie może być puste'] });
+        if (req.method === 'PUT' && /^\/issues\/7\d\.json$/.test(req.url)) {
+          const id = +req.url.match(/\d+/)[0], b = JSON.parse(body).issue;
+          if (b.status_id && !(opts.blockStatus && b.status_id === opts.blockStatus)) state[id] = b.status_id;
+          return send(204);
+        }
         if (req.method === 'PUT' && /^\/issues\/\d+\.json$/.test(req.url)) return send(204);
         if (req.method === 'POST' && req.url.startsWith('/uploads.json')) return send(201, { upload: { token: 'tok-' + log.length } });
+        if (req.method === 'GET' && req.url === '/issue_statuses.json')
+          return send(200, { issue_statuses: [{ id: 1, name: 'Nowy' }, { id: 3, name: 'W realizacji' }, { id: 4, name: 'Code review' },
+            { id: 5, name: 'Gotowy do UAT' }, { id: 9, name: 'Zamknięty', is_closed: true }] });
+        if (req.method === 'GET' && /^\/issues\/7\d\.json/.test(req.url)) {
+          const id = +req.url.match(/\d+/)[0], names = { 1: 'Nowy', 3: 'W realizacji', 4: 'Code review', 5: 'Gotowy do UAT' };
+          return send(200, { issue: { id, status: { id: state[id] || 1, name: names[state[id] || 1] } } });
+        }
         if (req.method === 'GET' && req.url.startsWith('/issues.json?project_id=7'))
           return send(200, { issues: opts.noIssues ? [] : [{ id: 1, custom_fields: [{ id: 4, name: 'Kryteria akceptacji', value: 'x' }, { id: 5, name: 'Uwagi z UAT', value: null }] }] });
         if (req.method === 'GET' && /^\/issues\/\d+\.json/.test(req.url))
@@ -76,9 +90,9 @@ function tasksFile(req, t) { const f = path.join(req, '04-validation', 'redmine-
 
 test('AC-RM1: readConfig - adres, projekt, tracker, walidacja', () => {
   assert.deepStrictEqual(rm.readConfig('redmine_url: "https://rm.firma.pl/"\nredmine_project: "faktury"\nredmine_tracker: "Feature"\n'),
-    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown', acField: '' });
+    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown', acField: '', statusStart: '', statusDone: '' });
   assert.deepStrictEqual(rm.readConfig('redmine_url: http://10.0.0.5:3000\nredmine_project: a_b-1\n'),
-    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown', acField: '' });
+    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown', acField: '', statusStart: '', statusDone: '' });
   assert.throws(() => rm.readConfig('redmine_project: "x"\n'), /redmine_url/);
   assert.throws(() => rm.readConfig('redmine_url: "https://a"\n'), /redmine_project/);
   assert.throws(() => rm.readConfig('redmine_url: "ftp://a"\nredmine_project: "x"\n'), /redmine_url/);
@@ -178,10 +192,89 @@ test('AC-RM13: pole wlasne Kryteria akceptacji - numer z zadan projektu, wartosc
   } finally { s3.close(); }
 });
 
+test('AC-RM15: status start/done, nazwa, odmowa zamkniecia, kontrola przejscia', async () => {
+  const s = await fakeRedmine({ blockStatus: 5 });
+  try {
+    const req = moduleWith(s.url);
+    let r = await run(['status', '71', 'start', '--note', 'Zaczynam: R-001', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out), { id: 71, url: s.url + '/issues/71', status: 'W realizacji' });
+    const put = s.log.find(x => x.method === 'PUT' && x.url === '/issues/71.json');
+    assert.strictEqual(put.body.issue.status_id, 3);
+    assert.match(put.body.issue.notes, /^Zaczynam: R-001\n\n_Wygenerowane przez AI \[Claude Code\]_$/);
+    r = await run(['status', '71', 'done', '--note', 'Commit abc123; AC-001-1', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(JSON.parse(r.out).status, 'Code review');
+    // nazwa z SDD.yaml wygrywa
+    const req2 = moduleWith(s.url, 'redmine_status_done: "Gotowy do UAT"\n');
+    r = await run(['status', '72', 'done', '--req', req2], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1, 'przejscie zablokowane w udawanym Redmine');
+    assert.match(r.err, /nie pozwoli/);
+    r = await run(['status', '72', 'Zamknięty', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /zamyka/);
+    r = await run(['status', '72', 'Nie ma takiego', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /W realizacji/);
+    assert.strictEqual(s.log.filter(x => x.method === 'PUT' && /72/.test(x.url)).length, 1, 'zamkniecie i zla nazwa - bez zapisu');
+  } finally { s.close(); }
+});
+
+test('AC-RM16: komentarz i opis zadania z dopiskiem AI [Claude Code], bez dublowania', async () => {
+  const s = await fakeRedmine();
+  try {
+    const req = moduleWith(s.url);
+    let r = await run(['comment', '73', '--note', 'Testy przechodza', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    const put = s.log.find(x => x.method === 'PUT' && x.url === '/issues/73.json');
+    assert.deepStrictEqual(Object.keys(put.body.issue), ['notes']);
+    assert.match(put.body.issue.notes, /Testy przechodza\n\n_Wygenerowane przez AI \[Claude Code\]_$/);
+    r = await run(['comment', '73', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1, 'komentarz bez tresci');
+    const t = { tasks: [{ key: 'T-01', subject: 'S', description: 'Opis' }, { key: 'T-02', subject: 'S2', description: 'Opis2\n\n_Wygenerowane przez AI [Claude Code]_', issue: 55 }] };
+    r = await run(['push', tasksFile(req, t), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    const post = s.log.find(x => x.method === 'POST' && x.url === '/issues.json').body.issue.description;
+    assert.match(post, /^Opis\n\n_Wygenerowane przez AI \[Claude Code\]_$/);
+    const upd = s.log.find(x => x.method === 'PUT' && x.url === '/issues/55.json').body.issue.description;
+    assert.strictEqual(upd.match(/Wygenerowane przez AI/g).length, 1);
+  } finally { s.close(); }
+});
+
+test('AC-RM18: check podpowiada pole na kryteria; 422 przy statusie - wyjasnienie', async () => {
+  const s = await fakeRedmine({ statusNeedsField: true });
+  try {
+    const req = moduleWith(s.url);
+    let r = await run(['check', '--req', req], { REDMINE_API_KEY: KEY });
+    const j = JSON.parse(r.out);
+    assert.deepStrictEqual(j.customFields.map(f => f.name), ['Kryteria akceptacji', 'Uwagi z UAT']);
+    assert.match(j.warning, /redmine_ac_field: "Kryteria akceptacji"/);
+    r = await run(['check', '--req', moduleWith(s.url, 'redmine_ac_field: "Kryteria akceptacji"\n')], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(JSON.parse(r.out).warning, undefined);
+    r = await run(['status', '74', 'start', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /wymaga tego pola przy zmianie statusu/);
+  } finally { s.close(); }
+});
+
+test('AC-RM19: pola wlasne z projektu (Redmine 4.2+), takze bez zadan', async () => {
+  const s = await fakeRedmine({ projectFields: true, noIssues: true });
+  try {
+    let r = await run(['check', '--req', moduleWith(s.url)], { REDMINE_API_KEY: KEY });
+    const j = JSON.parse(r.out);
+    assert.deepStrictEqual(j.customFields, [{ id: 6, name: 'Kryteria akceptacji' }, { id: 8, name: 'Link UAT' }]);
+    assert.match(j.warning, /redmine_ac_field/);
+    r = await run(['check', '--req', moduleWith(s.url, 'redmine_ac_field: "Kryteria akceptacji"\n')], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out).acField, { id: 6, name: 'Kryteria akceptacji' });
+    assert.ok(!s.log.some(x => x.url.startsWith('/issues.json')), 'pola z projektu - bez przegladania zadan');
+  } finally { s.close(); }
+});
+
 test('AC-RM2: issueBody - nowe zadanie z projektem i trackerem, aktualizacja bez nich', () => {
   const t = { key: 'T-01', subject: 'S', description: 'D' };
-  assert.deepStrictEqual(rm.issueBody(t, 7, 2), { issue: { project_id: 7, tracker_id: 2, subject: 'S', description: 'D' } });
-  assert.deepStrictEqual(rm.issueBody(Object.assign({ issue: 5 }, t), 7, 2), { issue: { subject: 'S', description: 'D' } });
+  const D = 'D\n\n' + rm.MARK;
+  assert.deepStrictEqual(rm.issueBody(t, 7, 2), { issue: { project_id: 7, tracker_id: 2, subject: 'S', description: D } });
+  assert.deepStrictEqual(rm.issueBody(Object.assign({ issue: 5 }, t), 7, 2), { issue: { subject: 'S', description: D } });
 });
 
 test('AC-RM3: check - projekt, trackery, wybrany tracker; 401 i 404 po polsku', async () => {
@@ -220,10 +313,10 @@ test('AC-RM4: push - nowe POST, istniejace PUT, relacje poprzedza, dry-run bez z
     assert.deepStrictEqual(out.map(x => [x.key, x.id, x.action]), [['T-01', 100, 'created'], ['T-02', 101, 'created'], ['T-03', 55, 'updated']]);
     assert.strictEqual(out[0].url, s.url + '/issues/100');
     const post = s.log.filter(x => x.method === 'POST' && x.url === '/issues.json');
-    assert.deepStrictEqual(post[0].body, { issue: { project_id: 7, tracker_id: 2, subject: '[R-001] Wpis odczytu', description: 'Opis 1' } });
+    assert.deepStrictEqual(post[0].body, { issue: { project_id: 7, tracker_id: 2, subject: '[R-001] Wpis odczytu', description: 'Opis 1\n\n' + rm.MARK } });
     const put = s.log.find(x => x.method === 'PUT');
     assert.strictEqual(put.url, '/issues/55.json');
-    assert.deepStrictEqual(put.body, { issue: { subject: '[R-003] Eksport', description: 'Opis 3' } });
+    assert.deepStrictEqual(put.body, { issue: { subject: '[R-003] Eksport', description: 'Opis 3\n\n' + rm.MARK } });
     const rel = s.log.filter(x => /relations/.test(x.url));
     assert.deepStrictEqual(rel.map(x => [x.url, x.body.relation.issue_to_id, x.body.relation.relation_type]),
       [['/issues/100/relations.json', 101, 'precedes'], ['/issues/101/relations.json', 55, 'precedes']]);
@@ -306,4 +399,8 @@ test('AC-RM8: skill handover opisuje Redmine', () => {
   assert.match(sk, /`attachments`/);
   assert.match(sk, /redmine_ac_field/);
   assert.match(sk, /`acceptance`/);
+  // AC-RM17
+  assert.match(sk, /\/sdd:handover status/);
+  assert.match(sk, /W realizacji|start/);
+  assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'templates', 'CLAUDE.md'), 'utf8'), /\/sdd:handover status/);
 });

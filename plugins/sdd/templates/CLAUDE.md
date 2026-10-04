@@ -100,6 +100,13 @@ Ustalony w `requirements/SDD.yaml` (`level: full | light`). `light` = jeden
 `03-spec/SPEC.md`, bez PRD i bez plikow dla agenta. Przejscie light -> full,
 gdy SPEC.md przekracza ok. 10 stron albo pojawia sie wiecej niz jeden wlasciciel biznesowy.
 
+## Budowa z zadan w Redmine (`backlog: redmine`)
+
+Budujesz z `03-spec/agent/*/tasks.md`, nie z opisow w Redmine (pliki sa zgodne z PRD). Numer zadania w Redmine
+jest w `requirements/04-validation/TRACEABILITY.md`. Zaczynasz zadanie -> `/sdd:handover status #<id> start`;
+kod i testy kryteriow gotowe, commit zrobiony -> `/sdd:handover status #<id> done` z hashem commita i kryteriami.
+Statusow UAT i zamykajacych nie ustawiasz.
+
 ## Klucze API
 
 Klucze (np. Redmine) leza w `~/.sdd-kit/.env` i czyta je tylko kit (skrypty, panel sdd-board).

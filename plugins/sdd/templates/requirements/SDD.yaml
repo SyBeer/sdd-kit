@@ -14,3 +14,5 @@ backlog: none          # none | linear | jira | redmine | file
 # redmine_tracker: "Feature"   # opcjonalnie; brak = tracker typu funkcjonalnosc/zadanie (nigdy Bug)
 # redmine_format: markdown       # markdown (tabele, obrazy) | textile - jak "Formatowanie tekstu" w Redmine
 # redmine_ac_field: "Kryteria akceptacji"   # opcjonalnie: pole wlasne na kryteria (nazwa albo numer pola)
+# redmine_status_start: "W realizacji"       # opcjonalnie: status, gdy agent zaczyna zadanie
+# redmine_status_done: "Code review"         # opcjonalnie: status, gdy kod i testy sa gotowe

@@ -28,7 +28,8 @@ function readConfig(yaml) {
   const format = yamlField(yaml, 'redmine_format') || 'markdown';
   if (format !== 'markdown' && format !== 'textile') throw new Error('redmine_format: markdown albo textile - jest: ' + format);
   // Pole wlasne na kryteria akceptacji (AC-RM13): nazwa albo numer; puste = tylko opis
-  return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format, acField: yamlField(yaml, 'redmine_ac_field') };
+  return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format, acField: yamlField(yaml, 'redmine_ac_field'),
+    statusStart: yamlField(yaml, 'redmine_status_start'), statusDone: yamlField(yaml, 'redmine_status_done') };
 }
 
 // Tracker: z konfiguracji (nazwa, bez wielkosci liter) albo pierwszy "funkcjonalnosc / zadanie" - zadania z wymagan
@@ -41,20 +42,36 @@ function pickTracker(trackers, name) {
 }
 
 // Tresc zapytania o zadanie (AC-RM2): nowe z projektem i trackerem, aktualizacja tylko temat i opis.
+// Dopisek na koncu tresci od AI (AC-RM16, prosba usera); bez dublowania.
+const MARK = '_Wygenerowane przez AI [Claude Code]_';
+function withMark(text) {
+  const t = String(text || '').replace(/\s+$/, '');
+  return t.includes('Wygenerowane przez AI [Claude Code]') ? t : (t ? t + '\n\n' : '') + MARK;
+}
+
 function issueBody(task, projectId, trackerId, acFieldId) {
   const issue = task.issue ? {} : { project_id: projectId, tracker_id: trackerId };
   issue.subject = task.subject;
-  issue.description = task.description;
+  issue.description = withMark(task.description);
   if (acFieldId && task.acceptance != null) issue.custom_fields = [{ id: acFieldId, value: task.acceptance }];
   return { issue };
 }
 
 // Numer pola wlasnego z nazwy: /custom_fields.json wymaga admina, wiec bierzemy go z pola custom_fields zadan projektu
 // (najpierw zadania wybranego trackera, potem dowolne) - AC-RM13.
-async function acFieldOf(call, cfg, projectId, trackerId) {
+// Pola wlasne widoczne w zadaniach projektu (do podpowiedzi w check, AC-RM18).
+async function projectFields(call, projectId) {
+  const r = await call('GET', '/issues.json?project_id=' + projectId + '&status_id=*&limit=25');
+  const seen = {};
+  ((r.data && r.data.issues) || []).forEach(i => (i.custom_fields || []).forEach(c => { seen[c.id] = c.name; }));
+  return Object.keys(seen).map(id => ({ id: +id, name: seen[id] }));
+}
+async function acFieldOf(call, cfg, projectId, trackerId, fields) {
   if (!cfg.acField) return null;
   if (/^\d+$/.test(cfg.acField)) return { id: +cfg.acField, name: '' };
   const want = cfg.acField.toLowerCase();
+  const hit = (fields || []).find(f => f.name.toLowerCase() === want);
+  if (hit) return hit;
   for (const q of ['&tracker_id=' + trackerId, '']) {
     const r = await call('GET', '/issues.json?project_id=' + projectId + q + '&status_id=*&limit=25');
     const found = ((r.data && r.data.issues) || []).map(i => (i.custom_fields || []).find(c => c.name.toLowerCase() === want)).find(Boolean);
@@ -97,15 +114,17 @@ function client(cfg, key) {
 const errs = d => (d && d.errors ? d.errors.join('; ') : '');
 
 async function project(call, cfg) {
-  const r = await call('GET', '/projects/' + encodeURIComponent(cfg.project) + '.json?include=trackers');
+  const r = await call('GET', '/projects/' + encodeURIComponent(cfg.project) + '.json?include=trackers,issue_custom_fields');
   if (r.status === 401) throw new Error('Redmine odrzucil klucz API (401) - sprawdz klucz i czy REST API jest wlaczone (Administracja -> Ustawienia -> API).');
   if (r.status === 404) throw new Error('Nie ma projektu "' + cfg.project + '" w ' + cfg.url + ' albo nie masz do niego dostepu (404).');
   if (r.status !== 200 || !r.data || !r.data.project) throw new Error('Redmine: ' + r.status + ' ' + errs(r.data));
   const p = r.data.project, trackers = p.trackers || [];
   const tracker = pickTracker(trackers, cfg.tracker);
   if (!tracker) throw new Error(cfg.tracker ? 'Projekt nie ma trackera "' + cfg.tracker + '" - dostepne: ' + trackers.map(t => t.name).join(', ') : 'Projekt nie ma zadnego trackera.');
-  const acField = await acFieldOf(call, cfg, p.id, tracker.id);
-  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker, acField };
+  // Pola wlasne projektu: Redmine 4.2+ podaje je przy projekcie (bez admina); starsze - z zadan projektu (AC-RM19)
+  const fields = Array.isArray(p.issue_custom_fields) ? p.issue_custom_fields.map(f => ({ id: f.id, name: f.name })) : null;
+  const acField = await acFieldOf(call, cfg, p.id, tracker.id, fields);
+  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker, acField, fields };
 }
 
 // Zadania po kolei, potem relacje "poprzedza" (AC-RM4). Blad -> wyjatek z tym, co juz zalozono (AC-RM5).
@@ -149,23 +168,78 @@ async function push(call, cfg, tasks, dry, req) {
   return done;
 }
 
+// Status zadania przez agenta (AC-RM15): start / done z SDD.yaml albo rozpoznane, nigdy zamykajacy.
+const START = /w realizacji|w toku|in progress|realizacja/i;
+const DONE = /code review|do przegl|review|resolved|rozwi[aą]zan/i;
+async function setStatus(call, cfg, id, want, note) {
+  const r = await call('GET', '/issue_statuses.json');
+  if (r.status !== 200 || !r.data) throw new Error('Nie moge pobrac listy statusow: Redmine ' + r.status);
+  const all = r.data.issue_statuses || [];
+  let st;
+  if (want === 'start' || want === 'done') {
+    const name = want === 'start' ? cfg.statusStart : cfg.statusDone;
+    st = name ? all.find(s => s.name.toLowerCase() === name.toLowerCase()) : all.find(s => !s.is_closed && (want === 'start' ? START : DONE).test(s.name));
+    if (!st) throw new Error('Nie znalazlem statusu "' + (name || want) + '". Wpisz nazwe w SDD.yaml (redmine_status_' + want + '). Statusy: ' + all.map(s => s.name).join(', '));
+  } else {
+    st = all.find(s => s.name.toLowerCase() === String(want).toLowerCase());
+    if (!st) throw new Error('Nie ma statusu "' + want + '". Statusy: ' + all.map(s => s.name).join(', '));
+  }
+  if (st.is_closed) throw new Error('Status "' + st.name + '" zamyka zadanie - to robi czlowiek (po UAT), nie agent.');
+  const body = { issue: { status_id: st.id } };
+  if (note) body.issue.notes = withMark(note);
+  const u = await call('PUT', '/issues/' + id + '.json', body);
+  if (u.status !== 204 && u.status !== 200) {
+    // Pole wymagane przy zmianie statusu (przeplyw pracy) - AC-RM18, prawdziwy Redmine usera 2026-10-04
+    const e = errs(u.data), req = /nie mo[zż]e by[cć] puste|can'?t be blank|cannot be blank/i.test(e);
+    throw new Error('Zadanie #' + id + ': Redmine ' + u.status + ' ' + e + (req ? '. Redmine wymaga tego pola przy zmianie statusu - ' +
+      'uzupelnij je w zadaniu albo ustaw redmine_ac_field w SDD.yaml i powtorz /sdd:handover (uzupelni istniejace zadania).' : ''));
+  }
+  const g = await call('GET', '/issues/' + id + '.json');
+  const now = g.data && g.data.issue && g.data.issue.status;
+  if (!now || now.id !== st.id) throw new Error('Redmine nie pozwolil na przejscie #' + id + ' do "' + st.name + '" (zostal "' + (now && now.name) + '") - przeplyw pracy Twojej roli w Redmine nie dopuszcza tej zmiany.');
+  return { id: +id, url: cfg.url + '/issues/' + id, status: now.name };
+}
+async function comment(call, cfg, id, note) {
+  if (!note) throw new Error('Podaj tresc: redmine.js comment <id> --note "..."');
+  const u = await call('PUT', '/issues/' + id + '.json', { issue: { notes: withMark(note) } });
+  if (u.status !== 204 && u.status !== 200) throw new Error('Zadanie #' + id + ': Redmine ' + u.status + ' ' + errs(u.data));
+  return { id: +id, url: cfg.url + '/issues/' + id };
+}
+
 async function main(argv) {
+  const opt = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
   const dry = argv.includes('--dry-run');
-  const i = argv.indexOf('--req');
-  const req = path.resolve(i >= 0 ? argv[i + 1] : 'requirements');
-  const args = argv.filter((a, n) => a !== '--dry-run' && n !== i && n !== i + 1);
+  const req = path.resolve(opt('--req') || 'requirements');
+  const note = opt('--note');
+  const skip = new Set();
+  ['--req', '--note'].forEach(n => { const i = argv.indexOf(n); if (i >= 0) { skip.add(i); skip.add(i + 1); } });
+  const args = argv.filter((a, n) => a !== '--dry-run' && !skip.has(n));
   const cfg = readConfig(fs.readFileSync(path.join(req, 'SDD.yaml'), 'utf8').replace(/\r\n?/g, '\n'));
   const cmd = args[0];
-  if (cmd !== 'check' && cmd !== 'push') throw new Error('Uzycie: redmine.js check | push <zadania.json> [--req requirements] [--dry-run]');
+  if (['check', 'push', 'status', 'comment'].indexOf(cmd) < 0) throw new Error('Uzycie: redmine.js check | push <zadania.json> [--dry-run] | status <id> <start|done|nazwa> [--note ".."] | comment <id> --note ".." [--req requirements]');
   let tasks = null;
   if (cmd === 'push') {
     if (!args[1]) throw new Error('Podaj plik zadan: redmine.js push <zadania.json>');
     tasks = JSON.parse(fs.readFileSync(path.resolve(args[1]), 'utf8')).tasks || [];
   }
+  if ((cmd === 'status' || cmd === 'comment') && !/^\d+$/.test(String(args[1]).replace(/^#/, ''))) throw new Error('Podaj numer zadania, np. redmine.js ' + cmd + ' 123');
+  const id = String(args[1] || '').replace(/^#/, '');
+  if (cmd === 'comment' && !note) throw new Error('Podaj tresc: redmine.js comment <id> --note "..."');
   const key = dry ? '' : apiKey();
   if (!dry && !key) throw new Error(KEY_HELP);
   const call = client(cfg, key);
-  if (cmd === 'check') return console.log(JSON.stringify(Object.assign(await project(call, cfg), { format: cfg.format }), null, 2));
+  if (cmd === 'check') {
+    const info = await project(call, cfg);
+    const fields = info.fields || await projectFields(call, info.project.id);
+    delete info.fields;
+    const out = Object.assign(info, { format: cfg.format, customFields: fields });
+    const ac = fields.find(f => /kryteri|acceptance/i.test(f.name));
+    if (!info.acField && ac) out.warning = 'Projekt ma pole "' + ac.name + '", a redmine_ac_field nie jest ustawione - zadania beda bez kryteriow w tym polu ' +
+      '(Redmine moze wymagac go przy zmianie statusu). Dopisz w SDD.yaml: redmine_ac_field: "' + ac.name + '"';
+    return console.log(JSON.stringify(out, null, 2));
+  }
+  if (cmd === 'status') return console.log(JSON.stringify(await setStatus(call, cfg, id, args[2], note), null, 2));
+  if (cmd === 'comment') return console.log(JSON.stringify(await comment(call, cfg, id, note), null, 2));
   try {
     console.log(JSON.stringify(await push(call, cfg, tasks, dry, req), null, 2));
   } catch (e) {
@@ -176,4 +250,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 
-module.exports = { readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };
+module.exports = { MARK, withMark, setStatus, readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };

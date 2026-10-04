@@ -242,7 +242,8 @@ const VARIANTS = {
     ['/sdd:spec --agent', 'Pliki dla agenta, który będzie budował (03-spec/agent/): generowane z zatwierdzonych wymagań.'],
     ['/sdd:spec --light', 'Jeden krótki SPEC.md, do małych rzeczy.']],
   '/sdd:validate': [],
-  '/sdd:handover': [['/sdd:handover', 'Cel backlogu bierze z Konfiguracji: plik, Linear, Jira albo Redmine (adres i projekt w Konfiguracji, klucz API poza plikami).']],
+  '/sdd:handover': [['/sdd:handover', 'Cel backlogu bierze z Konfiguracji: plik, Linear, Jira albo Redmine (adres i projekt w Konfiguracji, klucz API poza plikami).'],
+    ['/sdd:handover status', 'Redmine: agent budujący aplikację ustawia status zadania - start („W realizacji”) i done („Code review”, z commitem i kryteriami); komentarz z dopiskiem „Wygenerowane przez AI [Claude Code]”. UAT i zamknięcie robi człowiek.']],
   '/sdd:board': [
     ['/sdd:board', 'W trakcie rozmowy: po każdej wypowiedzi biznesu AI stawia karteczki i pyta o jedną rzecz.'],
     ['/sdd:board start', 'Jak uruchomić tablicę i założyć board.json dla modułu.'],

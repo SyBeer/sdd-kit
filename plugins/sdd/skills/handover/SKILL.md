@@ -33,7 +33,9 @@ zmienna `REDMINE_API_KEY` i Pek kluczy macOS (`redmine-api-key`). **Nie otwieraj
    skryptu) -> powiedz userowi, zeby ustawil go w panelu (Konfiguracja -> Klucz API Redmine);
    nie pros o wklejenie klucza do czatu ani do plikow.
 2. `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js" check --req requirements` -> nazwa projektu, trackery, wybrany
-   tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij.
+   tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij. `warning` (projekt ma pole na kryteria,
+   a `redmine_ac_field` nie jest ustawione) -> zaproponuj dopisanie go do SDD.yaml (PYTASZ) przed zalozeniem zadan -
+   Redmine moze wymagac tego pola przy zmianie statusu.
 3. Plik zadan `04-validation/redmine-YYYY-MM-DD.json`: `{ "tasks": [ { "key": "T-01", "subject": "[R-xxx] tytul",
    "description": "...", "after": ["T-00"], "issue": 123, "attachments": ["00-intake/ekran-zlecenia.png"] } ] }`.
    - `description` w formacie z `check` (`format`; `redmine_format` w SDD.yaml, domyslnie `markdown`). Markdown:
@@ -72,6 +74,18 @@ zmienna `REDMINE_API_KEY` i Pek kluczy macOS (`redmine-api-key`). **Nie otwieraj
    wypisuje zadania juz zalozone - wpisz je mimo to (inaczej ponowny przebieg je zdubluje) i pokaz blad.
 6. Zadania z poprzedniego `TRACEABILITY.md`, ktorych juz nie ma w wymaganiach: wypisz je userowi; nie zamykaj
    i nie usuwaj ich w Redmine sam.
+
+## Status zadania w Redmine (`/sdd:handover status #<id> start|done [opis]`)
+Dla agenta, ktory buduje aplikacje z `03-spec/agent/*/tasks.md`. Numer zadania z kolumny task w `TRACEABILITY.md`.
+- `start` - zaczynasz zadanie: `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js" status <id> start --req requirements
+  --note "Zaczynam: <R-xxx, co robie>"`. Status z `redmine_status_start` w SDD.yaml, bez niego np. "W realizacji".
+- `done` - kod gotowy, testy kryteriow AC-xxx-n przechodza, commit zrobiony: `... status <id> done --note "Commit
+  <hash>: <co zrobione>; kryteria: AC-xxx-1, AC-xxx-2; testy: <nazwy>"`. Status z `redmine_status_done`, bez niego
+  np. "Code review".
+- Sam komentarz bez zmiany statusu: `... comment <id> --note "..."`.
+- Skrypt dopisuje do kazdego komentarza `Wygenerowane przez AI [Claude Code]`. Statusow UAT, zamykajacych
+  i odrzucajacych nie ustawiasz - to robi czlowiek (skrypt i tak odmowi zamkniecia). Blad "Redmine nie pozwolil
+  na przejscie" -> pokaz go userowi, nie probuj innego statusu.
 
 ## Na koniec
 CHANGELOG + 5 linijek: ile zadan, gdzie, ile R pokrytych.
