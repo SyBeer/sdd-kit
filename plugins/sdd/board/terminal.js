@@ -39,10 +39,10 @@ class TermSession extends EventEmitter {
     super();
     this.limit = (opts && opts.limit) || 512 * 1024;
     this.proc = null; this.chunks = []; this.bytes = 0;
-    this.cwd = null; this.startedAt = null; this.exitCode = null;
+    this.cwd = null; this.startedAt = null; this.exitCode = null; this.size = null;
   }
   state() {
-    return { running: !!this.proc, cwd: this.cwd, startedAt: this.startedAt, exitCode: this.exitCode };
+    return { running: !!this.proc, cwd: this.cwd, startedAt: this.startedAt, exitCode: this.exitCode, size: this.size };
   }
   buffer() { return Buffer.concat(this.chunks); }
   push(chunk) {
@@ -59,6 +59,7 @@ class TermSession extends EventEmitter {
     if (!py) throw new Error('Brak Pythona 3 - terminal niedostępny.');
     this.chunks = []; this.bytes = 0; this.exitCode = null;
     this.cwd = o.cwd; this.startedAt = new Date().toISOString();
+    this.size = { cols: size(o.cols, 80), rows: size(o.rows, 24) };
     const argv = o.argv || claudeArgv(o.env);
     const p = spawn(py, [HELPER, String(size(o.cols, 80)), String(size(o.rows, 24))].concat(argv),
       { cwd: o.cwd, env: childEnv(o.env), stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
@@ -75,7 +76,16 @@ class TermSession extends EventEmitter {
     return true;
   }
   write(data) { if (this.proc) this.proc.stdin.write(data); }
-  resize(cols, rows) { if (this.proc) this.proc.stdio[3].write(size(cols, 80) + ' ' + size(rows, 24) + '\n'); }
+  // Ten sam rozmiar nie idzie drugi raz (kazda zmiana = przerysowanie ekranu Claude); force - po podlaczeniu karty,
+  // zeby Claude odrysowal ekran (AC-T10). Zwraca, czy rozmiar wyslano.
+  resize(cols, rows, force) {
+    if (!this.proc) return false;
+    const c = size(cols, 80), r = size(rows, 24);
+    if (!force && this.size && this.size.cols === c && this.size.rows === r) return false;
+    this.size = { cols: c, rows: r };
+    this.proc.stdio[3].write(c + ' ' + r + '\n');
+    return true;
+  }
   stop() { if (this.proc) this.proc.kill('SIGTERM'); }
 }
 

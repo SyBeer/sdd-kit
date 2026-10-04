@@ -46,6 +46,17 @@ test('AC-T2: resize zmienia rozmiar widziany przez program', { skip }, async () 
   s.stop();
 });
 
+test('AC-T10: resize - ten sam rozmiar nie jest wysylany ponownie, force wysyla zawsze', { skip }, async () => {
+  const s = new TermSession();
+  s.start({ cwd: os.tmpdir(), cols: 80, rows: 24, argv: ['sleep', '30'] });
+  assert.strictEqual(s.resize(80, 24), false);
+  assert.strictEqual(s.resize(100, 30), true);
+  assert.strictEqual(s.resize(100, 30), false);
+  assert.strictEqual(s.resize(100, 30, true), true);
+  assert.deepStrictEqual(s.state().size, { cols: 100, rows: 30 });
+  const done = exited(s); s.stop(); await done;
+});
+
 test('AC-T3: bufor wyjscia z limitem od poczatku', { skip }, async () => {
   const s = new TermSession({ limit: 10 });
   const done = exited(s);

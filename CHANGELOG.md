@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- Okno Claude Code: dol ekranu Claude nie ucieka juz poza okno (uwaga usera). Przyczyny: (1) przy dwoch kartach
+  (np. Panel i Tablica o roznej wysokosci) rozmiar jednej sesji ustawiala karta, ktora podlaczyla sie ostatnio -
+  teraz ustawia go karta, w ktorej pracujesz (aktywacja, fokus w terminalu, pisanie); (2) komunikat nad terminalem
+  zmienial wysokosc bez przeliczenia wierszy - teraz przeliczenie przy kazdej zmianie wysokosci okna Claude.
+  Serwer nie wysyla tego samego rozmiaru drugi raz (bez zbednego przerysowania). Spec: `docs/specs/claude-dock.md` AC-T10.
+
 ## [0.28.1] - 2026-10-04
 - `/sdd:board processes`: karteczki odtworzone z plikow wymagan (BR, R, D, A, istniejace Q, role z ACTORS, stany
   z ENTITIES) dostaja `ref`, `file` (plik, w ktorym sa) i `synced` - panel pokazuje ✓ zamiast "tylko na tablicy"

@@ -281,7 +281,7 @@ function termRoute(req, res, url) {
       return json(res, 200, termState());
     }
     if (url === '/api/term/input') { term.write(String(body.data || '')); return json(res, 200, { ok: true }); }
-    if (url === '/api/term/resize') { term.resize(body.cols, body.rows); return json(res, 200, { ok: true }); }
+    if (url === '/api/term/resize') { return json(res, 200, { ok: true, sent: term.resize(body.cols, body.rows, body.force === true) }); }
     if (url === '/api/term/stop') { term.stop(); return json(res, 200, { ok: true }); }
     json(res, 404, { error: 'Nie ma takiego adresu.' });
   });

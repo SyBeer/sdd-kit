@@ -55,6 +55,13 @@ z `claude` uruchomionym przez serwer kitu.
   start w module -> `GET /api/term` `{running: true, cwd: <folder modulu>}`, strumien odtwarza wyjscie, stop -> `running: false`.
 - AC-T8: `dockWidth(stored, viewport)`: domyslnie 520, ograniczone do 320 .. 70% okna, liczby z localStorage
   nieprawidlowe -> domyslna.
+- AC-T10 (zmiana 0.28.2, user: "panel Claude Code konczy sie za ekranem - ucina sie"): `TermSession.resize(cols, rows,
+  force)` - ten sam rozmiar nie idzie drugi raz (kazda zmiana przerysowuje ekran Claude), `force` wysyla zawsze; zwraca,
+  czy wyslano; `state().size` = biezacy rozmiar. Przegladarka: rozmiar sesji ustawia karta, w ktorej pracujesz
+  (aktywacja okna/karty, fokus w terminalu, pisanie - najwyzej co 2 s), po podlaczeniu karty z `force`; liczba wierszy
+  przeliczana przy kazdej zmianie wysokosci okna Claude (pojawienie / znikniecie komunikatu nad terminalem,
+  ResizeObserver), nie tylko przy zmianie okna przegladarki. Reczne: dwie karty o roznej wysokosci - aktywna karta
+  ma caly ekran Claude bez ucinania; komunikat nad terminalem nie wypycha dolu poza okno.
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez

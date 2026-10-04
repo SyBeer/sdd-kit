@@ -262,7 +262,13 @@
 
     function width() { return dockWidth(prefs.w, window.innerWidth); }
     function layout() { root.style.setProperty('--claude-w', width() + 'px'); }
-    function msg(t) { const m = q('.cd-msg'); m.textContent = t || ''; m.hidden = !t; }
+    // Komunikat nad terminalem zmienia jego wysokosc - przelicz wiersze od razu (nie tylko przez ResizeObserver,
+    // ktory w ukrytej karcie nie dziala) - AC-T10.
+    function msg(t) {
+      const m = q('.cd-msg'), was = m.hidden;
+      m.textContent = t || ''; m.hidden = !t;
+      if (was !== m.hidden) setTimeout(function () { refit(); }, 0);
+    }
     function api(url, body) {
       return fetch(url, { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
@@ -293,11 +299,25 @@
       const cs = getComputedStyle(dock), v = function (n) { return cs.getPropertyValue(n).trim(); };
       term.options.theme = { background: v('--panel'), foreground: v('--ink'), cursor: v('--ink'), cursorAccent: v('--panel'), selectionBackground: v('--sel') };
     }
-    function sendResize() {
+    // force: po podlaczeniu karty (odtworzenie ekranu) - Claude ma sie przerysowac, nawet przy tym samym rozmiarze
+    let forceNext = false;
+    function sendResize(force) {
+      if (force) forceNext = true;
       clearTimeout(rtimer);
-      rtimer = setTimeout(function () { if (term && state.running) api('/api/term/resize', { cols: term.cols, rows: term.rows }).catch(function () {}); }, 120);
+      rtimer = setTimeout(function () {
+        if (!term || !state.running) return;
+        const f = forceNext; forceNext = false;
+        api('/api/term/resize', { cols: term.cols, rows: term.rows, force: f }).catch(function () {});
+      }, 120);
     }
     function refit() { if (fit && root.classList.contains('claude-on')) { try { fit.fit(); } catch (e) {} sendResize(); } }
+    // Jedna sesja, kilka kart (np. Panel i Tablica o roznej wysokosci): rozmiar terminala ustawia karta, w ktorej
+    // wlasnie pracujesz - inaczej dol ekranu Claude ucieka poza okno (zmiana 0.28.2, AC-T10).
+    let claimed = 0;
+    function claim() {
+      if (!term || !state.running || !root.classList.contains('claude-on')) return;
+      claimed = Date.now(); refit();
+    }
     function flush() {
       if (sending || !pending) return;
       const data = pending; pending = ''; sending = true;
@@ -310,7 +330,7 @@
         const j = JSON.parse(e.data);
         if (j.replay) { term.reset(); show(j.state); }
         if (j.d) term.write(Uint8Array.from(atob(j.d), function (c) { return c.charCodeAt(0); }));
-        if (j.replay && state.running) sendResize();
+        if (j.replay && state.running) sendResize(true);
       };
       es.addEventListener('exit', function () { refresh(); });
       es.onopen = function () { refresh(); };
@@ -323,7 +343,14 @@
         term.loadAddon(fit);
         term.open(q('.cd-term'));
         theme();
-        term.onData(function (d) { if (state.running) { pending += d; flush(); } });
+        term.onData(function (d) {
+          if (!state.running) return;
+          if (Date.now() - claimed > 2000) claim();  // pisanie w tej karcie = ta karta ustawia rozmiar
+          pending += d; flush();
+        });
+        if (term.textarea) term.textarea.addEventListener('focus', claim);
+        // Rozmiar okna Claude zmienia sie tez bez zmiany okna przegladarki (komunikat nad terminalem, uchwyt) - AC-T10
+        if (window.ResizeObserver) new ResizeObserver(function () { clearTimeout(dock.ro); dock.ro = setTimeout(refit, 60); }).observe(q('.cd-term'));
         refit(); connect();
       }).catch(function () {
         msg('Nie udało się załadować terminala (xterm.js z cdn.jsdelivr.net). Sprawdź połączenie z internetem i otwórz okno ponownie.');
@@ -360,6 +387,8 @@
       };
       this.addEventListener('pointermove', move); this.addEventListener('pointerup', up);
     });
+    window.addEventListener('focus', claim);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) claim(); });
     window.addEventListener('resize', function () { if (root.classList.contains('claude-on')) { layout(); clearTimeout(dock.rt); dock.rt = setTimeout(refit, 80); } });
     if (prefs.open) open(true);
   }
