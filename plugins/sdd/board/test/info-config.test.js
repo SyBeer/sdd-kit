@@ -322,3 +322,11 @@ test('AC-C22: sekcje przewodnika jako lista punktowana z pogrubionymi skrotami',
   assert.match(html, /\.list\.bullets\{[^}]*list-style:\s*disc/);
   assert.match(html, /g\.sections\.forEach[^\n]*class="list bullets"[^\n]*SddUI\.marks\(esc\(i\)\)/);
 });
+
+test('AC-C24: przewodnik - sekcja o integracji z Redmine', () => {
+  const sec = info.guide().sections.find(x => x.title === 'Integracja z Redmine');
+  assert.ok(sec, 'brak sekcji');
+  const t = sec.items.join('\n');
+  ['~/.sdd-kit/.env', 'Claude go nie otwiera', '/sdd:handover status', 'Wygenerowane przez AI [Claude Code]', 'TRACEABILITY.md',
+    'redmine_ac_field', 'czeka na zgodę', 'UAT'].forEach(w => assert.ok(t.includes(w), 'brak: ' + w));
+});

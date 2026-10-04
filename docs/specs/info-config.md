@@ -119,3 +119,8 @@ i wiarygodnosc to co jest skrotem np. Q - pytanie albo [App] doprowadz do spojne
 
 ## Wyglad
 Tokeny kolorow z `:root` jak panel (ui.css + strony); bez nowych kolorow. Tresc w kartach jak karty etapow panelu.
+- AC-C24 (0.28.8, user: "dopisz w Jak to dziala informacje o sposobie dzialania integracji z Redmine"): `guide().sections`
+  ma sekcje "Integracja z Redmine": ustawienie (Konfiguracja + klucze SDD.yaml), klucz API w `~/.sdd-kit/.env`
+  (Claude go nie czyta), przekazanie (zgoda przed zapisem, dopisek AI), ponowne przekazanie (aktualizacja, bez
+  duplikatow), pliki lokalne (redmine-*.json, TRACEABILITY.md), agent budujacy (`/sdd:handover status` start/done,
+  UAT i zamkniecie czlowiek), typowe bledy.

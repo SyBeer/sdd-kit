@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.8] - 2026-10-04
 - Redmine - status zadania przez agenta (prosba usera): `/sdd:handover status #<id> start|done [opis]` ->
   `redmine.js status` / `comment`. start = `redmine_status_start` (domyslnie "W realizacji" / In Progress), done =
   `redmine_status_done` (domyslnie "Code review" / Resolved); statusy zamykajace odrzucane (UAT i zamkniecie robi
@@ -11,6 +11,8 @@
   "Zamknięty". Poprawki z testu: pole "Kryteria akceptacji" jest tam wymagane przy zmianie statusu - komunikat 422
   wyjasnia, co zrobic; `check` podaje pola wlasne projektu (Redmine 4.2+ `include=issue_custom_fields`, takze pusty
   projekt) i ostrzega, gdy pole na kryteria nie jest ustawione w `redmine_ac_field` (AC-RM18, AC-RM19).
+- Jak to dziala: nowa sekcja "Integracja z Redmine" - ustawienie, klucz API, przekazanie, ponowne przekazanie, pliki
+  lokalne, agent budujacy (status start/done), typowe bledy (AC-C24).
 
 ## [0.28.7] - 2026-10-04
 - Konfiguracja Redmine (zgloszenie usera: blad przy wklejonym adresie projektu, kluczyk aplikacji Hasla w polu projektu):
