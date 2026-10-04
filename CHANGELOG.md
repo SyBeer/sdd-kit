@@ -1,6 +1,16 @@
 # Changelog
 
-## [Niewydane]
+## [0.30.0] - 2026-10-04
+Wydanie zbiorcze na GitHub - zawiera wszystko od 0.28.1 (wersje 0.28.2..0.28.13 byly tylko na gitea; szczegoly
+w CHANGELOG.md). W skrocie:
+- Redmine w `/sdd:handover`: zadania ze specyfikacji prosto do backlogu (opis z tabela kryteriow, pole "Kryteria
+  akceptacji", zalaczniki, zaleznosci, ponowne przekazanie bez dublowania), status zadania przez agenta
+  (`/sdd:handover status`), link do srodowiska UAT, zgodnosc z wtyczka UAT (github.com/SyBeer/redmine-UAT-plugin).
+- Klucze API w `~/.sdd-kit/.env`, ustawiane w panelu (Konfiguracja); Claude tego pliku nie czyta.
+- Okno Claude Code: nie ucina dolu ekranu, wznawia rozmowe po restarcie serwera.
+- Panel: Domain "w toku", gdy walidacja znalazla pojecia spoza slownika; ikona aplikacji; tytul karty "SDD: <modul>";
+  spis tresci i sekcja o Redmine w "Jak to dziala".
+
 - Redmine - link do srodowiska UAT z SDD.yaml (prosba usera: "dodaj link UAT do SDD.yaml w sdd-kit"): nowy klucz
   `redmine_uat_link` (opcjonalnie `redmine_uat_field`, domyslnie pole "Link do środowiska UAT"). /sdd:handover wpisuje
   link w kazde zakladane i aktualizowane zadanie; `check` pokazuje pole i ostrzega, gdy projekt ma pole z linkiem UAT,
