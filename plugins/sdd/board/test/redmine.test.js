@@ -38,6 +38,8 @@ function fakeRedmine(opts) {
         }
         if (req.method === 'PUT' && /^\/issues\/\d+\.json$/.test(req.url)) return send(204);
         if (req.method === 'POST' && req.url.startsWith('/uploads.json')) return send(201, { upload: { token: 'tok-' + log.length } });
+        if (req.method === 'GET' && req.url.startsWith('/issues.json?project_id=7'))
+          return send(200, { issues: opts.noIssues ? [] : [{ id: 1, custom_fields: [{ id: 4, name: 'Kryteria akceptacji', value: 'x' }, { id: 5, name: 'Uwagi z UAT', value: null }] }] });
         if (req.method === 'GET' && /^\/issues\/\d+\.json/.test(req.url))
           return send(200, { issue: { id: +req.url.match(/\d+/)[0], attachments: [{ id: 9, filename: 'stary.png' }] } });
         if (req.method === 'POST' && /^\/issues\/\d+\/relations\.json$/.test(req.url)) {
@@ -73,9 +75,9 @@ function tasksFile(req, t) { const f = path.join(req, '04-validation', 'redmine-
 
 test('AC-RM1: readConfig - adres, projekt, tracker, walidacja', () => {
   assert.deepStrictEqual(rm.readConfig('redmine_url: "https://rm.firma.pl/"\nredmine_project: "faktury"\nredmine_tracker: "Feature"\n'),
-    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown' });
+    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown', acField: '' });
   assert.deepStrictEqual(rm.readConfig('redmine_url: http://10.0.0.5:3000\nredmine_project: a_b-1\n'),
-    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown' });
+    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown', acField: '' });
   assert.throws(() => rm.readConfig('redmine_project: "x"\n'), /redmine_url/);
   assert.throws(() => rm.readConfig('redmine_url: "https://a"\n'), /redmine_project/);
   assert.throws(() => rm.readConfig('redmine_url: "ftp://a"\nredmine_project: "x"\n'), /redmine_url/);
@@ -134,6 +136,45 @@ test('AC-RM12: zalaczniki - upload, token w zadaniu, bez dublowania, sciezka tyl
     }
     assert.strictEqual(s.log.length, n);
   } finally { s.close(); }
+});
+
+test('AC-RM13: pole wlasne Kryteria akceptacji - numer z zadan projektu, wartosc przy tworzeniu i aktualizacji', async () => {
+  const s = await fakeRedmine();
+  try {
+    const req = moduleWith(s.url, 'redmine_ac_field: "kryteria AKCEPTACJI"\n');
+    let r = await run(['check', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out).acField, { id: 4, name: 'Kryteria akceptacji' });
+    const t = { tasks: [
+      { key: 'T-01', subject: 'S1', description: 'D1', acceptance: '**AC-001-1**\n**Given** a\n**When** b\n**Then** c' },
+      { key: 'T-02', subject: 'S2', description: 'D2', issue: 55, acceptance: 'A2' },
+      { key: 'T-03', subject: 'S3', description: 'D3' },
+    ] };
+    r = await run(['push', tasksFile(req, t), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    const post = s.log.filter(x => x.method === 'POST' && x.url === '/issues.json').map(x => x.body.issue);
+    assert.deepStrictEqual(post[0].custom_fields, [{ id: 4, value: '**AC-001-1**\n**Given** a\n**When** b\n**Then** c' }]);
+    assert.strictEqual(post[1].custom_fields, undefined, 'bez acceptance - bez custom_fields');
+    assert.deepStrictEqual(s.log.find(x => x.method === 'PUT').body.issue.custom_fields, [{ id: 4, value: 'A2' }]);
+  } finally { s.close(); }
+  // numer pola zamiast nazwy - bez szukania; nazwa nieznana albo projekt bez zadan -> blad z prosba o numer
+  const s2 = await fakeRedmine({ noIssues: true });
+  try {
+    let r = await run(['check', '--req', moduleWith(s2.url, 'redmine_ac_field: 9\n')], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out).acField, { id: 9, name: '' });
+    r = await run(['check', '--req', moduleWith(s2.url, 'redmine_ac_field: "Kryteria akceptacji"\n')], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /numer pola/);
+  } finally { s2.close(); }
+  // bez redmine_ac_field - acceptance ignorowane
+  const s3 = await fakeRedmine();
+  try {
+    const req = moduleWith(s3.url);
+    const r = await run(['push', tasksFile(req, { tasks: [{ key: 'T-01', subject: 'S', description: 'D', acceptance: 'A' }] }), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.strictEqual(s3.log.find(x => x.url === '/issues.json').body.issue.custom_fields, undefined);
+  } finally { s3.close(); }
 });
 
 test('AC-RM2: issueBody - nowe zadanie z projektem i trackerem, aktualizacja bez nich', () => {
@@ -239,4 +280,6 @@ test('AC-RM8: skill handover opisuje Redmine', () => {
   assert.match(sk, /\| Kryterium \| Given \| When \| Then \|/);
   assert.match(sk, /redmine_format/);
   assert.match(sk, /`attachments`/);
+  assert.match(sk, /redmine_ac_field/);
+  assert.match(sk, /`acceptance`/);
 });

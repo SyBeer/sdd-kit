@@ -19,6 +19,10 @@
   ekranu z `00-intake/`) - skrypt wysyla je przez `/uploads.json`, przy ponownym przekazaniu nie dubluje; sciezki tylko
   z folderu requirements. Sprawdzone na Redmine usera (#13-#15: Markdown renderuje tabele i obrazy, Textile nie).
   Spec: AC-RM11, AC-RM12.
+- Redmine: kryteria akceptacji takze w polu wlasnym projektu (`redmine_ac_field` w SDD.yaml - nazwa albo numer pola).
+  Numer pola z nazwy bez uprawnien admina (z pol `custom_fields` istniejacych zadan projektu). Skill wypelnia pole
+  w ukladzie zespolu (`**AC-xxx-n**` + `**Given/When/Then**` w osobnych liniach). Sprawdzone na Redmine usera
+  (pole "Kryteria akceptacji", id 1, zadanie testowe #15). Spec: AC-RM13.
 
 ## [0.28.3] - 2026-10-04
 - Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie

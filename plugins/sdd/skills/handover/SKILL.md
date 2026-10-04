@@ -17,7 +17,8 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
 
 ## Redmine (`backlog: redmine`)
 Konfiguracja w `SDD.yaml`: `redmine_url` (adres), `redmine_project` (identyfikator z adresu `/projects/<identyfikator>`),
-opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadanie, nigdy "Bug"). Adres i projekt da sie tez ustawic w panelu
+opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadanie, nigdy "Bug"),
+`redmine_format` (`markdown` / `textile`) i `redmine_ac_field` (pole wlasne na kryteria akceptacji - nazwa albo numer). Adres i projekt da sie tez ustawic w panelu
 (Konfiguracja). Klucz API nigdy w plikach: zmienna `REDMINE_API_KEY` albo Pek kluczy macOS (usluga `redmine-api-key`).
 1. Brak `redmine_url` / `redmine_project` -> zapytaj o nie i wpisz do `SDD.yaml` (PYTASZ). Brak klucza (komunikat
    skryptu) -> przekaz userowi komendy z komunikatu; nie pros o wklejenie klucza do czatu ani do plikow.
@@ -46,6 +47,10 @@ opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadan
    - `after` = zaleznosci z `plan.md` (klucze zadan); skrypt zalozy relacje "poprzedza";
    - `issue` = numer z poprzedniego `TRACEABILITY.md`, gdy to zadanie bylo juz przekazane - wtedy aktualizacja
      zamiast nowego zadania (ponowny handover nie dubluje).
+   - `acceptance` - tylko gdy `check` zwrocil `acField` (pole wlasne na kryteria): kryteria tego zadania w ukladzie,
+     w jakim zespol wypelnia to pole w istniejacych zadaniach (zajrzyj do 1-2 zadan projektu); domyslnie kazde
+     kryterium jako `**AC-xxx-n**`, `**Given** ...`, `**When** ...`, `**Then** ...` w osobnych liniach, kryteria
+     rozdzielone pusta linia. Tabela w opisie zostaje - pole jest dla testerow UAT.
    - `attachments` (opcjonalnie) = pliki z `requirements/` dotyczace wymagania - zwykle zrzuty ekranu i dokumenty
      z `00-intake/` wskazane w zrodle R albo w INDEX.md. Skrypt je wysle i dolaczy; w opisie wstaw obraz po nazwie
      pliku (bez sciezki). Pliki, ktore zadanie juz ma, nie ida drugi raz. Nie dolaczaj surowca z danymi osobowymi

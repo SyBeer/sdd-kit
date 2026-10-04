@@ -65,5 +65,13 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
   (`filename`, `content_type` z rozszerzenia); przy aktualizacji pliki, ktore zadanie juz ma (ta sama nazwa), pomijane;
   sciezka poza `requirements/` albo brak pliku -> blad przed wyslaniem czegokolwiek; `--dry-run` liczy zalaczniki,
   nic nie wysyla.
+- AC-RM13 (user: "dodaj pole Kryteria akceptacji"; projekt ma pole wlasne "Kryteria akceptacji", id 1, Markdown,
+  zespol wpisuje `**Given** ...` / `**When** ...` / `**Then** ...` w osobnych liniach): `redmine_ac_field` w SDD.yaml -
+  nazwa pola (bez wielkosci liter) albo jego numer. Nazwa -> numer z pola `custom_fields` zadan projektu (GET
+  `/issues.json?project_id=..&tracker_id=..&status_id=*&limit=1`, potem bez trackera); `/custom_fields.json` wymaga
+  admina, wiec go nie uzywamy. Nie znaleziono -> blad z prosba o numer pola. `check` podaje pole (`acField`).
+  Zadanie z `acceptance` -> `custom_fields: [{ id, value }]` przy tworzeniu i aktualizacji; bez `redmine_ac_field`
+  albo bez `acceptance` - bez `custom_fields`. Skill: kryteria w uklad zespolu, kazde z naglowkiem `**AC-xxx-n**`,
+  kryteria rozdzielone pusta linia; w opisie tabela zostaje.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.

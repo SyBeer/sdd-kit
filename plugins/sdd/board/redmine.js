@@ -26,7 +26,8 @@ function readConfig(yaml) {
   // Format opisu (AC-RM11): Markdown domyslnie (tabele i obrazy dzialaja), Textile dla starszych instalacji
   const format = yamlField(yaml, 'redmine_format') || 'markdown';
   if (format !== 'markdown' && format !== 'textile') throw new Error('redmine_format: markdown albo textile - jest: ' + format);
-  return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format };
+  // Pole wlasne na kryteria akceptacji (AC-RM13): nazwa albo numer; puste = tylko opis
+  return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format, acField: yamlField(yaml, 'redmine_ac_field') };
 }
 
 // Tracker: z konfiguracji (nazwa, bez wielkosci liter) albo pierwszy "funkcjonalnosc / zadanie" - zadania z wymagan
@@ -39,11 +40,27 @@ function pickTracker(trackers, name) {
 }
 
 // Tresc zapytania o zadanie (AC-RM2): nowe z projektem i trackerem, aktualizacja tylko temat i opis.
-function issueBody(task, projectId, trackerId) {
+function issueBody(task, projectId, trackerId, acFieldId) {
   const issue = task.issue ? {} : { project_id: projectId, tracker_id: trackerId };
   issue.subject = task.subject;
   issue.description = task.description;
+  if (acFieldId && task.acceptance != null) issue.custom_fields = [{ id: acFieldId, value: task.acceptance }];
   return { issue };
+}
+
+// Numer pola wlasnego z nazwy: /custom_fields.json wymaga admina, wiec bierzemy go z pola custom_fields zadan projektu
+// (najpierw zadania wybranego trackera, potem dowolne) - AC-RM13.
+async function acFieldOf(call, cfg, projectId, trackerId) {
+  if (!cfg.acField) return null;
+  if (/^\d+$/.test(cfg.acField)) return { id: +cfg.acField, name: '' };
+  const want = cfg.acField.toLowerCase();
+  for (const q of ['&tracker_id=' + trackerId, '']) {
+    const r = await call('GET', '/issues.json?project_id=' + projectId + q + '&status_id=*&limit=25');
+    const found = ((r.data && r.data.issues) || []).map(i => (i.custom_fields || []).find(c => c.name.toLowerCase() === want)).find(Boolean);
+    if (found) return { id: found.id, name: found.name };
+  }
+  throw new Error('Nie znalazlem pola "' + cfg.acField + '" w zadaniach projektu (nazwe pola widac tylko w istniejacych zadaniach). ' +
+    'Wpisz w SDD.yaml numer pola zamiast nazwy, np. redmine_ac_field: 1 (numer: Administracja -> Pola wlasne, w adresie /custom_fields/<numer>).');
 }
 
 // Zalaczniki zadania (AC-RM12): sciezki wzgledem requirements/, tylko pliki wewnatrz tego folderu.
@@ -93,7 +110,8 @@ async function project(call, cfg) {
   const p = r.data.project, trackers = p.trackers || [];
   const tracker = pickTracker(trackers, cfg.tracker);
   if (!tracker) throw new Error(cfg.tracker ? 'Projekt nie ma trackera "' + cfg.tracker + '" - dostepne: ' + trackers.map(t => t.name).join(', ') : 'Projekt nie ma zadnego trackera.');
-  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker };
+  const acField = await acFieldOf(call, cfg, p.id, tracker.id);
+  return { project: { id: p.id, name: p.name, identifier: p.identifier }, trackers: trackers.map(t => ({ id: t.id, name: t.name })), tracker, acField };
 }
 
 // Zadania po kolei, potem relacje "poprzedza" (AC-RM4). Blad -> wyjatek z tym, co juz zalozono (AC-RM5).
@@ -105,7 +123,7 @@ async function push(call, cfg, tasks, dry, req) {
   const info = await project(call, cfg);
   for (let n = 0; n < tasks.length; n++) {
     const t = tasks[n];
-    const body = issueBody(t, info.project.id, info.tracker.id);
+    const body = issueBody(t, info.project.id, info.tracker.id, info.acField && info.acField.id);
     let todo = files[n];
     if (todo.length && t.issue) {  // ponowny handover: pliki, ktore zadanie juz ma, pomijamy
       const g = await call('GET', '/issues/' + t.issue + '.json?include=attachments');
