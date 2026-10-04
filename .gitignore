@@ -1,1 +1,5 @@
 .DS_Store
+# pliki kitu w ~/.sdd-kit (instalacja jedna komenda = klon repo) - nie moga blokowac aktualizacji
+/.env
+/config.json
+/bin/

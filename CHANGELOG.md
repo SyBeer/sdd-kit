@@ -1,5 +1,15 @@
 # Changelog
 
+## [Niewydane]
+- Klucze API w `~/.sdd-kit/.env` - tak samo na macOS i Windows (uwaga usera: "konfiguracja klucza w pliku env;
+  Claude go nie czyta, aplikacja tak"). Panel, Konfiguracja: pole "Klucz API Redmine" (Zapisz / Usun) - serwer
+  zapisuje klucz w pliku (600), a pokazuje tylko, skad jest (plik / zmienna / Pek kluczy / brak), nigdy wartosc.
+  `redmine.js`: zmienna > plik .env > Pek kluczy macOS. Zasada dla Claude w skillu handover i w szablonie CLAUDE.md:
+  nie otwierac `~/.sdd-kit/.env` (umowa, nie blokada systemowa). Skill handover: sekcja Redmine przeniesiona za
+  kroki ogolne (wczesniej rozcinala liste krokow). Spec: `docs/specs/secrets.md` (AC-S1..AC-S6).
+- `.gitignore` kitu: `/.env`, `/config.json`, `/bin/` - przy instalacji jedna komenda `~/.sdd-kit` to klon repo,
+  a te pliki kitu robily z niego "niezapisane zmiany" i blokowaly aktualizacje z panelu.
+
 ## [0.28.4] - 2026-10-04
 - `/sdd:handover` do Redmine (`backlog: redmine`). Skrypt `board/redmine.js` (REST API, bez zaleznosci): `check` -
   projekt i trackery; `push <zadania.json>` - nowe zadania (POST), juz przekazane aktualizuje (PUT, ponowny handover

@@ -99,3 +99,9 @@ Kazdy zapis automatyczny konczy sie jedna linia w `requirements/CHANGELOG.md`:
 Ustalony w `requirements/SDD.yaml` (`level: full | light`). `light` = jeden
 `03-spec/SPEC.md`, bez PRD i bez plikow dla agenta. Przejscie light -> full,
 gdy SPEC.md przekracza ok. 10 stron albo pojawia sie wiecej niz jeden wlasciciel biznesowy.
+
+## Klucze API
+
+Klucze (np. Redmine) leza w `~/.sdd-kit/.env` i czyta je tylko kit (skrypty, panel sdd-board).
+Nie otwieraj, nie wypisuj i nie kopiuj tego pliku ani hasel z Peku kluczy. Brakuje klucza -> popros
+czlowieka, zeby ustawil go w panelu (Konfiguracja); nigdy nie pros o wklejenie klucza w czacie.

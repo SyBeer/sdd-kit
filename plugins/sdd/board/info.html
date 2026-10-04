@@ -73,9 +73,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg
 .field{display:flex;flex-direction:column;gap:4px;margin:10px 0}
 .field>span{font-size:13px;font-weight:600}
 .field small{color:var(--muted);font-weight:400}
-input[type=text],select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+input[type=text],input[type=password],select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.row input[type=text]{flex:1 1 240px}
+.row input[type=text],.row input[type=password]{flex:1 1 240px}
 button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
 button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 button.b.danger{border-color:var(--hot);color:var(--hot)}
@@ -219,6 +219,12 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
   // ---------------------------------------------------------------- Konfiguracja
   var editing=false, cfg=null, ownersDraft=null, msg={};
   var SRC={env:'zmienna SDD_MODULES_ROOT (ma pierwszeństwo, zmiana tutaj nie zadziała po restarcie)',config:'wybór z panelu (~/.sdd-kit/config.json)',project:'folder nad bieżącym projektem'};
+  var KEYSRC={file:'ustawiony (plik .env)',env:'ustawiony (zmienna REDMINE_API_KEY)',keychain:'ustawiony (Pęk kluczy macOS)',none:'brak'};
+  function saveKey(v){
+    msg.keyerr=''; msg.keyok='';
+    api('/api/secrets',{method:'PUT',body:JSON.stringify({REDMINE_API_KEY:v})}).then(function(c){ msg.keyok=v?'Klucz zapisany.':'Klucz usunięty.'; renderConfig(c); })
+      .catch(function(err){ $('#keyerr').textContent=err.message; });
+  }
   function renderConfig(c){
     cfg=c; ownersDraft=c.sdd?JSON.parse(JSON.stringify(c.sdd.owners)):null;
     var demo=!!c.demo, h='<div class="grid">';
@@ -234,7 +240,12 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
         '<div id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'>'+
           '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
           '<label class="field"><span>Projekt w Redmine <small>identyfikator z adresu /projects/&lt;identyfikator&gt;</small></span><input type="text" id="f-rmproj" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+
-          '<p class="hint">Klucz API nie trafia do plików. Ustaw go raz w Terminalu: <code>security add-generic-password -s redmine-api-key -a "$USER" -w</code> (macOS) albo zmienną <code>REDMINE_API_KEY</code>.</p>'+
+          // Klucz API (0.28.5, docs/specs/secrets.md): zapis do ~/.sdd-kit/.env, panel widzi tylko, skad jest
+          '<div class="field"><span>Klucz API Redmine <small>'+esc(KEYSRC[c.redmineKey]||'brak')+'</small></span>'+
+          (demo?'':'<div class="row"><input type="password" id="f-rmkey" autocomplete="off" placeholder="'+(c.redmineKey==='none'?'wklej klucz z Redmine: Moje konto → Klucz dostępu do API':'nowy klucz (zastąpi obecny)')+'">'+
+            '<button class="b" type="button" id="savekey">Zapisz klucz</button>'+(c.redmineKey==='file'?'<button class="b" type="button" id="delkey">Usuń</button>':'')+'</div>')+
+          '<p class="hint">Klucz trafia do <code>~/.sdd-kit/.env</code> na tym komputerze - czyta go tylko sdd-kit, Claude go nie otwiera i nie widzi w panelu. Nie trafia do repo.</p>'+
+          '<p class="err" id="keyerr">'+esc(msg.keyerr||'')+'</p>'+(msg.keyok?'<p class="ok">'+esc(msg.keyok)+'</p>':'')+'</div>'+
         '</div>'+
         '<div class="field"><span>Role i co zatwierdzają <small>rola, nie osoba; nazwy użytej już w plikach nie da się tu zmienić ani usunąć</small></span><div id="owners"></div>'+
         (demo?'':'<div class="row"><button class="b" type="button" id="addrole">+ Dodaj rolę</button></div>')+'</div>'+
@@ -303,6 +314,8 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     };
     app.onclick=function(e){
       var t=e.target.closest('button'); if(!t) return;
+      if(t.id==='savekey'){ var kv=$('#f-rmkey').value.trim(); if(!kv){ $('#keyerr').textContent='Wklej klucz.'; return; } $('#f-rmkey').value=''; saveKey(kv); return; }
+      if(t.id==='delkey'){ if(confirm('Usunąć klucz API Redmine z ~/.sdd-kit/.env?')) saveKey(''); return; }
       if(t.id==='addrole'){ editing=true; ownersDraft.push({role:'',approves:[]}); drawOwners(); var l=app.querySelectorAll('[data-role]'); l[l.length-1].focus(); }
       else if(t.hasAttribute('data-delrole')){ editing=true; ownersDraft.splice(+t.getAttribute('data-delrole'),1); drawOwners(); }
       else if(t.id==='resetsdd'){ editing=false; load(); }

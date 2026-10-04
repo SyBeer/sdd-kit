@@ -19,6 +19,7 @@ const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModul
 const info = require('./info');
 const terminal = require('./terminal');
 const update = require('./update');
+const secrets = require('./secrets');
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -185,6 +186,8 @@ function configView(ctx) {
       .map(d => ({ dir: d, name: path.basename(d), exists: fs.existsSync(path.join(d, 'requirements', 'SDD.yaml')) })),
     lastModule: demo ? null : (cfg.lastModule || null),
     sdd,
+    // Klucz Redmine: tylko skad jest, nigdy wartosc (AC-S3)
+    redmineKey: demo ? 'none' : secrets.redmineKey().source,
     server: demo ? { version: VERSION, port: PORT } : { version: VERSION, port: PORT, board: ctx.board || '', config: CONFIG },
   };
 }
@@ -421,6 +424,18 @@ const server = http.createServer((req, res) => {
       return json(res, 200, { path: dir, exists: fs.existsSync(dir), hidden: info.rootPreview(modulesOf(user), dir),
         visible: listModules(dir).map(m => m.name) });
     } catch (e) { return json(res, 400, { error: e.message }); }
+  }
+  // Klucze API do ~/.sdd-kit/.env (0.28.5, docs/specs/secrets.md): tylko zapis, odpowiedz bez wartosci
+  if (url === '/api/secrets' && req.method === 'PUT') {
+    return readBody(req, 16 * 1024, buf => {
+      let body;
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+      const keys = Object.keys(body);
+      const bad = keys.filter(k => secrets.KNOWN.indexOf(k) < 0);
+      if (!keys.length || bad.length) return json(res, 400, { error: 'Dozwolone klucze: ' + secrets.KNOWN.join(', ') + '.' });
+      try { keys.forEach(k => secrets.writeSecret(k, body[k])); } catch (e) { return json(res, 400, { error: e.message }); }
+      json(res, 200, configView(user));
+    });
   }
   if (url === '/api/config' && req.method === 'PUT') {
     return readBody(req, 64 * 1024, buf => {

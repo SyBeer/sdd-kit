@@ -60,7 +60,8 @@ function moduleWith(url, extra) {
 function run(args, env) {
   return new Promise(res => {
     const p = spawn(process.execPath, [path.join(__dirname, '..', 'redmine.js')].concat(args),
-      { env: Object.assign({}, process.env, { REDMINE_API_KEY: '', SDD_REDMINE_KEYCHAIN: '0' }, env) });
+      { env: Object.assign({}, process.env, { REDMINE_API_KEY: '', SDD_REDMINE_KEYCHAIN: '0',
+        SDD_ENV_FILE: path.join(os.tmpdir(), 'sdd-brak-' + process.pid, '.env') }, env) });
     let out = '', err = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { err += d; });
     p.on('close', code => res({ code, out, err }));
@@ -258,6 +259,20 @@ test('AC-RM6: klucz nie trafia na wyjscie; brak klucza - jak go ustawic', async 
     assert.strictEqual(r.code, 1);
     assert.match(r.err, /REDMINE_API_KEY/);
     assert.match(r.err, /redmine-api-key/);
+  } finally { s.close(); }
+});
+
+test('AC-S4: klucz tylko w ~/.sdd-kit/.env wystarcza; brak klucza - panel w komunikacie', async () => {
+  const s = await fakeRedmine();
+  try {
+    const envFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-envf-')), '.env');
+    fs.writeFileSync(envFile, 'REDMINE_API_KEY="' + KEY + '"\n');
+    let r = await run(['check', '--req', moduleWith(s.url)], { SDD_ENV_FILE: envFile });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.strictEqual(s.log[0].key, KEY);
+    r = await run(['check', '--req', moduleWith(s.url)], {});
+    assert.strictEqual(r.code, 1);
+    assert.match(r.err, /panelu sdd-board: Konfiguracja -> Klucz API Redmine/);
   } finally { s.close(); }
 });
 

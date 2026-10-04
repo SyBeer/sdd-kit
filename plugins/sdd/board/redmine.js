@@ -7,12 +7,13 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 const { yamlField } = require('./info');
+const { redmineKey, envFile } = require('./secrets');
 
-const KEY_HELP = 'Brak klucza API Redmine. Ustaw go raz (klucz: Redmine -> Moje konto -> Klucz dostepu do API):\n' +
-  '  macOS (Pek kluczy):  security add-generic-password -s redmine-api-key -a "$USER" -w\n' +
-  '  albo w ~/.zshrc:     export REDMINE_API_KEY=...\n' +
+const KEY_HELP = 'Brak klucza API Redmine (klucz: Redmine -> Moje konto -> Klucz dostepu do API). Ustaw go raz:\n' +
+  '  w panelu sdd-board: Konfiguracja -> Klucz API Redmine -> Zapisz (macOS i Windows),\n' +
+  '  albo w pliku ' + envFile() + ': REDMINE_API_KEY="..."\n' +
+  '  (macOS: dziala tez Pek kluczy - security add-generic-password -s redmine-api-key -a "$USER" -w).\n' +
   'Nie wklejaj klucza do czatu ani do plikow projektu.';
 
 // Konfiguracja z SDD.yaml (AC-RM1).
@@ -77,15 +78,8 @@ function attachmentFiles(req, tasks) {
   }));
 }
 
-function apiKey(env) {
-  env = env || process.env;
-  if (env.REDMINE_API_KEY) return env.REDMINE_API_KEY;
-  if (process.platform === 'darwin' && env.SDD_REDMINE_KEYCHAIN !== '0') {
-    try { return execFileSync('security', ['find-generic-password', '-s', 'redmine-api-key', '-w'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
-    catch (e) { /* brak w Peku kluczy */ }
-  }
-  return '';
-}
+// Klucz: zmienna > ~/.sdd-kit/.env > Pek kluczy macOS (secrets.js, AC-S2)
+function apiKey(env) { return redmineKey(env).value; }
 
 function client(cfg, key) {
   return async function call(method, p, body, type) {
