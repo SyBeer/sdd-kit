@@ -1,6 +1,6 @@
 ---
 name: handover
-description: Przekazuje zatwierdzony spec do budowy - zadania do backlogu (Linear, Jira lub plik), kazde z ID wymagania i kryterium, plus tabela sladowalnosci R -> task -> test. Uzyj, gdy user mowi "przekaz do dev", "do backlogu", "handover", "zrob taski".
+description: Przekazuje zatwierdzony spec do budowy - zadania do backlogu (Linear, Jira, Redmine lub plik), kazde z ID wymagania i kryterium, plus tabela sladowalnosci R -> task -> test. Uzyj, gdy user mowi "przekaz do dev", "do backlogu", "handover", "zrob taski".
 ---
 
 # /sdd:handover
@@ -13,6 +13,30 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
 3. Backlog:
    - `file`: `04-validation/backlog-YYYY-MM-DD.md`
    - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). ID zadania wpisz z powrotem do tabeli.
+   - `redmine`: REST API przez skrypt kitu `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js"` (sekcja ponizej).
+
+## Redmine (`backlog: redmine`)
+Konfiguracja w `SDD.yaml`: `redmine_url` (adres), `redmine_project` (identyfikator z adresu `/projects/<identyfikator>`),
+opcjonalnie `redmine_tracker` (nazwa; brak = pierwszy tracker projektu). Adres i projekt da sie tez ustawic w panelu
+(Konfiguracja). Klucz API nigdy w plikach: zmienna `REDMINE_API_KEY` albo Pek kluczy macOS (usluga `redmine-api-key`).
+1. Brak `redmine_url` / `redmine_project` -> zapytaj o nie i wpisz do `SDD.yaml` (PYTASZ). Brak klucza (komunikat
+   skryptu) -> przekaz userowi komendy z komunikatu; nie pros o wklejenie klucza do czatu ani do plikow.
+2. `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js" check --req requirements` -> nazwa projektu, trackery, wybrany
+   tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij.
+3. Plik zadan `04-validation/redmine-YYYY-MM-DD.json`: `{ "tasks": [ { "key": "T-01", "subject": "[R-xxx] tytul",
+   "description": "...", "after": ["T-00"], "issue": 123 } ] }`.
+   - `description`: 2 zdania opisu, linia `Wymaganie: R-xxx`, lista kryteriow `* AC-xxx-n: ...` (doslownie z PRD),
+     linia `Zrodlo: 03-spec/PRD.md` - zwykle linie i `* `, bez tabel (Redmine renderuje Textile albo Markdown);
+   - `after` = zaleznosci z `plan.md` (klucze zadan); skrypt zalozy relacje "poprzedza";
+   - `issue` = numer z poprzedniego `TRACEABILITY.md`, gdy to zadanie bylo juz przekazane - wtedy aktualizacja
+     zamiast nowego zadania (ponowny handover nie dubluje).
+4. `... redmine.js push 04-validation/redmine-YYYY-MM-DD.json --req requirements --dry-run` -> pokaz liste: nowe /
+   aktualizowane, tematy, zaleznosci. Zapis do systemu zewnetrznego: PYTASZ i czekasz na "tak".
+5. `... redmine.js push 04-validation/redmine-YYYY-MM-DD.json --req requirements` -> JSON z `key`, `id`, `url`, `action`.
+   Numery `#<id>` z linkiem `url` wpisz do tabeli zadan i do kolumny task w `TRACEABILITY.md`. Blad w polowie: skrypt
+   wypisuje zadania juz zalozone - wpisz je mimo to (inaczej ponowny przebieg je zdubluje) i pokaz blad.
+6. Zadania z poprzedniego `TRACEABILITY.md`, ktorych juz nie ma w wymaganiach: wypisz je userowi; nie zamykaj
+   i nie usuwaj ich w Redmine sam.
 4. `04-validation/TRACEABILITY.md`: tabela R | AC | task | test (kolumna test pusta do wypelnienia przez dev, nazwa testu = AC-xxx-n).
 5. Reguła dla dev, wpisz na koncu TRACEABILITY.md: zmiana wymagania po przekazaniu = zmiana PRD i ponowny handover, nigdy ticket "z boku".
 6. Pod naglowkiem TRACEABILITY.md wpisz odcisk wymagan, liczony na koncu przebiegu:

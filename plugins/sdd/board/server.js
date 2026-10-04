@@ -173,6 +173,7 @@ function configView(ctx) {
     const y = fs.existsSync(sddFile(ctx)) ? fs.readFileSync(sddFile(ctx), 'utf8').replace(/\r\n?/g, '\n') : '';
     sdd = { project: info.yamlField(y, 'project'), level: info.yamlField(y, 'level') || 'full', owners: info.parseOwners(y),
       gate: info.yamlField(y, 'gate_blocking_status'), backlog: info.yamlField(y, 'backlog') || 'none',
+      redmineUrl: info.yamlField(y, 'redmine_url'), redmineProject: info.yamlField(y, 'redmine_project'),
       file: demo ? '' : sddFile(ctx), approvesAllowed: info.APPROVES, backlogsAllowed: info.BACKLOGS };
   }
   const cfg = demo ? {} : readConfig(CONFIG);
@@ -193,7 +194,7 @@ function localDate() {
 }
 // Zmiana SDD.yaml z panelu: tylko project, backlog, owners (level i gate zmienia Claude - AC-C9).
 function saveSdd(ctx, body) {
-  const allowed = ['project', 'backlog', 'owners'];
+  const allowed = ['project', 'backlog', 'owners', 'redmine_url', 'redmine_project'];
   const keys = Object.keys(body || {});
   const bad = keys.filter(k => allowed.indexOf(k) < 0);
   if (bad.length) return { code: 400, error: 'Tego nie zmienisz w przeglądarce: ' + bad.join(', ') + '. Poziom i etykietę blokującą zmienia Claude (wymaga zmian w plikach).' };

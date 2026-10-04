@@ -6,7 +6,7 @@ const path = require('path');
 const { readProgress, STAGES } = require('./progress');
 
 const APPROVES = ['R', 'D', 'GLOSSARY', 'BR', 'PRD'];
-const BACKLOGS = ['none', 'linear', 'jira', 'file'];
+const BACKLOGS = ['none', 'linear', 'jira', 'redmine', 'file'];
 
 // CRLF (Windows) -> \n jak w progress.js (0.27.1, AC-W4)
 function read(file) {
@@ -83,6 +83,17 @@ function yamlSet(text, changes) {
   if ('backlog' in changes) {
     if (BACKLOGS.indexOf(changes.backlog) < 0) throw new Error('backlog: dozwolone ' + BACKLOGS.join(', ') + '.');
     out = setLine(out, 'backlog', changes.backlog);
+  }
+  // Redmine (0.29.0, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml
+  if ('redmine_url' in changes) {
+    const u = String(changes.redmine_url || '').trim().replace(/\/+$/, '');
+    if (!/^https?:\/\/[^\s/"]+[^\s"]*$/.test(u)) throw new Error('redmine_url: adres musi zaczynać się od http:// albo https://, np. https://redmine.firma.pl.');
+    out = setLine(out, 'redmine_url', quote(u));
+  }
+  if ('redmine_project' in changes) {
+    const p = String(changes.redmine_project || '').trim();
+    if (!/^[a-z0-9][a-z0-9_-]*$/.test(p)) throw new Error('redmine_project: identyfikator projektu (małe litery, cyfry, - i _), jak w adresie /projects/<identyfikator>.');
+    out = setLine(out, 'redmine_project', quote(p));
   }
   return out;
 }
@@ -219,7 +230,7 @@ const VARIANTS = {
     ['/sdd:spec --agent', 'Pliki dla agenta, który będzie budował (03-spec/agent/): generowane z zatwierdzonych wymagań.'],
     ['/sdd:spec --light', 'Jeden krótki SPEC.md, do małych rzeczy.']],
   '/sdd:validate': [],
-  '/sdd:handover': [['/sdd:handover', 'Cel backlogu bierze z Konfiguracji: plik, Linear albo Jira.']],
+  '/sdd:handover': [['/sdd:handover', 'Cel backlogu bierze z Konfiguracji: plik, Linear, Jira albo Redmine (adres i projekt w Konfiguracji, klucz API poza plikami).']],
   '/sdd:board': [
     ['/sdd:board', 'W trakcie rozmowy: po każdej wypowiedzi biznesu AI stawia karteczki i pyta o jedną rzecz.'],
     ['/sdd:board start', 'Jak uruchomić tablicę i założyć board.json dla modułu.'],

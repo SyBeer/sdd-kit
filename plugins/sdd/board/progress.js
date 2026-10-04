@@ -34,7 +34,7 @@ const STAGES = [
   { key: 'handover', name: 'Handover', command: '/sdd:handover',
     desc: 'Zamiana specu na zadania dla zespołu, z tabelą śledzenia R → zadanie → test.',
     howto: ["Skopiuj komendę i wklej ją w Claude Code.",
-      "AI zamieni wymagania na zadania dla zespołu (plik, Linear albo Jira) i zapyta, zanim cokolwiek wyśle.",
+      "AI zamieni wymagania na zadania dla zespołu (plik, Linear, Jira albo Redmine) i zapyta, zanim cokolwiek wyśle.",
       "Powstanie tabela śledzenia: wymaganie → zadanie → test."] },
 ];
 

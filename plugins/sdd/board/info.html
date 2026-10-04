@@ -230,6 +230,12 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
         '<label class="field"><span>Nazwa projektu</span><input type="text" id="f-project" value="'+esc(c.sdd.project)+'"'+(demo?' disabled':'')+'></label>'+
         '<label class="field"><span>Backlog <small>czytany dopiero przy /sdd:handover</small></span><select id="f-backlog"'+(demo?' disabled':'')+'>'+
           c.sdd.backlogsAllowed.map(function(b){return '<option'+(b===c.sdd.backlog?' selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
+        // Redmine (0.29.0): adres i projekt; klucz API poza plikami (REDMINE_API_KEY albo Pek kluczy)
+        '<div id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'>'+
+          '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
+          '<label class="field"><span>Projekt w Redmine <small>identyfikator z adresu /projects/&lt;identyfikator&gt;</small></span><input type="text" id="f-rmproj" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+
+          '<p class="hint">Klucz API nie trafia do plików. Ustaw go raz w Terminalu: <code>security add-generic-password -s redmine-api-key -a "$USER" -w</code> (macOS) albo zmienną <code>REDMINE_API_KEY</code>.</p>'+
+        '</div>'+
         '<div class="field"><span>Role i co zatwierdzają <small>rola, nie osoba; nazwy użytej już w plikach nie da się tu zmienić ani usunąć</small></span><div id="owners"></div>'+
         (demo?'':'<div class="row"><button class="b" type="button" id="addrole">+ Dodaj rolę</button></div>')+'</div>'+
         '<div class="lock"><b>Poziom: '+esc(LEVEL[c.sdd.level]||c.sdd.level)+'</b>Zmiana przebudowuje pliki (PRD.md ↔ SPEC.md), więc robi ją Claude. W Claude Code, w folderze modułu, napisz np. „zmień poziom modułu na '+(c.sdd.level==='full'?'lekki':'pełny')+'”.</div>'+
@@ -292,6 +298,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     };
     app.onchange=function(e){
       var t=e.target; editing=true;
+      if(t.id==='f-backlog'){ var rf=$('#rmf'); if(rf) rf.hidden=t.value!=='redmine'; }
       if(t.hasAttribute('data-ap')){ var o=ownersDraft[+t.getAttribute('data-ap')]; o.approves=o.approves.filter(function(a){return a!==t.value}); if(t.checked) o.approves.push(t.value); }
     };
     app.onclick=function(e){
@@ -314,6 +321,10 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     var was=cfg.sdd.owners.map(function(o){return {role:o.role,approves:o.approves.slice().sort()}});
     if($('#f-project').value.trim()!==cfg.sdd.project) body.project=$('#f-project').value;
     if($('#f-backlog').value!==cfg.sdd.backlog) body.backlog=$('#f-backlog').value;
+    if($('#f-backlog').value==='redmine'){
+      if($('#f-rmurl').value.trim()!==(cfg.sdd.redmineUrl||'')) body.redmine_url=$('#f-rmurl').value;
+      if($('#f-rmproj').value.trim()!==(cfg.sdd.redmineProject||'')) body.redmine_project=$('#f-rmproj').value;
+    }
     if(JSON.stringify(owners)!==JSON.stringify(was)) body.owners=owners;
     if(!Object.keys(body).length){ $('#sdderr').textContent='Brak zmian do zapisania.'; return; }
     btn.disabled=true; $('#sdderr').textContent='';

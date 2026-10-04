@@ -45,7 +45,7 @@ Biznes nie instaluje nic: patrzy na tablice, odpowiada na pytania w pliku, zatwi
 | /sdd:domain    | 3 slownik, aktorzy, encje, reguly | pyta przed zmiana slownika |
 | /sdd:spec      | 4 PRD; --agent pliki dla agenta; --light SPEC.md | pyta przed nowym R |
 | /sdd:validate  | 5 kontrola jakosci, % gotowosci | pisze sam |
-| /sdd:handover  | 6 backlog i sladowalnosc | pisze sam, pyta przed zapisem do Linear/Jira |
+| /sdd:handover  | 6 backlog i sladowalnosc | pisze sam, pyta przed zapisem do Linear/Jira/Redmine |
 | /sdd:status    | stan w 20 linijkach | pisze sam |
 | /sdd:board     | lokalna tablica z karteczkami na zywo (bez Miro) | rysuje sam, do plikow po "tak" |
 

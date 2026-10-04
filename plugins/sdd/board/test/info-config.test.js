@@ -80,7 +80,7 @@ test('AC-C4: guide - etapy z STAGES, skille i foldery', () => {
 test('AC-C6: yamlSet - project i backlog, reszta bez zmian', () => {
   const out = info.yamlSet(YAML, { project: 'faktury "2026"', backlog: 'jira' });
   assert.match(out, /^project: "faktury '2026'"$/m);
-  assert.match(out, /^backlog: jira {10}# none \| linear \| jira \| file$/m);
+  assert.match(out, /^backlog: jira {10}# none \| linear \| jira \| redmine \| file$/m);
   const strip = t => t.split('\n').filter(l => !/^(project|backlog):/.test(l)).join('\n');
   assert.strictEqual(strip(out), strip(YAML));
   assert.throws(() => info.yamlSet(YAML, { backlog: 'trello' }), /backlog/);

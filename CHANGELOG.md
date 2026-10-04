@@ -1,5 +1,16 @@
 # Changelog
 
+## [Niewydane]
+- `/sdd:handover` do Redmine (`backlog: redmine`). Skrypt `board/redmine.js` (REST API, bez zaleznosci): `check` -
+  projekt i trackery; `push <zadania.json>` - nowe zadania (POST), juz przekazane aktualizuje (PUT, ponowny handover
+  nie dubluje), zaleznosci z plan.md jako relacje "poprzedza", `--dry-run` bez wysylania; blad w polowie zwraca
+  zadania juz zalozone. Skill: plik zadan `04-validation/redmine-YYYY-MM-DD.json` (temat `[R-xxx]`, opis z AC),
+  lista do zatwierdzenia przed zapisem, numery `#id` do TRACEABILITY.md, zadan usunietych z wymagan nie zamyka sam.
+  Konfiguracja: `redmine_url`, `redmine_project`, opcjonalnie `redmine_tracker` w SDD.yaml - adres i projekt takze
+  w panelu (Konfiguracja, pola przy wyborze redmine). Klucz API nigdy w plikach: `REDMINE_API_KEY` albo Pek kluczy
+  macOS (`redmine-api-key`); bez klucza skrypt podaje, jak go ustawic. Spec: `docs/specs/redmine.md` (AC-RM1..AC-RM9);
+  testy `test/redmine.test.js` na lokalnym serwerze udajacym REST API Redmine.
+
 ## [0.28.3] - 2026-10-04
 - Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie
   rozmowy"). Gdy w folderze modulu jest zapisana rozmowa Claude Code (`~/.claude/projects/<folder>/*.jsonl`), okno

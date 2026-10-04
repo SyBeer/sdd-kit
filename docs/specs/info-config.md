@@ -38,7 +38,7 @@ pytania "jak to dziala / co robi /sdd:x" nie wracaja w rozmowie.
    | Katalog modulow | config.json `modulesRoot` | TAK (jak "Zmien katalog…") + podglad: ktore moduly znikna z listy | tylko wskaznik, pliki zostaja |
    | Projekty dodane | config.json `modules` | TAK: dodaj, usun z listy (pliki zostaja) | tylko lista |
    | Nazwa projektu | SDD.yaml `project` | TAK | tylko wyswietlana |
-   | Backlog | SDD.yaml `backlog` | TAK: none / linear / jira / file | czytany dopiero w /sdd:handover |
+   | Backlog | SDD.yaml `backlog` | TAK: none / linear / jira / redmine / file (przy redmine tez adres i projekt - docs/specs/redmine.md) | czytany dopiero w /sdd:handover |
    | Role i co zatwierdzaja | SDD.yaml `owners` | TAK: dodaj role, zmien `approves` (R, D, GLOSSARY, BR, PRD); zmiana nazwy albo usuniecie roli - tylko gdy nazwa nie wystepuje w plikach `requirements/` | nazwy rol stoja w DECISIONS/QUESTIONS ("Zdecydowal", "Do kogo"); zmiana zerwalaby slad |
    | Poziom | SDD.yaml `level` | NIE - pokazane z instrukcja | zmiana wymaga przebudowy plikow (PRD.md <-> SPEC.md) - robi Claude |
    | Etykieta blokujaca | SDD.yaml `gate_blocking_status` | NIE - pokazane z instrukcja | pytania w QUESTIONS.md maja stara etykiete; zmiana po cichu odblokowalaby go-live |

@@ -7,4 +7,8 @@ owners:                # role biznesowe, ktore zatwierdzaja (rola, nie osoba)
   - role: "ksiegowosc"
     approves: [BR]
 gate_blocking_status: "blokuje go-live"   # etykieta pytan blokujacych
-backlog: none          # none | linear | jira | file
+backlog: none          # none | linear | jira | redmine | file
+# Przy backlog: redmine (klucz API NIE tutaj - REDMINE_API_KEY albo Pek kluczy macOS):
+# redmine_url: "https://redmine.firma.pl"
+# redmine_project: "identyfikator-projektu"
+# redmine_tracker: "Feature"   # opcjonalnie; brak = pierwszy tracker projektu
