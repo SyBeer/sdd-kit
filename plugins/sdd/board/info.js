@@ -224,7 +224,8 @@ const VARIANTS = {
     ['/sdd:board', 'W trakcie rozmowy: po każdej wypowiedzi biznesu AI stawia karteczki i pyta o jedną rzecz.'],
     ['/sdd:board start', 'Jak uruchomić tablicę i założyć board.json dla modułu.'],
     ['/sdd:board sync', 'Po warsztacie: karteczki i odpowiedzi z tablicy trafiają do plików - AI proponuje, Ty zatwierdzasz.'],
-    ['/sdd:board rebuild', 'Buduje tablicę od zera z plików (role, encje, reguły, otwarte pytania), gdy pliki są dalej niż tablica.']],
+    ['/sdd:board rebuild', 'Buduje tablicę od zera z plików (role, encje, reguły, otwarte pytania), gdy pliki są dalej niż tablica.'],
+    ['/sdd:board processes', 'Istniejąca aplikacja: rozpisuje jej procesy na karteczki (kto, co robi, reguła, efekt, ekran) ze źródłem w kodzie; rozjazdy z dokumentacją jako czerwone pytania.']],
   '/sdd:status': [['/sdd:status --file', 'To samo podsumowanie, zapisane też do requirements/STATUS.md.']],
 };
 // Dwa punkty startu (AC-C19).

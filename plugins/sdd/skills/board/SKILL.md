@@ -1,6 +1,6 @@
 ---
 name: board
-description: Lokalna tablica warsztatowa (karteczki jak w Event Stormingu) odswiezana na zywo w przegladarce, bez Miro. Agent stawia karteczki piszac do requirements/01-interview/board.json, po warsztacie synchronizuje tablice do plikow. Uzyj, gdy user mowi "tablica", "board", "warsztat na zywo", "pokaz na karteczkach", "event storming", albo podczas /sdd:interview live.
+description: Lokalna tablica warsztatowa (karteczki jak w Event Stormingu) odswiezana na zywo w przegladarce, bez Miro. Agent stawia karteczki piszac do requirements/01-interview/board.json, po warsztacie synchronizuje tablice do plikow. Uzyj, gdy user mowi "tablica", "board", "warsztat na zywo", "pokaz na karteczkach", "event storming", "rozpisz procesy aplikacji na tablicy", albo podczas /sdd:interview live.
 ---
 
 # /sdd:board
@@ -72,6 +72,33 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
 Zbuduj `board.json` od zera z ACTORS, ENTITIES, RULES, QUESTIONS. Uzywaj, gdy pliki sa dalej niz tablica.
 Pytania: kazde otwarte, zadane i sprzeczne Q staje sie karteczka `hot` (`ref` = Q-xxx, tresc = pytanie,
 `file` = `01-interview/QUESTIONS.md`, `synced` = teraz). Odpowiedziane i zaparkowane - nie.
+
+## Procesy z dzialajacej aplikacji (`/sdd:board processes`)
+Rozpisuje procesy istniejacej aplikacji (as-built) na karteczki - punkt wyjscia do warsztatu "jak to dziala dzis".
+Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D ani Q w plikach - to robi `sync`.
+1. Czytaj: aktualny `board.json`, `00-intake/INDEX.md` (zrodla `as-built`, zwlaszcza odczyt kodu `[App]`),
+   `DECISIONS.md`, `RULES.md`, `QUESTIONS.md`, sekcje "Poza zakresem" i kandydatow w PRD.
+2. Czytaj aplikacje: punkty wejscia (trasy, ekrany, formularze, komendy CLI), logike obliczen i walidacji, integracje,
+   README. Kod czytasz fragmentami (grep po trasach i funkcjach), nie calymi plikami.
+3. Pasy = procesy tak, jak je widzi uzytkownik (cel: "Miesieczny odczyt", "Rozliczenie miesiaca"), nie pliki ani
+   endpointy. Zwykle 5-9 pasow. Pasy i karteczki usera zostaja; pusty pas domyslny ("Nowy proces") mozna usunac;
+   `Do wyjaśnienia` na koncu `lanes`.
+4. W pasie od lewej wg przebiegu: `act` (kto) -> `cmd` (co robi) -> `pol` (regula/walidacja) -> `ev` (co sie stalo)
+   -> `rm` (co oglada). Kazda karteczka w swojej kolumnie. Tresc jezykiem biznesu ("Wpisz cene paliwa recznie"),
+   nie nazwa trasy; regula w formie "Jezeli ..., to ...".
+5. `source` = `[App] <plik>:<linia>` albo `[App]/[Dok] <plik z INDEX.md>, sekcja`. Gdy jest decyzja `[Biz]`
+   (D-xxx), dopisz ja na poczatku - wygrywa z kodem. `ref` = BR-xxx, jesli karteczka to istniejaca regula.
+   `file` = docelowy plik wg mapowania z `sync` (act -> ACTORS, ev -> ENTITIES, pol -> RULES, cmd/rm -> PRD).
+6. Decyzja mowi co innego niz kod -> karteczka opisuje stan docelowy z dopiskiem "(docelowo; dzis ...)".
+   Funkcje oznaczone w PRD jako poza zakresem (makiety itp.) pomijasz.
+7. Rozjazd kod vs dokumentacja, funkcja opisana, a nieobecna w kodzie, zachowanie bez zrodla `[Biz]` budzace
+   watpliwosc -> `hot` przy karteczce, ktorej dotyczy (zasady miejsca ponizej), `ref` = kolejne wolne Q-xxx
+   z QUESTIONS.md. Pytanie o przeszlosc ("kiedy ostatnio..., jak to zrobiles?"). Najwyzej kilka - reszta przy `sync`.
+8. Nie dubluj: karteczka o tym samym `ref` albo tej samej tresci w pasie juz jest -> pomijasz.
+   `id` unikalne, `by: "agent"`, `created` = `updated` = teraz (`date -Iseconds`). Tytul/podtytul tablicy:
+   nazwa aplikacji + wersja + "as-built", jesli byly domyslne.
+9. Linia w `CHANGELOG.md` (liczba procesow, karteczek, numery Q) i odpowiedz: lista pasow po 1 zdaniu,
+   co oznaczyles "docelowo", jakie `hot`, jedno pytanie o przeszlosc.
 
 ## Gdzie stawiac pytanie (`hot`)
 1. Powiazane ID pytania to R/BR/D/A z kolumn "Skad" i "Wplyw" w QUESTIONS.md.

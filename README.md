@@ -74,6 +74,7 @@ W osobnym oknie terminala, w folderze projektu:
 
 Otworz http://localhost:8012/board. Agent stawia karteczki piszac do board.json, strona odswieza sie sama.
 Ty mozesz przesuwac i dopisywac karteczki w przegladarce, agent to widzi.
+Istniejaca aplikacja: /sdd:board processes rozpisuje jej procesy (as-built z kodu, README i decyzji) na karteczki.
 Po warsztacie: /sdd:board sync przenosi karteczki do plikow. Przyklad: plugins/sdd/board/example-zlecenia.json
 
 Jak wyglada wynik? Ten sam serwer pokazuje demo: http://localhost:8012/demo - gotowy modul Zlecenia po przejsciu SDD

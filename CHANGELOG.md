@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- `/sdd:board processes` (skill board): procesy dzialajacej aplikacji na tablicy - pasy wg celu uzytkownika,
+  karteczki act/cmd/pol/ev/rm ze zrodlem `[App] plik:linia`, decyzje `[Biz]` wygrywaja z kodem ("docelowo; dzis ..."),
+  rozjazdy kod vs dokumentacja jako `hot` z kolejnym Q. Tylko board.json; do plikow przez `sync`. Wzor: warsztat fv-manager 2026-10-03.
+  Przewodnik w panelu ("Jak to dziala") pokazuje nowy wariant.
+- Aktualizacja z panelu sprawdzona przez usera na prawdziwym wydaniu: 0.27.1 -> 0.27.2 z GitHuba (AC-UP8).
+
 ## [0.27.2] - 2026-10-03
 - Test AC-W1 (CRLF) porownuje liste plikow Intake bez kolejnosci - kopia z CRLF ma inne daty plikow, a lista idzie
   od najnowszego; na Windows w Actions wynik zalezal od kolejnosci zapisu (raz zielony, raz czerwony). Panel bez zmian.
