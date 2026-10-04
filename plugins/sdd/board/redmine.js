@@ -23,7 +23,10 @@ function readConfig(yaml) {
   if (!/^https?:\/\/[^\s/]+/.test(url)) throw new Error('redmine_url musi zaczynac sie od http:// albo https:// - jest: ' + url);
   if (!project) throw new Error('Brak redmine_project w SDD.yaml (identyfikator projektu z adresu /projects/<identyfikator>).');
   if (!/^[a-z0-9][a-z0-9_-]*$/.test(project)) throw new Error('redmine_project to identyfikator (male litery, cyfry, - i _), nie nazwa - jest: ' + project);
-  return { url, project, tracker: yamlField(yaml, 'redmine_tracker') };
+  // Format opisu (AC-RM11): Markdown domyslnie (tabele i obrazy dzialaja), Textile dla starszych instalacji
+  const format = yamlField(yaml, 'redmine_format') || 'markdown';
+  if (format !== 'markdown' && format !== 'textile') throw new Error('redmine_format: markdown albo textile - jest: ' + format);
+  return { url, project, tracker: yamlField(yaml, 'redmine_tracker'), format };
 }
 
 // Tracker: z konfiguracji (nazwa, bez wielkosci liter) albo pierwszy "funkcjonalnosc / zadanie" - zadania z wymagan
@@ -43,6 +46,20 @@ function issueBody(task, projectId, trackerId) {
   return { issue };
 }
 
+// Zalaczniki zadania (AC-RM12): sciezki wzgledem requirements/, tylko pliki wewnatrz tego folderu.
+const TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
+  pdf: 'application/pdf', txt: 'text/plain', md: 'text/markdown', csv: 'text/csv' };
+function attachmentFiles(req, tasks) {
+  const root = path.resolve(req) + path.sep;
+  return tasks.map(t => (t.attachments || []).map(rel => {
+    const f = path.resolve(req, String(rel));
+    if (!f.startsWith(root)) throw new Error('Zadanie ' + t.key + ': zalacznik spoza folderu requirements: ' + rel);
+    if (!fs.existsSync(f) || !fs.statSync(f).isFile()) throw new Error('Zadanie ' + t.key + ': nie ma pliku ' + rel);
+    const name = path.basename(f), ext = name.split('.').pop().toLowerCase();
+    return { file: f, name, type: TYPES[ext] || 'application/octet-stream' };
+  }));
+}
+
 function apiKey(env) {
   env = env || process.env;
   if (env.REDMINE_API_KEY) return env.REDMINE_API_KEY;
@@ -54,11 +71,11 @@ function apiKey(env) {
 }
 
 function client(cfg, key) {
-  return async function call(method, p, body) {
+  return async function call(method, p, body, type) {
     let r;
     try {
-      r = await fetch(cfg.url + p, { method, headers: { 'X-Redmine-API-Key': key, 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: body ? JSON.stringify(body) : undefined });
+      r = await fetch(cfg.url + p, { method, headers: { 'X-Redmine-API-Key': key, 'Content-Type': type || 'application/json', Accept: 'application/json' },
+        body: body == null ? undefined : type ? body : JSON.stringify(body) });
     } catch (e) { throw new Error('Brak polaczenia z ' + cfg.url + ' (' + (e.cause && e.cause.code || e.message) + ').'); }
     const text = await r.text();
     let data = null;
@@ -80,12 +97,28 @@ async function project(call, cfg) {
 }
 
 // Zadania po kolei, potem relacje "poprzedza" (AC-RM4). Blad -> wyjatek z tym, co juz zalozono (AC-RM5).
-async function push(call, cfg, tasks, dry) {
+async function push(call, cfg, tasks, dry, req) {
   const done = [];
-  if (dry) return tasks.map(t => ({ key: t.key, id: t.issue || null, url: t.issue ? cfg.url + '/issues/' + t.issue : null, action: 'dry-run', subject: t.subject }));
+  const files = attachmentFiles(req || '.', tasks);  // bledne sciezki - przed wyslaniem czegokolwiek
+  if (dry) return tasks.map((t, n) => ({ key: t.key, id: t.issue || null, url: t.issue ? cfg.url + '/issues/' + t.issue : null,
+    action: 'dry-run', subject: t.subject, attachments: files[n].length }));
   const info = await project(call, cfg);
-  for (const t of tasks) {
+  for (let n = 0; n < tasks.length; n++) {
+    const t = tasks[n];
     const body = issueBody(t, info.project.id, info.tracker.id);
+    let todo = files[n];
+    if (todo.length && t.issue) {  // ponowny handover: pliki, ktore zadanie juz ma, pomijamy
+      const g = await call('GET', '/issues/' + t.issue + '.json?include=attachments');
+      const have = new Set(((g.data && g.data.issue && g.data.issue.attachments) || []).map(a => a.filename));
+      todo = todo.filter(a => !have.has(a.name));
+    }
+    const uploads = [];
+    for (const a of todo) {
+      const u = await call('POST', '/uploads.json?filename=' + encodeURIComponent(a.name), fs.readFileSync(a.file), 'application/octet-stream');
+      if (u.status !== 201 || !u.data || !u.data.upload) { const e = new Error('Zadanie ' + t.key + ', zalacznik ' + a.name + ': Redmine ' + u.status + ' ' + errs(u.data)); e.done = done; throw e; }
+      uploads.push({ token: u.data.upload.token, filename: a.name, content_type: a.type });
+    }
+    if (uploads.length) body.issue.uploads = uploads;
     const r = t.issue ? await call('PUT', '/issues/' + t.issue + '.json', body) : await call('POST', '/issues.json', body);
     const ok = t.issue ? r.status === 204 || r.status === 200 : r.status === 201;
     if (!ok) { const e = new Error('Zadanie ' + t.key + ': Redmine ' + r.status + ' ' + errs(r.data)); e.done = done; throw e; }
@@ -120,9 +153,9 @@ async function main(argv) {
   const key = dry ? '' : apiKey();
   if (!dry && !key) throw new Error(KEY_HELP);
   const call = client(cfg, key);
-  if (cmd === 'check') return console.log(JSON.stringify(await project(call, cfg), null, 2));
+  if (cmd === 'check') return console.log(JSON.stringify(Object.assign(await project(call, cfg), { format: cfg.format }), null, 2));
   try {
-    console.log(JSON.stringify(await push(call, cfg, tasks, dry), null, 2));
+    console.log(JSON.stringify(await push(call, cfg, tasks, dry, req), null, 2));
   } catch (e) {
     console.log(JSON.stringify(e.done || [], null, 2));
     throw e;
@@ -131,4 +164,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 
-module.exports = { readConfig, pickTracker, issueBody, apiKey, push, project };
+module.exports = { readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };

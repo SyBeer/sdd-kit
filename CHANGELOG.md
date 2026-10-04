@@ -14,6 +14,11 @@
   relacje "poprzedza", ponowny handover aktualizuje te same zadania (bez duplikatow i bez podwojnych relacji).
   Poprawki z testu: domyslny tracker to funkcjonalnosc/zadanie, nie pierwszy z listy ("Błąd") - AC-RM10; w opisie
   pusta linia przed lista kryteriow i po niej (Textile).
+- Redmine: opis w Markdown (domyslnie; `redmine_format: textile` dla starszych instalacji) - kryteria jako tabela
+  Kryterium | Given | When | Then, polskie znaki, obrazy w opisie. Zalaczniki: `attachments` w pliku zadan (np. zrzuty
+  ekranu z `00-intake/`) - skrypt wysyla je przez `/uploads.json`, przy ponownym przekazaniu nie dubluje; sciezki tylko
+  z folderu requirements. Sprawdzone na Redmine usera (#13-#15: Markdown renderuje tabele i obrazy, Textile nie).
+  Spec: AC-RM11, AC-RM12.
 
 ## [0.28.3] - 2026-10-04
 - Okno Claude Code: wznowienie rozmowy po restarcie serwera (uwaga usera: "kazdy restart serwera czysci historie

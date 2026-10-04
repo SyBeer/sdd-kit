@@ -56,5 +56,14 @@ w tabeli sladowalnosci. Ponowne przekazanie po zmianie wymagan aktualizuje istni
 - AC-RM10 (po pierwszym prawdziwym Redmine: pierwszy tracker projektu to "Błąd"): bez `redmine_tracker` wybierany
   pierwszy tracker typu funkcjonalnosc / zadanie (Feature, Funkcjonalność, Story, Zadanie, Task, Wymaganie), nigdy
   "Bug" / "Błąd", chyba ze innego nie ma; nazwa z konfiguracji wygrywa (bez wielkosci liter), nieznana -> blad z lista.
+- AC-RM11 (po tescie na Redmine usera: Markdown renderuje tabele i obrazy, Textile nie): `redmine_format` w SDD.yaml
+  (`markdown` domyslnie albo `textile`, inne -> blad); `check` podaje format. Skill buduje opis w tym formacie:
+  kryteria jako tabela Kryterium | Given | When | Then (Markdown `| a | b |` + `|---|`, Textile `|_. a |`),
+  obrazy `![opis](plik)` / `!plik!`; znak `|` w komorce zamieniany na `\|`.
+- AC-RM12: zadanie z `attachments: ["00-intake/ekran.png", ...]` (sciezki wzgledem `requirements/`): kazdy plik
+  wysylany przez POST `/uploads.json?filename=<nazwa>` (`application/octet-stream`), token w `uploads` zapytania o zadanie
+  (`filename`, `content_type` z rozszerzenia); przy aktualizacji pliki, ktore zadanie juz ma (ta sama nazwa), pomijane;
+  sciezka poza `requirements/` albo brak pliku -> blad przed wyslaniem czegokolwiek; `--dry-run` liczy zalaczniki,
+  nic nie wysyla.
 - AC-RM9 (reczne, przy pierwszym prawdziwym Redmine): przekazanie zaklada zadania z zaleznosciami; ponowne -
   aktualizuje te same numery.

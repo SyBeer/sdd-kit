@@ -24,7 +24,9 @@ function fakeRedmine(opts) {
       let body = '';
       req.on('data', c => { body += c; });
       req.on('end', () => {
-        log.push({ method: req.method, url: req.url, key: req.headers['x-redmine-api-key'], body: body ? JSON.parse(body) : null });
+        const isJson = /json/.test(req.headers['content-type'] || '');
+        log.push({ method: req.method, url: req.url, key: req.headers['x-redmine-api-key'], type: req.headers['content-type'],
+          body: body && isJson ? JSON.parse(body) : null, size: body.length });
         const send = (code, obj) => { rq.writeHead(code, { 'Content-Type': 'application/json' }); rq.end(obj ? JSON.stringify(obj) : ''); };
         if (req.headers['x-redmine-api-key'] !== KEY) return send(401);
         if (req.method === 'GET' && req.url.startsWith('/projects/faktury.json'))
@@ -35,6 +37,9 @@ function fakeRedmine(opts) {
           return send(201, { issue: { id: next++, subject: JSON.parse(body).issue.subject } });
         }
         if (req.method === 'PUT' && /^\/issues\/\d+\.json$/.test(req.url)) return send(204);
+        if (req.method === 'POST' && req.url.startsWith('/uploads.json')) return send(201, { upload: { token: 'tok-' + log.length } });
+        if (req.method === 'GET' && /^\/issues\/\d+\.json/.test(req.url))
+          return send(200, { issue: { id: +req.url.match(/\d+/)[0], attachments: [{ id: 9, filename: 'stary.png' }] } });
         if (req.method === 'POST' && /^\/issues\/\d+\/relations\.json$/.test(req.url)) {
           if (opts.relationExists) return send(422, { errors: ['Related issue has already been taken'] });
           return send(201, { relation: { id: 1 } });
@@ -68,9 +73,9 @@ function tasksFile(req, t) { const f = path.join(req, '04-validation', 'redmine-
 
 test('AC-RM1: readConfig - adres, projekt, tracker, walidacja', () => {
   assert.deepStrictEqual(rm.readConfig('redmine_url: "https://rm.firma.pl/"\nredmine_project: "faktury"\nredmine_tracker: "Feature"\n'),
-    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature' });
+    { url: 'https://rm.firma.pl', project: 'faktury', tracker: 'Feature', format: 'markdown' });
   assert.deepStrictEqual(rm.readConfig('redmine_url: http://10.0.0.5:3000\nredmine_project: a_b-1\n'),
-    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '' });
+    { url: 'http://10.0.0.5:3000', project: 'a_b-1', tracker: '', format: 'markdown' });
   assert.throws(() => rm.readConfig('redmine_project: "x"\n'), /redmine_url/);
   assert.throws(() => rm.readConfig('redmine_url: "https://a"\n'), /redmine_project/);
   assert.throws(() => rm.readConfig('redmine_url: "ftp://a"\nredmine_project: "x"\n'), /redmine_url/);
@@ -87,6 +92,48 @@ test('AC-RM10: domyslny tracker - funkcjonalnosc/zadanie, nie blad', () => {
   assert.strictEqual(rm.pickTracker(T(['Bug']), '').name, 'Bug');
   assert.strictEqual(rm.pickTracker(T(['Błąd', 'Funkcjonalność']), 'błąd').name, 'Błąd');
   assert.strictEqual(rm.pickTracker(T(['Bug']), 'Feature'), null);
+});
+
+test('AC-RM11: format opisu - markdown domyslnie, textile, inny -> blad', () => {
+  assert.strictEqual(rm.readConfig('redmine_url: "https://a"\nredmine_project: "x"\n').format, 'markdown');
+  assert.strictEqual(rm.readConfig('redmine_url: "https://a"\nredmine_project: "x"\nredmine_format: textile\n').format, 'textile');
+  assert.throws(() => rm.readConfig('redmine_url: "https://a"\nredmine_project: "x"\nredmine_format: html\n'), /redmine_format/);
+});
+
+test('AC-RM12: zalaczniki - upload, token w zadaniu, bez dublowania, sciezka tylko w requirements', async () => {
+  const s = await fakeRedmine();
+  try {
+    const req = moduleWith(s.url);
+    fs.mkdirSync(path.join(req, '00-intake'));
+    fs.writeFileSync(path.join(req, '00-intake', 'ekran.png'), Buffer.from([137, 80, 78, 71, 1, 2, 3]));
+    fs.writeFileSync(path.join(req, '00-intake', 'stary.png'), 'x');
+    const t = { tasks: [
+      { key: 'T-01', subject: 'S1', description: '![ekran](ekran.png)', attachments: ['00-intake/ekran.png'] },
+      { key: 'T-02', subject: 'S2', description: 'D2', issue: 55, attachments: ['00-intake/stary.png', '00-intake/ekran.png'] },
+    ] };
+    let r = await run(['push', tasksFile(req, t), '--req', req, '--dry-run'], {});
+    assert.strictEqual(r.code, 0, r.err);
+    assert.deepStrictEqual(JSON.parse(r.out).map(x => x.attachments), [1, 2]);
+    assert.strictEqual(s.log.length, 0);
+    r = await run(['push', tasksFile(req, t), '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    const up = s.log.filter(x => x.url.startsWith('/uploads.json'));
+    assert.deepStrictEqual(up.map(x => x.url), ['/uploads.json?filename=ekran.png', '/uploads.json?filename=ekran.png']);
+    assert.strictEqual(up[0].type, 'application/octet-stream');
+    assert.strictEqual(up[0].size, 7);
+    const post = s.log.find(x => x.method === 'POST' && x.url === '/issues.json');
+    assert.deepStrictEqual(post.body.issue.uploads, [{ token: post.body.issue.uploads[0].token, filename: 'ekran.png', content_type: 'image/png' }]);
+    const put = s.log.find(x => x.method === 'PUT');
+    assert.deepStrictEqual(put.body.issue.uploads.map(u => u.filename), ['ekran.png'], 'stary.png juz jest w zadaniu');
+    // sciezka poza requirements albo brak pliku -> blad, nic nie wyslane
+    const n = s.log.length;
+    for (const bad of ['../SDD.yaml.bak', '00-intake/nie-ma.png']) {
+      r = await run(['push', tasksFile(req, { tasks: [{ key: 'T-09', subject: 'S', description: 'D', attachments: [bad] }] }), '--req', req], { REDMINE_API_KEY: KEY });
+      assert.strictEqual(r.code, 1, bad);
+      assert.match(r.err, /T-09/);
+    }
+    assert.strictEqual(s.log.length, n);
+  } finally { s.close(); }
 });
 
 test('AC-RM2: issueBody - nowe zadanie z projektem i trackerem, aktualizacja bez nich', () => {
@@ -189,5 +236,7 @@ test('AC-RM8: skill handover opisuje Redmine', () => {
   assert.match(sk, /`redmine`/);
   ['redmine.js', 'check', '--dry-run', 'push', 'REDMINE_API_KEY', 'TRACEABILITY'].forEach(w => assert.ok(sk.includes(w), 'brak: ' + w));
   assert.match(sk, /nie pro[sś] o wklejenie klucza/i);
-  assert.match(sk, /pusta linia, lista kryteriow/);
+  assert.match(sk, /\| Kryterium \| Given \| When \| Then \|/);
+  assert.match(sk, /redmine_format/);
+  assert.match(sk, /`attachments`/);
 });

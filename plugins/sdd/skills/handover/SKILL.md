@@ -24,13 +24,32 @@ opcjonalnie `redmine_tracker` (nazwa; brak = tracker typu funkcjonalnosc / zadan
 2. `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js" check --req requirements` -> nazwa projektu, trackery, wybrany
    tracker. Pokaz je w 1-2 linijkach. Blad -> pokaz komunikat i przerwij.
 3. Plik zadan `04-validation/redmine-YYYY-MM-DD.json`: `{ "tasks": [ { "key": "T-01", "subject": "[R-xxx] tytul",
-   "description": "...", "after": ["T-00"], "issue": 123 } ] }`.
-   - `description`: 2 zdania opisu, linia `Wymaganie: R-xxx`, pusta linia, lista kryteriow `* AC-xxx-n: ...`
-     (doslownie z PRD), pusta linia, `Zrodlo: 03-spec/PRD.md`. Puste linie przed lista i po niej sa obowiazkowe -
-     bez nich Textile (domyslne formatowanie Redmine) nie pokaze listy; bez tabel i naglowkow (dziala w Textile i Markdown);
+   "description": "...", "after": ["T-00"], "issue": 123, "attachments": ["00-intake/ekran-zlecenia.png"] } ] }`.
+   - `description` w formacie z `check` (`format`; `redmine_format` w SDD.yaml, domyslnie `markdown`). Markdown:
+     ```
+     <2 zdania opisu>
+
+     **Wymaganie:** R-xxx
+
+     | Kryterium | Given | When | Then |
+     |---|---|---|---|
+     | AC-xxx-1 | <stan> | <zdarzenie> | <wynik> |
+
+     ![<co widac>](ekran-zlecenia.png)
+
+     **Źródło:** 03-spec/PRD.md
+     ```
+     Kryteria doslownie z PRD, po polsku (z polskimi znakami); znak `|` w tresci zamien na `\|`. Kryterium, ktore
+     nie dzieli sie na Given/When/Then - jedna komorka "Then" z cala trescia, Given i When `-`.
+     Textile (`redmine_format: textile`): naglowek tabeli `|_. Kryterium |_. Given |_. When |_. Then |`, wiersze
+     `| ... |`, obraz `!ekran-zlecenia.png!`, pogrubienie `*Wymaganie:*`; pusta linia przed tabela i po niej;
    - `after` = zaleznosci z `plan.md` (klucze zadan); skrypt zalozy relacje "poprzedza";
    - `issue` = numer z poprzedniego `TRACEABILITY.md`, gdy to zadanie bylo juz przekazane - wtedy aktualizacja
      zamiast nowego zadania (ponowny handover nie dubluje).
+   - `attachments` (opcjonalnie) = pliki z `requirements/` dotyczace wymagania - zwykle zrzuty ekranu i dokumenty
+     z `00-intake/` wskazane w zrodle R albo w INDEX.md. Skrypt je wysle i dolaczy; w opisie wstaw obraz po nazwie
+     pliku (bez sciezki). Pliki, ktore zadanie juz ma, nie ida drugi raz. Nie dolaczaj surowca z danymi osobowymi
+     bez pytania.
 4. `... redmine.js push 04-validation/redmine-YYYY-MM-DD.json --req requirements --dry-run` -> pokaz liste: nowe /
    aktualizowane, tematy, zaleznosci. Zapis do systemu zewnetrznego: PYTASZ i czekasz na "tak".
 5. `... redmine.js push 04-validation/redmine-YYYY-MM-DD.json --req requirements` -> JSON z `key`, `id`, `url`, `action`.
