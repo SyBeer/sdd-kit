@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.1] - 2026-10-04
 - `/sdd:board processes`: karteczki odtworzone z plikow wymagan (BR, R, D, A, istniejace Q, role z ACTORS, stany
   z ENTITIES) dostaja `ref`, `file` (plik, w ktorym sa) i `synced` - panel pokazuje ✓ zamiast "tylko na tablicy"
   (uwaga usera). Karteczki tylko z kodu, "docelowo" i nowe Q - bez `synced` i `file`, do plikow przez `sync`.
