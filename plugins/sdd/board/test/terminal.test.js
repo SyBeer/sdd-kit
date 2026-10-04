@@ -208,3 +208,13 @@ test('AC-T7: serwer - zabezpieczenia, start w folderze modulu, odtworzenie, stop
     proc.kill();
   }
 });
+
+test('AC-T13: kontener terminala bez odstepow (border-box + FitAddon), odstepy na .xterm', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'ui.css'), 'utf8');
+  const term = css.match(/\.cdock \.cd-term\{([^}]*)\}/);
+  assert.ok(term, 'brak reguly .cd-term');
+  assert.doesNotMatch(term[1], /padding/, '.cd-term nie moze miec padding');
+  assert.match(css, /\.cdock \.cd-term \.xterm\{[^}]*padding:/);
+  const js = fs.readFileSync(path.join(__dirname, '..', 'ui.js'), 'utf8');
+  assert.match(js, /document\.fonts/);
+});

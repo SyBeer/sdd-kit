@@ -92,8 +92,10 @@ html.claude-on #drawer{right:var(--claude-w)}
 .cdock .cd-head button[hidden]{display:none}
 .cdock .cd-msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
 .cdock .cd-msg[hidden]{display:none}
-.cdock .cd-term{flex:1;min-height:0;padding:6px 4px 6px 10px;overflow:hidden}
-.cdock .cd-term .xterm{height:100%}
+/* Bez padding na kontenerze: strony maja box-sizing:border-box, a FitAddon liczy wysokosc kontenera z odstepami
+   (o 12 px za duzo -> czasem jeden wiersz za duzo i ucieta ostatnia linia, AC-T13). Odstepy na .xterm - FitAddon je odejmuje. */
+.cdock .cd-term{flex:1;min-height:0;overflow:hidden}
+.cdock .cd-term .xterm{height:100%;padding:6px 4px 6px 10px}
 /* Waskie okno: Claude na calym ekranie nad strona */
 @media (max-width:900px){
   html.claude-on{padding-right:0}

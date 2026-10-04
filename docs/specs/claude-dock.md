@@ -69,6 +69,11 @@ z `claude` uruchomionym przez serwer kitu.
 - AC-T12 (serwer): `GET /api/term` -> `canResume` (rozmowa w folderze modulu jest); `POST /api/term/start {resume:true}`
   uruchamia z `--continue`. Przegladarka: przy `canResume` i braku sesji przyciski "Wznów rozmowę" i "Nowa rozmowa",
   bez - "Uruchom Claude". Reczne: rozmowa, restart serwera, "Wznów rozmowę" -> ta sama rozmowa z historia.
+- AC-T13 (0.28.10, zrzut usera: ostatnia linia Claude ucieta w polowie): kontener terminala (`.cd-term`) bez
+  odstepow wewnetrznych - strony maja `box-sizing: border-box`, a dopasowanie xterm (FitAddon) liczy wysokosc
+  kontenera razem z odstepami (12 px za duzo -> czasem jeden wiersz za duzo). Odstepy na elemencie `.xterm`
+  (FitAddon je odejmuje). Przeliczenie wierszy takze po zaladowaniu czcionek (`document.fonts`). Reczne/pomiar:
+  wiersze x wysokosc wiersza <= wysokosc terminala dla wielu wysokosci okna.
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez

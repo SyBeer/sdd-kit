@@ -362,6 +362,11 @@
         if (term.textarea) term.textarea.addEventListener('focus', claim);
         // Rozmiar okna Claude zmienia sie tez bez zmiany okna przegladarki (komunikat nad terminalem, uchwyt) - AC-T10
         if (window.ResizeObserver) new ResizeObserver(function () { clearTimeout(dock.ro); dock.ro = setTimeout(refit, 60); }).observe(q('.cd-term'));
+        // Czcionka dociagnieta po otwarciu zmienia wysokosc wiersza - przelicz wiersze jeszcze raz (AC-T13)
+        if (document.fonts) {
+          if (document.fonts.ready) document.fonts.ready.then(function () { refit(); });
+          if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { refit(); });
+        }
         refit(); connect();
       }).catch(function () {
         msg('Nie udało się załadować terminala (xterm.js z cdn.jsdelivr.net). Sprawdź połączenie z internetem i otwórz okno ponownie.');
