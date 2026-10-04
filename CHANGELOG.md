@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- Konfiguracja, klucz API Redmine (zgloszenie usera: "uruchamia sie Passwords, pyta o login; nie zapisaly sie dane
+  adresu Redmine"): (1) jeden przycisk "Zapisz ustawienia modulu" zapisuje backlog, adres, projekt i klucz naraz -
+  wczesniej "Zapisz klucz" przerysowywal zakladke i gubil niezapisane pola (backlog wracal do poprzedniego, adres
+  znikal); (2) pole klucza to tekst z kropkami (CSS), nie pole hasla - przegladarka i aplikacja Hasla nie proponuja
+  zapisania loginu. Przycisk "Usuń klucz" zostaje. Spec: `docs/specs/secrets.md` AC-S6.
+
 ## [0.28.5] - 2026-10-04
 - Klucze API w `~/.sdd-kit/.env` - tak samo na macOS i Windows (uwaga usera: "konfiguracja klucza w pliku env;
   Claude go nie czyta, aplikacja tak"). Panel, Konfiguracja: pole "Klucz API Redmine" (Zapisz / Usun) - serwer

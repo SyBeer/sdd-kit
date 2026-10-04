@@ -14,7 +14,9 @@ nie blokada systemowa; twarda blokada wymagalaby sandboxa Claude Code - poza zak
    wartosc moze byc w cudzyslowie. Zapis tylko przez kit; uprawnienia 600 (macOS/Linux).
 2. Klucz Redmine (`redmine.js`): zmienna `REDMINE_API_KEY` > plik `.env` > Pek kluczy macOS (`redmine-api-key`).
    Komunikat o braku klucza wskazuje najpierw panel (Konfiguracja), potem plik.
-3. Panel, Konfiguracja (przy `backlog: redmine`): pole "Klucz API Redmine" (typ hasla) z przyciskami Zapisz i Usun;
+3. Panel, Konfiguracja (przy `backlog: redmine`): pole "Klucz API Redmine" - tekst maskowany CSS (nie pole hasla:
+   przegladarka / aplikacja Hasla traktowaly je jak logowanie, 0.28.6); zapis razem z ustawieniami modulu jednym
+   przyciskiem "Zapisz ustawienia modulu" (osobny zapis gubil niezapisane pola), "Usun klucz" osobno;
    stan: "ustawiony (plik .env)", "ustawiony (zmienna)", "ustawiony (Pek kluczy)", "brak". Serwer:
    `GET /api/config` -> `redmineKey` = `env` | `file` | `keychain` | `none` (nigdy wartosc);
    `PUT /api/secrets {REDMINE_API_KEY}` zapisuje / pusta wartosc usuwa wpis; tylko `X-SDD` + Host lokalny, demo 403,
@@ -36,5 +38,6 @@ nie blokada systemowa; twarda blokada wymagalaby sandboxa Claude Code - poza zak
 - AC-S4: `redmine.js check` z kluczem tylko w pliku `.env` laczy sie; komunikat o braku klucza wskazuje panel.
 - AC-S5: skill handover i szablon CLAUDE.md zawieraja zakaz czytania `~/.sdd-kit/.env`; `.gitignore` zawiera
   `/.env`, `/config.json`, `/bin/`.
-- AC-S6 (reczne): panel - zapis klucza, stan "ustawiony (plik .env)", Usun -> "brak"; klucz nie pojawia sie w HTML
-  ani w odpowiedziach.
+- AC-S6 (reczne, sprawdzone 2026-10-04 na kopii modulu): wybor redmine + adres + projekt + klucz -> jeden zapis zapisuje
+  wszystko (SDD.yaml i .env), stan "ustawiony (plik .env)", pole typu text z maska; Usun klucz -> "brak"; klucz nie
+  pojawia sie w HTML ani w odpowiedziach.
