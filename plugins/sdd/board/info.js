@@ -84,7 +84,7 @@ function yamlSet(text, changes) {
     if (BACKLOGS.indexOf(changes.backlog) < 0) throw new Error('backlog: dozwolone ' + BACKLOGS.join(', ') + '.');
     out = setLine(out, 'backlog', changes.backlog);
   }
-  // Redmine (0.29.0, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml
+  // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml
   if ('redmine_url' in changes) {
     const u = String(changes.redmine_url || '').trim().replace(/\/+$/, '');
     if (!/^https?:\/\/[^\s/"]+[^\s"]*$/.test(u)) throw new Error('redmine_url: adres musi zaczynać się od http:// albo https://, np. https://redmine.firma.pl.');

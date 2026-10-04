@@ -230,7 +230,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
         '<label class="field"><span>Nazwa projektu</span><input type="text" id="f-project" value="'+esc(c.sdd.project)+'"'+(demo?' disabled':'')+'></label>'+
         '<label class="field"><span>Backlog <small>czytany dopiero przy /sdd:handover</small></span><select id="f-backlog"'+(demo?' disabled':'')+'>'+
           c.sdd.backlogsAllowed.map(function(b){return '<option'+(b===c.sdd.backlog?' selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
-        // Redmine (0.29.0): adres i projekt; klucz API poza plikami (REDMINE_API_KEY albo Pek kluczy)
+        // Redmine (0.28.4): adres i projekt; klucz API poza plikami (REDMINE_API_KEY albo Pek kluczy)
         '<div id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'>'+
           '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
           '<label class="field"><span>Projekt w Redmine <small>identyfikator z adresu /projects/&lt;identyfikator&gt;</small></span><input type="text" id="f-rmproj" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+

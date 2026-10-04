@@ -1,4 +1,4 @@
-// Backlog w Redmine. Kryteria z docs/specs/redmine.md (AC-RM1..AC-RM8, zmiana 0.29.0).
+// Backlog w Redmine. Kryteria z docs/specs/redmine.md (AC-RM1..AC-RM8, zmiana 0.28.4).
 // Prawdziwego Redmine tu nie ma - lokalny serwer HTTP odpowiada jak REST API Redmine (te same adresy i pola).
 'use strict';
 const test = require('node:test');

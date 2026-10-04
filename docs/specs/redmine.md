@@ -2,7 +2,7 @@
 
 Status: zatwierdzony zakres 2026-10-04 (user: "Dopisz obsluge Redmine do skilla /sdd:handover, zeby zadania ze
 specyfikacji trafialy prosto do backlogu w Redmine")
-Wersja docelowa: 0.29.0
+Wersja docelowa: 0.28.4
 
 ## Cel
 Zadania z przekazania (`/sdd:handover`) trafiaja do projektu w Redmine bez przepisywania recznie, kazde z numerem

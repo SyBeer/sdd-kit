@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.28.4] - 2026-10-04
 - `/sdd:handover` do Redmine (`backlog: redmine`). Skrypt `board/redmine.js` (REST API, bez zaleznosci): `check` -
   projekt i trackery; `push <zadania.json>` - nowe zadania (POST), juz przekazane aktualizuje (PUT, ponowny handover
   nie dubluje), zaleznosci z plan.md jako relacje "poprzedza", `--dry-run` bez wysylania; blad w polowie zwraca

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Backlog w Redmine dla /sdd:handover (spec: docs/specs/redmine.md, zmiana 0.29.0). REST API Redmine, bez zaleznosci.
+// Backlog w Redmine dla /sdd:handover (spec: docs/specs/redmine.md, zmiana 0.28.4). REST API Redmine, bez zaleznosci.
 // Uzycie:  node redmine.js check [--req requirements]
 //          node redmine.js push <zadania.json> [--req requirements] [--dry-run]
 // Konfiguracja: SDD.yaml (redmine_url, redmine_project, redmine_tracker). Klucz API: REDMINE_API_KEY albo Pek kluczy
