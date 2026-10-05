@@ -12,7 +12,8 @@ Status: robocze | zakwestionowane (Q-xxx) | zatwierdzone
 - `Przy awarii` - co widzi uzytkownik i co robi aplikacja, gdy system nie odpowiada. To wymaganie, nie detal.
 - `Krytyczna` - `tak`, gdy bez integracji proces biznesowy staje; wtedy obowiazkowa sekcja "Proces systemowy".
 - `Wymagania` - `R` rodzaju kontrakt (wejscie albo wyjscie) dla tej integracji; sciezka kaskady jak w RULES.
-  Brak: walidacja kontrola 20 - WARN przy `monolith`, BLOCK przy `service`.
+  Brak: walidacja kontrola 20 - WARN przy `monolith`, BLOCK przy `service`. Dotyczy `zewnetrzny` i wymiany plikow;
+  `reczny` z wpisem recznym nie potrzebuje kontraktu - tu wskazujesz zwykle `R` formularza.
 - Brak integracji: jeden wiersz `nasz` i zdanie "brak integracji" ze zrodlem `[Biz]`.
 
 | ID | System | Rola | Wlasciciel | Master dla | Wymiana | Przy awarii | Krytyczna | Wymagania | Status | Zrodlo |

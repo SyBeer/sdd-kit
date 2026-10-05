@@ -26,7 +26,7 @@ function freshProject() {
 const SYS = '# Systemy\n\n| ID | System | Rola | Wlasciciel | Master dla | Wymiana | Przy awarii | Krytyczna | Status | Zrodlo |\n' +
   '|----|--------|------|------------|------------|---------|-------------|-----------|--------|--------|\n' +
   '| S-001 | Aplikacja | nasz | wlasciciel procesu | - | - | - | - | robocze | [Biz] s.md |\n' +
-  '| S-002 | NBP | zewnetrzny | dzial finansow | Sredni kurs NBP | -> my, raz dziennie | ostatni kurs | tak | robocze | [Biz] s.md |\n' +
+  '| S-002 | NBP | zewnetrzny | dzial finansow | Sredni kurs NBP | -> my, raz dziennie | komunikat „Brak kursu <waluta>” | tak | robocze | [Biz] s.md |\n' +  // <waluta> w zdaniu to nie wzor
   '| S-003 | Excel limitow | reczny | DR | Limit kredytowy | <-> na zadanie | brak importu | nie | zatwierdzone | [App] x.md |\n';  // <-> to nie wzor <...>
 
 // ---- Szablon i domena
@@ -203,6 +203,7 @@ test('AC-SY24: SYSTEMS.md - kolumna Wymagania i rola konsument; panel pokazuje R
   const t = read('templates/requirements/02-domain/SYSTEMS.md');
   assert.match(t, /\| Krytyczna \| Wymagania \| Status \|/);
   assert.match(t, /konsument/);
+  assert.match(t, /wpisem recznym[^\n]*zwykle `R`/);
   const req = freshProject();
   fs.writeFileSync(path.join(req, '02-domain', 'SYSTEMS.md'),
     '| ID | System | Rola | Wlasciciel | Master dla | Wymiana | Przy awarii | Krytyczna | Wymagania | Status | Zrodlo |\n|--|--|--|--|--|--|--|--|--|--|--|\n' +
@@ -225,6 +226,8 @@ test('AC-SY26: validate - kontrola 20 WARN przy monolith, BLOCK przy service; 1-
   const v = read('skills/validate/SKILL.md');
   assert.match(v, /^20\. WARN \(`monolith`\) \/ BLOCK \(`service`\):/m);
   assert.match(v, /bez zadnego `R` kontraktu wyjscia[^\n]*BLOCK/);
+  assert.match(v, /`reczny` z wpisem recznym[^\n]*nie potrzebuje kontraktu/);
+  assert.match(v, /wymiana plikow/);
   assert.match(v, /^19\. WARN:/m);
   assert.match(v, /^17\. BLOCK:/m);
 });

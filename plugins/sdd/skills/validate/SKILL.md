@@ -42,9 +42,11 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
     zrodla prawdy to sprzecznosc, ktora w budowie konczy sie rozjazdem danych. Pozycje: dane i oba `S-xxx`.
 18. WARN: integracja (`zewnetrzny` / `reczny`) bez `Przy awarii` albo bez `Wlasciciel` (puste, `-`, `?`).
 19. WARN: integracja `Krytyczna = tak` bez sekcji `## Proces systemowy: <nazwa>` w SYSTEMS.md.
-20. WARN (`monolith`) / BLOCK (`service`): integracja w SYSTEMS (`zewnetrzny` / `reczny`, przy `service` tez
-    `konsument`) bez `R` kontraktu w kolumnie `Wymagania` albo z `R`, ktorego nie ma w PRD. Przy `service`
-    dodatkowo: serwis bez zadnego `R` kontraktu wyjscia - BLOCK (serwis bez obietnicy dla konsumentow).
+20. WARN (`monolith`) / BLOCK (`service`): integracja w SYSTEMS (`zewnetrzny`, `reczny` z wymiana plikow - CSV,
+    Excel; przy `service` tez `konsument`) bez `R` kontraktu w kolumnie `Wymagania` albo z `R`, ktorego nie ma w PRD.
+    Przy `service` dodatkowo: serwis bez zadnego `R` kontraktu wyjscia - BLOCK (serwis bez obietnicy dla konsumentow).
+    `reczny` z wpisem recznym (dane przepisywane z faktury, strony, paragonu) nie potrzebuje kontraktu - `Wymagania`
+    wskazuje zwykle `R` formularza; bez zadnego `R`: WARN przy obu rodzajach.
     Rodzaj modulu z `kind` w SDD.yaml; brak pola = `monolith`. Pozycje: `S-xxx` bez kontraktu.
     Brak `SYSTEMS.md` na poziomie `full`: kontrole 17-20 jako jeden wiersz INFO "brak rejestru systemow" (nie BLOCK -
     projekty sprzed 0.31.0 nie staja). Poziom `light`: 17-20 pomijasz.

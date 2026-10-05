@@ -157,9 +157,11 @@ wlasciciele obu stron: `D` ze zrodlem `[Biz]`, nie odczyt z istniejacego kodu (d
 - **AC-SY25** Skill spec: rodzaj wymagania `kontrakt` (`Rodzaj: kontrakt - wejscie|wyjscie`, `System: S-xxx`)
   z obowiazkowymi AC: dane, kierunek, czestotliwosc/opoznienie, awaria; przy `service` dodatkowo zmiana wersji.
   Bez schematu technicznego.
-- **AC-SY26** Skill validate: kontrola 20 - integracja (`zewnetrzny`/`reczny`, przy `service` tez `konsument`)
-  bez `R` kontraktu w kolumnie `Wymagania`: WARN przy `monolith`, BLOCK przy `service`; `service` bez zadnego
-  `R` kontraktu wyjscia: BLOCK. Kontrole 1-19 bez zmian.
+- **AC-SY26** Skill validate: kontrola 20 - integracja `zewnetrzny` i `reczny` z wymiana plikow (CSV, Excel; przy
+  `service` tez `konsument`) bez `R` kontraktu w kolumnie `Wymagania`: WARN przy `monolith`, BLOCK przy `service`;
+  `service` bez zadnego `R` kontraktu wyjscia: BLOCK. `reczny` z wpisem recznym (dane przepisywane z papieru,
+  faktury, strony) nie potrzebuje kontraktu - `Wymagania` wskazuje zwykle `R` formularza; brak jakiegokolwiek `R`:
+  WARN (przy obu rodzajach). Kontrole 1-19 bez zmian. (Poprawka po weryfikacji na fv-manager 2026-10-05.)
 - **AC-SY27** Skill interview: przy `service` pytania o konsumentow i obietnice przy awarii / zmianie wersji
   (regula luki integracji).
 - **AC-SY28** Skill handover: `R` kontraktu -> test kontraktowy w tabeli sladowalnosci; przy `service` zadanie bez
@@ -175,9 +177,30 @@ wlasciciele obu stron: `D` ze zrodlem `[Biz]`, nie odczyt z istniejacego kodu (d
 - Recznie: na fv-manager `kind: monolith` w Konfiguracji, przebieg `/sdd:domain` + `/sdd:spec` (R kontraktu) (Home Assistant, ceny energii, falownik) - wynik do sekcji
   "Weryfikacja" w tym pliku.
 
+## Weryfikacja (2026-10-05, fv-manager, kod sdd-kit z repo przed wydaniem 0.31.0)
+Przebieg: `kind: monolith` (odcisk bez zmian - AC-SY22), `/sdd:domain` (SYSTEMS.md), `/sdd:spec` (kontrakty),
+`/sdd:validate` (przebieg 10, kontrole 16-20), panel z kodu repo (port 8013).
+1. Rejestr: 6 systemow - FV Manager (nasz), Home Assistant (zewnetrzny, w obie strony), Faktura operatora sieci,
+   Publikacja cen RCE, Zrodlo cen paliwa (reczny, wpis reczny), Plik CSV (reczny, wymiana plikow). Tesla poza
+   rejestrem (integracja wycofana, R-018). Brak integracji krytycznych - proces systemowy niepotrzebny.
+2. Test spojnosci znalazl to, czego wczesniejszy model nie widzial: pola EV Odczytu miesiaca (kWh domowe, ladowanie
+   publiczne) bez systemu-mastera -> Q-052, Q-053. Luka integracji: awaria HA (Q-050), ceny RCE (Q-051).
+   Zachowanie przy awarii HA odczytane z kodu poszlo do A-015 `niepotwierdzone`, nie do D (docs/specs/decisions.md).
+3. Kontrakty: nowe R-020 (kontrakt HA, wejscie), R-004 i R-013 oznaczone jako kontrakt pliku CSV; wyjscie do HA
+   (/api/summary), z ktorego wlasciciel nie korzysta - decyzja D-030 "do usuniecia" zamiast sztucznego kontraktu.
+4. Walidacja: 95% (R-020 robocze), 0 BLOCK; WARN 7 (AC-020-2), 12 (R-015 po D-030), 18 (S-002, S-003, S-004).
+   Panel: Domain 6 systemow z lista, naglowek "poziom pelny · monolit", nastepny krok Spec.
+5. Znalezione bledy sdd-kit, poprawione przed wydaniem:
+   - parser tabel odrzucal wiersz z `<encja>` w srodku zdania jako wiersz-wzor (HA znikal z listy) - teraz wzor to
+     tylko komorka w calosci `<...>` (test AC-SY11);
+   - kontrola 20 wymagala kontraktu dla `reczny` z wpisem recznym (faktura, RCE, paliwo) - sztuczne; teraz kontrakt
+     dla `zewnetrzny` i wymiany plikow, wpis reczny wskazuje zwykle `R` formularza (AC-SY26, rozstrzygniecie 5).
+
 ## Rozstrzygniecia (2026-10-05, wlasciciel produktu)
 1. `reczny` (Excel, mail) jest systemem, jesli niesie dane, ktorych master jest poza aplikacja - tak.
 2. Kontrola 17 (dwa mastery) - BLOCK.
 3. Karteczka `sys` na tablicy - etap 2, po weryfikacji na fv-manager.
 4. sdd-kit opisuje monolit albo jeden serwis; rodzaj deklaruje czlowiek w `SDD.yaml` jako `kind: monolith | service`
    (nazwa klucza po angielsku jak pozostale), kontrakt to wymaganie `R` (czesc B).
+5. (po weryfikacji na fv-manager) `reczny` z wpisem recznym nie wymaga kontraktu - kontrakt dla danych przepisywanych
+   recznie jest sztuczny, to zwykly formularz z wlasnym `R`. Kontrakt obowiazuje `zewnetrzny` i wymiane plikow.

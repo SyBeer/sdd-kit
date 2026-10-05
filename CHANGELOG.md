@@ -17,12 +17,14 @@
   brak pliku = INFO; `/sdd:handover` - zadanie integracyjne z wierszem systemu i osobnym kryterium awarii.
 - Panel: liczba i lista systemow przy etapie Domain, kafelki systemow i integracji krytycznych w zakladce Modul,
   sekcja "Systemy i integracje" w "Jak to dziala". Demo: rejestr 4 systemow z procesem kursu NBP.
-- Poprawka: wiersz tabeli ze strzalka `<->` nie jest juz brany za wiersz-wzor szablonu (`<opis>`).
+- Poprawka: wiersz tabeli ze strzalka `<->` albo z `<encja>` w srodku zdania nie jest juz brany za wiersz-wzor
+  szablonu - wzor to tylko komorka w calosci `<opis>` (znalezione przy weryfikacji na fv-manager).
 - Rodzaj modulu i kontrakt jako wymaganie (spec: docs/specs/systems.md czesc B): `kind: monolith | service`
   w SDD.yaml (ustawia czlowiek - `/sdd:init` pyta, Konfiguracja w panelu; brak pola = monolith, odcisk zmienia
   tylko `service`). Kontrakt to `R` rodzaju kontrakt (`Rodzaj: kontrakt - wejscie|wyjscie`, `System: S-xxx`) z AC
   jezykiem biznesu; SYSTEMS.md: kolumna `Wymagania` i rola `konsument`. `/sdd:validate` kontrola 20: integracja
-  bez R kontraktu - WARN przy monolicie, BLOCK przy serwisie (takze serwis bez kontraktu wyjscia).
+  bez R kontraktu - WARN przy monolicie, BLOCK przy serwisie (takze serwis bez kontraktu wyjscia); kontrakt dotyczy
+  systemow zewnetrznych i wymiany plikow - wpis reczny (faktura, ceny) wskazuje zwykle R formularza.
   `/sdd:handover`: kolumna `Rodzaj` w TRACEABILITY; w serwisie `redmine.js status <id> done` odmawia zadaniu
   z kontraktem bez "test kontraktowy: ..." w notce. Panel: rodzaj w naglowku, w Module i w Konfiguracji.
 

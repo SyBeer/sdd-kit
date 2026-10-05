@@ -24,7 +24,8 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
    - kryteria AC-xxx-n Given/When/Then; kazde testowalne (konkretny stan, zdarzenie, wynik obserwowalny)
    - status `robocze`, wlasciciel (rola)
    Mozesz proponowac paczkami po 3-5 R, user zatwierdza paczke.
-   **Wymaganie rodzaju kontrakt** (docs/specs/systems.md czesc B) - dla kazdej integracji z `02-domain/SYSTEMS.md`,
+   **Wymaganie rodzaju kontrakt** (docs/specs/systems.md czesc B) - dla integracji `zewnetrzny` i wymiany plikow
+   z `02-domain/SYSTEMS.md` (`reczny` z wpisem recznym: w `Wymagania` wpisz zwykle `R` formularza, bez kontraktu),
    a przy `kind: service` w SDD.yaml takze dla kazdego wejscia (kto nas wola) i wyjscia (komu dajemy dane):
    linie `Rodzaj: kontrakt - wejscie|wyjscie` i `System: S-xxx`, numer R wpisz w kolumne `Wymagania` w SYSTEMS.md.
    Obowiazkowe AC jezykiem biznesu: jakie dane (pojecia ze slownika), kierunek,

@@ -56,8 +56,9 @@ function parseTable(md) {
       head.forEach((h, i) => { row[h] = c[i] || ''; });
       return row;
     })
-    // wiersz-wzor z szablonu ma <opis>; strzalka <-> (SYSTEMS.md, 0.31.0) to nie wzor - wzor musi miec litere
-    .filter(r => !/<[^<>]*[a-zA-Ząćęłńóśźż][^<>]*>/.test(r._raw));
+    // wiersz-wzor z szablonu ma komorke w calosci <opis>; strzalka <-> i tekst z <encja> w srodku zdania (SYSTEMS.md,
+    // weryfikacja 0.31.0 na fv-manager) to dane, nie wzor
+    .filter(r => !cells(r._raw).some(c => /^<[^<>]*[a-zA-Ząćęłńóśźż][^<>]*>$/.test(c)));
 }
 
 // Szczegoly licznikow (zmiana 0.15.0, AC-54..AC-56): lista pozycji z plikiem, z ktorego pochodza.
