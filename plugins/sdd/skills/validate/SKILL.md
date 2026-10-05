@@ -42,8 +42,12 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
     zrodla prawdy to sprzecznosc, ktora w budowie konczy sie rozjazdem danych. Pozycje: dane i oba `S-xxx`.
 18. WARN: integracja (`zewnetrzny` / `reczny`) bez `Przy awarii` albo bez `Wlasciciel` (puste, `-`, `?`).
 19. WARN: integracja `Krytyczna = tak` bez sekcji `## Proces systemowy: <nazwa>` w SYSTEMS.md.
-    Brak `SYSTEMS.md` na poziomie `full`: kontrole 17-19 jako jeden wiersz INFO "brak rejestru systemow" (nie BLOCK -
-    projekty sprzed 0.31.0 nie staja). Poziom `light`: 17-19 pomijasz.
+20. WARN (`monolith`) / BLOCK (`service`): integracja w SYSTEMS (`zewnetrzny` / `reczny`, przy `service` tez
+    `konsument`) bez `R` kontraktu w kolumnie `Wymagania` albo z `R`, ktorego nie ma w PRD. Przy `service`
+    dodatkowo: serwis bez zadnego `R` kontraktu wyjscia - BLOCK (serwis bez obietnicy dla konsumentow).
+    Rodzaj modulu z `kind` w SDD.yaml; brak pola = `monolith`. Pozycje: `S-xxx` bez kontraktu.
+    Brak `SYSTEMS.md` na poziomie `full`: kontrole 17-20 jako jeden wiersz INFO "brak rejestru systemow" (nie BLOCK -
+    projekty sprzed 0.31.0 nie staja). Poziom `light`: 17-20 pomijasz.
     Numeracja kontroli jest stala (panel czyta wiersz 9 po numerze) - nowe kontrole dopisujesz na koncu.
 
 Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent/*/spec.md` i dolacz wynik.

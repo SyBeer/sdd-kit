@@ -213,6 +213,24 @@ async function setStatus(call, cfg, id, want, note) {
   if (!now || now.id !== st.id) throw new Error('Redmine nie pozwolil na przejscie #' + id + ' do "' + st.name + '" (zostal "' + (now && now.name) + '") - przeplyw pracy Twojej roli w Redmine nie dopuszcza tej zmiany.');
   return { id: +id, url: cfg.url + '/issues/' + id, status: now.name };
 }
+// Bramka kontraktu (0.31.0, docs/specs/systems.md AC-SY28): w module `kind: service` zadanie realizujace R kontraktu
+// (TRACEABILITY.md, kolumna Rodzaj = kontrakt) nie przechodzi do done bez testu kontraktowego w notce.
+function contractGate(req, id, want, note) {
+  if (want !== 'done') return;
+  const rd = f => { try { return fs.readFileSync(path.join(req, f), 'utf8').replace(/\r\n?/g, '\n'); } catch (e) { return ''; } };
+  if (!/^kind:\s*"?service"?\s*(#.*)?$/m.test(rd('SDD.yaml'))) return;
+  const lines = rd('04-validation/TRACEABILITY.md').split('\n').filter(l => /^\s*\|/.test(l));
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+  if (!lines.length) return;
+  const head = cells(lines[0]).map(h => h.toLowerCase());
+  const kCol = head.indexOf('rodzaj'), tCol = head.indexOf('task'), rCol = head.indexOf('r');
+  if (kCol < 0 || tCol < 0) return;
+  const hit = lines.slice(1).map(cells).filter(c => /kontrakt/i.test(c[kCol] || '') && new RegExp('#' + id + '(?!\\d)').test(c[tCol] || ''));
+  if (hit.length && !/testy? kontraktow/i.test(note || ''))
+    throw new Error('Zadanie #' + id + ' realizuje kontrakt (' + hit.map(c => c[rCol] || '?').join(', ') + ') w module serwisu - ' +
+      'bez testu kontraktowego nie przechodzi do done. Dopisz do notki: "test kontraktowy: <nazwa testu>".');
+}
+
 async function comment(call, cfg, id, note) {
   if (!note) throw new Error('Podaj tresc: redmine.js comment <id> --note "..."');
   const u = await call('PUT', '/issues/' + id + '.json', { issue: { notes: withMark(note) } });
@@ -239,6 +257,7 @@ async function main(argv) {
   if ((cmd === 'status' || cmd === 'comment') && !/^\d+$/.test(String(args[1]).replace(/^#/, ''))) throw new Error('Podaj numer zadania, np. redmine.js ' + cmd + ' 123');
   const id = String(args[1] || '').replace(/^#/, '');
   if (cmd === 'comment' && !note) throw new Error('Podaj tresc: redmine.js comment <id> --note "..."');
+  if (cmd === 'status') contractGate(req, id, args[2], note);
   const key = dry ? '' : apiKey();
   if (!dry && !key) throw new Error(KEY_HELP);
   const call = client(cfg, key);
@@ -270,4 +289,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 
-module.exports = { MARK, withMark, setStatus, readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };
+module.exports = { contractGate, MARK, withMark, setStatus, readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };

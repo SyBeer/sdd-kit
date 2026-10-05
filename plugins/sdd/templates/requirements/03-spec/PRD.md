@@ -17,6 +17,8 @@ Opis:
 Zrodlo:            [Biz]/[App]/[Dok]/[AI] <plik z INDEX.md>[, sekcja/wiersz]
 Zalozenia:         A-xxx
 Reguly:            BR-xxx
+Rodzaj:            (tylko kontrakt: kontrakt - wejscie|wyjscie; zwykle wymaganie - pomin linie)
+System:            (tylko kontrakt: S-xxx z 02-domain/SYSTEMS.md)
 Status:            robocze | do przegladu | zatwierdzone
 Wlasciciel:        (rola)
 

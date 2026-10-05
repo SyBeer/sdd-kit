@@ -19,16 +19,20 @@ Tworzy szkielet procesu w biezacym projekcie.
      `Dockerfile`): utworz `CLAUDE.md` z krotka sekcja `# Projekt` (nazwa, 1-2 zdania z README, jesli jest) i pod nia
      tresc szablonu. Wymagania to czesc repo aplikacji, nie cale repo.
    - Jesli `CLAUDE.md` nie ma i repo nie zawiera kodu (osobne repo wymagan): skopiuj szablon.
-4. Zapytaj o dwie rzeczy, po kolei, nie naraz:
+4. Zapytaj o trzy rzeczy, po kolei, nie naraz:
    - nazwa projektu (wpisz do `SDD.yaml`)
    - poziom: `full` czy `light`. Argument `--light` pomija pytanie. Przy `light` usun `03-spec/PRD.md`, zostaw `SPEC.md`. Przy `full` odwrotnie.
+   - rodzaj modulu (`kind` w SDD.yaml): "Czy ta czesc jest wdrazana osobno i inne czesci moga z nia rozmawiac tylko
+     przez kontrakt?" Tak -> `kind: service` (serwis), nie -> `kind: monolith` (monolit, aplikacja wdrazana w calosci).
+     Mozesz podpowiedziec z repo (np. openapi.yaml, osobny Dockerfile) - to podpowiedz `[AI]`, wybiera czlowiek.
+     Od rodzaju zalezy, czy kontrakt (wejscie/wyjscie) jest obowiazkowym wymaganiem (walidacja kontrola 20).
 5. Zapytaj o zatwierdzajacych jezykiem biznesu, dwa pytania po kolei (bez skrotow R/D/GLOSSARY/BR w pytaniu):
    - "Kto akceptuje wymagania, decyzje i slownik pojec? Podaj role, nie osobe (np. wlasciciel procesu, kierownik dzialu)."
      -> `owners: - role: "<odpowiedz>"  approves: [R, D, GLOSSARY, BR]`
    - "Kto zatwierdza caly dokument na koniec? (opcjonalnie, np. sponsor, zarzad; puste = ta sama osoba)"
      -> jesli podano: `- role: "<odpowiedz>"  approves: [PRD]`
    Zastap cala liste `owners` z szablonu (usun przykladowa "ksiegowosc").
-6. Dopisz do `CHANGELOG.md`: `YYYY-MM-DD | init | utworzono strukture, poziom <level> | -`.
+6. Dopisz do `CHANGELOG.md`: `YYYY-MM-DD | init | utworzono strukture, poziom <level>, rodzaj <kind> | -`.
 7. Wypisz w 5 linijkach, co powstalo i jaki jest nastepny krok: wrzucic surowiec do `00-intake/` i odpalic `/sdd:intake`.
 
 ## Nie rob

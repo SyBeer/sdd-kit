@@ -28,6 +28,8 @@ albo swiadomie do "Poza zakresem" w PRD.
    Dla kazdej integracji `Krytyczna = tak` proponujesz `## Proces systemowy: <nazwa>` (`sequenceDiagram` z galezia
    `alt` przy awarii) - 3-5 linijek i "tak". CO, nie JAK: bez protokolow i endpointow.
    Aplikacja bez integracji: wiersz `nasz` i "brak integracji" ze zrodlem `[Biz]`.
+   Kolumna `Wymagania`: `R` kontraktu tej integracji (wypelnia /sdd:spec; tu zostaw `-`). Przy `kind: service`
+   w SDD.yaml dopisz konsumentow serwisu (rola `konsument`) - nieznany konsument = pytanie (luka integracji).
 5. **RULES.md**: reguly "jezeli... to..." z numerem BR-xxx, zrodlem, powiazanymi A i R. Regula ze zrodlem `[Dok]` lub `[AI]` dostaje automatycznie A `niepotwierdzone`. Kolumne `Wymagania` wypelniaj rzetelnie - to sciezka kaskady.
 6. **Test spojnosci** (wypisz wynik):
    - kazde pojecie uzyte w RULES i ENTITIES jest w GLOSSARY

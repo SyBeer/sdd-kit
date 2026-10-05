@@ -141,3 +141,137 @@ test('AC-SY17: demo - SYSTEMS.md, raport z wierszami 17-19, nadal 100% i aktualn
   assert.ok(!v.stale, 'raport demo nieaktualny - przelicz odcisk');
   assert.strictEqual(p.next.key, 'handover');
 });
+
+// ======== Czesc B: rodzaj modulu (kind) i kontrakt jako wymaganie (AC-SY19..AC-SY30)
+const info = require('../info');
+const redmine = require('../redmine');
+const setYaml = (req, fn) => { const f = path.join(req, 'SDD.yaml'); fs.writeFileSync(f, fn(fs.readFileSync(f, 'utf8'))); };
+
+test('AC-SY19: szablon SDD.yaml ma kind: monolith z komentarzem', () => {
+  const y = read('templates/requirements/SDD.yaml');
+  assert.match(y, /^kind: monolith\s+# monolith \| service/m);
+  assert.ok(y.indexOf('kind:') > y.indexOf('level:'), 'kind pod level');
+});
+
+test('AC-SY20: init pyta o rodzaj modulu pytaniem rozstrzygajacym, podpowiedz tylko jako sugestia', () => {
+  const s = read('skills/init/SKILL.md');
+  assert.match(s, /wdrazana osobno/);
+  assert.match(s, /`kind: monolith`|`kind`/);
+  assert.match(s, /podpowiedz[^\n]*`\[AI\]`[^\n]*wybiera czlowiek/i);
+});
+
+test('AC-SY21: Konfiguracja zapisuje kind; panel i Modul pokazuja rodzaj po polsku', () => {
+  const req = freshProject();
+  let y = fs.readFileSync(path.join(req, 'SDD.yaml'), 'utf8');
+  const y2 = info.yamlSet(y, { kind: 'service' });
+  assert.match(y2, /^kind: service\s+# monolith \| service/m);
+  assert.throws(() => info.yamlSet(y, { kind: 'mikro' }), /kind/);
+  // brak linii kind (projekt sprzed 0.31.0) -> wstawiona pod level
+  const old = y.replace(/^kind:.*\n/m, '');
+  const y3 = info.yamlSet(old, { kind: 'service' });
+  assert.match(y3, /^level:.*\nkind: service/m);
+  assert.deepStrictEqual(info.KINDS, ['monolith', 'service']);
+  const srv = read('board/server.js');
+  assert.match(srv, /allowed = \[[^\]]*'kind'/);
+  assert.match(srv, /kind: info\.yamlField\(y, 'kind'\)/);
+  const h = read('board/info.html');
+  assert.match(h, /f-kind/);
+  assert.match(h, /KIND=\{monolith:'monolit/);
+  assert.match(read('board/progress.html'), /KIND\[p\.kind\]/);
+});
+
+test('AC-SY22: odcisk obejmuje kind: service; monolith jawny = brak pola (stare raporty aktualne)', () => {
+  const req = freshProject();
+  const base = fingerprint(req);
+  setYaml(req, t => t.replace(/^kind:.*\n/m, ''));
+  assert.strictEqual(fingerprint(req), base, 'brak pola = monolith');
+  setYaml(req, t => t.replace(/^(level:.*\n)/m, '$1kind: service\n'));
+  assert.notStrictEqual(fingerprint(req), base);
+});
+
+test('AC-SY23: readProgress i moduleSummary zwracaja kind (domyslnie monolith)', () => {
+  const req = freshProject();
+  setYaml(req, t => t.replace(/^kind:.*\n/m, ''));
+  assert.strictEqual(readProgress(req).kind, 'monolith');
+  assert.strictEqual(moduleSummary(req).kind, 'monolith');
+  setYaml(req, t => t.replace(/^(level:.*\n)/m, '$1kind: service\n'));
+  assert.strictEqual(readProgress(req).kind, 'service');
+  assert.strictEqual(moduleSummary(req).kind, 'service');
+});
+
+test('AC-SY24: SYSTEMS.md - kolumna Wymagania i rola konsument; panel pokazuje R kontraktu', () => {
+  const t = read('templates/requirements/02-domain/SYSTEMS.md');
+  assert.match(t, /\| Krytyczna \| Wymagania \| Status \|/);
+  assert.match(t, /konsument/);
+  const req = freshProject();
+  fs.writeFileSync(path.join(req, '02-domain', 'SYSTEMS.md'),
+    '| ID | System | Rola | Wlasciciel | Master dla | Wymiana | Przy awarii | Krytyczna | Wymagania | Status | Zrodlo |\n|--|--|--|--|--|--|--|--|--|--|--|\n' +
+    '| S-002 | NBP | zewnetrzny | DR | Kurs | -> my | ostatni kurs | tak | R-020 | robocze | [Biz] s.md |\n');
+  const it = stage(readProgress(req), 'domain').details.systems.items[0];
+  assert.match(it.note, /kontrakt: R-020/);
+});
+
+test('AC-SY25: spec - rodzaj wymagania kontrakt z obowiazkowymi AC, bez schematu technicznego', () => {
+  const s = read('skills/spec/SKILL.md');
+  assert.match(s, /`Rodzaj: kontrakt - wejscie\|wyjscie`/);
+  assert.match(s, /`System: S-xxx`/);
+  assert.match(s, /dopuszczalne opoznienie/);
+  assert.match(s, /zmiana wersji/);
+  assert.match(s, /[Bb]ez schematu technicznego|nie wchodzi do PRD/);
+  assert.match(read('templates/requirements/03-spec/PRD.md'), /^Rodzaj:/m);
+});
+
+test('AC-SY26: validate - kontrola 20 WARN przy monolith, BLOCK przy service; 1-19 bez zmian', () => {
+  const v = read('skills/validate/SKILL.md');
+  assert.match(v, /^20\. WARN \(`monolith`\) \/ BLOCK \(`service`\):/m);
+  assert.match(v, /bez zadnego `R` kontraktu wyjscia[^\n]*BLOCK/);
+  assert.match(v, /^19\. WARN:/m);
+  assert.match(v, /^17\. BLOCK:/m);
+});
+
+test('AC-SY27: interview - przy service pytania o konsumentow i obietnice', () => {
+  const s = read('skills/interview/SKILL.md');
+  assert.match(s, /`kind: service`[^\n]*konsument/);
+  assert.match(s, /zmian(ie|a) wersji/);
+});
+
+test('AC-SY28: handover - test kontraktowy w TRACEABILITY; status done odmawia przy service bez testu', () => {
+  const s = read('skills/handover/SKILL.md');
+  assert.match(s, /R \| AC \| Rodzaj \| task \| test/);
+  assert.match(s, /test kontraktowy/);
+  const req = freshProject();
+  write(req, '04-validation/TRACEABILITY.md', '# Sledzenie\n\n| R | AC | Rodzaj | task | test |\n|---|---|---|---|---|\n' +
+    '| R-020 | AC-020-1 | kontrakt - wyjscie | #41 | |\n| R-001 | AC-001-1 | - | #42 | |\n');
+  // monolith: bez bramki
+  assert.doesNotThrow(() => redmine.contractGate(req, '41', 'done', 'Commit abc'));
+  setYaml(req, t => t.replace(/^kind:.*$/m, 'kind: service'));
+  assert.throws(() => redmine.contractGate(req, '41', 'done', 'Commit abc; testy: AC-020-1'), /test kontraktow/);
+  assert.doesNotThrow(() => redmine.contractGate(req, '41', 'done', 'Commit abc; test kontraktowy: pact-limity'));
+  assert.doesNotThrow(() => redmine.contractGate(req, '42', 'done', 'Commit abc'));   // nie-kontrakt
+  assert.doesNotThrow(() => redmine.contractGate(req, '41', 'start', ''));            // tylko done
+});
+
+test('AC-SY29: przewodnik i CLAUDE.md - rodzaj modulu, kontrakt jako wymaganie', () => {
+  const g = JSON.stringify(guide());
+  assert.match(g, /[Rr]odzaj modułu/);
+  assert.match(g, /monolit/);
+  assert.match(g, /serwis/);
+  assert.match(g, /[Kk]ontrakt[^"]*wymagani/);
+  const c = read('templates/CLAUDE.md');
+  assert.match(c, /`kind`/);
+  assert.match(c, /[Kk]ontrakt[^\n]*`R`/);
+});
+
+test('AC-SY30: demo jest monolith, raport z wierszem 20, nadal 100% i aktualny', () => {
+  assert.strictEqual(readProgress(DEMO_REQ).kind, 'monolith');
+  const rep = fs.readFileSync(path.join(DEMO_REQ, '04-validation', 'validate-2026-09-27.md'), 'utf8');
+  assert.match(rep, /^\| 20 \|/m);
+  const v = stage(readProgress(DEMO_REQ), 'validate');
+  assert.strictEqual(v.counts.readiness, 100);
+  assert.ok(!v.stale);
+});
+
+function write(req, rel, text) {
+  fs.mkdirSync(path.dirname(path.join(req, rel)), { recursive: true });
+  fs.writeFileSync(path.join(req, rel), text);
+}

@@ -103,13 +103,81 @@ swiadome "nie ma", a nie brak pliku.
 - **AC-SY17** Demo zlecenia: SYSTEMS.md z systemami z materialow (aplikacja zlecen, NBP - kurs sredni,
   system finansowy - limity, jesli wynikaja ze zrodel), raport walidacji z wierszami 17-19, demo nadal 100%.
 
+## Czesc B: rodzaj modulu (`kind`) i kontrakt jako wymaganie (dopisane 2026-10-05, zatwierdzone)
+
+### Problem
+sdd-kit opisuje jedna rzecz: monolit albo jeden serwis. Wejscie i wyjscie (kontrakt) sa dzis tylko wierszem w
+SYSTEMS.md - wiedza o otoczeniu, bez zrodla, AC, zatwierdzenia i kaskady. Dla serwisu kontrakt jest jego produktem,
+dla monolitu dotyczy tylko integracji zewnetrznych. sdd-kit nie wie, z ktorym przypadkiem ma do czynienia,
+a zgadywanie z kodu byloby zrodlem `[AI]` - nie mozna na nim stawiac wymogu "kontrakt obowiazkowy".
+
+### Decyzja
+Czlowiek deklaruje rodzaj modulu raz, w `SDD.yaml`:
+```yaml
+kind: monolith   # monolith | service
+```
+- `monolith` - aplikacja wdrazana w calosci; jej moduly rozmawiaja w kodzie (wspolna baza, wspolne obiekty),
+- `service` - wdrazany osobno, z wlasnymi danymi, rozmawia z reszta tylko przez kontrakt.
+Pytanie rozstrzygajace: "czy ta czesc jest wdrazana osobno i inne czesci moga z nia rozmawiac tylko przez kontrakt?"
+Tak -> `service`. Klucz po angielsku jak pozostale (`level`, `owners`, `backlog`); w UI i pytaniach po polsku:
+"monolit (aplikacja wdrazana w calosci)" / "serwis (wdrazany osobno, rozmawia przez kontrakt)".
+
+Kontrakt = wymaganie `R` rodzaju **kontrakt** (wejscie albo wyjscie), z AC jezykiem biznesu: jakie dane (pojecia ze
+slownika), kierunek, czestotliwosc / dopuszczalne opoznienie, zachowanie przy awarii (wiazace AC; kolumna
+`Przy awarii` w SYSTEMS zostaje skrotem), przy `service` - zmiana wersji. Schemat techniczny (OpenAPI, AsyncAPI, pola,
+endpointy) powstaje w budowie i wskazuje `R` - nie wchodzi do PRD. Kontrakt miedzy dwoma serwisami uzgadniaja
+wlasciciele obu stron: `D` ze zrodlem `[Biz]`, nie odczyt z istniejacego kodu (docs/specs/decisions.md).
+
+### Zachowanie zalezne od `kind`
+| | `monolith` | `service` |
+|---|---|---|
+| Kontrakt dotyczy | integracji zewnetrznych z SYSTEMS | integracji zewnetrznych **i wlasnego API**: kto nas wola (wejscie), komu dajemy dane (wyjscie) |
+| SYSTEMS.md | systemy, z ktorych bierzemy / do ktorych wysylamy | plus **konsumenci** serwisu (rola `konsument`); nieznany konsument = Q |
+| validate 20 | WARN: integracja bez `R` kontraktu | **BLOCK**: integracja albo konsument bez `R` kontraktu; serwis bez zadnego `R` kontraktu wyjscia |
+| interview | luka integracji | plus "kto korzysta z naszych danych", "co obiecujemy konsumentom przy awarii i zmianie wersji" |
+| spec | `R` kontraktu dla integracji | `R` kontraktu dla kazdego wejscia i wyjscia; AC zmiany wersji (zmiana niekompatybilna wymaga...) |
+| handover | test kontraktowy przy `R` kontraktu | test kontraktowy obowiazkowy; zadanie z `R` kontraktu bez testu kontraktowego sie nie zamyka |
+
+### Poza zakresem (czesc B)
+- porownanie `R` wyjscia dostawcy z `R` wejscia odbiorcy miedzy modulami - osobny etap,
+- zbiorcza mapa systemow wszystkich modulow - osobny etap,
+- wykrywanie `kind` z kodu jako decyzja - init moze tylko podpowiedziec.
+
+### Kryteria akceptacji (czesc B)
+- **AC-SY19** Szablon `SDD.yaml`: `kind: monolith   # monolith | service` z komentarzem; brak pola = `monolith`
+  (projekty sprzed 0.31.0 bez zmian).
+- **AC-SY20** `/sdd:init` pyta o rodzaj modulu pytaniem rozstrzygajacym; moze podpowiedziec z repo (np. openapi.yaml,
+  osobny Dockerfile) jako sugestie `[AI]`, wybiera czlowiek.
+- **AC-SY21** Panel, Konfiguracja: wybor rodzaju (monolit / serwis) zapisuje `kind` w `SDD.yaml`; zakladka Modul
+  i naglowek panelu pokazuja rodzaj po polsku.
+- **AC-SY22** Odcisk wymagan obejmuje `kind` - zmiana rodzaju uniewaznia walidacje i handover.
+- **AC-SY23** `readProgress` / `moduleSummary` zwracaja `kind` (`monolith` domyslnie).
+- **AC-SY24** SYSTEMS.md: kolumna `Wymagania` (`R` kontraktu; sciezka kaskady jak w RULES), rola `konsument`
+  (przy `service`). Panel w liscie systemow pokazuje `R` kontraktu.
+- **AC-SY25** Skill spec: rodzaj wymagania `kontrakt` (`Rodzaj: kontrakt - wejscie|wyjscie`, `System: S-xxx`)
+  z obowiazkowymi AC: dane, kierunek, czestotliwosc/opoznienie, awaria; przy `service` dodatkowo zmiana wersji.
+  Bez schematu technicznego.
+- **AC-SY26** Skill validate: kontrola 20 - integracja (`zewnetrzny`/`reczny`, przy `service` tez `konsument`)
+  bez `R` kontraktu w kolumnie `Wymagania`: WARN przy `monolith`, BLOCK przy `service`; `service` bez zadnego
+  `R` kontraktu wyjscia: BLOCK. Kontrole 1-19 bez zmian.
+- **AC-SY27** Skill interview: przy `service` pytania o konsumentow i obietnice przy awarii / zmianie wersji
+  (regula luki integracji).
+- **AC-SY28** Skill handover: `R` kontraktu -> test kontraktowy w tabeli sladowalnosci; przy `service` zadanie bez
+  testu kontraktowego nie przechodzi do `done` (`/sdd:handover status ... done` odmawia bez testu w notce).
+- **AC-SY29** Przewodnik "Jak to dziala" i CLAUDE.md: rodzaj modulu, kontrakt jako wymaganie, CO vs JAK kontraktu.
+- **AC-SY30** Demo zostaje `monolith` (brak pola albo `kind: monolith`), raport z wierszem 20, nadal 100%.
+
 ## Testy (TDD, przed kodem)
 - `board/test/systems.test.js`: AC-SY1..AC-SY4, AC-SY5..AC-SY6, AC-SY7..AC-SY10 (tresc skilli i szablonow),
   AC-SY11..AC-SY13 (`readProgress`, `moduleSummary`, odcisk na kopii projektu), AC-SY14..AC-SY17.
-- Recznie: przebieg `/sdd:domain` na fv-manager (Home Assistant, ceny energii, falownik) - wynik do sekcji
+- czesc B: AC-SY19..AC-SY30 w tym samym pliku testow (SDD.yaml, odcisk, readProgress/moduleSummary, Konfiguracja,
+  tresc skilli, demo).
+- Recznie: na fv-manager `kind: monolith` w Konfiguracji, przebieg `/sdd:domain` + `/sdd:spec` (R kontraktu) (Home Assistant, ceny energii, falownik) - wynik do sekcji
   "Weryfikacja" w tym pliku.
 
 ## Rozstrzygniecia (2026-10-05, wlasciciel produktu)
 1. `reczny` (Excel, mail) jest systemem, jesli niesie dane, ktorych master jest poza aplikacja - tak.
 2. Kontrola 17 (dwa mastery) - BLOCK.
 3. Karteczka `sys` na tablicy - etap 2, po weryfikacji na fv-manager.
+4. sdd-kit opisuje monolit albo jeden serwis; rodzaj deklaruje czlowiek w `SDD.yaml` jako `kind: monolith | service`
+   (nazwa klucza po angielsku jak pozostale), kontrakt to wymaganie `R` (czesc B).

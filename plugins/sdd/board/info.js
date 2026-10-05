@@ -7,6 +7,7 @@ const { readProgress, STAGES } = require('./progress');
 
 const APPROVES = ['R', 'D', 'GLOSSARY', 'BR', 'PRD'];
 const BACKLOGS = ['none', 'linear', 'jira', 'redmine', 'file'];
+const KINDS = ['monolith', 'service'];  // rodzaj modulu (0.31.0, docs/specs/systems.md czesc B)
 
 // CRLF (Windows) -> \n jak w progress.js (0.27.1, AC-W4)
 function read(file) {
@@ -83,6 +84,17 @@ function yamlSet(text, changes) {
   if ('backlog' in changes) {
     if (BACKLOGS.indexOf(changes.backlog) < 0) throw new Error('backlog: dozwolone ' + BACKLOGS.join(', ') + '.');
     out = setLine(out, 'backlog', changes.backlog);
+  }
+  if ('kind' in changes) {
+    if (KINDS.indexOf(changes.kind) < 0) throw new Error('kind: dozwolone ' + KINDS.join(', ') + ' (monolit albo serwis).');
+    // projekt sprzed 0.31.0 nie ma linii kind - wstaw pod level, z komentarzem jak w szablonie (AC-SY21)
+    const lvl = out.match(/^level:.*$/m);
+    if (!/^kind:/m.test(out) && lvl) {
+      const col = lvl[0].indexOf('#') > 0 ? lvl[0].indexOf('#') : 23, head = 'kind: ' + changes.kind;
+      out = out.replace(/^(level:.*)$/m, () => lvl[0] + '\n' + head + ' '.repeat(Math.max(1, col - head.length)) +
+        '# monolith | service - service: wdrazany osobno, rozmawia z reszta tylko przez kontrakt');
+    }
+    else out = setLine(out, 'kind', changes.kind);
   }
   // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml.
   // Wklejony adres projektu (.../projects/<id>) - rozdzielamy sami (AC-RM14).
@@ -163,7 +175,7 @@ function moduleSummary(req) {
   const c = key => ((p.stages || []).find(x => x.key === key) || {}).counts || {};
   const iv = c('interview'), dm = c('domain'), sp = c('spec');
   return {
-    name: path.basename(path.dirname(req)), project: p.project || '', level, specFile,
+    name: path.basename(path.dirname(req)), project: p.project || '', level, kind: p.kind || 'monolith', specFile,
     sections: { cel: s['cel'] || '', zakres: s['zakres'] || '', pozaZakresem: s['poza zakresem'] || '', aktorzy: s['aktorzy'] || '' },
     owners: parseOwners(yaml), gate: yamlField(yaml, 'gate_blocking_status'), backlog: yamlField(yaml, 'backlog') || 'none',
     counts: {
@@ -217,6 +229,11 @@ const SECTIONS = [
     '**PRD** – dokument wymagań dla biznesu.',
     'Statusy: robocze → zatwierdzone; zakwestionowane (Q-xxx), gdy nowe źródło podważa element modelu.',
     'Zmiana decyzji albo reguły uruchamia kaskadę: powiązane **R** wracają „do przeglądu”.'] },
+  { title: 'Rodzaj modułu i kontrakt', items: [
+    'Rodzaj modułu ustawiasz raz (Konfiguracja albo /sdd:init): monolit - aplikacja wdrażana w całości; serwis - wdrażany osobno, z własnymi danymi, rozmawia z resztą tylko przez kontrakt. Pytanie rozstrzygające: czy ta część jest wdrażana osobno i inne mogą z nią rozmawiać tylko przez kontrakt?',
+    'Kontrakt to wymaganie (R rodzaju „kontrakt”, wejście albo wyjście) z kryteriami językiem biznesu: jakie dane, kierunek, częstotliwość albo dopuszczalne opóźnienie, co przy awarii; przy serwisie także zmiana wersji. Schemat techniczny (OpenAPI, AsyncAPI) powstaje w budowie i wskazuje R.',
+    'Monolit: kontrakt dla integracji zewnętrznych, brak go - ostrzeżenie. Serwis: kontrakt także dla własnego API i każdego konsumenta, brak - blokada; zadanie z kontraktem nie przejdzie do „done” bez testu kontraktowego.',
+    'Kontrakt między dwoma serwisami uzgadniają właściciele obu stron - to decyzja biznesu [Biz], nie odczyt z kodu.'] },
   { title: 'Systemy i integracje', items: [
     'SYSTEMS.md to rejestr systemów: kto jest właścicielem integracji, który system jest źródłem prawdy (master) dla jakich danych, kierunek i częstotliwość wymiany, co robimy przy awarii.',
     'Mapa systemów (diagram) powstaje z tabeli - aplikacja w środku, wokół systemy zewnętrzne i ręczne (Excel, mail).',
@@ -309,4 +326,4 @@ function rootPreview(mods, newRoot) {
   return (mods || []).filter(m => !m.external && path.dirname(path.resolve(m.dir)) !== r).map(m => m.name);
 }
 
-module.exports = { APPROVES, BACKLOGS, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };
+module.exports = { APPROVES, BACKLOGS, KINDS, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };

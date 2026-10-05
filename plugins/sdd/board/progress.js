@@ -217,7 +217,8 @@ function domain(req) {
       note: r.wymagania ? 'wymagania: ' + r.wymagania : '' }))),
     entities: list('02-domain/ENTITIES.md', ents.map(e => ({ id: '', title: e, status: '', note: '' }))),
     systems: list('02-domain/SYSTEMS.md', systems.map(s => ({ id: s.id, title: s.system || '', status: clean(s.status),
-      note: [s.rola, !/^-?$/.test((s['master dla'] || '').trim()) && 'master dla: ' + s['master dla'], s.wymiana, /^tak/i.test(s.krytyczna || '') && 'krytyczna']
+      note: [s.rola, !/^-?$/.test((s['master dla'] || '').trim()) && 'master dla: ' + s['master dla'], s.wymiana, /^tak/i.test(s.krytyczna || '') && 'krytyczna',
+        /R-\d+/.test(s.wymagania || '') && 'kontrakt: ' + s.wymagania]
         .filter(x => x && x !== '-').join(' · ') }))),
   };
   return { status, counts, details };
@@ -319,6 +320,7 @@ function readProgress(reqDir) {
   const yaml = read(path.join(req, 'SDD.yaml'));
   const project = yamlField(yaml, 'project');
   const level = yamlField(yaml, 'level') || 'full';
+  const kind = yamlField(yaml, 'kind') === 'service' ? 'service' : 'monolith';  // 0.31.0, AC-SY23
   const gate = yamlField(yaml, 'gate_blocking_status');
 
   const iv = interview(req, gate);
@@ -376,7 +378,7 @@ function readProgress(reqDir) {
     .map(l => l.trim()).filter(l => l && !l.startsWith('#')).slice(-5).reverse();
 
   return {
-    exists: true, dir: req, project: /<[^>]+>/.test(project) ? '' : project, level,
+    exists: true, dir: req, project: /<[^>]+>/.test(project) ? '' : project, level, kind,
     stages, next: { key: next.key, name: next.name, command: next.command, desc: next.desc, howto: next.howto },
     blockers: iv.blockers, waiting: iv.waiting, changelog,
     updated: new Date().toISOString(),

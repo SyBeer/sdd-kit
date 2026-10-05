@@ -19,6 +19,8 @@ Piec regul. Kazde pytanie ma w kolumnie "Skad" nazwe reguly i odnosnik.
 5. **Luka integracji**: system albo przeplyw danych w surowcu lub w `02-domain/SYSTEMS.md` bez wlasciciela, kierunku,
    czestotliwosci albo zachowania przy awarii -> pytanie o przeszlosc ("co sie stalo ostatnio, gdy <system> nie odpowiadal",
    "skad wzieliscie <dane>, gdy ich zabraklo"). Adresat: wlasciciel integracji, a bez niego wlasciciel procesu.
+   Przy `kind: service` w SDD.yaml dodatkowo: kto korzysta z danych serwisu (konsument), co obiecujemy konsumentom
+   przy awarii i przy zmianie wersji ("co sie stalo ostatnio, gdy zmienilismy dane, ktore ktos od nas bral").
 
 Zasady formulowania:
 - o przeszlosc, nie hipotezy: "co zrobiles ostatnio, gdy..." zamiast "czy chcialbys..."

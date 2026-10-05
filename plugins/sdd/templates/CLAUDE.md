@@ -42,6 +42,14 @@ jak jest, nie ze biznes tak chce (np. "limit 5000 zl, bo tak jest w kodzie"); wr
 Zgoda czlowieka na propozycje wpisu nie zastepuje zrodla:
 bez slow biznesu to nadal nie jest decyzja biznesu.
 
+## 2a. Rodzaj modulu i kontrakt
+
+`kind` w `SDD.yaml`: `monolith` (aplikacja wdrazana w calosci) albo `service` (wdrazany osobno, rozmawia z reszta
+tylko przez kontrakt). Ustawia czlowiek - nie zgaduj z kodu. Kontrakt (wejscie/wyjscie) to wymaganie `R` rodzaju
+kontrakt z AC jezykiem biznesu (dane, kierunek, czestotliwosc/opoznienie, awaria; przy `service` zmiana wersji);
+schemat techniczny (OpenAPI, AsyncAPI) powstaje w budowie i wskazuje `R`. Przy `service` kontrakt jest obowiazkowy
+dla kazdego wejscia, wyjscia i konsumenta.
+
 ## 3. Identyfikatory
 
 - `R-xxx` wymaganie (PRD), `AC-xxx-n` kryterium akceptacji wymagania R-xxx

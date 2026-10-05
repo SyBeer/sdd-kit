@@ -18,7 +18,9 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
    - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). ID zadania wpisz z powrotem do tabeli.
    - `redmine`: REST API przez skrypt kitu `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js"` (sekcja ponizej).
 
-4. `04-validation/TRACEABILITY.md`: tabela R | AC | task | test (kolumna test pusta do wypelnienia przez dev, nazwa testu = AC-xxx-n).
+4. `04-validation/TRACEABILITY.md`: tabela R | AC | Rodzaj | task | test (kolumna test pusta do wypelnienia przez dev,
+   nazwa testu = AC-xxx-n). `Rodzaj` = `kontrakt - wejscie|wyjscie` dla R kontraktu (linia `Rodzaj:` w PRD), inaczej `-`.
+   R kontraktu -> w kolumnie test test kontraktowy (np. test konsumenta/dostawcy); przy `kind: service` obowiazkowy.
 5. Reguła dla dev, wpisz na koncu TRACEABILITY.md: zmiana wymagania po przekazaniu = zmiana PRD i ponowny handover, nigdy ticket "z boku".
 6. Pod naglowkiem TRACEABILITY.md wpisz odcisk wymagan, liczony na koncu przebiegu:
    `node "${CLAUDE_PLUGIN_ROOT}/board/fingerprint.js" requirements` -> linia `Odcisk wymagan: sha256:<hex>`.
@@ -90,7 +92,8 @@ Dla agenta, ktory buduje aplikacje z `03-spec/agent/*/tasks.md`. Numer zadania z
   --note "Zaczynam: <R-xxx, co robie>"`. Status z `redmine_status_start` w SDD.yaml, bez niego np. "W realizacji".
 - `done` - kod gotowy, testy kryteriow AC-xxx-n przechodza, commit zrobiony: `... status <id> done --note "Commit
   <hash>: <co zrobione>; kryteria: AC-xxx-1, AC-xxx-2; testy: <nazwy>"`. Status z `redmine_status_done`, bez niego
-  np. "Code review".
+  np. "Code review". Modul `kind: service`, zadanie z R kontraktu (TRACEABILITY, `Rodzaj` = kontrakt): notka musi
+  zawierac `test kontraktowy: <nazwa>` - bez tego skrypt odmawia przejscia do done.
 - Sam komentarz bez zmiany statusu: `... comment <id> --note "..."`.
 - Skrypt dopisuje do kazdego komentarza `Wygenerowane przez AI [Claude Code]`. Statusow UAT, zamykajacych
   i odrzucajacych nie ustawiasz - to robi czlowiek (skrypt i tak odmowi zamkniecia). Blad "Redmine nie pozwolil

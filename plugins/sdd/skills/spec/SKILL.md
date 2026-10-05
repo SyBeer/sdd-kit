@@ -24,6 +24,14 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
    - kryteria AC-xxx-n Given/When/Then; kazde testowalne (konkretny stan, zdarzenie, wynik obserwowalny)
    - status `robocze`, wlasciciel (rola)
    Mozesz proponowac paczkami po 3-5 R, user zatwierdza paczke.
+   **Wymaganie rodzaju kontrakt** (docs/specs/systems.md czesc B) - dla kazdej integracji z `02-domain/SYSTEMS.md`,
+   a przy `kind: service` w SDD.yaml takze dla kazdego wejscia (kto nas wola) i wyjscia (komu dajemy dane):
+   linie `Rodzaj: kontrakt - wejscie|wyjscie` i `System: S-xxx`, numer R wpisz w kolumne `Wymagania` w SYSTEMS.md.
+   Obowiazkowe AC jezykiem biznesu: jakie dane (pojecia ze slownika), kierunek,
+   czestotliwosc albo dopuszczalne opoznienie, zachowanie przy awarii; przy `service` dodatkowo
+   zmiana wersji (co wolno zmienic bez uprzedzenia konsumenta, co wymaga uzgodnienia). Bez schematu technicznego: OpenAPI/AsyncAPI, pola, endpointy powstaja
+   w budowie i wskazuja R - nie wchodza do PRD. Kontrakt miedzy dwoma serwisami: zrodlo `[Biz]` (D wlascicieli
+   obu stron), nie odczyt z kodu.
 4. R stojace na A `obalone`, na elemencie modelu `zakwestionowane` albo na Q z etykieta
    blokujaca: NIE tworz, wpisz do sekcji 7 PRD. Element `zakwestionowane` to podstawa
    podmyta przez zrodlo wyzsze w hierarchii - wymaganie na niej byloby zbudowane na piasku.

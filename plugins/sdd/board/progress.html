@@ -239,6 +239,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
   var $=function(s){return document.querySelector(s)};
   var STATUS={done:'gotowe',active:'w toku',todo:'nie zaczęte'};
   var LEVEL={full:'pełny',light:'lekki'};
+  var KIND={monolith:'monolit',service:'serwis'};
   // etykiety licznikow: [klucz, etykieta, czy ostrzezenie gdy > 0]
   var LABELS={
     intake:[['sources','źródeł w spisie'],['unindexed','czeka na spis',1]],
@@ -412,7 +413,7 @@ dialog .err{color:var(--hot);font-size:13px;min-height:1.2em;margin:8px 0 0}
       return;
     }
     renderModules(p);
-    $('#meta').textContent='poziom '+(LEVEL[p.level]||p.level)+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
+    $('#meta').textContent='poziom '+(LEVEL[p.level]||p.level)+' · '+(KIND[p.kind]||KIND.monolith)+' · '+p.stages.filter(function(s){return s.status==='done'}).length+' z 6 etapów gotowych';
 
     var allDone=p.next.key==='done';
     var html='<section class="next'+(allDone?' alldone':'')+'"><div><div class="lbl">'+(allDone?'Status':'Aktualny krok')+'</div>'+

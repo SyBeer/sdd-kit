@@ -1,6 +1,7 @@
 # Konfiguracja procesu SDD dla tego projektu
 project: "<nazwa projektu>"
 level: full            # full | light
+kind: monolith         # monolith | service - service: wdrazany osobno, rozmawia z reszta tylko przez kontrakt
 owners:                # role biznesowe, ktore zatwierdzaja (rola, nie osoba)
   - role: "wlasciciel procesu"
     approves: [R, D, GLOSSARY]

@@ -22,7 +22,7 @@ function tracked(req) {
   return out.sort();
 }
 
-// Z SDD.yaml tylko to, co zmienia ocene walidacji: poziom, kto zatwierdza, etykieta blokujaca (0.18.2, AC-64).
+// Z SDD.yaml tylko to, co zmienia ocene walidacji: poziom, rodzaj modulu, kto zatwierdza, etykieta blokujaca (0.18.2, AC-64).
 // project i backlog (ustawiany przy handover) oraz komentarze nie uniewazniaja raportu.
 function sddRelevant(text) {
   const out = [];
@@ -31,6 +31,8 @@ function sddRelevant(text) {
     const line = l.replace(/\s+#.*$/, '').replace(/\s+$/, '');
     if (/^\S/.test(line)) inOwners = /^owners:/.test(line);
     if (/^(level|gate_blocking_status):/.test(line) || (inOwners && /^\s+\S/.test(line))) out.push(line.trim());
+    // kind (0.31.0, AC-SY22): tylko service - monolith jawny i brak pola daja ten sam odcisk (stare raporty aktualne)
+    if (/^kind:\s*"?service"?\s*$/.test(line)) out.push('kind: service');
   });
   return out.join('\n');
 }
