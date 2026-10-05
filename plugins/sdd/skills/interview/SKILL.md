@@ -60,7 +60,23 @@ JEDNO pytanie naraz. Nigdy partia pytan - prowadzacy zbiera odpowiedzi na zywo i
 - Ustaw status tych pytan na `zadane (runda N, data)`.
 - Gdy user wklei lub wgra odpowiedzi: sparsuj, dla kazdego pytania przejdz do kroku 3.
 
+## Krok 2c: potwierdzenie hurtowe i akceptacja as-built (duzo A z `[App]`/`[Dok]`)
+Gdy regula 3 daje wiele pytan potwierdzajacych (typowo: istniejaca aplikacja, fakty z kodu), nie zadawaj ich po jednym.
+- **Akceptacja as-built** (istniejaca aplikacja, raz na modul): jedno pytanie do wlasciciela procesu - "obecne
+  dzialanie aplikacji przyjmujemy jako docelowe, z wyjatkiem...?". Odpowiedz = jedna `D` ze zrodlem `[Biz]`
+  (sesja/runda), wyjatki wymienione z nazwy. `A` z `[App]` spoza wyjatkow dostaja `potwierdzone` z dopiskiem
+  `(akceptacja as-built D-xxx)`. NIE obejmuje: `A` z `[Dok]` i `[AI]` (dokument to nie dzialanie aplikacji),
+  miejsc, gdzie kod przeczy dokumentacji albo wyglada na obejscie, oraz pytan `sprzeczne` - te ida osobno.
+- **Potwierdzenie hurtowe** (reszta): w rundzie async jedna lista per rola - "to wynika z aplikacji/dokumentu,
+  zaznacz tylko to, co sie nie zgadza". Kazda pozycja z ID `A`, jednym zdaniem i zrodlem. Odpowiedz "reszta OK"
+  potwierdza nieoznaczone pozycje zrodlem `[Biz]` (runda, kto); oznaczone ida dalej jako zwykle pytania.
+- Na zywo (`live`) to samo jako jedno pytanie z lista, nie N pytan.
+- Niepotwierdzone `A` nie zatrzymuja pracy (validate: WARN 8, nizsza gotowosc), wiec liste mozna wyslac raz na etap.
+
 ## Krok 3: przetwarzanie odpowiedzi (tu PYTASZ przed zapisem)
+`D` powstaje tylko z odpowiedzi biznesu: wpis `Zrodlo: [Biz] <sesja|runda|wiadomosc>`, `Zdecydowal` = rola, ktora
+odpowiedziala. Fakt odczytany z kodu, aplikacji albo dokumentu - nawet zatwierdzony przez prowadzacego - to `A`
+`niepotwierdzone` z tym zrodlem, nie `D` (validate kontrola 16 = BLOCK). Zgoda na wpis nie zastepuje zrodla.
 Odpowiedzi moga przyjsc tez z Tablicy warsztatowej (pole "Odpowiedź" na czerwonej karteczce, `answer` w board.json) -
 `/sdd:board sync` przetwarza je tym samym krokiem.
 Dla kazdej odpowiedzi zaproponuj w 3-5 linijkach:

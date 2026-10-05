@@ -33,6 +33,12 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
 14. INFO: Q `zaparkowane` bez warunku (to tez blad procesu, popraw)
 15. INFO: element modelu (pojecie, `BR`) ktorego nie cytuje zadne R - sierota w druga strone,
     albo model wyprzedza spec, albo wymaganie wypadlo.
+16. BLOCK: D, ktorej `Zrodlo` nie zawiera `[Biz]` (dawniej `[B]` - liczy sie jak `[Biz]`) - decyzja
+    wyprowadzona z kodu, dokumentu albo wniosku AI. Stoi na szczycie hierarchii, wiec blad z kodu
+    utrwalilby sie jako prawda. Naprawa: przepisac na `A` `niepotwierdzone` z tym zrodlem (i pytanie
+    do biznesu) albo dopisac zrodlo `[Biz]`, jesli biznes to rzeczywiscie powiedzial. R stojace
+    na takiej D licza sie do gotowosci jak R z BLOCK.
+    Numeracja kontroli jest stala (panel czyta wiersz 9 po numerze) - nowe kontrole dopisujesz na koncu.
 
 Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent/*/spec.md` i dolacz wynik.
 

@@ -203,7 +203,8 @@ const SECTIONS = [
     '[App] – działająca aplikacja, system albo prototyp (zaobserwowane zachowanie).',
     '[Dok] – dokument spisany z kodu albo przez model.',
     '[AI] – interpretacja modelu; musi wrócić do biznesu jako pytanie albo założenie.',
-    'Kolejność: [Biz] → [App] → [Dok] → [AI]. Wyższe źródło wygrywa, a różnica trafia do QUESTIONS.md jako „sprzeczne” - Claude nie rozstrzyga jej po cichu.'] },
+    'Kolejność: [Biz] → [App] → [Dok] → [AI]. Wyższe źródło wygrywa, a różnica trafia do QUESTIONS.md jako „sprzeczne” - Claude nie rozstrzyga jej po cichu.',
+    'Decyzja (D) powstaje tylko ze słów biznesu [Biz]. To, co wynika z kodu albo dokumentu, jest założeniem (A) do potwierdzenia - inaczej błąd z kodu stałby się „decyzją”, której nikt już nie podważa. Walidacja blokuje D bez [Biz]. Żeby nie zasypać biznesu pytaniami: przy istniejącej aplikacji jedna decyzja „akceptacja as-built” (z wyjątkami), a resztę biznes potwierdza hurtowo jedną listą.'] },
   { title: 'Identyfikatory i statusy', items: [
     '**Q** – pytanie.',
     '**D** – decyzja.',

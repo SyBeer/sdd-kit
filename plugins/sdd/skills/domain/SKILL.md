@@ -51,6 +51,8 @@ Gdy intake zglosil przebudowe albo oznaczyl elementy jako `zakwestionowane`:
 - Pierwsze utworzenie plikow: piszesz sam.
 - Zmiana istniejacej definicji w GLOSSARY lub reguly BR: PYTASZ (3-5 linijek, co i dlaczego).
 - Zdjecie statusu `zakwestionowane`: PYTASZ.
+- Nie tworzysz `D-xxx` - decyzje zapisuje /sdd:interview ze slow biznesu `[Biz]`. Regula albo stan odczytany
+  z kodu lub dokumentu bez slow biznesu stoi na `A` `niepotwierdzone` z tym zrodlem (`[App]`/`[Dok]`).
 - Status hasla `zatwierdzone` ustawia tylko czlowiek - przez tryb `/sdd:domain zatwierdz` ponizej.
 
 ## Zatwierdzanie slownika (`/sdd:domain zatwierdz`)

@@ -36,6 +36,12 @@ Na pytanie "jak dziala" wygrywa `as-built`, na "co mielismy zbudowac" - `intencj
 Zgodnosc dwoch zrodel `[Dok]` NIE jest potwierdzeniem. Dwa dokumenty spisane z tej samej
 aplikacji powtarzaja ten sam blad. Potwierdza tylko `[Biz]`.
 
+Decyzja `D-xxx` powstaje tylko ze slow biznesu - zrodlo `[Biz]` z nazwa pliku (sesja, runda, wiadomosc).
+To, co wynika z `[App]`/`[Dok]`/`[AI]`, zapisujesz jako `A-xxx` `niepotwierdzone` z tym zrodlem - one mowia,
+jak jest, nie ze biznes tak chce (np. "limit 5000 zl, bo tak jest w kodzie"); wraca to do biznesu jako pytanie.
+Zgoda czlowieka na propozycje wpisu nie zastepuje zrodla:
+bez slow biznesu to nadal nie jest decyzja biznesu.
+
 ## 3. Identyfikatory
 
 - `R-xxx` wymaganie (PRD), `AC-xxx-n` kryterium akceptacji wymagania R-xxx
@@ -45,6 +51,7 @@ aplikacji powtarzaja ten sam blad. Potwierdza tylko `[Biz]`.
 ## 4. Zakazy
 
 - Nie pisz wymagania bez zrodla. Bez zrodla = zalozenie `A-xxx` ze statusem `niepotwierdzone`.
+- Nie zapisuj `D-xxx` ze zrodlem innym niz `[Biz]` - wniosek z kodu albo dokumentu to `A-xxx` (sekcja 2).
 - Nie zmieniaj statusu na `potwierdzone` / `zatwierdzone` bez jawnej zgody czlowieka.
 - Nastepny krok podawaj zgodnie z bramkami: slownik (GLOSSARY) z haslami niezatwierdzonymi -> `/sdd:domain zatwierdz`,
   nie /sdd:spec (jego bramka odmowi). Panel (`sdd-board`) pokazuje ten sam krok.

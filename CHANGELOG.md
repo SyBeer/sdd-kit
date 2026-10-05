@@ -1,5 +1,14 @@
 # Changelog
 
+## [Niewydane]
+- Decyzje `D` tylko ze slow biznesu `[Biz]` (spec: docs/specs/decisions.md). Wniosek z kodu, aplikacji albo
+  dokumentu to zalozenie `A` `niepotwierdzone`, nie decyzja - zgoda prowadzacego nie zastepuje zrodla.
+  `/sdd:validate`: nowa kontrola 16 BLOCK "D bez zrodla [Biz]" (numery 1-15 bez zmian). Reguly w CLAUDE.md
+  projektu, szablonie DECISIONS i skillach interview / intake / domain; przewodnik "Jak to dziala".
+- `/sdd:interview`: potwierdzenie hurtowe (jedna lista "zaznacz, co sie nie zgadza") i akceptacja as-built
+  (jedna decyzja biznesu dla istniejacej aplikacji, z wyjatkami) - zeby blokada nie zasypala biznesu pytaniami.
+- Demo: raport walidacji z wierszem 16 (PASS).
+
 ## [0.30.0] - 2026-10-04
 Wydanie zbiorcze na GitHub - zawiera wszystko od 0.28.1 (wersje 0.28.2..0.28.13 byly tylko na gitea; szczegoly
 w CHANGELOG.md). W skrocie:
