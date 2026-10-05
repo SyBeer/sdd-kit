@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.32.0] - 2026-10-05
 - Wersja skilli w sesjach Claude Code (spec: docs/specs/session-version.md): plugin ma hooki `SessionStart`
   i `SessionEnd` (`hooks/hooks.json`, `board/session-mark.js`) - sesja zapisuje w `~/.sdd-kit/sessions/` wersje
   skilli, ktora zaladowala. Panel: gdy otwarta sesja ma inna wersje niz zainstalowany plugin, przy wersji
