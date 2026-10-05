@@ -1,6 +1,6 @@
 # Changelog
 
-## [Niewydane]
+## [0.31.0] - 2026-10-05
 - Decyzje `D` tylko ze slow biznesu `[Biz]` (spec: docs/specs/decisions.md). Wniosek z kodu, aplikacji albo
   dokumentu to zalozenie `A` `niepotwierdzone`, nie decyzja - zgoda prowadzacego nie zastepuje zrodla.
   `/sdd:validate`: nowa kontrola 16 BLOCK "D bez zrodla [Biz]" (numery 1-15 bez zmian). Reguly w CLAUDE.md
