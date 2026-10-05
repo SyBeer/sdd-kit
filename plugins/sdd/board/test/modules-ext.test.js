@@ -121,12 +121,12 @@ test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
   createModule(root, { name: 'horizon', level: 'full' }, { git: false });
   saveRoot(cfg, root);
   const want = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.claude-plugin', 'plugin.json'), 'utf8')).version;
-  const { port, proc } = await start(cfg, tmp());
+  const { port, proc } = await start(cfg, tmp(), { SDD_SESSIONS_DIR: path.join(tmp(), 'sessions') });  // sesje: 0.32.0
   try {
     for (const u of ['/api/version', '/demo/api/version']) {
       const r = await call(port, 'GET', u);
       assert.strictEqual(r.code, 200, u);
-      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '' });
+      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '', sessions: [] });
     }
   } finally { proc.kill(); }
 });

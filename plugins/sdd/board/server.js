@@ -15,6 +15,7 @@ const path = require('path');
 const { readProgress, questionIndex } = require('./progress');
 const { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
+const { listSessions } = require('./session-mark');  // wersja skilli w sesjach Claude Code (0.32.0)
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
 const info = require('./info');
 const terminal = require('./terminal');
@@ -362,7 +363,11 @@ const server = http.createServer((req, res) => {
       json(res, 200, Object.assign(r, { disk: diskVersion(), plugin: pluginVersion(), running: VERSION }));
     });
   }
-  if (url === '/api/version' && req.method === 'GET') return json(res, 200, { running: VERSION, disk: diskVersion(), plugin: pluginVersion() });
+  if (url === '/api/version' && req.method === 'GET') {
+    const plugin = pluginVersion();
+    return json(res, 200, { running: VERSION, disk: diskVersion(), plugin,
+      sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion() }) });
+  }
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
   if (url === '/api/board' && req.method === 'GET') return json(res, 200, boardView(ctx));

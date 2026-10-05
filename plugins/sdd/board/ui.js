@@ -120,8 +120,17 @@
     if (plugin) tips.push('Plugin w Claude Code ma wersję ' + v.plugin + ', a kit na dysku ' + v.disk +
       '. Zaktualizuj: claude plugin marketplace update sdd-kit && claude plugin update sdd@sdd-kit,' +
       ' potem restart sesji Claude Code.');
-    return { stale: server || plugin,
-      text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : ''),
+    // Sesje Claude Code (0.32.0, AC-SV6): znaczniki z hooka pluginu - wersja skilli, ktora sesja zaladowala
+    const sessions = Array.isArray(v.sessions) ? v.sessions : [];
+    const old = sessions.filter(s => s.stale);
+    if (old.length) tips.push('Sesje Claude Code na starszej wersji skilli:\n' +
+      old.map(s => '  ' + (s.cwd || '?') + ' - ' + s.version).join('\n') +
+      '\nZamknij te sesje i otwórz nową - skille ładują się przy starcie sesji.');
+    else if (sessions.length) tips.push(sessions.length + ' otwart' + (sessions.length === 1 ? 'a sesja' : 'e sesje') +
+      ' Claude Code na wersji ' + sessions[0].version + '.');
+    return { stale: server || plugin || old.length > 0,
+      text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : '') +
+        (old.length ? ' · sesja Claude nieaktualna' : ''),
       title: (tips.length ? tips.join('\n') : 'sdd-kit ' + v.running) + '\nKliknij: opis zmian tej wersji na GitHubie',
       href: RELEASES + v.running };
   }

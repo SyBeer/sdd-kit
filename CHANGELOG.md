@@ -1,5 +1,12 @@
 # Changelog
 
+## [Niewydane]
+- Wersja skilli w sesjach Claude Code (spec: docs/specs/session-version.md): plugin ma hooki `SessionStart`
+  i `SessionEnd` (`hooks/hooks.json`, `board/session-mark.js`) - sesja zapisuje w `~/.sdd-kit/sessions/` wersje
+  skilli, ktora zaladowala. Panel: gdy otwarta sesja ma inna wersje niz zainstalowany plugin, przy wersji
+  w gornym pasku "· sesja Claude nieaktualna" z podpowiedzia, ktora sesje zamknac. Hook nic nie wypisuje
+  i nigdy nie psuje startu sesji. Dziala dla sesji otwartych po instalacji tej wersji.
+
 ## [0.31.0] - 2026-10-05
 - Decyzje `D` tylko ze slow biznesu `[Biz]` (spec: docs/specs/decisions.md). Wniosek z kodu, aplikacji albo
   dokumentu to zalozenie `A` `niepotwierdzone`, nie decyzja - zgoda prowadzacego nie zastepuje zrodla.

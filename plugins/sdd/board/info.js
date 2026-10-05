@@ -249,7 +249,8 @@ const SECTIONS = [
     'Serwer uruchamiasz komendą sdd-board w folderze modułu (albo z HQAI); zostaw okno terminala otwarte.',
     'Panel, tablica i te zakładki odświeżają się same, gdy Claude zmienia pliki.',
     'Komend wymagających rozmowy nie uruchamia się z panelu - kopiujesz je do Claude Code.',
-    'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.'] },
+    'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.',
+    'Skille ładują się przy starcie sesji Claude Code. Po aktualizacji pluginu otwarta sesja dalej używa starych - wtedy przy wersji w górnym pasku pojawia się „· sesja Claude nieaktualna”, a podpowiedź mówi, którą sesję zamknąć i otworzyć na nowo.'] },
   // Integracja z Redmine (0.28.8; wtyczka UAT 0.28.14, AC-RM20; prosba usera: "dopisz w Jak to dziala sposob dzialania integracji z Redmine")
   { title: 'Integracja z Redmine', items: [
     '**Ustawienie** – Konfiguracja: backlog „redmine”, adres Redmine, projekt (można wkleić adres projektu z przeglądarki) i klucz API. W SDD.yaml modułu dodatkowo: redmine_ac_field (pole na kryteria akceptacji, np. „Kryteria akceptacji”), redmine_uat_link (link do środowiska UAT wpisywany w każde zadanie, pole „Link do środowiska UAT” albo redmine_uat_field), opcjonalnie redmine_tracker, redmine_status_start, redmine_status_done.',
