@@ -38,6 +38,12 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
     utrwalilby sie jako prawda. Naprawa: przepisac na `A` `niepotwierdzone` z tym zrodlem (i pytanie
     do biznesu) albo dopisac zrodlo `[Biz]`, jesli biznes to rzeczywiscie powiedzial. R stojace
     na takiej D licza sie do gotowosci jak R z BLOCK.
+17. BLOCK: dwa systemy w `02-domain/SYSTEMS.md` sa masterem dla tej samej encji albo pola (`Master dla`) - dwa
+    zrodla prawdy to sprzecznosc, ktora w budowie konczy sie rozjazdem danych. Pozycje: dane i oba `S-xxx`.
+18. WARN: integracja (`zewnetrzny` / `reczny`) bez `Przy awarii` albo bez `Wlasciciel` (puste, `-`, `?`).
+19. WARN: integracja `Krytyczna = tak` bez sekcji `## Proces systemowy: <nazwa>` w SYSTEMS.md.
+    Brak `SYSTEMS.md` na poziomie `full`: kontrole 17-19 jako jeden wiersz INFO "brak rejestru systemow" (nie BLOCK -
+    projekty sprzed 0.31.0 nie staja). Poziom `light`: 17-19 pomijasz.
     Numeracja kontroli jest stala (panel czyta wiersz 9 po numerze) - nowe kontrole dopisujesz na koncu.
 
 Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent/*/spec.md` i dolacz wynik.

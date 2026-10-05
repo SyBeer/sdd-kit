@@ -11,11 +11,14 @@ Etap 2. Zamieniasz surowiec w rozstrzygniecia przez pytania, nie zgadywanie.
 `00-intake/INDEX.md`, `01-interview/QUESTIONS.md`, `ASSUMPTIONS.md`, `DECISIONS.md`, jesli istnieja: `02-domain/*`, `03-spec/PRD.md`.
 
 ## Krok 1: generowanie pytan (zawsze, w kazdym trybie)
-Cztery reguly. Kazde pytanie ma w kolumnie "Skad" nazwe reguly i odnosnik.
+Piec regul. Kazde pytanie ma w kolumnie "Skad" nazwe reguly i odnosnik.
 1. **Luka**: proces, encja lub regula wspomniana w surowcu, ale bez opisu zachowania (co sie dzieje w wyjatku, kto moze, kiedy).
 2. **Pusty powod**: decyzja D bez wypelnionego "Powod" albo z powodem oznaczonym `[AI]` (wniosek prowadzacego) -> pytanie "dlaczego".
 3. **Zalozenie bez biznesu**: A ze zrodlem `[App]`, `[Dok]` lub `[AI]` -> pytanie potwierdzajace.
 4. **Sprzecznosc**: wiersze `sprzeczne` w QUESTIONS.md -> pytanie "ktore prawdziwe" z cytatami obu zrodel.
+5. **Luka integracji**: system albo przeplyw danych w surowcu lub w `02-domain/SYSTEMS.md` bez wlasciciela, kierunku,
+   czestotliwosci albo zachowania przy awarii -> pytanie o przeszlosc ("co sie stalo ostatnio, gdy <system> nie odpowiadal",
+   "skad wzieliscie <dane>, gdy ich zabraklo"). Adresat: wlasciciel integracji, a bez niego wlasciciel procesu.
 
 Zasady formulowania:
 - o przeszlosc, nie hipotezy: "co zrobiles ostatnio, gdy..." zamiast "czy chcialbys..."
@@ -67,6 +70,7 @@ Gdy regula 3 daje wiele pytan potwierdzajacych (typowo: istniejaca aplikacja, fa
   (sesja/runda), wyjatki wymienione z nazwy. `A` z `[App]` spoza wyjatkow dostaja `potwierdzone` z dopiskiem
   `(akceptacja as-built D-xxx)`. NIE obejmuje: `A` z `[Dok]` i `[AI]` (dokument to nie dzialanie aplikacji),
   miejsc, gdzie kod przeczy dokumentacji albo wyglada na obejscie, oraz pytan `sprzeczne` - te ida osobno.
+  `Przy awarii` w SYSTEMS NIE jest objete akceptacja as-built - zawsze osobne pytanie, bo kod czesto awarii w ogole nie obsluguje.
 - **Potwierdzenie hurtowe** (reszta): w rundzie async jedna lista per rola - "to wynika z aplikacji/dokumentu,
   zaznacz tylko to, co sie nie zgadza". Kazda pozycja z ID `A`, jednym zdaniem i zrodlem. Odpowiedz "reszta OK"
   potwierdza nieoznaczone pozycje zrodlem `[Biz]` (runda, kto); oznaczone ida dalej jako zwykle pytania.

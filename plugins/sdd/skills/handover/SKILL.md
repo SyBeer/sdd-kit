@@ -10,6 +10,9 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
 ## Kroki
 1. Przeczytaj `SDD.yaml` (`backlog`), `03-spec/agent/*/tasks.md` (przy `light`: AC z SPEC.md).
 2. Zbuduj liste zadan: tytul, opis w 2 zdaniach, `R-xxx`, `AC-xxx-n`, zaleznosci z plan.md, szacunek T-shirt (S/M/L) jesli user chce.
+   Zadanie integracyjne (R dotyka systemu z `02-domain/SYSTEMS.md`): w opisie wiersz systemu - `S-xxx`, wlasciciel,
+   kierunek i czestotliwosc, master dla - oraz odnosnik do sekcji "Proces systemowy", jesli jest. Zachowanie
+   przy awarii idzie jako osobne kryterium w zadaniu (z kolumny `Przy awarii`, a jesli R ma takie AC - to AC).
 3. Backlog:
    - `file`: `04-validation/backlog-YYYY-MM-DD.md`
    - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). ID zadania wpisz z powrotem do tabeli.

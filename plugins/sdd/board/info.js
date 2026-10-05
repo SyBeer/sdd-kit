@@ -169,6 +169,7 @@ function moduleSummary(req) {
     counts: {
       requirements: sp.requirements || 0, approved: sp.approved || 0, review: sp.review || 0,
       rules: dm.rules || 0, terms: dm.terms || 0, actors: dm.actors || 0, entities: dm.entities || 0,
+      systems: dm.systems || 0, critical: dm.critical || 0,
       decisions: iv.decisions || 0, assumptions: iv.assumptions || 0,
       questions: iv.questions || 0, open: iv.open || 0, blockers: (p.blockers || []).length,
     },
@@ -192,7 +193,7 @@ const SKILLS = [
 const FOLDERS = [
   ['00-intake/', 'Surowiec: maile, notatki, PDF-y i spis INDEX.md. Nie jest prawdą, tylko źródłem.'],
   ['01-interview/', 'Pytania (QUESTIONS), decyzje (DECISIONS), założenia (ASSUMPTIONS), sesje i tablica board.json.'],
-  ['02-domain/', 'Model: słownik (GLOSSARY), role (ACTORS), encje (ENTITIES), reguły (RULES). To jest prawda o domenie.'],
+  ['02-domain/', 'Model: słownik (GLOSSARY), role (ACTORS), encje (ENTITIES), reguły (RULES), systemy (SYSTEMS). To jest prawda o domenie.'],
   ['03-spec/', 'Wymagania: PRD.md (poziom pełny) albo SPEC.md (lekki).'],
   ['04-validation/', 'Raporty walidacji z procentem gotowości.'],
   ['CHANGELOG.md, SDD.yaml', 'Historia zmian wymagań i ustawienia procesu (role, poziom, backlog).'],
@@ -210,11 +211,18 @@ const SECTIONS = [
     '**D** – decyzja.',
     '**A** – założenie.',
     '**BR** – reguła biznesowa.',
+    '**S** – system, z którym aplikacja wymienia dane (SYSTEMS.md).',
     '**R** – wymaganie.',
     '**AC** – kryterium akceptacji.',
     '**PRD** – dokument wymagań dla biznesu.',
     'Statusy: robocze → zatwierdzone; zakwestionowane (Q-xxx), gdy nowe źródło podważa element modelu.',
     'Zmiana decyzji albo reguły uruchamia kaskadę: powiązane **R** wracają „do przeglądu”.'] },
+  { title: 'Systemy i integracje', items: [
+    'SYSTEMS.md to rejestr systemów: kto jest właścicielem integracji, który system jest źródłem prawdy (master) dla jakich danych, kierunek i częstotliwość wymiany, co robimy przy awarii.',
+    'Mapa systemów (diagram) powstaje z tabeli - aplikacja w środku, wokół systemy zewnętrzne i ręczne (Excel, mail).',
+    'Proces systemowy (diagram sekwencji z gałęzią awarii) - tylko dla integracji krytycznych, bez których proces biznesowy staje.',
+    'Opisuje CO, nie JAK: dane i zachowanie widziane przez biznes, bez protokołów i endpointów.',
+    'Walidacja blokuje dwa systemy jako źródło prawdy dla tych samych danych i ostrzega o integracji bez właściciela albo bez zachowania przy awarii.'] },
   { title: 'Tablica warsztatowa', items: [
     'Karteczki: zdarzenie, komenda, kto, reguła, widok, „nie wiemy” (pytanie).',
     'Tablica to widok, pliki w requirements/ są prawdą. Po warsztacie /sdd:board sync przenosi karteczki do plików.',

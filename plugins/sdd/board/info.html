@@ -194,7 +194,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     });
     h+='<section class="card"><h2>Stan wymagań</h2><ul class="counts">'+
       cnt(c.requirements,'wymagań (R)')+cnt(c.approved,'zatwierdzonych')+cnt(c.review,'do przeglądu',1)+
-      cnt(c.rules,'reguł biznesowych (BR)')+cnt(c.terms,'haseł słownika')+cnt(c.decisions,'decyzji (D)')+cnt(c.assumptions,'założeń (A)')+
+      cnt(c.rules,'reguł biznesowych (BR)')+cnt(c.systems,'systemów (S)')+cnt(c.critical,'integracji krytycznych')+cnt(c.terms,'haseł słownika')+cnt(c.decisions,'decyzji (D)')+cnt(c.assumptions,'założeń (A)')+
       cnt(c.questions,'pytań (Q)')+cnt(c.open,'otwartych')+cnt(c.blockers,'blokujących',1)+'</ul>'+
       '<h3>Tablica warsztatowa</h3><p class="muted">'+(m.board.notes?('<b>'+m.board.notes+'</b> karteczek w '+m.board.lanes+' procesach, w plikach: <b>'+m.board.synced+'</b>'):'Tablica jest pusta.')+'</p></section>';
     h+='<section class="card"><h2>Kto zatwierdza</h2>'+(m.owners.length?'<ul class="list">'+m.owners.map(function(o){

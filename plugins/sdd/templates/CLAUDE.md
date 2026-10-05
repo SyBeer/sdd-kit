@@ -46,6 +46,7 @@ bez slow biznesu to nadal nie jest decyzja biznesu.
 
 - `R-xxx` wymaganie (PRD), `AC-xxx-n` kryterium akceptacji wymagania R-xxx
 - `Q-xxx` pytanie, `D-xxx` decyzja, `A-xxx` zalozenie, `BR-xxx` regula biznesowa
+- `S-xxx` system (rejestr `02-domain/SYSTEMS.md`: integracje, master danych, zachowanie przy awarii)
 - numeracja ciagla, nigdy nie uzywaj ponownie zwolnionego numeru
 
 ## 4. Zakazy

@@ -1,6 +1,6 @@
 ---
 name: domain
-description: Buduje model domeny z intake i wywiadu - slownik pojec, aktorow, encje ze stanami (Mermaid) i reguly biznesowe BR-xxx; robi test spojnosci i odsyla braki do pytan. Obsluguje tez przebudowe modelu po zgloszeniu z intake. Uzyj, gdy user mowi "slownik", "model domeny", "encje", "reguly biznesowe", "kto jest kim", "domain", "przebudowa modelu".
+description: Buduje model domeny z intake i wywiadu - slownik pojec, aktorow, encje ze stanami (Mermaid), reguly biznesowe BR-xxx i rejestr systemow z mapa integracji; robi test spojnosci i odsyla braki do pytan. Obsluguje tez przebudowe modelu po zgloszeniu z intake. Uzyj, gdy user mowi "slownik", "model domeny", "encje", "reguly biznesowe", "kto jest kim", "domain", "przebudowa modelu".
 ---
 
 # /sdd:domain
@@ -20,11 +20,21 @@ albo swiadomie do "Poza zakresem" w PRD.
 1. **GLOSSARY.md**: kazde pojecie biznesowe z surowca. Jedno pojecie = jedna definicja. Jesli biznes uzywa dwoch slow na to samo, jedno jest haslem, drugie synonimem. Jesli jedno slowo oznacza dwie rzeczy, rozbij na dwa hasla z dopiskiem. Zrodlo (z nazwa pliku) i przyklad obowiazkowe. Status `robocze`.
 2. **ACTORS.md**: role, nie osoby. "Co robi" i "czego nie wolno" z surowca. Brak "czego nie wolno" = pytanie (luka).
 3. **ENTITIES.md**: obiekty biznesowe, pola kluczowe, stany, przejscia z rola, diagram `stateDiagram-v2`. Przejscie bez roli = pytanie.
-4. **RULES.md**: reguly "jezeli... to..." z numerem BR-xxx, zrodlem, powiazanymi A i R. Regula ze zrodlem `[Dok]` lub `[AI]` dostaje automatycznie A `niepotwierdzone`. Kolumne `Wymagania` wypelniaj rzetelnie - to sciezka kaskady.
-5. **Test spojnosci** (wypisz wynik):
+4. **SYSTEMS.md** (docs/specs/systems.md): systemy z surowca, z ktorymi aplikacja wymienia dane - zewnetrzne
+   i reczne (Excel, mail), jesli niesie dane, ktorych master jest poza aplikacja. Wiersz na system `S-xxx`; `nasz` dokladnie jeden.
+   `Master dla` wskazuje encje albo pola z ENTITIES/GLOSSARY. Brak wlasciciela, kierunku, czestotliwosci albo
+   `Przy awarii` = pytanie (luka integracji), nie zgadujesz. Wiedza z kodu = `[App]` + `A` `niepotwierdzone`.
+   Sekcje `## Mapa systemow` (`flowchart LR`, naglowek GENEROWANE) odtwarzasz z tabeli przy kazdym przebiegu.
+   Dla kazdej integracji `Krytyczna = tak` proponujesz `## Proces systemowy: <nazwa>` (`sequenceDiagram` z galezia
+   `alt` przy awarii) - 3-5 linijek i "tak". CO, nie JAK: bez protokolow i endpointow.
+   Aplikacja bez integracji: wiersz `nasz` i "brak integracji" ze zrodlem `[Biz]`.
+5. **RULES.md**: reguly "jezeli... to..." z numerem BR-xxx, zrodlem, powiazanymi A i R. Regula ze zrodlem `[Dok]` lub `[AI]` dostaje automatycznie A `niepotwierdzone`. Kolumne `Wymagania` wypelniaj rzetelnie - to sciezka kaskady.
+6. **Test spojnosci** (wypisz wynik):
    - kazde pojecie uzyte w RULES i ENTITIES jest w GLOSSARY
    - kazda rola w RULES i przejsciach jest w ACTORS
    - kazdy stan w RULES jest w ENTITIES
+   - kazde pole encji pochodzace spoza aplikacji ma mastera w SYSTEMS; zadna encja ani pole nie ma dwoch masterow -
+     trafienie dwoch masterow to Q `sprzeczne` (validate 17 = BLOCK)
    - **jedno pojecie = jeden zbior rekordow**: czy dwa zrodla nie nazywaja ta sama nazwa
      innego zbioru obiektow. Sprawdzasz zakres (co sie pod nazwe lapie), nie brzmienie
      definicji - dwie definicje moga brzmiec podobnie i obejmowac inne rekordy. Trafienie
@@ -51,6 +61,7 @@ Gdy intake zglosil przebudowe albo oznaczyl elementy jako `zakwestionowane`:
 - Pierwsze utworzenie plikow: piszesz sam.
 - Zmiana istniejacej definicji w GLOSSARY lub reguly BR: PYTASZ (3-5 linijek, co i dlaczego).
 - Zdjecie statusu `zakwestionowane`: PYTASZ.
+- Zmiana `Master dla`, `Przy awarii` albo `Krytyczna` w istniejacym wierszu SYSTEMS: PYTASZ (jak definicja).
 - Nie tworzysz `D-xxx` - decyzje zapisuje /sdd:interview ze slow biznesu `[Biz]`. Regula albo stan odczytany
   z kodu lub dokumentu bez slow biznesu stoi na `A` `niepotwierdzone` z tym zrodlem (`[App]`/`[Dok]`).
 - Status hasla `zatwierdzone` ustawia tylko czlowiek - przez tryb `/sdd:domain zatwierdz` ponizej.
@@ -68,7 +79,7 @@ Krok miedzy modelem a /sdd:spec: bramka /sdd:spec wymaga, zeby kazde haslo w tab
 5. Na koniec: ile zatwierdzonych / ile zostalo. Wszystkie zatwierdzone -> nastepny krok /sdd:spec.
 
 ## Na koniec
-CHANGELOG + 5 linijek: ile pojec, aktorow, encji, regul, ile brakow poszlo do pytan,
+CHANGELOG + 5 linijek: ile pojec, aktorow, encji, regul, systemow (w tym krytycznych), ile brakow poszlo do pytan,
 ile elementow zostaje `zakwestionowane`.
 Nastepny krok: dopoki jakiekolwiek haslo nie jest `zatwierdzone`, podaj `/sdd:domain zatwierdz` z liczba hasel do
 zatwierdzenia - nie proponuj /sdd:spec (jego bramka odmowi). /sdd:spec dopiero przy calym slowniku zatwierdzonym.

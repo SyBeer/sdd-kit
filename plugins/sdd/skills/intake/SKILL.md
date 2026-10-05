@@ -50,7 +50,7 @@ zrodlo przez model i dopasujesz je do tego, co juz wiesz, zamiast zauwazyc, ze n
    przebieg, sekcja per zrodlo. Wpisuj tez "brak" tam, gdzie zrodlo o czyms milczy.
 2. **Porownanie z tym, co mamy**, w tej kolejnosci (od najtwardszego):
    1. `01-interview/DECISIONS.md` (`D-xxx`) - biznes juz rozstrzygnal,
-   2. `02-domain/ENTITIES.md` - encje, pola, stany, przejscia,
+   2. `02-domain/ENTITIES.md` - encje, pola, stany, przejscia, oraz `02-domain/SYSTEMS.md` - systemy, master danych, wymiana,
    3. `02-domain/RULES.md` (`BR-xxx`),
    4. `02-domain/GLOSSARY.md`, `02-domain/ACTORS.md`,
    5. `01-interview/ASSUMPTIONS.md` (`A-xxx`),

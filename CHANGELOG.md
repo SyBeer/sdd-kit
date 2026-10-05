@@ -8,6 +8,16 @@
 - `/sdd:interview`: potwierdzenie hurtowe (jedna lista "zaznacz, co sie nie zgadza") i akceptacja as-built
   (jedna decyzja biznesu dla istniejacej aplikacji, z wyjatkami) - zeby blokada nie zasypala biznesu pytaniami.
 - Demo: raport walidacji z wierszem 16 (PASS).
+- Systemy i integracje (spec: docs/specs/systems.md): nowy plik `02-domain/SYSTEMS.md` - rejestr systemow `S-xxx`
+  (wlasciciel integracji, master danych, kierunek i czestotliwosc wymiany, zachowanie przy awarii, krytycznosc),
+  mapa systemow (mermaid `flowchart`) i proces systemowy (`sequenceDiagram` z galezia awarii) dla integracji krytycznych.
+  `/sdd:domain` buduje rejestr i sprawdza jeden master na dane; `/sdd:interview` - regula "luka integracji"
+  (zachowanie przy awarii zawsze osobnym pytaniem, poza akceptacja as-built); `/sdd:validate` - kontrole 17 BLOCK
+  (dwa mastery), 18 WARN (bez wlasciciela / zachowania przy awarii), 19 WARN (krytyczna bez procesu systemowego),
+  brak pliku = INFO; `/sdd:handover` - zadanie integracyjne z wierszem systemu i osobnym kryterium awarii.
+- Panel: liczba i lista systemow przy etapie Domain, kafelki systemow i integracji krytycznych w zakladce Modul,
+  sekcja "Systemy i integracje" w "Jak to dziala". Demo: rejestr 4 systemow z procesem kursu NBP.
+- Poprawka: wiersz tabeli ze strzalka `<->` nie jest juz brany za wiersz-wzor szablonu (`<opis>`).
 
 ## [0.30.0] - 2026-10-04
 Wydanie zbiorcze na GitHub - zawiera wszystko od 0.28.1 (wersje 0.28.2..0.28.13 byly tylko na gitea; szczegoly

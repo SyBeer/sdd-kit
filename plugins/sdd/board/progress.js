@@ -56,7 +56,8 @@ function parseTable(md) {
       head.forEach((h, i) => { row[h] = c[i] || ''; });
       return row;
     })
-    .filter(r => !/<[^>]+>/.test(r._raw));
+    // wiersz-wzor z szablonu ma <opis>; strzalka <-> (SYSTEMS.md, 0.31.0) to nie wzor - wzor musi miec litere
+    .filter(r => !/<[^<>]*[a-zA-Ząćęłńóśźż][^<>]*>/.test(r._raw));
 }
 
 // Szczegoly licznikow (zmiana 0.15.0, AC-54..AC-56): lista pozycji z plikiem, z ktorego pochodza.
@@ -202,7 +203,10 @@ function domain(req) {
   const approved = approvedGl.length;
   const ents = (read(d('ENTITIES.md')).match(/^##\s+[^<\n]+$/gm) || []).map(h => h.replace(/^##\s+/, '').trim());
   const actors = parseTable(read(d('ACTORS.md'))), rules = parseTable(read(d('RULES.md')));
-  const counts = { terms: gl.length, approved, entities: ents.length, actors: actors.length, rules: rules.length };
+  // Rejestr systemow (zmiana 0.31.0, docs/specs/systems.md AC-SY11): tylko liczby i lista - status etapu bez zmian
+  const systems = parseTable(read(d('SYSTEMS.md'))).filter(s => /^S-\d+/.test(s.id || ''));
+  const counts = { terms: gl.length, approved, entities: ents.length, actors: actors.length, rules: rules.length,
+    systems: systems.length, critical: systems.filter(s => /^tak/i.test(s.krytyczna || '')).length };
   const status = gl.length === 0 ? 'todo' : approved === gl.length ? 'done' : 'active';
   const term = g => ({ id: '', title: g.pojecie || '', status: clean(g.status), note: g.definicja || '' });
   const details = {
@@ -212,6 +216,9 @@ function domain(req) {
     rules: list('02-domain/RULES.md', rules.map(r => ({ id: r.id, title: r.regula || '', status: clean(r.status),
       note: r.wymagania ? 'wymagania: ' + r.wymagania : '' }))),
     entities: list('02-domain/ENTITIES.md', ents.map(e => ({ id: '', title: e, status: '', note: '' }))),
+    systems: list('02-domain/SYSTEMS.md', systems.map(s => ({ id: s.id, title: s.system || '', status: clean(s.status),
+      note: [s.rola, !/^-?$/.test((s['master dla'] || '').trim()) && 'master dla: ' + s['master dla'], s.wymiana, /^tak/i.test(s.krytyczna || '') && 'krytyczna']
+        .filter(x => x && x !== '-').join(' · ') }))),
   };
   return { status, counts, details };
 }
