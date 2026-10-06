@@ -249,11 +249,48 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
   .ruler{display:none}
   .statusbar{white-space:normal}
   .statusbar .sright{margin-left:0;flex-wrap:wrap;gap:4px 14px}
+  #pdf,.pdfsep{display:none}
   .statusbar .cursor{display:none}
   .topbar .qbar{flex-wrap:wrap}
   .tbar{overflow-x:auto}
   #drawer{top:auto;left:0;width:auto;max-height:75vh;border-left:0;border-top:1px solid var(--line);border-radius:10px 10px 0 0;transform:translateY(105%)}
   #drawer.open{transform:none}
+}
+/* Eksport do PDF (0.35.0, docs/specs/board-pdf.md): jedna strona o rozmiarze tablicy (@page z exportPdf), jasne kolory */
+#printhead{display:none}
+html.printing #printhead{display:block;padding:0 0 14px}
+#printhead .ph1{font-size:18px;font-weight:600;color:#24221d}
+#printhead .ph1 span{font-weight:400;color:#6f695c;font-size:14px}
+#printhead .ph2{margin-top:2px;font:11px var(--mono);color:#6f695c}
+#printhead .ph3{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:11px;color:#24221d}
+#printhead .lg{display:inline-flex;align-items:center;gap:5px}
+#printhead .sq{width:10px;height:10px;border-radius:2px;border:1px solid rgba(0,0,0,.15)}
+#printhead .sq.ev{background:var(--ev)}#printhead .sq.cmd{background:var(--cmd)}#printhead .sq.act{background:var(--act)}
+#printhead .sq.pol{background:var(--pol)}#printhead .sq.rm{background:var(--rm)}#printhead .sq.hot{background:var(--hot)}
+#printhead .sync{width:13px;height:13px;font-size:8px}
+/* Uklad eksportu: klasa printing na <html> juz przed drukiem - pomiar strony (@page) i wydruk widza ten sam uklad */
+html.printing,html.printing body{height:auto!important;overflow:visible!important;background:#fff}
+html.printing body{display:block!important;padding:24px}
+html.printing .statusbar,html.printing .topbar,html.printing .demobar,html.printing .tbar,html.printing .msg,html.printing .switched,
+html.printing #drawer,html.printing .cdock,html.printing .tip,html.printing .addnote,html.printing .ltools,html.printing .ins-h,html.printing .ins-v{display:none!important}
+html.printing .work,html.printing main{display:block!important}
+html.printing #board{overflow:visible!important;background:none!important;cursor:auto}
+html.printing .inner{zoom:1!important;width:max-content!important;min-width:0!important}
+html.printing .lane-title,html.printing .ruler,html.printing .ruler .corner{position:static!important}
+html.printing .note{cursor:auto;break-inside:avoid}
+html.printing .note.sel{outline:0}
+html.printing .note .txt{max-height:none;overflow:visible}
+html.printing .note .ans{display:block;-webkit-line-clamp:unset;overflow:visible}
+html.printing .note .meta{white-space:normal}
+html.printing{padding-right:0!important}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .statusbar,.topbar,.demobar,.tbar,.msg,.switched,#drawer,.cdock,.tip,.addnote,.ltools,.ins-h,.ins-v{display:none!important}
+  #board{overflow:visible!important}
+  .lane-title,.ruler,.ruler .corner{position:static!important}
+  .note .txt{max-height:none}
+  .note .ans{-webkit-line-clamp:unset}
+  #printhead{display:block}
 }
 </style>
 <script src="/board-ops.js"></script>
@@ -280,13 +317,15 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
   <span class="zoom" role="group" aria-label="Powiększenie">
     <button id="zout" title="Pomniejsz" aria-label="Pomniejsz">−</button><button class="fit" id="zfit" title="Dopasuj – zmieść tablicę w szerokości okna"><output id="zval">100%</output></button><button id="zin" title="Powiększ" aria-label="Powiększ">+</button>
   </span>
+  <span class="vsep pdfsep" aria-hidden="true"></span>
+  <button class="b" id="pdf" title="Eksport całej tablicy do PDF - jedna strona">PDF</button>
 </div>
 <div class="msg" id="msg" role="status"></div>
 <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
   Tablicę przełączono w innej karcie albo serwer uruchomiono z innym plikiem. Niezapisana edycja i historia Cofnij z poprzedniej tablicy zostały odrzucone.</div>
   <button class="b" id="sw-ok">Rozumiem</button></div>
 <div class="work">
-<main><div class="board" id="board"><div class="inner" id="inner"></div></div><p class="tip" id="tip"></p></main>
+<main><header id="printhead" aria-hidden="true"></header><div class="board" id="board"><div class="inner" id="inner"></div></div><p class="tip" id="tip"></p></main>
 
 <aside id="drawer" aria-label="Karteczka" aria-hidden="true">
   <button class="rail" id="rail" title="Rozwiń panel karteczki" aria-label="Rozwiń panel karteczki"><b>«</b><span>KARTECZKA</span></button>
@@ -365,6 +404,7 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
     // pasek stanu: cztery stany z pelnym opisem (0.33.0)
     $('#syncbar').innerHTML=board.notes.length?'<span class="lbl">Pliki:</span>'+['synced','changed','board','missing'].map(function(k){
       return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join(''):'';
+    $('#pdf').hidden=!board.lanes.length;
     var inner=$('#inner'); inner.innerHTML=''; inner.classList.toggle('blank',!board.lanes.length);
     if(!board.lanes.length){
       inner.innerHTML=EMPTY;
@@ -855,10 +895,11 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
   // ------------------------------------------------------------ powiekszenie
   var z=1;
   try{ z=parseFloat(localStorage.getItem('sdd-board-zoom'))||1; }catch(e){}
-  function setZoom(v){
+  function setZoom(v,noSave){
     z=Math.min(1.5,Math.max(0.5,Math.round(v*100)/100));
     document.documentElement.style.setProperty('--z',z);
     $('#zval').textContent=Math.round(z*100)+'%';
+    if(noSave) return;  // okno eksportu PDF nie zmienia zapisanego powiekszenia
     try{ localStorage.setItem('sdd-board-zoom',z); }catch(e){}
   }
   $('#zin').onclick=function(){ setZoom(z+0.1); };
@@ -870,6 +911,42 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
     setZoom(natural>avail?Math.floor(avail/natural*100)/100:1);
   };
   setZoom(z);
+
+  // ------------------------------------------------------------ eksport do PDF (0.35.0, docs/specs/board-pdf.md)
+  function printHead(){
+    var d=new Date(), p=function(v){return (v<10?'0':'')+v}, mod=$('#modbtn .mname').textContent;
+    var types=[['ev','zdarzenie'],['cmd','komenda'],['act','kto'],['pol','reguła'],['rm','widok'],['hot','nie wiemy']];
+    var states=[['synced','✓','w plikach'],['changed','↻','zmienione'],['board','●','tylko na tablicy'],['missing','!','brak w pliku']];
+    $('#printhead').innerHTML='<div class="ph1">'+esc(mod)+(board.title?' · '+esc(board.title):'')+(board.subtitle?' <span>'+esc(board.subtitle)+'</span>':'')+'</div>'+
+      '<div class="ph2">eksport '+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+' · sdd-kit</div>'+
+      '<div class="ph3">'+types.map(function(t){return '<span class="lg"><i class="sq '+t[0]+'"></i>'+t[1]+'</span>'}).join('')+
+      states.map(function(x){return '<span class="lg"><i class="sync '+x[0]+'">'+x[1]+'</i>'+x[2]+'</span>'}).join('')+'</div>';
+  }
+  // Przycisk PDF otwiera nowe okno z ta sama tablica w trybie eksportu (?pdf=1) - tam jasny motyw, 100%, uklad wydruku,
+  // strona = cala tablica i okno drukowania; okno z praca zostaje nietkniete (AC-BP3)
+  var PDF_MODE=/[?&]pdf=1(&|$)/.test(location.search), printed=false;
+  function pdfLayout(){
+    var root=document.documentElement;
+    root.setAttribute('data-theme','light'); setZoom(1,true); printHead(); root.classList.add('printing');
+    // pomiar w ukladzie eksportu (klasa printing); +2 px zapasu na zaokraglenia przegladarki
+    var inner=$('#inner'), size=BoardOps.boardPageSize(inner.scrollWidth+2, inner.scrollHeight+$('#printhead').offsetHeight+2);
+    var st=document.getElementById('pdfpage');
+    if(!st){ st=document.createElement('style'); st.id='pdfpage'; document.head.appendChild(st); }
+    st.textContent=size.css;
+  }
+  // okno eksportu: po kazdym odswiezeniu tablicy uklad i rozmiar strony od nowa; okno drukowania raz, po czcionkach
+  function pdfRendered(){
+    if(!PDF_MODE||!board.lanes.length) return;
+    pdfLayout();
+    if(printed) return;
+    printed=true; document.title=document.title+' – PDF';
+    (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){ setTimeout(function(){ pdfLayout(); window.print(); },200); });
+  }
+  function exportPdf(){
+    if(!board.lanes.length) return;
+    window.open(location.pathname+'?pdf=1','_blank');
+  }
+  $('#pdf').onclick=exportPdf;
 
   // ------------------------------------------------------------ na zywo
   var knownFile=null, lastModuleName='';
@@ -896,7 +973,7 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
       board=b; board.notes=board.notes||[]; board.lanes=board.lanes||[];
       if(got==='external'&&had) say('Tablicę zmieniono poza tą kartą (np. agent) – historię cofania wyczyszczono.');
       lastModuleName=(b._module&&b._module.name)||'';
-      undoButtons(); safeRender();
+      undoButtons(); safeRender(); pdfRendered();
     };
     es.onerror=function(){$('#conn').textContent='przerwane, łączę…';$('#live').classList.add('off');es.close();setTimeout(connect,1500)};
   }

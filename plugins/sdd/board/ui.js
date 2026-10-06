@@ -245,7 +245,8 @@
       const logo = bar.querySelector('.logo');
       if (logo) logo.title = 'sdd-kit ' + x.text;
     }).catch(function () {});
-    if (!b) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
+    // okno eksportu PDF tablicy (?pdf=1): bez okna Claude - nie przejmuje rozmiaru terminala (docs/specs/board-pdf.md)
+    if (!b && !/[?&]pdf=1(&|$)/.test(location.search)) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
   }
 
   // ---------------------------------------------------------------- nowa wersja z GitHuba (0.27.0, docs/specs/update.md)

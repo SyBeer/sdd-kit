@@ -347,5 +347,12 @@
     };
   }
 
-  return { boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, copyNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
+  // Eksport do PDF (0.35.0, docs/specs/board-pdf.md AC-BP2): jedna strona o rozmiarze calej tablicy + 24 px marginesu.
+  function boardPageSize(w, h) {
+    const side = function (v, min) { v = Number(v); return Math.max(min, Math.ceil((isFinite(v) && v > 0 ? v : 0) + 48)); };
+    const W = side(w, 400), H = side(h, 300);
+    return { w: W, h: H, css: '@page{size:' + W + 'px ' + H + 'px;margin:0}' };
+  }
+
+  return { boardPageSize, boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, copyNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
 });

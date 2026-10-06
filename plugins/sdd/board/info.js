@@ -244,7 +244,8 @@ const SECTIONS = [
     'Karteczki: zdarzenie, komenda, kto, reguła, widok, „nie wiemy” (pytanie).',
     'Tablica to widok, pliki w requirements/ są prawdą. Po warsztacie /sdd:board sync przenosi karteczki do plików.',
     'Znaczniki: ✓ w plikach, ↻ zmieniona po synchronizacji, ! numeru nie ma w pliku.',
-    'Karteczki dopisane w przeglądarce są słowami biznesu [Biz].'] },
+    'Karteczki dopisane w przeglądarce są słowami biznesu [Biz].',
+    'Przycisk PDF w pasku narzędzi otwiera nowe okno z całą tablicą na jednej dużej stronie (nie na kartkach A4) - w oknie drukowania wybierz „Zapisz jako PDF”. Najlepiej w Chrome albo Edge.'] },
   { title: 'Panel i serwer', items: [
     'Serwer uruchamiasz komendą sdd-board w folderze modułu (albo z HQAI); zostaw okno terminala otwarte.',
     'Panel, tablica i te zakładki odświeżają się same, gdy Claude zmienia pliki.',

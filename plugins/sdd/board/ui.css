@@ -8,7 +8,7 @@ html{scrollbar-gutter:stable}
   --accent:#e39a3b; --hot-ink:#c2412f; --ok:#2f9e5b;
   --status:#2a2823; --status-ink:#e4dfd3;
   /* kolory karteczek (tablica); --hot = karteczka "nie wiemy", czerwony tekst = --hot-ink */
-  --ev:#ffbb73; --cmd:#a2cdf3; --act:#f8e07a; --pol:#d8bbf0; --rm:#ade0a9; --hot:#ff9d8d;
+  --ev:#ffbb73; --cmd:#a2cdf3; --act:#f8e07a; --pol:#d8bbf0; --rm:#ade0a9; --hot:#f25a48;
   /* stany etapow (Panel) i znaczniki */
   --st-done:#ade0a9; --st-part:#f8e07a; --st-work:#ffbb73; --st-stale:#a85a06; --st-app:#bcd8f5;
   --shadow:0 4px 14px rgba(40,30,10,.14);
@@ -22,7 +22,7 @@ html{scrollbar-gutter:stable}
   --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;--cur-row:#2a261f;
   --input:#1b1a17;--input-line:#46433b;--dash:#4a463d;
   --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--status:#11100e;--status-ink:#c9c3b6;
-  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e57c6c;
+  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e8503f;
   --st-done:#8ec58b;--st-part:#dcc65e;--st-work:#e89a52;--st-stale:#f0a64a;--st-app:#7fb1e6;
   --shadow:0 6px 20px rgba(0,0,0,.5)}}
 :root[data-theme="dark"]{color-scheme:dark;
@@ -30,7 +30,7 @@ html{scrollbar-gutter:stable}
   --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;--cur-row:#2a261f;
   --input:#1b1a17;--input-line:#46433b;--dash:#4a463d;
   --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--status:#11100e;--status-ink:#c9c3b6;
-  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e57c6c;
+  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e8503f;
   --st-done:#8ec58b;--st-part:#dcc65e;--st-work:#e89a52;--st-stale:#f0a64a;--st-app:#7fb1e6;
   --shadow:0 6px 20px rgba(0,0,0,.5)}
 /* Czcionki IBM Plex (0.33.0, AC-B54): lokalnie z /fonts/ (OFL, fonts/OFL.txt) - dzialaja tez bez internetu. Uzywa ich tablica. */

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.35.0] - 2026-10-06
+- Tablica: eksport do PDF jako jedna duza strona (docs/specs/board-pdf.md, AC-BP1..AC-BP6). Przycisk "PDF" w pasku
+  narzedzi otwiera nowe okno z cala tablica w ukladzie wydruku i okno drukowania - jedna strona o rozmiarze tablicy
+  (nie kartki A4), wybierasz "Zapisz jako PDF". W PDF: nazwa modulu, tytul tablicy, data eksportu, legenda typow i stanow plikow, wszystkie
+  procesy i kolumny w skali 100%, pelny tekst karteczek i odpowiedzi; bez przyciskow, paskow i panelu. Zawsze jasne
+  kolory; okno z praca zostaje bez zmian (motyw, powiekszenie, miejsce, edycja). Dziala tez w demo;
+  na telefonie przycisku nie ma. Docelowo Chrome / Edge (Safari moze dzielic na kartki).
+- Karteczki "nie wiemy" znow wyraznie czerwone: `#f25a48` w jasnym motywie, `#e8503f` w ciemnym (od 0.33.0 byly
+  bladorozowe `#ff9d8d`). Tekst na karteczce dalej ciemny (kontrast 5,2:1 / 4,8:1).
+
 ## [0.34.2] - 2026-10-06
 - Okno Claude idzie za modulem (docs/specs/claude-dock.md AC-T16): kazdy modul ma wlasna sesje Claude Code w swoim
   folderze. Po zmianie modulu okno od razu pokazuje sesje nowego modulu (albo "Uruchom Claude" w jego folderze);

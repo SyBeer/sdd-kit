@@ -283,3 +283,5 @@ pytania, demo, telefon <= 640 px) bez zmian. Panel, Modul, Jak to dziala, Konfig
 - AC-B57: klawisze 1-7 przy otwartej karteczce (poza polem tekstowym, bez Cmd/Ctrl) ustawiaja typ w formularzu
   (zdarzenie, komenda, kto, regula, widok, nie wiemy, odstep); w demo wylaczone; zapis dalej przyciskiem Zapisz.
 - AC-B58 (reczne): wyglad zgodny z makieta w jasnym i ciemnym motywie; telefon - panel od dolu, strona przewija sie.
+- Zmiana 0.35.0 (uwaga usera: "karteczki 'nie wiem' musza byc CZERWONE"): `--hot` = `#f25a48` (jasny) / `#e8503f` (ciemny)
+  zamiast `#ff9d8d` / `#e57c6c` z handoffu; tekst karteczki ciemny `#1d1b16` (kontrast 5,2:1 / 4,8:1).

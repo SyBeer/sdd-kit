@@ -75,7 +75,9 @@ test('AC-B56: tablica - id dla skryptu, pasek stanu, linijka kolumn, karteczka 1
   assert.match(html, /#drawer\{[^}]*width:300px/);
   // tokeny wspolne dla stron w ui.css od 0.34.0 (AC-F1)
   assert.match(css, /--hot-ink:#c2412f/);
-  assert.match(css, /--hot:#ff9d8d/);
+  // karteczka "nie wiemy" czerwona (0.35.0, uwaga usera: "karteczki nie wiem musza byc CZERWONE")
+  assert.match(css, /--hot:#f25a48/);
+  assert.match(css, /--hot:#e8503f/);
   assert.match(html, /ODPOWIEDŹ CZEKA/);
   assert.match(css, /--sans:"IBM Plex Sans"/);
   assert.match(html, /font-family:var\(--sans\)/);
