@@ -141,7 +141,59 @@
     return Math.max(320, Math.min(n > 0 ? n : 520, max));
   }
 
-  const api = { pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, slug, tabTitle, KEY };
+  // Opcje xterm.js (AC-W11). Windows: ConPTY sam przerysowuje zawiniete linie - xterm musi o tym wiedziec
+  // (windowsPty), inaczej zmiana szerokosci okna psuje ekran Claude.
+  function termOptions(state) {
+    const o = { fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace', fontSize: 13, cursorBlink: true, scrollback: 5000 };
+    if (state && state.platform === 'win32') o.windowsPty = { backend: 'conpty', buildNumber: state.windowsBuild || undefined };
+    return o;
+  }
+  // Klawisze kopiowania / wklejania poza macOS (AC-W11): Ctrl+C z zaznaczeniem kopiuje (bez zaznaczenia to przerwanie
+  // dla Claude), Ctrl+V wkleja przez przegladarke. Na macOS robia to Cmd+C / Cmd+V same.
+  function termKey(e, hasSelection, isMac) {
+    if (isMac || !e || e.type !== 'keydown' || !e.ctrlKey || e.altKey || e.metaKey) return null;
+    const k = String(e.key || '').toLowerCase();
+    if (k === 'c' && hasSelection) return 'copy';
+    if (k === 'v') return 'paste';
+    return null;
+  }
+
+  // Zawartosc gornego paska (0.33.0, AC-B55). Tablica (data-page="board"): odchudzony naglowek z handoffu - logo,
+  // sdd-kit / modul (gniazdo .slot-mod), krotkie zakladki, gniazdo pytan (.slot-q), motyw jednym przyciskiem.
+  // Pozostale strony bez zmian. Gniazda wypelnia render() elementami ze strony (data-slot) - te same wezly.
+  const SHORT = { 'Panel modułu': 'Panel', 'Tablica warsztatowa': 'Tablica' };
+  function topbarHtml(page, b, t) {
+    const list = tabs(page, b);
+    const claude = b ? '' : '<button type="button" class="cl-btn" aria-pressed="false" title="Claude Code w oknie z prawej, w folderze modułu">Claude</button>';
+    if (page === 'board') {
+      const next = t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾'];
+      return '<span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
+        '<span class="crumb"><span class="kit">sdd-kit</span><span class="sl">/</span><span class="slot-mod"></span></span>' +
+        '<div class="tabs">' + list.map(function (x) {
+          const l = SHORT[x.label] || x.label;
+          return x.current ? '<span class="tab" aria-current="page">' + l + '</span>' : '<a class="tab" href="' + x.href + '">' + l + '</a>';
+        }).join('') + '</div>' +
+        '<div class="right"><span class="slot-q"></span><span class="vsep" aria-hidden="true"></span>' +
+        '<a class="ver" target="_blank" rel="noopener" hidden></a>' +
+        '<button type="button" class="theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
+        claude + '</div>';
+    }
+    // Twoj modul: link do przykladu w nowym oknie; demo: powrot do Twojego modulu (zmiana 0.12.0)
+    const link = b ? '<a class="xlink" href="/"><span class="long">← Twój moduł</span><span class="short">← Twój</span></a>'
+      : '<a class="xlink" href="/demo" target="_blank" rel="noopener"><span class="long">Przykład gotowego modułu ↗</span><span class="short">Przykład ↗</span></a>';
+    return '<div class="tabs">' + list.map(function (x) {
+        const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
+        return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
+      }).join('') + '</div>' +
+      '<div class="right">' + claude +
+      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + link +
+      '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
+        return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
+          (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
+      }).join('') + '</div></div>';
+  }
+
+  const api = { topbarHtml, pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -158,26 +210,21 @@
 
   function mark(bar, t) {
     bar.querySelectorAll('input[name="sdd-theme"]').forEach(function (i) { i.checked = i.value === t; });
+    const tb = bar.querySelector('.theme-btn');  // tablica: jeden przycisk ☾/☀ (0.33.0)
+    if (tb) { const n = t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾'];
+      tb.setAttribute('data-next', n[0]); tb.title = n[1]; tb.setAttribute('aria-label', n[1]); tb.textContent = n[2]; }
   }
 
   function render(bar) {
     const page = bar.getAttribute('data-page');
     const t = load();
     const b = base(location.pathname);
-    // Twoj modul: link do przykladu w nowym oknie; demo: powrot do Twojego modulu (zmiana 0.12.0)
-    const link = b ? '<a class="xlink" href="/"><span class="long">← Twój moduł</span><span class="short">← Twój</span></a>'
-      : '<a class="xlink" href="/demo" target="_blank" rel="noopener"><span class="long">Przykład gotowego modułu ↗</span><span class="short">Przykład ↗</span></a>';
-    bar.innerHTML =
-      '<div class="tabs">' + tabs(page, b).map(function (x) {
-        const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
-        return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
-      }).join('') + '</div>' +
-      '<div class="right">' + (b ? '' : '<button type="button" class="cl-btn" aria-pressed="false" title="Claude Code w oknie z prawej, w folderze modułu">Claude</button>') +
-      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + link +
-      '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
-        return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
-          (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
-      }).join('') + '</div></div>';
+    // Gniazda tablicy (0.33.0): przycisk modulu i pytania stoja w HTML strony, tu tylko trafiaja na miejsce
+    const slots = [].slice.call(bar.querySelectorAll('[data-slot]'));
+    bar.innerHTML = topbarHtml(page, b, t);
+    slots.forEach(function (el) { const to = bar.querySelector('.slot-' + el.getAttribute('data-slot')); if (to) to.replaceWith(el); });
+    const tb = bar.querySelector('.theme-btn');
+    if (tb) tb.onclick = function () { save(pickTheme(tb.getAttribute('data-next'), false)); apply(); mark(bar, load()); };
     bar.addEventListener('change', function (e) {
       if (e.target.name !== 'sdd-theme') return;
       save(pickTheme(e.target.value, false)); apply();
@@ -193,7 +240,10 @@
     fetch(b + '/api/version').then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
       const x = versionBadge(v), el = bar.querySelector('.ver');
       if (!x || !el) return;
-      el.textContent = x.text; el.title = x.title; el.href = x.href; el.hidden = false; el.classList.toggle('stale', x.stale);
+      el.textContent = x.text; el.title = x.title; el.href = x.href; el.classList.toggle('stale', x.stale);
+      // tablica: wersja w podpowiedzi logo, w pasku tylko ostrzezenie (0.33.0, AC-B55)
+      const logo = bar.querySelector('.logo');
+      if (logo) { logo.title = 'sdd-kit ' + x.text + (x.stale ? '\n' + x.title : ''); el.hidden = !x.stale; } else el.hidden = false;
     }).catch(function () {});
     if (!b) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
   }
@@ -304,9 +354,12 @@
       q('.cd-run').textContent = resume ? 'Wznów rozmowę' : state.exitCode != null && !run ? 'Uruchom ponownie' : 'Uruchom Claude';
       q('.cd-run').title = resume ? 'Ostatnia rozmowa z Claude w tym folderze (claude --continue)' : '';
       const dir = run ? state.cwd : state.module, c = q('.cd-cwd');
-      c.textContent = dir ? '· ' + dir.split('/').filter(Boolean).pop() + (run && state.module && state.module !== state.cwd ? ' (inny moduł)' : '') : '';
+      // Windows: sciezka z ukosnikami wstecznymi (C:\\Users\\...\\modul) - nazwa folderu, nie cala sciezka
+      c.textContent = dir ? '· ' + dir.split(/[\\/]/).filter(Boolean).pop() + (run && state.module && state.module !== state.cwd ? ' (inny moduł)' : '') : '';
       c.title = dir || '';
-      if (!state.available) msg('Terminal niedostępny: serwer potrzebuje Pythona 3 (macOS / Linux). Uruchom Claude Code w osobnym oknie, w folderze modułu.');
+      // ConPTY: xterm przerysowuje jak Windows (AC-W11); stan moze przyjsc po utworzeniu terminala
+      if (term && state.platform === 'win32') term.options.windowsPty = termOptions(state).windowsPty;
+      if (!state.available) msg(state.reason || 'Terminal niedostępny. Uruchom Claude Code w osobnym oknie, w folderze modułu.');
       else if (!run && state.exitCode != null) msg('Sesja zakończona (kod ' + state.exitCode + ').');
       else if (!run && resume) msg('W tym module jest zapisana rozmowa z Claude - możesz ją wznowić albo zacząć nową.');
       else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (state.module ? ' ' + state.module : '') + '.');
@@ -364,7 +417,19 @@
     function setup() {
       return loadXterm().then(function () {
         if (term) return;
-        term = new window.Terminal({ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 13, cursorBlink: true, scrollback: 5000 });
+        term = new window.Terminal(termOptions(state));
+        // Windows / Linux: Ctrl+C z zaznaczeniem kopiuje, Ctrl+V wkleja (xterm domyslnie wysyla ^C / ^V) - AC-W11
+        const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+        term.attachCustomKeyEventHandler(function (e) {
+          const k = termKey(e, term.hasSelection(), isMac);
+          if (k === 'copy') {
+            const sel = term.getSelection();
+            if (navigator.clipboard) navigator.clipboard.writeText(sel).catch(function () {});
+            term.clearSelection(); e.preventDefault();
+            return false;
+          }
+          return k !== 'paste';   // false: xterm nie wysyla ^V, przegladarka robi wklejenie (zdarzenie paste)
+        });
         fit = new window.FitAddon.FitAddon();
         term.loadAddon(fit);
         term.open(q('.cd-term'));

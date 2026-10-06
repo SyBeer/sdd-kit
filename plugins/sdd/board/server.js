@@ -267,7 +267,10 @@ function termState() {
   // zapisana rozmowa Claude Code w folderze modulu -> mozna wznowic po restarcie serwera (AC-T12)
   let canResume = false;
   if (mod) { try { canResume = terminal.hasHistory(fs.realpathSync(mod)); } catch (e) { canResume = false; } }
-  return Object.assign(term.state(), { available: terminal.available(), module: mod, canResume });
+  // platform / windowsBuild: przegladarka ustawia xterm pod ConPTY; reason: dlaczego terminal niedostepny (AC-W11)
+  const av = terminal.availability();
+  return Object.assign(term.state(), { available: av.ok, reason: av.reason, platform: process.platform,
+    windowsBuild: process.platform === 'win32' ? terminal.windowsBuild(require('os').release()) : null, module: mod, canResume });
 }
 ['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { term.stop(); if (sig !== 'exit') process.exit(0); }));
 function termRoute(req, res, url) {
@@ -284,7 +287,7 @@ function termRoute(req, res, url) {
     let body = {};
     try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
     if (url === '/api/term/start') {
-      if (!terminal.available()) return json(res, 501, { error: 'Terminal niedostępny: potrzebny Python 3 (macOS / Linux).' });
+      if (!terminal.available()) return json(res, 501, { error: terminal.availability().reason });
       if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
       try { term.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true }); }
       catch (e) { return json(res, 500, { error: e.message }); }
@@ -321,8 +324,18 @@ const ASSETS = { '/board-ops.js': 'text/javascript', '/ui.js': 'text/javascript'
 const ICONS = { '/favicon.svg': ['favicon.svg', 'image/svg+xml'], '/favicon.png': ['favicon.png', 'image/png'],
   '/favicon.ico': ['favicon.png', 'image/png'], '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'] };
 
+// Czcionki IBM Plex (0.33.0, AC-B54): tylko pliki .woff2 z board/fonts/, nazwa bez sciezki
+const FONT = /^\/fonts\/(ibm-plex-[a-z0-9-]+\.woff2)$/;
+
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://localhost');
+  const fm = FONT.exec(u.pathname);
+  if (fm) {
+    const f = path.join(__dirname, 'fonts', fm[1]);
+    if (!fs.existsSync(f)) return json(res, 404, { error: 'Brak czcionki.' });
+    res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'max-age=604800' });
+    return fs.createReadStream(f).pipe(res);
+  }
   if (ICONS[u.pathname]) {
     res.writeHead(200, { 'Content-Type': ICONS[u.pathname][1], 'Cache-Control': 'max-age=86400' });
     return fs.createReadStream(path.join(__dirname, ICONS[u.pathname][0])).pipe(res);

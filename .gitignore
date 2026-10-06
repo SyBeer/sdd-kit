@@ -3,3 +3,6 @@
 /.env
 /config.json
 /bin/
+# materialy projektowe (handoff wygladu) - tylko lokalnie
+/design_handoff_tablica_warsztatowa/
+/Prace nad wyglądem strony.zip

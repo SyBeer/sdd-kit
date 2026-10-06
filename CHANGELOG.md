@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.33.0] - 2026-10-06
+- Tablica warsztatowa - odchudzony interfejs wg `design_handoff_tablica_warsztatowa` (spec: docs/specs/board-ui.md,
+  AC-B54..AC-B58). Zmienia sie tylko wyglad, logika tablicy bez zmian; Panel, Modul, Jak to dziala, Konfiguracja
+  bez zmian.
+  - pasek stanu (26 px): polaczenie, "Pliki:" z czterema stanami i pelnym opisem, odpowiedzi czekajace na zapis
+    (klik kopiuje `/sdd:board sync`), zaznaczona karteczka albo liczby;
+  - naglowek (36 px) zamiast paska zakladek i "Wymagania do modulu": logo, `sdd-kit / modul ▾`, krotkie zakladki,
+    grupa pytan (liczba, "+N z pliku", Przeglad, Ukryj/Pokaz), motyw jednym przyciskiem ☾/☀, Claude; wersja w
+    podpowiedzi logo, w pasku tylko ostrzezenie;
+  - pasek narzedzi (34 px): + Karteczka, + Proces, Cofnij / Ponow tekstem, powiekszenie z wartoscia = Dopasuj;
+  - tablica od krawedzi do krawedzi, kropki co 14 px, linijka numerow kolumn, nazwa procesu 132 px;
+  - karteczka 128 px bez obrotu, meta w jednej linii (ID · autor · data), znaczek stanu w prawym gornym rogu
+    takze dla "tylko na tablicy", etykieta "ODPOWIEDZ CZEKA" zamiast obrysu;
+  - panel karteczki 300 px: typy jako zwarta lista z opisem i klawiszem, pola z malymi etykietami, przyciski
+    Zapisz / Anuluj / Duplikuj / ↑ ↓ / Usun, status na dole; bez zaznaczenia - lista skrotow;
+  - klawisze 1-7 ustawiaja typ otwartej karteczki (poza polem tekstowym, nie w demo);
+  - nowe, cieplejsze tokeny jasnego i ciemnego motywu; `--hot` = kolor karteczki, `--hot-ink` = czerwony tekst;
+  - czcionki IBM Plex Sans i Mono lokalnie w `board/fonts/` (OFL), `/fonts/*.woff2` z serwera - dzialaja offline.
+- Poprawka: znaczek stanu "tylko na tablicy" (klasa `board`) nie dziedziczy juz stylu kontenera tablicy.
+- Okno Claude Code na Windows 10 / 11 (spec: docs/specs/claude-dock.md, czesc "Windows 10 / 11"): pseudokonsola
+  ConPTY przez pomocnika w C# (`board/conpty.cs`) kompilowanego przez Windows PowerShell 5.1 - bez Pythona i bez
+  zaleznosci npm. Pomocnik przez `-EncodedCommand` (zasady wykonywania skryptow go nie dotycza), bez migajacego
+  okna; `claude` i jego procesy w obiekcie zadania - Zakoncz i koniec serwera nie zostawiaja sierot; polskie znaki
+  i emoji w obie strony; `claude` wybierany kolejno: `SDD_CLAUDE_CMD`, `claude.exe` (takze `~/.local/bin`),
+  cel shimu npm bezposrednio (bez pliku wsadowego i `.ps1`), `cmd /c claude`. Czytelne komunikaty, gdy terminal
+  niedostepny (Windows starszy niz 1809, brak PowerShell, Constrained Language / AppLocker).
+- Przegladarka: xterm.js w trybie ConPTY (`windowsPty`) - zmiana szerokosci okna nie psuje ekranu; poza macOS
+  Ctrl+C z zaznaczeniem kopiuje, Ctrl+V wkleja; czcionka Cascadia Mono / Consolas; nazwa folderu modulu
+  z windowsowej sciezki. `GET /api/term`: `platform`, `windowsBuild`, `reason`.
+- Testy: `test/terminal-windows.test.js` (AC-W1..AC-W12) i workflow `terminal-windows` na `windows-latest`
+  i `windows-11-arm` - prawdziwy ConPTY i prawdziwy `claude` z npm, takze z TEMP i folderem ze spacja i polskimi znakami.
+
 ## [0.32.0] - 2026-10-05
 - Wersja skilli w sesjach Claude Code (spec: docs/specs/session-version.md): plugin ma hooki `SessionStart`
   i `SessionEnd` (`hooks/hooks.json`, `board/session-mark.js`) - sesja zapisuje w `~/.sdd-kit/sessions/` wersje

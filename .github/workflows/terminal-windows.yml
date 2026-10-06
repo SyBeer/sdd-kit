@@ -1,0 +1,49 @@
+# Okno Claude Code na prawdziwym Windows (spec: docs/specs/claude-dock.md, czesc "Windows 10 / 11", AC-W1..AC-W12).
+# Prawdziwa pseudokonsola ConPTY, Windows PowerShell 5.1 (kompilator C# 5), prawdziwy Claude Code z npm - bez atrap.
+# Dwa przebiegi: zwykle sciezki oraz TEMP i folder modulu ze spacja i polskimi znakami (jak "C:\Users\Jan Kowalski").
+name: terminal-windows
+on:
+  push:
+    paths: ['plugins/sdd/board/terminal.js', 'plugins/sdd/board/conpty.cs', 'plugins/sdd/board/server.js',
+            'plugins/sdd/board/ui.js', 'plugins/sdd/board/test/terminal*.test.js', '.github/workflows/terminal-windows.yml']
+  workflow_dispatch:
+
+jobs:
+  conpty:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Claude Code (npm) i wersje
+        shell: cmd
+        run: |
+          call npm install -g @anthropic-ai/claude-code
+          ver
+          node -p "process.arch + ' ' + require('os').release()"
+          where claude
+          call claude --version
+          powershell -NoProfile -Command "$PSVersionTable.PSVersion.ToString(); $ExecutionContext.SessionState.LanguageMode"
+      - name: Testy terminala (ConPTY, prawdziwy claude)
+        shell: cmd
+        env: { SDD_TEST_REAL_CLAUDE: '1' }
+        run: node --test --test-reporter=spec --test-timeout=120000 plugins/sdd/board/test/terminal-windows.test.js plugins/sdd/board/test/terminal.test.js
+      - name: Testy terminala - TEMP ze spacja i polskimi znakami
+        shell: pwsh
+        run: |
+          $t = 'C:\tmp\Jan Kowalski\Zażółć gęślą'
+          New-Item -ItemType Directory -Force $t | Out-Null
+          $env:TEMP = $t; $env:TMP = $t; $env:SDD_TEST_REAL_CLAUDE = '1'
+          node --test --test-reporter=spec --test-timeout=120000 plugins/sdd/board/test/terminal-windows.test.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Zadnych osieroconych procesow po testach
+        if: always()
+        shell: cmd
+        run: |
+          tasklist /FI "IMAGENAME eq claude.exe"
+          tasklist /FI "IMAGENAME eq node.exe" /V
+          tasklist /FI "IMAGENAME eq OpenConsole.exe"

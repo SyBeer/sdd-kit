@@ -262,3 +262,24 @@ Agent (Claude Code) dalej pisze do tego samego `board.json`; format pliku bez zm
 
 ## Wyglad
 Tokeny kolorow z `board/index.html` (`:root`), jasny i ciemny motyw bez zmian.
+
+## Zmiana 0.33.0: odchudzony interfejs tablicy (design_handoff_tablica_warsztatowa)
+Wzorzec: `design_handoff_tablica_warsztatowa/README.md` i makieta `Tablica warsztatowa v2.dc.html` (hi-fi).
+Zmienia sie tylko wyglad i uklad tablicy; logika (`board-ops.js`, zapis, Cofnij, przeciaganie, strefy wstawiania,
+pytania, demo, telefon <= 640 px) bez zmian. Panel, Modul, Jak to dziala, Konfiguracja - bez zmian.
+- AC-B54: czcionki IBM Plex Sans (400-700) i Mono (400-600), latin + latin-ext, lokalnie w `board/fonts/` (OFL,
+  `OFL.txt`); serwer podaje `/fonts/<nazwa>.woff2` jako `font/woff2` tylko dla plikow z tego folderu, inne nazwy 404;
+  `@font-face` w `ui.css`.
+- AC-B55: pasek u gory tablicy (`data-page="board"`): logo, `sdd-kit / <modul ▾>` (`#modbtn`), krotkie zakladki
+  (Panel, Tablica, Modul, Jak to dziala, Konfiguracja), grupa pytan (`#qbar`), motyw jako jeden przycisk ☾/☀,
+  Claude; wersja tylko w `title` logo, widoczna w pasku tylko jako ostrzezenie (`.ver.stale`). Pasek innych stron
+  bez zmian (dlugie nazwy zakladek, para przyciskow motywu, wersja, link do przykladu).
+- AC-B56: `index.html` zachowuje id, z ktorych korzysta skrypt (`#addnote`, `#addlane`, `#undo`, `#redo`, `#zin`,
+  `#zout`, `#zfit`, `#zval`, `#syncbar`, `#qbar`, `#conn`, `#drawer`, `#f-text`, `#f-type`, `#f-lane`, `#f-ref`,
+  `#ansbox`, `#save`, `#cancel`, `#dup`, `#del`, `#up`, `#down`, `#src`, `#fold`, `#rail`, `#close`, `#modbtn`,
+  `#modmenu`, `#order`, `#ok`, `#msg`, `#switched`, `#board`, `#inner`); pasek stanu z `#conn` i `#syncbar`
+  (cztery stany z pelnym opisem), linijka numerow kolumn, karteczka 128 px bez obrotu ze znaczkiem stanu takze
+  dla "tylko na tablicy", panel 300 px, tokeny z handoffu (`--hot` = kolor karteczki, `--hot-ink` = czerwony tekst).
+- AC-B57: klawisze 1-7 przy otwartej karteczce (poza polem tekstowym, bez Cmd/Ctrl) ustawiaja typ w formularzu
+  (zdarzenie, komenda, kto, regula, widok, nie wiemy, odstep); w demo wylaczone; zapis dalej przyciskiem Zapisz.
+- AC-B58 (reczne): wyglad zgodny z makieta w jasnym i ciemnym motywie; telefon - panel od dolu, strona przewija sie.

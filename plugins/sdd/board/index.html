@@ -10,313 +10,353 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/ui.js"></script>
 <style>
+/* Tablica warsztatowa - odchudzony interfejs (0.33.0, design_handoff_tablica_warsztatowa, docs/specs/board-ui.md AC-B56).
+   --hot to kolor karteczki "nie wiemy" (jasny, ciemny tekst); czerwony tekst (proces pytan, Usun, bledy) = --hot-ink. */
 :root{
-  --bg:#e9e6df; --board:#f6f4ee; --ink:#26241f; --muted:#6b675c; --line:#cfcabd; --panel:#fff;
-  --ev:#f5a13a; --cmd:#5aa0e6; --act:#f7e36b; --pol:#c79ae3; --rm:#8fd18f; --hot:#e8503f;
-  --shadow:0 2px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,0,0,.10);
-  --draft:#c9c6be; --draft-ink:#4a473f;
+  --bg:#f3efe6; --board:#f3efe6; --panel:#fbf9f4; --line:#e2dccf; --line-soft:#ece7dc;
+  --ink:#24221d; --muted:#6f695c; --faint:#a29b8b; --hover:#f1ece1;
+  --input:#fff; --input-line:#cfc7b6; --dot:#dcd5c5; --dash:#cbc3b1;
+  --accent:#e39a3b; --hot-ink:#c2412f; --status:#2a2823; --status-ink:#e4dfd3;
+  --lane-bg:rgba(251,249,244,.96);
+  --ev:#ffbb73; --cmd:#a2cdf3; --act:#f8e07a; --pol:#d8bbf0; --rm:#ade0a9; --hot:#ff9d8d;
+  --draft:#ddd8cc; --note-shadow:0 1px 1px rgba(60,40,0,.12); --shadow:0 4px 14px rgba(40,30,10,.14);
+  --s-synced:#2f9e5b; --s-changed:#d9770b; --s-board:#7b828c; --s-missing:#d63a2f;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   --z:1;
 }
 :root{color-scheme:light dark}
 :root[data-theme="light"]{color-scheme:light}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--draft:#5a5850;--draft-ink:#ece8dd;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
-:root[data-theme="dark"]{color-scheme:dark;--draft:#5a5850;--draft-ink:#ece8dd;--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1a17;--board:#1b1a17;--panel:#23221e;--line:#36342e;--line-soft:#2e2c27;
+  --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;
+  --input:#1b1a17;--input-line:#46433b;--dot:#2c2a25;--dash:#4a463d;
+  --accent:#f0a64a;--hot-ink:#f08676;--status:#11100e;--status-ink:#c9c3b6;
+  --lane-bg:rgba(35,34,30,.96);
+  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e57c6c;
+  --draft:#5a574f;--note-shadow:0 1px 2px rgba(0,0,0,.5);--shadow:0 6px 20px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#1b1a17;--board:#1b1a17;--panel:#23221e;--line:#36342e;--line-soft:#2e2c27;
+  --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;
+  --input:#1b1a17;--input-line:#46433b;--dot:#2c2a25;--dash:#4a463d;
+  --accent:#f0a64a;--hot-ink:#f08676;--status:#11100e;--status-ink:#c9c3b6;
+  --lane-bg:rgba(35,34,30,.96);
+  --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#e57c6c;
+  --draft:#5a574f;--note-shadow:0 1px 2px rgba(0,0,0,.5);--shadow:0 6px 20px rgba(0,0,0,.5)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
-header{padding:16px 20px 6px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline}
-h1{margin:0;font-size:24px;font-weight:700}
-header p{margin:0;color:var(--muted)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit}
-button.b{font-size:13.5px;padding:6px 11px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+button.b{display:inline-flex;align-items:center;height:24px;padding:0 9px;font-size:12px;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}
+button.b[hidden]{display:none}
 button.b:hover{border-color:var(--ink)}
-button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-button.b.danger{color:var(--hot)}
+button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+button.b.danger{color:var(--hot-ink)}
+button.b:disabled{color:var(--faint);border-color:var(--line);cursor:not-allowed}
+button.b:focus-visible,.zoom button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+code{font-family:var(--mono);font-size:11.5px;background:var(--hover);padding:1px 4px;border-radius:3px}
 
-/* pasek: legenda + narzedzia */
-.bar{display:flex;flex-wrap:wrap;gap:8px 14px;padding:4px 20px 10px;font-size:13px;color:var(--muted);align-items:center}
-.legend{display:flex;flex-wrap:wrap;gap:6px 12px}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:14px;height:14px;display:inline-block;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
-.tools{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* 1. pasek stanu (26 px) */
+.statusbar{min-height:26px;flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:2px 16px;padding:2px 10px;background:var(--status);color:var(--status-ink);font-size:11.5px;white-space:nowrap}
+.statusbar .live{display:inline-flex;align-items:center;gap:6px}
+.statusbar .live i{width:7px;height:7px;border-radius:50%;background:#5cc27a}
+.statusbar .live.off i{background:#d9770b}
+.syncbar{display:inline-flex;flex-wrap:wrap;align-items:center;gap:2px 12px}
+.syncbar:empty{display:none}
+.syncbar .lbl{font-weight:600}
+.syncbar .si{display:inline-flex;align-items:center;gap:5px}
+.sright{margin-left:auto;display:inline-flex;align-items:center;gap:14px}
+#pend{height:20px;padding:0 8px;border-radius:3px;border:0;background:var(--accent);color:#1d1b16;font-size:11.5px;font-weight:600;cursor:pointer}
+#pend[hidden]{display:none}
+#pend .m{font-family:var(--mono);font-weight:500}
+.cursor{font-family:var(--mono);overflow:hidden;text-overflow:ellipsis}
+/* znaczek stanu: ten sam kolor w pasku, na karteczce i w panelu */
+.sync{display:grid;place-items:center;border-radius:50%;color:#fff;font-weight:700;font-style:normal;line-height:1}
+.sync.synced{background:var(--s-synced)}.sync.changed{background:var(--s-changed)}.sync.board{background:var(--s-board)}.sync.missing{background:var(--s-missing)}
+.syncbar .sync{width:14px;height:14px;font-size:9px}
+
+/* 2. naglowek - ui.css (.topbar[data-page="board"]); tu grupa pytan (#qbar) w naglowku */
+.qbar{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.qbar:empty{display:none}
+.qbar .qsq{width:9px;height:9px;border-radius:2px;background:var(--hot)}
+.qbar b{color:var(--ink);font-weight:600}
+.qbar button.b{height:22px;padding:0 8px;border-radius:3px;font-size:12px}
+.qbar button.b.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.qbar .rv{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+body.demo .qbar button{display:none}
+
+/* 3. pasek narzedzi (34 px) */
+.tbar{height:34px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--panel);border-bottom:1px solid var(--line);white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.tbar::-webkit-scrollbar{display:none}
+.tbar .vsep{width:1px;height:16px;background:var(--line);margin:0 6px;flex:none}
 .undo{display:inline-flex;gap:4px}
-.zoom{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
-.zoom button{background:none;border:0;padding:5px 10px;cursor:pointer;color:var(--ink);font-size:14px}
-.zoom button:hover{background:var(--bg)}
-.zoom output{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;color:var(--ink);font-size:12.5px}
-.zoom .fit{border-left:1px solid var(--line);font-size:12.5px}
-.st b{color:var(--ink);font-weight:600}
-.msg{flex-basis:100%;color:var(--hot);font-size:13px;min-height:0}
-.switched{flex-basis:100%;display:flex;gap:12px;align-items:center;padding:8px 12px;border:2px solid var(--hot);border-radius:6px;background:var(--panel);color:var(--ink);font-size:13px;line-height:1.45}
-.switched[hidden]{display:none}
-.switched code{font-size:12px}
+.zoom{display:inline-flex;align-items:center;gap:2px}
+.zoom button{width:24px;height:24px;padding:0;border:0;border-radius:3px;background:none;color:var(--ink);font-size:14px;cursor:pointer}
+.zoom button:hover{background:var(--hover)}
+.zoom .fit{width:auto;min-width:46px;height:22px;padding:0 6px;border:1px solid var(--line);font:500 11px/1 var(--mono)}
+.zoom .fit:hover{border-color:var(--ink);background:none}
+.msg{flex:none;padding:5px 10px;color:var(--hot-ink);font-size:12px;font-weight:600;background:var(--panel);border-bottom:1px solid var(--line)}
 .msg:empty{display:none}
+.switched{flex:none;display:flex;gap:12px;align-items:center;padding:8px 12px;border-bottom:2px solid var(--hot-ink);background:var(--panel);color:var(--ink);font-size:12.5px;line-height:1.45}
+.switched[hidden]{display:none}
+/* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
+body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo .tbar .vsep,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del,body.demo #dup,body.demo .keys{display:none}
+body.demo-start .topbar .modsw,body.demo-start .topbar .crumb .sl{display:none}
+body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
 
-/* tablica */
-main{padding:0 20px 24px}
-.board{background:var(--board);border:1px solid var(--line);border-radius:6px;overflow:auto;max-height:calc(100vh - 150px);background-image:radial-gradient(var(--line) .7px,transparent .8px);background-size:22px 22px}
+/* 4. tablica: od krawedzi do krawedzi, kropki co 14 px */
+main{display:flex;flex-direction:column;min-width:0}
+#board{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1px,transparent 1.2px);background-size:14px 14px;overflow:auto;cursor:all-scroll}
+#board:has(.inner.blank){cursor:auto}
+#board.panning,#board.panning *{cursor:grabbing!important;user-select:none}
 .inner{zoom:var(--z);width:max-content;min-width:100%}
 .inner.blank{zoom:1;width:auto}
-.board:has(.inner.blank){max-height:none}
-.lane{display:grid;grid-template-columns:170px auto;border-bottom:1px dashed var(--line)}
-.lane:last-child{border-bottom:0}
-.lane-title{position:sticky;left:0;z-index:2;background:var(--board);padding:12px 10px 12px 12px;border-right:1px dashed var(--line);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-.lname{background:none;border:0;padding:0;text-align:left;font-weight:700;font-size:17px;line-height:1.2;cursor:text;border-bottom:1px dashed transparent;word-break:break-word}
+.ruler{position:sticky;top:0;z-index:4;display:flex;height:22px;background:var(--panel);border-bottom:1px solid var(--line)}
+.ruler .corner{position:sticky;left:0;z-index:5;width:132px;flex:none;border-right:1px solid var(--line);background:var(--panel);font:500 10px/22px var(--mono);letter-spacing:.06em;color:var(--faint);padding-left:10px}
+.ruler .nums{display:flex;gap:10px;padding:0 12px}
+.ruler .nums span{width:128px;flex:none;font:500 10.5px/22px var(--mono);color:var(--faint);text-align:center}
+.lane{display:grid;grid-template-columns:132px auto;border-bottom:1px solid var(--line)}
+.lane-title{position:sticky;left:0;z-index:2;background:var(--lane-bg);padding:10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+.lname{background:none;border:0;padding:0;text-align:left;font-weight:600;font-size:12.5px;line-height:1.3;color:var(--ink);cursor:text;border-bottom:1px dashed transparent;word-break:break-word}
 .lname:hover{border-bottom-color:var(--muted)}
-/* Demo (0.11.0): tylko podglad - bez przyciskow edycji; karteczke da sie otworzyc do czytania */
-body:not(.demo) .hint.ro,body.demo .hint.ed,body.demo #addnote,body.demo #addlane,body.demo .undo,body.demo #p-addnote,body.demo #p-addlane,body.demo .ltools,body.demo .addnote,body.demo .ins-h,body.demo .ins-v,body.demo #order,body.demo #save,body.demo #del,body.demo #dup,body.demo #dupkey{display:none}
-body.demo-start header h1{display:none}
-body.demo .lname{cursor:default}body.demo .lname:hover{border-bottom-color:transparent}
-.lane-title input{font:inherit;font-weight:700;font-size:16px;width:100%;padding:3px 5px;border:1px solid var(--ink);border-radius:3px;background:var(--panel);color:var(--ink)}
-.lmeta{font-size:12px;color:var(--muted)}
-.ltools{display:flex;gap:2px;opacity:.35;transition:opacity .15s}
+.lane.qlane .lname{color:var(--hot-ink)}
+.lane-title input{font:inherit;font-weight:600;font-size:12.5px;width:100%;padding:2px 4px;border:1px solid var(--ink);border-radius:3px;background:var(--input);color:var(--ink)}
+.lmeta{font:400 10.5px/1.4 var(--mono);color:var(--muted)}
+.ltools{display:flex;gap:2px;margin-top:4px;opacity:.35;transition:opacity .15s}
 .lane:hover .ltools,.ltools:focus-within{opacity:1}
 @media (hover:none){.ltools{opacity:1}}
-.ltools button{background:none;border:1px solid transparent;border-radius:3px;padding:1px 7px;cursor:pointer;color:var(--muted);font-size:13px}
+.ltools button{background:none;border:1px solid transparent;border-radius:3px;padding:0 6px;height:20px;cursor:pointer;color:var(--muted);font-size:12px}
 .ltools button:hover{border-color:var(--line);color:var(--ink)}
-.ltools button.x:hover{color:var(--hot)}
-.cols{display:flex;gap:10px;padding:14px;align-items:flex-start}
-.col{display:flex;flex-direction:column;gap:8px;min-width:130px;min-height:100px;padding:4px;border-radius:4px}
-.col.over{outline:2px dashed var(--muted)}
+.ltools button.x:hover{color:var(--hot-ink)}
+.cols{display:flex;gap:10px;padding:12px 12px 10px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:10px;width:128px;flex:none;min-height:52px;border-radius:3px}
+.col.over{outline:2px dashed var(--muted);outline-offset:3px}
 /* Strefy wstawiania pomiedzy (0.14.1): niewidoczne, po najechaniu kreska z "+" */
 .ins-h,.ins-v{position:relative;background:none;border:0;padding:0;cursor:pointer;color:var(--muted)}
-.ins-h{width:136px;height:8px;margin:-8px 0;z-index:1}
+.ins-h{width:128px;height:10px;margin:-10px 0;z-index:1}
 .ins-v{width:10px;align-self:stretch;margin:0 -10px;z-index:1}
 .ins-v.over{width:24px;margin:0 -17px}
-.ins-h span,.ins-v span{pointer-events:none} /* szerszy cel podczas przeciagania */
+.ins-h span,.ins-v span{pointer-events:none}
 .ins-h::before,.ins-v::before{content:"";position:absolute;background:var(--muted);opacity:0}
-.ins-h::before{left:0;right:0;top:3px;height:2px}
+.ins-h::before{left:0;right:0;top:4px;height:2px}
 .ins-v::before{top:0;bottom:0;left:4px;width:2px}
-.ins-h span,.ins-v span{position:absolute;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--panel);border:1px solid var(--muted);font-size:14px;line-height:1;opacity:0}
-.ins-h span{left:58px;top:-6px}
-.ins-v span{left:-5px;top:36px}
+.ins-h span,.ins-v span{position:absolute;display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--panel);border:1px solid var(--muted);font-size:13px;line-height:1;opacity:0}
+.ins-h span{left:55px;top:-4px}
+.ins-v span{left:-4px;top:36px}
 .ins-v.over::before,.ins-h:hover::before,.ins-v:hover::before,.ins-h:focus-visible::before,.ins-v:focus-visible::before{opacity:1}
 .ins-v.over span,.ins-h:hover span,.ins-v:hover span,.ins-h:focus-visible span,.ins-v:focus-visible span{opacity:1;color:var(--ink)}
-.addnote{width:136px;min-height:92px;border:2px dashed var(--line);border-radius:3px;background:none;color:var(--muted);font-size:22px;cursor:pointer;opacity:.55}
-.addnote.low{min-height:30px;font-size:16px;opacity:.35}
-.addnote:hover,.addnote:focus-visible{opacity:1;border-color:var(--muted);color:var(--ink)}
-.note{width:136px;min-height:92px;padding:9px 9px 7px;font-size:13.5px;line-height:1.25;box-shadow:var(--shadow);color:#26241f;cursor:grab;position:relative;border:0;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:8px}
-.note .txt{flex:1;white-space:pre-wrap;word-break:break-word}
-.note .meta{display:flex;flex-direction:column;gap:1px;font-size:10.5px;line-height:1.3;opacity:.78;border-top:1px solid rgba(0,0,0,.14);padding-top:4px}
-.note.hot .meta{border-top-color:rgba(255,255,255,.35)}
-.note .meta .l1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.note .meta b{font-weight:700}
-.note .meta .l2{font-variant-numeric:tabular-nums}
-.sync{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;font-style:normal;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.3)}
-.sync.synced{background:var(--ink);color:var(--bg)}
-.sync.changed{background:var(--panel);color:var(--ink);border:1px solid var(--ink)}
-.sync.missing{background:var(--hot);color:#fff}
-.sync.board{background:none;box-shadow:none;border:1px dashed var(--muted)}
-.syncbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:12.5px}
-/* Pytania z pliku na tablicy (0.17.0) */
-.qbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px}
-.qbar:empty{display:none}
-.qbar .lbl{font-weight:700;color:var(--ink)}
-.qbar button.b{padding:2px 9px;font-size:12.5px}
-.qbar label{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
-.lane.qlane .lname{color:var(--hot)}
-.note.closedq{opacity:.5;filter:grayscale(1)}
-/* Odpowiedzi na tablicy (0.17.0) */
-.note .qans{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;color:#26241f;border-radius:3px;padding:1px 4px;align-self:flex-start}
-.note .ans{font-size:12px;font-style:italic;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.note.answered{outline:3px solid var(--rm);outline-offset:1px}
-.idhint{margin-top:3px}
-.dupkey{margin-top:6px}
-.dupkey[hidden]{display:none}
-.ansbox{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
-.ansbox[hidden]{display:none}
-.qbar .rv{display:inline-flex;gap:6px;align-items:center}
-.qbar .pend{color:var(--ink)}
-.note .qclosed{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
-body.hideq .note.hot,body.hideq .lane.qonly{display:none}
-body.demo .qbar button{display:none}
-.syncbar:empty{display:none}
-.syncbar .lbl{color:var(--ink);font-weight:600}
-.syncbar .si{display:inline-flex;align-items:center;gap:6px}
-.syncbar .sync{position:static;width:16px;height:16px;font-size:10px}
-.syncbar .hint2{color:var(--muted)}
-.note.ev{background:var(--ev)}.note.cmd{background:var(--cmd)}.note.act{background:var(--act);min-height:62px}
-.note{scroll-margin:12px 12px 12px 182px} /* przewijanie do karteczki omija przyklejona nazwe procesu (170 px) */
-.board{cursor:all-scroll}.board:has(.inner.blank){cursor:auto}.board.panning,.board.panning *{cursor:grabbing!important;user-select:none}
-.note.space{background:transparent;box-shadow:none;outline:1px dashed var(--line);outline-offset:-1px;color:var(--muted)}
+.addnote{width:128px;height:52px;border:1px dashed var(--dash);border-radius:3px;background:none;color:var(--faint);font-size:16px;line-height:1;cursor:pointer}
+.addnote.low{height:16px;font-size:11px}
+.addnote:hover,.addnote:focus-visible{border-color:var(--muted);color:var(--ink)}
+/* karteczka: 128 px, bez obrotu, wysokosc z tresci; tekst zawsze ciemny */
+.note{width:128px;padding:6px 7px 5px;font-size:12.5px;line-height:1.35;color:#1d1b16;background:var(--ev);border:1px solid rgba(0,0,0,.06);border-radius:3px;box-shadow:var(--note-shadow);cursor:grab;position:relative;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:4px}
+.note{scroll-margin:12px 12px 12px 144px} /* przewijanie do karteczki omija przyklejona nazwe procesu (132 px) */
+.note .txt{white-space:pre-wrap;word-break:break-word;max-height:85px;overflow:hidden}
+.note .meta{font:500 10px/1.2 var(--mono);color:rgba(29,27,22,.68);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note .sync{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border:2px solid var(--bg);font-size:10px}
+.note.ev{background:var(--ev)}.note.cmd{background:var(--cmd)}.note.act{background:var(--act)}
+.note.pol{background:var(--pol)}.note.rm{background:var(--rm)}.note.hot{background:var(--hot)}
+.note.space{background:transparent;box-shadow:none;border:1px dashed var(--dash);color:var(--muted);min-height:40px}
 .note.space .txt{font-style:italic;opacity:.8}
-.note.space.sel{outline:2px solid var(--ink);outline-offset:2px}
-.note.draft{cursor:default}.note.draft.none{background:var(--draft);color:var(--draft-ink)}.note.draft .txt.ph{opacity:.6;font-style:italic}
-.note.pol{background:var(--pol)}.note.rm{background:var(--rm)}.note.hot{background:var(--hot);color:#fff}
-.note:nth-child(odd){transform:rotate(-1deg)}.note:nth-child(even){transform:rotate(.8deg)}
-.note.fresh{animation:drop .5s cubic-bezier(.2,.8,.3,1.1) both}
-@keyframes drop{from{transform:translateY(-16px) rotate(-6deg);opacity:0}to{opacity:1}}
-.note.sel{outline:2px solid var(--ink);outline-offset:2px}
-.note.ins-before::before,.note.ins-after::after{content:"";position:absolute;left:-4px;right:-4px;height:4px;border-radius:2px;background:var(--ink)}
+.note.draft{cursor:default}.note.draft.none{background:var(--draft)}.note.draft .txt.ph{opacity:.55}
+.note.fresh{animation:drop .4s cubic-bezier(.2,.8,.3,1.1) both}
+@keyframes drop{from{transform:translateY(-12px);opacity:0}to{opacity:1}}
+.note.sel,.note.space.sel{outline:2px solid var(--ink);outline-offset:2px}
+.note.ins-before::before,.note.ins-after::after{content:"";position:absolute;left:-4px;right:-4px;height:3px;border-radius:2px;background:var(--ink)}
 .note.ins-before::before{top:-7px}.note.ins-after::after{bottom:-7px}
-.order{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}
-.order button.b{padding:4px 9px;font-size:12.5px}
-.order[hidden]{display:none}
-.types{border:0;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.types legend{color:var(--muted);font-size:12px;padding:0;margin-bottom:3px}
-.types .t{position:relative;display:flex;align-items:center;gap:8px;margin:0;padding:6px 8px;border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);font-size:13.5px;line-height:1.2}
-.types .t:hover{border-color:var(--muted)}
-.types .t:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--bg)}
-.types .t:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
-.types input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
-.types i{width:16px;height:16px;flex:none;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
-.types i.spacei{background:none;box-shadow:none;border:1px dashed var(--muted)}
-.types small{display:block;color:var(--muted);font-size:11.5px}
-button.b:disabled{opacity:.4;cursor:default;border-color:var(--line)}
+.note.closedq{opacity:.5;filter:grayscale(1)}
+.note .qclosed{align-self:flex-start;font:600 9.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.02em}
+/* odpowiedz z warsztatu (0.17.0): etykieta nad trescia i linia odpowiedzi */
+.note .qans{align-self:flex-start;font:600 9.5px/1 var(--mono);background:#1d1b16;color:#fff;padding:3px 4px;border-radius:2px}
+.note .ans{font-size:11.5px;line-height:1.3;font-style:italic;border-top:1px solid rgba(0,0,0,.15);padding-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+body.hideq .note.hot,body.hideq .lane.qonly{display:none}
 /* wskazowka na pustej tablicy */
-.empty{padding:28px 24px 32px;max-width:900px;margin:0 auto;color:var(--ink)}
-.empty>h2{font-size:20px;margin:0 0 4px}
-.empty>p{margin:0 0 18px;color:var(--muted)}
+.empty{padding:28px 24px 32px;max-width:900px;margin:0 auto;color:var(--ink);cursor:auto}
+.empty>h2{font-size:18px;margin:0 0 4px;font-weight:600}
+.empty>p{margin:0 0 18px;color:var(--muted);font-size:13.5px}
 .ways{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;align-items:start}
-.way{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
-.way h3{margin:0;font-size:15px}
-.way p{margin:0;color:var(--muted);font-size:14px;line-height:1.4}
-.way ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4}
-.way .run{font-size:12.5px;color:var(--muted)}
+.way{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.way h3{margin:0;font-size:14px;font-weight:600}
+.way p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.way ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.45}
+.way .run{font-size:12px;color:var(--muted)}
 .cmdrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.cmdrow code{font-size:15px;padding:6px 10px;border:1px solid var(--line)}
+.cmdrow code{font-size:13px;padding:4px 8px;border:1px solid var(--line)}
 .way .go{align-self:flex-start}
 .mini{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin:0;padding-top:4px}
-.mini .note{width:92px;min-height:58px;padding:6px 7px;font-size:11.5px;cursor:default}
-.mini .note.act{min-height:40px}
+.mini .note{width:92px;padding:5px 6px;font-size:11px;cursor:default}
 .mini figcaption{flex-basis:100%;font-size:12px;color:var(--muted)}
-.tip{margin:10px 2px 0;color:var(--muted);font-size:13.5px}
+.tip{flex:none;margin:0;padding:6px 12px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);background:var(--panel)}
 .tip:empty{display:none}
 @media (max-width:700px){.ways{grid-template-columns:1fr}.empty{padding:20px 14px}}
 
-/* panel edycji */
-#drawer{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:100vw;background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);padding:16px;z-index:30;overflow-y:auto;font-size:14px;transform:translateX(105%);transition:transform .18s ease;visibility:hidden}
+/* 5. panel karteczki (300 px) */
+#drawer{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:100vw;background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:30;overflow-y:auto;font-size:12.5px;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .18s ease;visibility:hidden}
 #drawer.open{transform:none;visibility:visible}
 #drawer.idle .form,#drawer:not(.idle) .idlebox,#drawer.idle .close{display:none}
-#drawer .rail,#drawer .fold{display:none}
-#drawer .fold{background:none;border:0;font-size:18px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px}
-#drawer .fold:hover{color:var(--ink)}
-/* Panel na stale obok tablicy (zmiana 0.14.0) - tylko szerokie okno; telefon: panel od dolu jak wczesniej */
-@media(min-width:641px){
-  body{padding-right:340px}
-  body.fold{padding-right:40px}
-  #drawer{transform:none;visibility:visible;box-shadow:none;transition:none}
-  #drawer .fold{display:inline-block}
-  body.fold #drawer{width:40px;padding:0;overflow:hidden}
-  body.fold #drawer>:not(.rail){display:none}
-  body.fold #drawer .rail{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;height:100%;padding:14px 0;background:none;border:0;cursor:pointer;color:var(--muted)}
-  body.fold #drawer .rail:hover{color:var(--ink);background:var(--bg)}
-  #drawer .rail span{writing-mode:vertical-rl;font-size:13px;letter-spacing:.04em}
-}
-#drawer .dh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-#drawer h2{margin:0;font-size:16px;flex:1}
-#drawer .close{background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px}
-#drawer .close:hover{color:var(--ink)}
-label{display:block;color:var(--muted);font-size:12px;margin:10px 0 3px}
-#drawer input,#drawer select,#drawer textarea{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
-textarea{min-height:90px;resize:vertical}
-.row{display:flex;gap:8px;margin-top:14px;align-items:center}
-.row .ok{font-size:12.5px;color:var(--muted)}
-.hint{color:var(--muted);font-size:12.5px;margin:0}
-.src{font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line);padding-top:10px;line-height:1.5}
+#drawer .rail{display:none}
+#drawer .dh{height:34px;flex:none;display:flex;align-items:center;gap:6px;padding:0 4px 0 12px;border-bottom:1px solid var(--line)}
+#drawer .dl{font:600 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--muted)}
+#drawer #ph{flex:1;min-width:0;font:600 12px/1 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drawer .fold,#drawer .close{width:24px;height:24px;padding:0;border:0;border-radius:3px;background:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1}
+#drawer .close{font-size:16px}
+#drawer .fold{display:none}
+#drawer .fold:hover,#drawer .close:hover{color:var(--ink);background:var(--hover)}
+.idlebox{padding:14px 12px;display:flex;flex-direction:column;gap:14px}
+.idlebox .hint{font-size:13px;line-height:1.5}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:12px;color:var(--muted)}
+.keys dt{font-family:var(--mono);color:var(--ink)}
+.keys dd{margin:0}
+.form{flex:1;display:flex;flex-direction:column}
+.form .rohint{padding:10px 12px 0}
+.types{border:0;margin:0;padding:8px;display:flex;flex-direction:column;gap:1px;border-bottom:1px solid var(--line-soft)}
+.types legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.types .t{position:relative;display:grid;grid-template-columns:10px 70px minmax(0,1fr) 10px;align-items:center;gap:7px;height:21px;margin:0;padding:0 6px;border:1px solid transparent;border-radius:3px;cursor:pointer;color:var(--ink);font-size:12px;white-space:nowrap}
+.types .t:hover{background:var(--hover)}
+.types .t:has(input:checked){border-color:var(--ink);background:var(--hover);font-weight:600}
+.types .t:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:1px}
+.types input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.types i{width:10px;height:10px;border-radius:2px}
+.types i.spacei{background:none;outline:1px dashed var(--faint);outline-offset:-1px}
+.types small{font-size:11px;font-weight:400;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.types kbd{font:400 10px/1 var(--mono);color:var(--faint)}
+.fields{display:flex;flex-direction:column;gap:10px;padding:12px}
+#drawer textarea,#drawer input,#drawer select{width:100%;min-width:0;font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--input-line);border-radius:3px}
+#drawer textarea{font-size:13.5px;line-height:1.45;padding:7px 9px;resize:vertical}
+#f-text{min-height:84px}
+#drawer input,#drawer select{height:26px;padding:0 8px;font-size:12.5px}
+#drawer select{padding:0 4px}
+#f-ref{font:500 12.5px/1 var(--mono)}
+#drawer textarea:focus,#drawer input:focus,#drawer select:focus{outline:2px solid var(--ink);outline-offset:-1px;border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:6px 8px}
+.grid2 label,.ansbox label{font:500 11px/1 var(--mono);color:var(--muted)}
+.ansbox{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.ansbox[hidden]{display:none}
+.ansbox label{color:var(--hot-ink)}
+#f-ans{font-size:13px}
+.ok{margin:0;font-size:12px;font-weight:600;color:var(--hot-ink)}
+.ok:empty{display:none}
+.ok.good{color:var(--s-synced)}
+.row{display:flex;align-items:center;gap:4px}
+.row button.b{height:26px;font-size:12.5px;border-radius:3px;padding:0 10px}
+.row #save{padding:0 12px}
+.row .order{display:inline-flex;gap:4px}
+.row .order[hidden]{display:none}
+.row .order button.b{width:26px;padding:0;justify-content:center}
+.row #del{margin-left:auto;border:0;padding:0 6px}
+.row #del:hover{text-decoration:underline}
+.hint{color:var(--muted);font-size:12px;margin:0;line-height:1.45}
+.ansbox .hint{font-size:11.5px}
+.src{margin-top:auto;display:grid;grid-template-columns:64px minmax(0,1fr);gap:3px 8px;padding:10px 12px 12px;border-top:1px solid var(--line-soft);font:400 11px/1.45 var(--mono);color:var(--muted)}
 .src:empty{display:none}
-.src div{display:grid;grid-template-columns:78px 1fr;gap:8px;color:var(--ink)}
-.src span{color:var(--muted)}
-code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg);padding:1px 4px;border-radius:3px}
+.src .k{color:var(--faint)}
+.src .v{overflow-wrap:anywhere}
+.src .sync{display:inline-grid;width:12px;height:12px;font-size:8px;margin-right:5px;vertical-align:-2px}
+.src code{font-size:11px;background:none;padding:0}
 
-/* Szerokie okno: strona sie nie przewija, tablica wypelnia reszte wysokosci i ma oba paski przewijania na ekranie (zmiana 0.14.1) */
+/* Szerokie okno: strona sie nie przewija, tablica wypelnia reszte wysokosci (0.14.1); panel stoi obok (0.14.0) */
 @media(min-width:641px){
   html{height:100%;scrollbar-gutter:auto}
   body{height:100%;display:flex;flex-direction:column;overflow:hidden}
-  main{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:12px}
-  .board{flex:1;min-height:0;max-height:none}
-  .tip:empty{display:none}
+  .work{flex:1;min-height:0;display:flex}
+  main{flex:1;min-height:0}
+  #board{flex:1;min-height:0}
+  #drawer{position:relative;flex:none;transform:none;visibility:visible;box-shadow:none;transition:none;z-index:auto}
+  #drawer .fold{display:inline-block}
+  body.fold #drawer{width:26px;overflow:hidden}
+  body.fold #drawer>:not(.rail){display:none}
+  body.fold #drawer .rail{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;height:100%;padding:10px 0 0;background:none;border:0;cursor:pointer;color:var(--muted)}
+  body.fold #drawer .rail:hover{color:var(--ink);background:var(--hover)}
+  #drawer .rail span{writing-mode:vertical-rl;font:600 10.5px/1 var(--mono);letter-spacing:.08em}
 }
+/* Telefon: panel od dolu, strona przewija sie jak dotad */
 @media(max-width:640px){
-  header,main{padding-left:16px;padding-right:16px}
-  .bar{padding-left:16px;padding-right:16px}
-  .tools{margin-left:0}
-  .lane{grid-template-columns:120px auto}
-  .lname{font-size:15px}
-  .board{max-height:none}
+  .lane{grid-template-columns:110px auto}
+  .lane-title{padding:8px}
+  .ruler{display:none}
+  .statusbar{white-space:normal}
+  .sright{margin-left:0;flex-wrap:wrap;gap:4px 14px}
+  .statusbar .cursor{display:none}
+  .tbar{overflow-x:auto}
   #drawer{top:auto;left:0;width:auto;max-height:75vh;border-left:0;border-top:1px solid var(--line);border-radius:10px 10px 0 0;transform:translateY(105%)}
+  #drawer.open{transform:none}
 }
 </style>
 <script src="/board-ops.js"></script>
 </head>
 <body>
-<nav class="topbar" id="topbar" data-page="board" aria-label="Widok"></nav>
-<header>
-  <h1><span class="lbl">Wymagania do modułu:</span> <span class="modsw">
+<div class="statusbar">
+  <span class="live" id="live"><i aria-hidden="true"></i><span>na żywo: <span id="conn">łączę…</span></span></span>
+  <span class="syncbar" id="syncbar" title="Karteczki trafiają do plików przez /sdd:board sync w Claude Code"></span>
+  <span class="sright"><button type="button" id="pend" hidden title="Odpowiedzi z tablicy trafią do plików po /sdd:board sync – kliknij, żeby skopiować komendę"></button><span class="cursor" id="cursor"></span></span>
+</div>
+<nav class="topbar" id="topbar" data-page="board" aria-label="Widok">
+  <span class="modsw" data-slot="mod">
     <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span class="mname">…</span><span class="car" aria-hidden="true">▾</span></button>
     <div id="modmenu" class="modmenu" role="menu" hidden></div>
-  </span></h1>
-  <p><span id="title">Tablica</span><span id="subtitle"></span></p>
-</header>
-<div class="bar">
-  <div class="legend">
-    <span><i style="background:var(--ev)"></i>zdarzenie</span>
-    <span><i style="background:var(--cmd)"></i>komenda</span>
-    <span><i style="background:var(--act)"></i>kto</span>
-    <span><i style="background:var(--pol)"></i>reguła</span>
-    <span><i style="background:var(--rm)"></i>widok</span>
-    <span><i style="background:var(--hot)"></i>nie wiemy</span>
-  </div>
-  <div class="tools">
-    <button class="b" id="addnote">+ Karteczka</button>
-    <button class="b" id="addlane">+ Proces</button>
-    <span class="undo"><button class="b" id="undo" title="Cofnij (⌘Z / Ctrl+Z)" disabled>↶ Cofnij</button><button class="b" id="redo" title="Ponów (⇧⌘Z / Ctrl+Y)" disabled>↷ Ponów</button></span>
-    <span class="zoom" role="group" aria-label="Powiększenie">
-      <button id="zout" title="Pomniejsz" aria-label="Pomniejsz">−</button><output id="zval">100%</output><button id="zin" title="Powiększ" aria-label="Powiększ">+</button><button class="fit" id="zfit" title="Zmieść tablicę w szerokości okna">Dopasuj</button>
-    </span>
-    <span class="st">połączenie: <b id="conn">…</b></span>
-  </div>
-  <div class="syncbar" id="syncbar"></div>
-  <div class="qbar" id="qbar"></div>
-  <div class="msg" id="msg" role="status"></div>
-  <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
-    Tablicę przełączono w innej karcie albo serwer uruchomiono z innym plikiem. Niezapisana edycja i historia Cofnij z poprzedniej tablicy zostały odrzucone.</div>
-    <button class="b" id="sw-ok">Rozumiem</button></div>
+  </span>
+  <span class="qbar" id="qbar" data-slot="q"></span>
+</nav>
+<div class="tbar">
+  <button class="b p" id="addnote">+ Karteczka</button>
+  <button class="b" id="addlane">+ Proces</button>
+  <span class="vsep" aria-hidden="true"></span>
+  <span class="undo"><button class="b" id="undo" title="Cofnij (⌘Z / Ctrl+Z)" disabled>Cofnij</button><button class="b" id="redo" title="Ponów (⇧⌘Z / Ctrl+Y)" disabled>Ponów</button></span>
+  <span class="vsep" aria-hidden="true"></span>
+  <span class="zoom" role="group" aria-label="Powiększenie">
+    <button id="zout" title="Pomniejsz" aria-label="Pomniejsz">−</button><button class="fit" id="zfit" title="Dopasuj – zmieść tablicę w szerokości okna"><output id="zval">100%</output></button><button id="zin" title="Powiększ" aria-label="Powiększ">+</button>
+  </span>
 </div>
+<div class="msg" id="msg" role="status"></div>
+<div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
+  Tablicę przełączono w innej karcie albo serwer uruchomiono z innym plikiem. Niezapisana edycja i historia Cofnij z poprzedniej tablicy zostały odrzucone.</div>
+  <button class="b" id="sw-ok">Rozumiem</button></div>
+<div class="work">
 <main><div class="board" id="board"><div class="inner" id="inner"></div></div><p class="tip" id="tip"></p></main>
 
 <aside id="drawer" aria-label="Karteczka" aria-hidden="true">
-  <button class="rail" id="rail" title="Rozwiń panel karteczki" aria-label="Rozwiń panel karteczki"><b>«</b><span>Karteczka</span></button>
-  <div class="dh"><h2 id="ph">Karteczka</h2><button class="fold" id="fold" title="Zwiń panel do boku" aria-label="Zwiń panel do boku">»</button><button class="close" id="close" title="Zakończ edycję (Esc)" aria-label="Zakończ edycję">×</button></div>
+  <button class="rail" id="rail" title="Rozwiń panel karteczki" aria-label="Rozwiń panel karteczki"><b>«</b><span>KARTECZKA</span></button>
+  <div class="dh"><span class="dl">KARTECZKA</span><span id="ph"></span><button class="fold" id="fold" title="Zwiń panel do boku" aria-label="Zwiń panel do boku">»</button><button class="close" id="close" title="Zakończ edycję (Esc)" aria-label="Zakończ edycję">×</button></div>
   <div class="idlebox">
-    <p class="hint ed">Kliknij karteczkę, żeby ją edytować, albo dodaj nową.</p>
+    <p class="hint ed">Kliknij karteczkę, żeby ją edytować, albo <b>+</b> pod kolumną, żeby dodać nową.</p>
     <p class="hint ro">Kliknij karteczkę, żeby zobaczyć szczegóły.</p>
-    <div class="row"><button class="b" id="p-addnote">+ Karteczka</button><button class="b" id="p-addlane">+ Proces</button></div>
+    <dl class="keys"><dt>1–7</dt><dd>zmień typ zaznaczonej</dd><dt>⌘D</dt><dd>duplikuj</dd><dt>⌘Z</dt><dd>cofnij</dd><dt>⌥ + przeciągnij</dt><dd>kopiuj w nowe miejsce</dd><dt>Esc</dt><dd>zakończ edycję</dd></dl>
   </div>
   <div class="form">
-  <p class="hint ed">Zmiany zapisują się do pliku tablicy, Claude je widzi.</p>
-  <p class="hint ro">Demo - karteczka tylko do czytania.</p>
-  <label for="f-text">Treść</label><textarea id="f-text"></textarea>
+  <p class="hint ro rohint">Demo - karteczka tylko do czytania.</p>
   <fieldset class="types" id="f-type">
     <legend>Typ</legend>
-    <label class="t"><input type="radio" name="ntype" value="ev"><i style="background:var(--ev)"></i><span>zdarzenie<small>coś się stało</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="cmd"><i style="background:var(--cmd)"></i><span>komenda<small>ktoś coś robi</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="act"><i style="background:var(--act)"></i><span>kto<small>rola</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="pol"><i style="background:var(--pol)"></i><span>reguła<small>jeżeli… to…</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="rm"><i style="background:var(--rm)"></i><span>widok<small>co ktoś ogląda</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="hot"><i style="background:var(--hot)"></i><span>nie wiemy<small>pytanie</small></span></label>
-    <label class="t"><input type="radio" name="ntype" value="space"><i class="spacei"></i><span>odstęp<small>puste miejsce</small></span></label>
+    <label class="t"><input type="radio" name="ntype" value="ev"><i style="background:var(--ev)"></i><span>zdarzenie</span><small>coś się stało</small><kbd>1</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="cmd"><i style="background:var(--cmd)"></i><span>komenda</span><small>ktoś coś robi</small><kbd>2</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="act"><i style="background:var(--act)"></i><span>kto</span><small>rola albo system</small><kbd>3</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="pol"><i style="background:var(--pol)"></i><span>reguła</span><small>jeżeli… to…</small><kbd>4</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="rm"><i style="background:var(--rm)"></i><span>widok</span><small>co widać</small><kbd>5</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="hot"><i style="background:var(--hot)"></i><span>nie wiemy</span><small>pytanie, luka</small><kbd>6</kbd></label>
+    <label class="t"><input type="radio" name="ntype" value="space"><i class="spacei"></i><span>odstęp</span><small>puste miejsce</small><kbd>7</kbd></label>
   </fieldset>
-  <label for="f-lane">Proces</label><select id="f-lane"></select>
-  <label for="f-ref">ID (opcjonalne)</label><input id="f-ref" autocomplete="off" aria-describedby="f-ref-hint">
-  <p class="hint idhint" id="f-ref-hint">R – wymaganie · Q – pytanie · A – założenie · D – decyzja · BR – reguła biznesowa</p>
-  <div class="ansbox" id="ansbox" hidden>
-    <label for="f-ans">Odpowiedź</label><textarea id="f-ans" placeholder="Co odpowiedział biznes – słowami biznesu"></textarea>
-    <label for="f-by">Kto odpowiedział</label><input id="f-by" list="rolelist" autocomplete="off" placeholder="rola, np. sponsor biznesowy">
-    <datalist id="rolelist"></datalist>
-    <p class="hint">Do plików (decyzja albo założenie) wpisze to agent: <code>/sdd:board sync</code>.</p>
+  <div class="fields">
+    <textarea id="f-text" aria-label="Treść" placeholder="Treść karteczki…" rows="4"></textarea>
+    <div class="grid2">
+      <label for="f-lane">proces</label><select id="f-lane"></select>
+      <label for="f-ref">id</label><input id="f-ref" autocomplete="off" placeholder="np. R-014" title="R – wymaganie · Q – pytanie · A – założenie · D – decyzja · BR – reguła biznesowa">
+    </div>
+    <div class="ansbox" id="ansbox" hidden>
+      <label for="f-ans">odpowiedź biznesu</label><textarea id="f-ans" rows="3" placeholder="Co odpowiedział biznes – słowami biznesu"></textarea>
+      <input id="f-by" list="rolelist" autocomplete="off" placeholder="kto odpowiedział (rola)" aria-label="Kto odpowiedział">
+      <datalist id="rolelist"></datalist>
+      <p class="hint">Do plików (decyzja albo założenie) wpisze to agent: <code>/sdd:board sync</code>.</p>
+    </div>
+    <p class="ok" id="ok" role="status"></p>
+    <div class="row">
+      <button class="b p" id="save" title="Zapisz (⌘Enter)">Zapisz</button>
+      <button class="b" id="cancel" hidden>Anuluj</button>
+      <button class="b" id="dup" title="Kopia pod oryginałem (⌘D / Ctrl+D). Kopia w inne miejsce: przeciągnij z wciśniętym Option (Alt).">Duplikuj</button>
+      <span class="order" id="order"><button class="b" id="up" title="Wyżej w kolumnie" aria-label="Wyżej w kolumnie">↑</button><button class="b" id="down" title="Niżej w kolumnie" aria-label="Niżej w kolumnie">↓</button></span>
+      <button class="b danger" id="del">Usuń</button>
+    </div>
   </div>
-  <div class="order" id="order"><span>Kolejność w kolumnie:</span><button class="b" id="up">↑ wyżej</button><button class="b" id="down">↓ niżej</button></div>
-  <div class="row">
-    <button class="b p" id="save">Zapisz</button>
-    <button class="b" id="cancel" hidden>Anuluj</button>
-    <button class="b" id="dup" title="Kopia pod oryginałem (⌘D / Ctrl+D). Kopia w inne miejsce: przeciągnij z wciśniętym Option (Alt).">Duplikuj</button>
-    <button class="b danger" id="del">Usuń</button>
-    <span class="ok" id="ok"></span>
-  </div>
-  <p class="hint dupkey" id="dupkey" hidden>⌘D / Ctrl+D – duplikowanie karteczki</p>
   <div class="src" id="src"></div>
   </div>
 </aside>
+</div>
 <script>
   var BASE=SddUI.base(location.pathname); // '', /demo albo /demo/start (zmiana 0.12.0)
 (function(){
@@ -327,7 +367,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   var ops=window.BoardOps;
   var expectSwitch=false; // przelaczenie modulu z menu tej karty - bez ostrzezenia (AC-B38)
   var setModule=SddUI.modSwitch({ onNew:function(){ location.href='/#nowy-modul'; }, onSelect:function(){ expectSwitch=true; } });
-  var SYNC={synced:['✓','w plikach'],changed:['↻','zmienione po synchronizacji'],missing:['!','brak w pliku'],board:['','tylko na tablicy']};
+  var SYNC={synced:['✓','w plikach'],changed:['↻','zmienione po synchronizacji'],board:['●','tylko na tablicy'],missing:['!','brak w pliku']};
+  var TNAME={ev:'zdarzenie',cmd:'komenda',act:'kto',pol:'reguła',rm:'widok',hot:'nie wiemy',space:'odstęp'};
   function syncOf(n){ return ops.noteSync(n,board._sync); } // zawsze znany stan (AC-B35)
 
   // ------------------------------------------------------------ render
@@ -337,17 +378,17 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     setModule(board._module&&(board._module.dir||board._module.name),board._modules,board._demo);
     document.body.classList.toggle('demo',!!board._demo);
     document.body.classList.toggle('demo-start',board._demo==='start'); // bez plikow - bez naglowka modulu
-    $('#title').textContent=board.title||'Tablica';
-    $('#subtitle').textContent=board.subtitle?' · '+board.subtitle:'';
+    // tytul i opis tablicy w podpowiedzi przycisku modulu (0.33.0 - naglowek h1 zniknal)
+    $('#modbtn').title=[board.title,board.subtitle].filter(Boolean).join(' · ')+(board.title||board.subtitle?'\n':'')+'Przełącz moduł albo załóż nowy';
     var laneSel=$('#f-lane'), keep=laneSel.value; laneSel.innerHTML='';
     board.lanes.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;laneSel.appendChild(o)});
     if(keep&&board.lanes.indexOf(keep)>=0) laneSel.value=keep;
 
     var cnt={synced:0,changed:0,missing:0,board:0};
     board.notes.forEach(function(n){ var k=syncOf(n); if(k in cnt) cnt[k]++; }); // odstepy poza licznikiem
-    $('#syncbar').innerHTML=board.notes.length?'<span class="lbl">Pliki:</span>'+['synced','changed','missing','board'].filter(function(k){return cnt[k]||k==='board'||k==='synced'}).map(function(k){
-      return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join('')+
-      '<span class="hint2">przenosi <code>/sdd:board sync</code> w Claude Code</span>':'';
+    // pasek stanu: cztery stany z pelnym opisem (0.33.0)
+    $('#syncbar').innerHTML=board.notes.length?'<span class="lbl">Pliki:</span>'+['synced','changed','board','missing'].map(function(k){
+      return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join(''):'';
     var inner=$('#inner'); inner.innerHTML=''; inner.classList.toggle('blank',!board.lanes.length);
     if(!board.lanes.length){
       inner.innerHTML=EMPTY;
@@ -358,15 +399,35 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     qbar();
     $('#tip').innerHTML=ops.boardHint(board)==='nonotes'?
       'Kliknij <b>+</b> w procesie, żeby dodać pierwszą karteczkę. Zacznij od zdarzeń (pomarańczowe) w czasie przeszłym, od lewej do prawej.':'';
+    if(board.lanes.length) inner.appendChild(rulerEl());
     board.lanes.forEach(function(lane,li){ inner.appendChild(laneEl(lane,li)); });
+    cursorLabel();
 
     if(sel && !byId(sel)){ closeDrawer(); }
     else if(sel && filledFor!==sel){ fill(byId(sel)); }
-    else if(sel){ fillMeta(byId(sel)); $('#ph').textContent=('Karteczka '+(byId(sel).ref||'')).trim(); }
+    else if(sel){ fillMeta(byId(sel)); $('#ph').textContent=phOf(byId(sel)); }
     orderButtons();
     first=false;
   }
 
+  // Linijka numerow kolumn (0.33.0): tyle, ile kolumn ma najdluzszy proces + kolumna z "+"
+  function rulerEl(){
+    var n=1; board.lanes.forEach(function(l){ n=Math.max(n,ops.nextCol(board,l)+(draft&&draft.lane===l&&draft.newCol?2:1)); });
+    var r=document.createElement('div'); r.className='ruler'; r.setAttribute('aria-hidden','true');
+    var h='<span class="corner">PROCES</span><div class="nums">';
+    for(var i=1;i<=n;i++) h+='<span>'+(i<10?'0':'')+i+'</span>';
+    r.innerHTML=h+'</div>'; return r;
+  }
+  // Pasek stanu z prawej: zaznaczona karteczka albo liczby (0.33.0)
+  function cursorLabel(){
+    var n=sel&&byId(sel), d=!n&&draft, two=function(c){ c=(c||0)+1; return (c<10?'0':'')+c; };
+    var real=board.notes.filter(function(x){return x.type!=='space'}).length, L=board.lanes.length;
+    $('#cursor').textContent=n?[n.ref||TNAME[n.type]||'karteczka',n.lane,'kol. '+two(n.col)].join(' · '):
+      d?['nowa',d.lane,'kol. '+two(d.col)].join(' · '):
+      real+' '+plural(real,'karteczka','karteczki','karteczek')+' · '+L+' '+plural(L,'proces','procesy','procesów');
+  }
+  function plural(n,a,b,c){ return n===1?a:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?b:c; }
+  function phOf(n){ return n?(n.ref||TNAME[n.type]||'karteczka'):''; }
   function laneEl(lane,li){
     var L=document.createElement('div');L.className='lane';
     if(ops.isQuestionsLane(lane)){ // proces pytan na czerwono (0.17.0); bez innych karteczek chowany razem z pytaniami
@@ -377,7 +438,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     var name=document.createElement('button');name.className='lname';name.textContent=lane;name.title='Kliknij, żeby zmienić nazwę';
     name.onclick=function(){ startRename(t,lane); };
     var n=board.notes.filter(function(x){return x.lane===lane&&x.type!=='space'}).length; // bez odstepow
-    var meta=document.createElement('span');meta.className='lmeta';meta.textContent=n+' '+(n===1?'karteczka':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'karteczki':'karteczek');
+    var meta=document.createElement('span');meta.className='lmeta';meta.textContent=n+' '+plural(n,'karteczka','karteczki','karteczek');
     var tools=document.createElement('span');tools.className='ltools';
     tools.appendChild(tbtn('↑','Przesuń proces wyżej',li===0,function(){ ops.moveLane(board,lane,-1); commit(); }));
     tools.appendChild(tbtn('↓','Przesuń proces niżej',li===board.lanes.length-1,function(){ ops.moveLane(board,lane,1); commit(); }));
@@ -471,8 +532,8 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(qc){ el.classList.add('closedq'); var qb=document.createElement('span'); qb.className='qclosed'; qb.textContent=qc; el.insertBefore(qb,tx); }
     var as=ops.answerState(n,board._questions); // odpowiedz z warsztatu (0.17.0)
     if(as){
-      if(as==='pending'){ el.classList.add('answered'); var ab=document.createElement('span'); ab.className='qans'; ab.textContent='odpowiedź czeka na zapis'; el.insertBefore(ab,tx); }
-      var at=document.createElement('span'); at.className='ans'; at.textContent='↳ '+n.answer+(n.answeredBy?' – '+n.answeredBy:''); tx.after(at);
+      if(as==='pending'){ el.classList.add('answered'); var ab=document.createElement('span'); ab.className='qans'; ab.textContent='ODPOWIEDŹ CZEKA'; ab.title='Odpowiedź czeka na zapis – /sdd:board sync'; el.insertBefore(ab,tx); }
+      var at=document.createElement('span'); at.className='ans'; at.textContent='↳ '+n.answer; at.title=n.answer+(n.answeredBy?' – '+n.answeredBy:''); tx.after(at);
     }
     if(n.type==='space'){
       el.title='Odstęp – puste miejsce na tablicy, nie trafia do plików';
@@ -480,19 +541,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       el.addEventListener('click',function(){ openNote(n.id); });
       return el;
     }
+    // meta w jednej linii: ID · autor · data (MM-DD GG:MM); zrodlo tylko w podpowiedzi i w panelu (0.33.0)
     var who=author(n), when=ops.fmtDate(n.updated||n.created);
-    if(n.ref||n.source||who||when){
-      var m=document.createElement('span');m.className='meta';
-      var l1=document.createElement('span');l1.className='l1';
-      if(n.ref){var r=document.createElement('b');r.textContent=n.ref;l1.appendChild(r);if(n.source)l1.appendChild(document.createTextNode(' · '))}
-      if(n.source)l1.appendChild(document.createTextNode(n.source));
-      if(l1.childNodes.length)m.appendChild(l1);
-      if(who||when){var l2=document.createElement('span');l2.className='l2';l2.textContent=[who,when].filter(Boolean).join(' · ');m.appendChild(l2)}
-      el.appendChild(m);
-    }
+    var line=[n.ref,who,when.slice(5)].filter(Boolean).join(' · ');
+    if(line){ var m=document.createElement('span');m.className='meta';m.textContent=line;el.appendChild(m); }
     var st=syncOf(n);
-    if(st!=='board'){ var sb=document.createElement('span'); sb.className='sync '+st; sb.textContent=SYNC[st][0]; el.appendChild(sb); }
-    el.title=['Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
+    var sb=document.createElement('span'); sb.className='sync '+st; sb.textContent=SYNC[st][0]; sb.setAttribute('aria-hidden','true'); el.appendChild(sb);
+    el.title=[n.text||'','Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
     el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id); e.dataTransfer.effectAllowed='copyMove';});
     el.addEventListener('click',function(){ openNote(n.id); });
     return el;
@@ -637,7 +692,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   function openDrawer(){ $('#drawer').classList.add('open'); if(folded) setFold(false); panelState(); }
   function closeDrawer(){
     $('#drawer').classList.remove('open');
-    var had=sel||draft; sel=null; draft=null; filledFor=undefined; $('#ok').textContent=''; $('#ph').textContent='Karteczka';
+    var had=sel||draft; sel=null; draft=null; filledFor=undefined; $('#ok').textContent=''; $('#ph').textContent='';
     panelState();
     if(had) render();
   }
@@ -648,8 +703,6 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   }
   $('#fold').onclick=function(){ setFold(true); };
   $('#rail').onclick=function(){ setFold(false); };
-  $('#p-addnote').onclick=function(){ newNote(); };
-  $('#p-addlane').onclick=function(){ addLane(); };
   if(PHONE.addEventListener) PHONE.addEventListener('change',panelState);
   setFold(folded); panelState();
   function newNote(lane,col,opt){
@@ -668,12 +721,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     if(mates.length>1){ var i=mates.indexOf(n); $('#up').disabled=i===0; $('#down').disabled=i===mates.length-1; }
   }
   function fill(n){
-    filledFor=n?n.id:null; $('#ok').textContent='';
+    filledFor=n?n.id:null; $('#ok').textContent=''; $('#ok').classList.remove('good');
     $('#cancel').hidden=!!n;
     $('#f-ans').value=n&&n.answer||''; $('#f-by').value=n&&n.answeredBy||'';
-    if(!n){ $('#ph').textContent='Nowa karteczka'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; $('#dupkey').hidden=true; ansBox(); return; }
-    $('#del').hidden=false; $('#dup').hidden=false; $('#dupkey').hidden=false;
-    $('#ph').textContent=('Karteczka '+(n.ref||'')).trim();
+    if(!n){ $('#ph').textContent='nowa'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; ansBox(); return; }
+    $('#del').hidden=false; $('#dup').hidden=false;
+    $('#ph').textContent=phOf(n);
     $('#f-text').value=n.text||'';setType(n.type||'ev');$('#f-lane').value=n.lane;$('#f-ref').value=n.ref||'';
     ansBox(); fillMeta(n);
   }
@@ -685,10 +738,13 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       changed:'zmieniona po synchronizacji'+(n.synced?' ('+ops.fmtDate(n.synced)+')':'')+' – przenieś ponownie',
       missing:'oznaczona jako przeniesiona, ale '+(n.ref||'jej')+' nie ma w pliku',
       board:'tylko na tablicy – przeniesie ją /sdd:board sync'}[st];
-    var rows=[['Pliki',pl],['Utworzono',ops.fmtDate(n.created)],['Zmieniono',ops.fmtDate(n.updated)],['Autor',author(n)],['Skąd',n.source||''],['Trafia do',n.file?'<code>'+esc(n.file)+'</code>':'']];
-    $('#src').innerHTML=rows.filter(function(r){return r[1]}).map(function(r){return '<div><span>'+r[0]+':</span> '+(r[0]==='Trafia do'?r[1]:esc(r[1]))+'</div>'}).join('');
+    // status na dole panelu: male etykiety, mono 11 px (0.33.0)
+    var rows=[['pliki','<i class="sync '+st+'" aria-hidden="true">'+SYNC[st][0]+'</i>'+esc(pl)],['trafia do',n.file?'<code>'+esc(n.file)+'</code>':''],['źródło',esc(n.source||'')],
+      ['autor',esc(author(n))],['zmieniono',esc(ops.fmtDate(n.updated))],['utworzono',esc(ops.fmtDate(n.created))]];
+    $('#src').innerHTML=rows.filter(function(r){return r[1]}).map(function(r){return '<span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span>'}).join('');
   }
   $('#save').onclick=function(){
+    $('#ok').classList.remove('good');
     var text=$('#f-text').value.trim();
     var chk=document.querySelector('input[name="ntype"]:checked');
     if(!text&&!(chk&&chk.value==='space')){ $('#ok').textContent='Wpisz treść.'; $('#f-text').focus(); return; } // odstep bez tresci
@@ -710,7 +766,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       n.answer=ans||undefined; n.answeredBy=ans?by:undefined;
     }
     if(!n.source){n.source='warsztat, dopisane w przeglądarce [Biz]';n.by='człowiek'}
-    filledFor=undefined; commit().then(function(){ $('#ok').textContent='Zapisano ✓'; });
+    filledFor=undefined; commit().then(function(){ $('#ok').textContent='Zapisano ✓'; $('#ok').classList.add('good'); });
   };
   $('#del').onclick=function(){ if(!sel)return; ops.removeNote(board,sel); closeDrawer(); commit(); };
   // Kopiowanie karteczki (0.23.0): kopia pod oryginalem, panel przechodzi na kopie
@@ -726,6 +782,14 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   $('#down').onclick=function(){ if(sel){ ops.stepNote(board,sel,1); commit(); } };
   $('#addnote').onclick=function(){ newNote(); };
   $('#addlane').onclick=addLane;
+  // Klawisze 1-7 (0.33.0, AC-B57): typ zaznaczonej albo nowej karteczki w formularzu - jak klik w typ; zapis dalej Zapisz.
+  // Poza polem tekstowym, bez Cmd/Ctrl/Alt; w demo wylaczone.
+  document.addEventListener('keydown',function(e){
+    if(!(sel||draft)||board._demo||e.metaKey||e.ctrlKey||e.altKey||typing(e.target)) return;
+    var i=parseInt(e.key,10); if(!(i>=1&&i<=7)) return;
+    var r=document.querySelector('input[name="ntype"][value="'+TYPES[i-1]+'"]');
+    if(r&&!r.checked){ e.preventDefault(); r.click(); }
+  });
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape' && $('#drawer').classList.contains('open')) closeDrawer();
     if(e.key==='Enter' && (e.metaKey||e.ctrlKey) && $('#drawer').classList.contains('open')) $('#save').click();
@@ -764,9 +828,9 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       review.ids=review.ids.filter(function(id){return byId(id)});
       if(review.i>=review.ids.length) review.i=review.ids.length-1;
       if(!review.ids.length){ review=null; return qbar(); }
-      bar.innerHTML='<span class="lbl">Przegląd pytań:</span><span class="rv"><button class="b" id="rvprev"'+(review.i<=0?' disabled':'')+'>‹ Poprzednie</button>'+
-        '<span><b>'+(review.i+1)+'</b> z '+review.ids.length+'</span><button class="b" id="rvnext"'+(review.i>=review.ids.length-1?' disabled':'')+'>Następne ›</button></span>'+
-        '<button class="b" id="rvend">Zakończ przegląd</button>';
+      bar.innerHTML='<span class="qsq" aria-hidden="true"></span><span>Przegląd</span><span class="rv"><button class="b" id="rvprev" title="Poprzednie pytanie"'+(review.i<=0?' disabled':'')+'>‹</button>'+
+        '<span><b>'+(review.i+1)+'</b>/'+review.ids.length+'</span><button class="b" id="rvnext" title="Następne pytanie"'+(review.i>=review.ids.length-1?' disabled':'')+'>›</button></span>'+
+        '<button class="b" id="rvend">Zakończ</button>';
       $('#rvprev').onclick=function(){ goReview(review.i-1); };
       $('#rvnext').onclick=function(){ goReview(review.i+1); };
       $('#rvend').onclick=function(){ review=null; closeDrawer(); qbar(); };
@@ -774,12 +838,14 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
     }
     var miss=ops.missingQuestions(board,qs), closed=board.notes.filter(function(n){return ops.closedQuestion(n,qs)});
     var pend=ops.pendingAnswers(board,qs);
-    bar.innerHTML='<span class="lbl">Pytania:</span><span>'+hot.length+' na tablicy</span>'+
-      (miss.length?'<span><b>'+miss.length+'</b> z pliku nie ma na tablicy</span><button class="b" id="qadd" title="'+esc(miss.map(function(q){return q.id}).join(', '))+'">Dołóż</button>':'')+
-      (hot.length?'<button class="b" id="qreview" title="Po kolei: sprzeczne, blokujące, zadane, otwarte">Przegląd pytań</button>':'')+
-      (pend.length?'<span class="pend"><b>'+pend.length+'</b> '+(pend.length===1?'odpowiedź czeka':'odpowiedzi czeka')+' na zapis – uruchom <code>/sdd:board sync</code></span><button class="b" id="qcopy">Kopiuj</button>':'')+
-      (closed.length?'<button class="b" id="qclean" title="Pytania odpowiedziane albo zaparkowane w pliku">Zdejmij zamknięte ('+closed.length+')</button>':'')+
-      '<label><input type="checkbox" id="qshow"'+(showQ?' checked':'')+'> Pokaż pytania</label>';
+    // naglowek (0.33.0): kwadrat + liczba pytan, przyciski; odpowiedzi czekajace na zapis - w pasku stanu (#pend)
+    bar.innerHTML='<span class="qsq" aria-hidden="true"></span><span><b>'+hot.length+'</b> '+plural(hot.length,'pytanie','pytania','pytań')+'</span>'+
+      (miss.length?'<button class="b" id="qadd" title="Dołóż '+miss.length+' '+plural(miss.length,'pytanie','pytania','pytań')+' z QUESTIONS.md, których nie ma na tablicy: '+esc(miss.map(function(q){return q.id}).join(', '))+'">+'+miss.length+' z pliku</button>':'')+
+      (hot.length?'<button class="b" id="qreview" title="Przegląd pytań po kolei: sprzeczne, blokujące, zadane, otwarte">Przegląd</button>':'')+
+      (closed.length?'<button class="b" id="qclean" title="Zdejmij z tablicy pytania odpowiedziane albo zaparkowane w pliku">Zdejmij zamknięte ('+closed.length+')</button>':'')+
+      '<button class="b'+(showQ?'':' on')+'" id="qshow" aria-pressed="'+(!showQ)+'" title="'+(showQ?'Ukryj pytania na tablicy':'Pokaż pytania na tablicy')+'">'+(showQ?'Ukryj':'Pokaż')+'</button>';
+    var pb=$('#pend'); pb.hidden=!pend.length;
+    if(pend.length&&!pb.dataset.copied) pb.innerHTML=pend.length+' '+(pend.length===1?'odpowiedź czeka':'odpowiedzi czeka')+' na zapis · <span class="m">/sdd:board sync</span>';
     var a=$('#qadd'); if(a) a.onclick=function(){
       var m=ops.missingQuestions(board,board._questions), n=ops.placeQuestions(board,m,new Date().toISOString());
       if(!showQ) setShowQ(true);
@@ -790,14 +856,19 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       if(sel&&ids.indexOf(sel)>=0) closeDrawer();
       ids.forEach(function(id){ ops.removeNote(board,id); }); commit(); say('Zdjęto '+ids.length+' zamkniętych pytań.');
     };
-    var cp=$('#qcopy'); if(cp) cp.onclick=function(){ try{ navigator.clipboard.writeText('/sdd:board sync').then(function(){ cp.textContent='Skopiowano'; }); }catch(e){} };
     var rv=$('#qreview'); if(rv) rv.onclick=function(){
       review={ids:ops.questionOrder(board,board._questions),i:0};
       if(!showQ) setShowQ(true);
       goReview(0);
     };
-    $('#qshow').onchange=function(){ setShowQ(this.checked); };
+    $('#qshow').onclick=function(){ setShowQ(!showQ); qbar(); };
   }
+  // Odpowiedzi czekajace na zapis (pasek stanu): klik kopiuje komende, przez 1,5 s "skopiowano"
+  $('#pend').onclick=function(){
+    var pb=this; try{ navigator.clipboard.writeText('/sdd:board sync'); }catch(e){}
+    var m=pb.querySelector('.m'); if(m) m.textContent='skopiowano'; pb.dataset.copied='1';
+    setTimeout(function(){ delete pb.dataset.copied; if(m) m.textContent='/sdd:board sync'; },1500);
+  };
   function goReview(i){
     if(!review) return;
     review.i=Math.max(0,Math.min(i,review.ids.length-1));
@@ -835,7 +906,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
   $('#sw-ok').onclick=function(){ $('#switched').hidden=true; };
   function connect(){
     var es=new EventSource(BASE+'/events');
-    es.onopen=function(){$('#conn').textContent='na żywo'};
+    es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
     es.onmessage=function(e){
       var b=JSON.parse(e.data), sw=ops.boardSwitched(knownFile,b);
       if(b._file) knownFile=b._file;
@@ -851,7 +922,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg
       lastModuleName=(b._module&&b._module.name)||'';
       undoButtons(); safeRender();
     };
-    es.onerror=function(){$('#conn').textContent='przerwane, łączę…';es.close();setTimeout(connect,1500)};
+    es.onerror=function(){$('#conn').textContent='przerwane, łączę…';$('#live').classList.add('off');es.close();setTimeout(connect,1500)};
   }
   connect();
 })();

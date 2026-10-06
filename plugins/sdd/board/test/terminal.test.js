@@ -11,7 +11,8 @@ const { spawn } = require('child_process');
 const { TermSession, claudeArgv, available, childEnv, historyDir, hasHistory } = require('../terminal');
 const ui = require('../ui');
 
-const skip = available() ? false : 'brak Pythona 3 z modulem pty';
+// Testy z sh / stty / sleep - macOS i Linux; Windows (ConPTY) ma swoje: terminal-windows.test.js
+const skip = process.platform === 'win32' ? 'macOS / Linux (sh, stty); Windows: terminal-windows.test.js' : available() ? false : 'brak Pythona 3 z modulem pty';
 
 function until(s, re, ms) {
   return new Promise((res, rej) => {

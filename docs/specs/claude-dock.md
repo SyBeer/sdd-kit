@@ -78,3 +78,69 @@ z `claude` uruchomionym przez serwer kitu.
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez
   poziomego przewijania.
+
+## Windows 10 / 11 (zmiana 0.33.0)
+
+Status: zakres 2026-10-05 (user: "przygotuj SDD-Kit, zeby terminal dzialal na Windows 11 ... wiele rzeczy dziala
+domyslnie zle i trzeba to madrze sprawdzic"; wybor: PowerShell + C#, kit bez zaleznosci npm).
+
+### Zakres
+1. Pseudokonsola Windows (ConPTY, Windows 10 1809 = build 17763 i nowsze) przez pomocnika `board/conpty.cs`
+   (C# 5 - kompilator Windows PowerShell 5.1), ladowanego przez `powershell.exe -NoProfile -NonInteractive
+   -EncodedCommand` (zasady wykonywania skryptow nie dotycza `-EncodedCommand`; plik `.cs` to nie skrypt).
+   Python na Windows niepotrzebny.
+2. Protokol pomocnika (zamiast fd 3, ktorego PowerShell nie odczyta): wejscie = ramki `[typ 1 B][dlugosc 4 B BE][dane]`;
+   typ `d` = bajty do terminala, `r` = "kolumny wiersze". Wyjscie terminala -> surowe bajty na stdout
+   (strumien binarny, bez przekodowania konsoli). Bledy pomocnika -> stderr w UTF-8 (nie w stronie kodowej 852),
+   kod 127 (nie da sie uruchomic polecenia), 126 (kompilacja C# albo pseudokonsola niedostepna), 125 (Constrained
+   Language Mode / AppLocker - komunikat dopisuje serwer). Kazdy wyjatek PowerShell lapany i wypisany tekstem
+   (nieobsluzony trafilby na stderr jako `#< CLIXML` - smieci w terminalu; znalezione na probie pod pwsh).
+3. Pulapki Windows, ktore pomocnik i serwer obsluguja:
+   - drzewo procesow: `claude` i jego procesy potomne w obiekcie zadania (Job Object, KILL_ON_JOB_CLOSE) -
+     zabicie pomocnika (Zakoncz, koniec serwera) konczy cale drzewo, bez sierot;
+   - stdio pomocnika jest przekierowane, wiec proces w pseudokonsoli dostaje puste uchwyty standardowe
+     (STARTF_USESTDHANDLES) - inaczej pisalby do rury pomocnika zamiast do terminala;
+   - zamkniete wejscie pomocnika (koniec serwera) -> ClosePseudoConsole, do 3 s na zakonczenie, potem zakonczenie
+     zadania; wyjscie czytane do konca przed zamknieciem (inaczej ClosePseudoConsole moze zawisnac);
+   - bez migajacego okna konsoli (`windowsHide`);
+   - polecenie `claude`: kolejno `SDD_CLAUDE_CMD`; `claude.exe` w PATH albo `%USERPROFILE%\.local\bin\claude.exe`
+     (instalator natywny); `claude.cmd` z npm -> `node <cli.js>` bezposrednio, gdy obok jest
+     `node_modules/@anthropic-ai/claude-code/cli.js` (bez pliku wsadowego: Ctrl+C nie pyta "Terminate batch job",
+     `.ps1` z npm i zasady Restricted nie maja znaczenia); inaczej `cmd.exe /d /s /c "claude"`;
+   - argumenty w linii polecen cytowane wg regul CommandLineToArgvW (spacje, cudzyslowy, ukosniki przed cudzyslowem);
+   - polskie znaki i emoji w obie strony bez zmian (UTF-8 przez ConPTY).
+4. Serwer: `available()` zwraca tez powod niedostepnosci (`reason`): Windows starszy niz 17763, brak
+   `powershell.exe`, brak Pythona na macOS/Linuksie. `GET /api/term`: `platform`, `windowsBuild`, `reason`.
+   Komunikat w oknie i blad 501 biora `reason`.
+5. Przegladarka: na Windows xterm.js z `windowsPty: {backend: 'conpty', buildNumber}` (ConPTY sam przerysowuje
+   zawiniete linie - bez tego zmiana szerokosci psuje ekran); czcionka z Cascadia Mono / Consolas;
+   poza macOS Ctrl+C przy zaznaczonym tekscie kopiuje (bez zaznaczenia idzie do Claude jako przerwanie),
+   Ctrl+V wkleja.
+6. Testy na prawdziwym Windows w GitHub Actions (`windows-latest` i `windows-11-arm`): testy pomocnika
+   na programach Node (bez atrap) i start prawdziwego `claude` z npm w pseudokonsoli.
+
+### Kryteria akceptacji
+- AC-W1: na Windows program w pseudokonsoli widzi terminal (`process.stdout.isTTY` true) o zadanym rozmiarze
+  (`columns`/`rows` = 100/30); wejscie trafia do programu; kod wyjscia (3) wraca; `running` false po zakonczeniu.
+- AC-W2: `resize(120, 40)` - program dostaje zdarzenie zmiany rozmiaru i widzi 120x40.
+- AC-W3: "zażółć gęślą jaźń 🙂" wpisane do terminala wraca z programu bajt w bajt (UTF-8).
+- AC-W4: `stop()` konczy program i jego proces potomny (wnuk pomocnika) w < 3 s - zaden nie zostaje.
+- AC-W5: zamkniete wejscie pomocnika (koniec serwera) konczy program w < 5 s.
+- AC-W6: Ctrl+C (`\x03`) trafia do programu jako przerwanie (program bez trybu raw konczy sie po SIGINT).
+- AC-W7: `winQuote` / `winCommandLine`: argumenty ze spacjami, cudzyslowami i ukosnikami przechodza przez
+  CommandLineToArgvW bez zmian (sprawdzane programem Node w pseudokonsoli: `process.argv`).
+- AC-W8: `frame(typ, dane)` - naglowek 5 B (typ + dlugosc big-endian) + dane; wejscie i rozmiar nie mieszaja sie
+  przy duzym wklejeniu (100 KB wejscia, potem resize).
+- AC-W9: `windowsClaude(env, fs)`: kolejnosc SDD_CLAUDE_CMD -> claude.exe (PATH, potem ~/.local/bin) ->
+  claude.cmd z cli.js obok (node + cli.js) -> `cmd.exe /d /s /c claude`; `--continue` doklejane w kazdym wariancie.
+- AC-W10: `available()` na Windows: build < 17763 -> false z powodem; brak powershell.exe -> false z powodem;
+  inaczej true. Na macOS/Linux bez zmian (Python). Pomocnik bez zasad wykonywania: `-EncodedCommand`, nie `-File`.
+- AC-W11: `GET /api/term` zwraca `platform`, `windowsBuild` (Windows) i `reason`; `ui.termOptions(state)` daje
+  `windowsPty` tylko na Windows; `ui.termKey(event, hasSelection, isMac)` - `'copy'` dla Ctrl+C z zaznaczeniem,
+  `'paste'` dla Ctrl+V, tylko poza macOS; inaczej `null` (klawisz idzie do Claude).
+- AC-W12 (Actions): prawdziwy `claude` z npm startuje w pseudokonsoli - `--version` zwraca numer wersji, a sam
+  `claude` rysuje ekran (tekst "Claude Code" albo ekran logowania) w < 60 s; Zakoncz nie zostawia procesow `claude`.
+- AC-W13 (reczne, Windows 11 usera): Tablica -> Claude -> Uruchom: Claude Code dziala, /sdd:status odpowiada,
+  polskie znaki w odpowiedziach, zmiana szerokosci okna nie psuje ekranu, Ctrl+C przy zaznaczeniu kopiuje,
+  Esc przerywa Claude, Zakoncz i zamkniecie serwera nie zostawiaja `claude.exe`/`node.exe` w Menedzerze zadan,
+  Wznów rozmowę po restarcie serwera.
