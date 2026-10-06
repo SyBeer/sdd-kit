@@ -344,6 +344,11 @@
       return fetch(url, { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
     }
+    // Sesja na modul (0.34.2, AC-T16): sesje innych modulow dzialaja w tle - powiedz gdzie
+    function elsewhere() {
+      const o = state.others || [];
+      return o.length ? ' Claude działa też w: ' + o.map(function (d) { return d.split(/[\\/]/).filter(Boolean).pop(); }).join(', ') + ' (wróć do modułu, żeby zobaczyć).' : '';
+    }
     function show(s) {
       state = s || state;
       const run = !!state.running;
@@ -361,8 +366,8 @@
       if (term && state.platform === 'win32') term.options.windowsPty = termOptions(state).windowsPty;
       if (!state.available) msg(state.reason || 'Terminal niedostępny. Uruchom Claude Code w osobnym oknie, w folderze modułu.');
       else if (!run && state.exitCode != null) msg('Sesja zakończona (kod ' + state.exitCode + ').');
-      else if (!run && resume) msg('W tym module jest zapisana rozmowa z Claude - możesz ją wznowić albo zacząć nową.');
-      else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (state.module ? ' ' + state.module : '') + '.');
+      else if (!run && resume) msg('W tym module jest zapisana rozmowa z Claude - możesz ją wznowić albo zacząć nową.' + elsewhere());
+      else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (state.module ? ' ' + state.module : '') + '.' + elsewhere());
       else msg('');
     }
     // Serwer bez /api/term = dziala na starym kodzie (pliki przegladarki sa juz nowe) - powiedz to zamiast pustego terminala.

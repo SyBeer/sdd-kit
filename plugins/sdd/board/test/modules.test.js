@@ -41,7 +41,7 @@ test('AC-10: createModule full - struktura, SDD.yaml, CLAUDE.md, CHANGELOG', () 
   assert.ok(fs.existsSync(path.join(req, '03-spec', 'PRD.md')));
   assert.ok(!fs.existsSync(path.join(req, '03-spec', 'SPEC.md')));
   assert.ok(fs.existsSync(path.join(dir, 'CLAUDE.md')));
-  assert.match(fs.readFileSync(path.join(req, 'CHANGELOG.md'), 'utf8'), /\| init \| utworzono strukture, poziom full \|/);
+  assert.match(fs.readFileSync(path.join(req, 'CHANGELOG.md'), 'utf8'), /\| init \| utworzono strukture, poziom full, rodzaj monolith \|/);
 });
 
 test('AC-10: createModule light - SPEC.md zamiast PRD.md, bez sponsora', () => {

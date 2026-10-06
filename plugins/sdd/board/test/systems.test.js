@@ -278,3 +278,22 @@ function write(req, rel, text) {
   fs.mkdirSync(path.dirname(path.join(req, rel)), { recursive: true });
   fs.writeFileSync(path.join(req, rel), text);
 }
+
+test('AC-SY31: nowy modul z panelu - wybor monolit / serwis zapisany w SDD.yaml i w CHANGELOG', () => {
+  const { createModule } = require('../modules');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-sy31-'));
+  const s = createModule(root, { name: 'platnosci', level: 'full', kind: 'service' }, { git: false });
+  const y = fs.readFileSync(path.join(s, 'requirements', 'SDD.yaml'), 'utf8');
+  assert.match(y, /^kind: service\b/m);
+  assert.strictEqual((y.match(/^kind:/gm) || []).length, 1);
+  assert.match(fs.readFileSync(path.join(s, 'requirements', 'CHANGELOG.md'), 'utf8'), /\| init \| utworzono strukture, poziom full, rodzaj service \|/);
+  const m = createModule(root, { name: 'faktury', level: 'light' }, { git: false });
+  assert.match(fs.readFileSync(path.join(m, 'requirements', 'SDD.yaml'), 'utf8'), /^kind: monolith\b/m);
+  assert.throws(() => createModule(root, { name: 'zly', level: 'full', kind: 'mikro' }, { git: false }), /monolith albo service/);
+  // okno "Nowy modul" w Panelu
+  const h = read('board/progress.html');
+  assert.match(h, /<select name="kind">/);
+  assert.match(h, /<option value="monolith" selected>monolit/);
+  assert.match(h, /<option value="service">serwis/);
+  assert.match(h, /kind:el\.kind\.value/);
+});

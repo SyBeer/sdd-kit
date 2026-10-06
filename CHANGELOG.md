@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.34.2] - 2026-10-06
+- Okno Claude idzie za modulem (docs/specs/claude-dock.md AC-T16): kazdy modul ma wlasna sesje Claude Code w swoim
+  folderze. Po zmianie modulu okno od razu pokazuje sesje nowego modulu (albo "Uruchom Claude" w jego folderze);
+  sesja poprzedniego dziala dalej w tle i wraca po powrocie do niego. Okno mowi, w ktorych innych modulach Claude
+  dziala. Wczesniej jedna sesja na serwer zostawala w module, w ktorym ja uruchomiono.
+- Nowy modul z Panelu: wybor rodzaju monolit / serwis w oknie "Nowy modul" (domyslnie monolit), zapisany w SDD.yaml
+  i w CHANGELOG modulu (docs/specs/systems.md AC-SY31). Wczesniej modul z panelu byl zawsze monolitem, a zmiana
+  wymagala wejscia w Konfiguracje.
+
 ## [0.34.1] - 2026-10-06
 - Poprawka: po otwarciu okna Claude panel karteczki na Tablicy przesuwal sie w lewo na tablice (zgloszenie z Chrome
   na Windows; dotyczylo kazdej przegladarki). Pozostalosc z czasow, gdy panel byl przyklejony do prawej krawedzi

@@ -57,9 +57,12 @@ function allModules(root, extra) {
 
 const q = s => '"' + String(s).replace(/["\\\n]/g, ' ').trim() + '"';
 
-function createModule(root, { name, level, approver, sponsor }, opts = {}) {
+function createModule(root, { name, level, approver, sponsor, kind }, opts = {}) {
   if (!NAME_RE.test(name || '')) throw new Error('Zla nazwa modulu: male litery, cyfry i myslnik, np. "faktury-2026".');
   if (level !== 'full' && level !== 'light') throw new Error('Zly poziom: full albo light.');
+  // rodzaj modulu (0.34.2, AC-SY31): wybor w oknie "Nowy modul", domyslnie monolit
+  kind = kind || 'monolith';
+  if (kind !== 'monolith' && kind !== 'service') throw new Error('Zly rodzaj modulu: monolith albo service.');
   const dir = path.join(root, name);
   if (fs.existsSync(dir)) throw new Error('Folder ' + dir + ' juz istnieje.');
 
@@ -77,11 +80,12 @@ function createModule(root, { name, level, approver, sponsor }, opts = {}) {
   const yaml = fs.readFileSync(yamlFile, 'utf8').replace(/\r\n?/g, '\n')
     .replace(/^project:.*$/m, 'project: ' + q(name))
     .replace(/^level:\s*\w+/m, 'level: ' + level)
+    .replace(/^kind:\s*\w+/m, 'kind: ' + kind)
     .replace(/^(owners:.*\n)(?:[ \t]+.*\n)*/m, '$1' + owners);
   fs.writeFileSync(yamlFile, yaml);
 
   const today = new Date().toISOString().slice(0, 10);
-  fs.appendFileSync(path.join(req, 'CHANGELOG.md'), today + ' | init | utworzono strukture, poziom ' + level + ' | panel\n');
+  fs.appendFileSync(path.join(req, 'CHANGELOG.md'), today + ' | init | utworzono strukture, poziom ' + level + ', rodzaj ' + kind + ' | panel\n');
 
   if (opts.git !== false) spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, stdio: 'ignore' });
   return dir;

@@ -13,7 +13,7 @@ z `claude` uruchomionym przez serwer kitu.
 1. Serwer (`board/terminal.js` + `board/pty-helper.py`):
    - Terminal przez modul `pty` z Pythona 3 (stdlib, jest na macOS i Linuksie) - kit dalej bez zaleznosci npm.
      Brak Pythona albo Windows -> `available: false` i komunikat w oknie, reszta aplikacji dziala.
-   - Jedna sesja na serwer, katalog roboczy = folder modulu (rodzic `requirements/`) z chwili startu sesji.
+   - Sesja na modul (od 0.34.2, AC-T16; wczesniej jedna na serwer), katalog roboczy = folder modulu (rodzic `requirements/`).
      Sesja zyje na serwerze: przejscie Panel <-> Tablica <-> inne zakladki i przeladowanie strony nie przerywa Claude.
    - Polecenie: `$SHELL -l -c 'exec claude'` (powloka logowania daje PATH z Homebrew, bez aliasow z .zshrc);
      zmiana przez `SDD_CLAUDE_CMD`. Zmienne `CLAUDECODE*` usuniete (serwer uruchomiony z Claude Code nie blokuje
@@ -82,6 +82,11 @@ z `claude` uruchomionym przez serwer kitu.
   dobrze"): serwer slucha na 127.0.0.1 i na ::1 (tylko petla zwrotna). Windows laczy "localhost" najpierw z ::1 - przy
   samym IPv4 kazde nowe polaczenie czekalo ~2 s na odmowe. Brak IPv6 albo zajety port na ::1 nie zatrzymuje serwera
   (ostrzezenie przy zajetym). Adres w instrukcjach zostaje http://localhost:8012 - inny adres to inne ustawienia przegladarki.
+- AC-T16 (0.34.2, zgloszenie usera: "po zmianie modulu nie zmienia sie kontekst terminala Claude"): sesja na modul.
+  Okno pokazuje sesje biezacego modulu; zmiana modulu wysyla otwartym oknom ekran i stan sesji nowego modulu (jak
+  ponowne podlaczenie). Sesja poprzedniego modulu dziala dalej w tle i wraca po powrocie do niego - rozmowa nie
+  przepada. `GET /api/term` -> `others`: foldery innych modulow z dzialajaca sesja; okno pisze "Claude dziala tez w: …".
+  Zakoncz konczy sesje biezacego modulu; koniec serwera - wszystkie.
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez

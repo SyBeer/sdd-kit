@@ -227,3 +227,51 @@ test('AC-T14: okno Claude nie przesuwa panelu karteczki (panel w ukladzie tablic
   assert.match(css, /html\.claude-on\{padding-right:var\(--claude-w\)\}/);
   assert.match(board, /@media\(min-width:641px\)\{[\s\S]*?#drawer\{position:relative;flex:none/);
 });
+
+test('AC-T16: sesja na modul - zmiana modulu przelacza okno, sesja poprzedniego dziala w tle', { skip }, async () => {
+  const port = await freePort();
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-term16-'));
+  ['a', 'b'].forEach(m => fs.cpSync(TEMPLATES, path.join(root, m, 'requirements'), { recursive: true }));
+  const real = m => fs.realpathSync(path.join(root, m));
+  const proc = spawn(process.execPath, [path.join(BOARD_DIR, 'server.js'), path.join(root, 'a', 'requirements', '01-interview', 'board.json'), String(port)],
+    { cwd: root, env: Object.assign({}, process.env, { SDD_CONFIG: path.join(root, 'config.json'), SDD_MODULES_ROOT: root,
+      SDD_CLAUDE_CMD: "sh -c 'echo dir=$(pwd); sleep 30'", CLAUDE_CONFIG_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-ccfg-')) }) });
+  await new Promise((res, rej) => {
+    let out = '';
+    proc.stdout.on('data', c => { out += c; if (/Panel:/.test(out)) res(); });
+    proc.on('exit', code => rej(new Error('serwer zakonczyl sie: ' + code + ' ' + out)));
+  });
+  const state = async () => JSON.parse((await call(port, 'GET', '/api/term')).body);
+  const select = async m => assert.strictEqual((await call(port, 'POST', '/api/modules/select', { dir: path.join(root, m) })).code, 200);
+  const screen = async () => { const s = await stream(port, 300); return JSON.parse(s.split('\n').find(l => l.startsWith('data: ')).slice(6)); };
+  try {
+    assert.strictEqual((await call(port, 'POST', '/api/term/start', { cols: 80, rows: 24 })).code, 200);
+    await new Promise(r => setTimeout(r, 500));
+    // otwarte okno dostaje ekran nowego modulu w chwili zmiany
+    const live = stream(port, 700);
+    await new Promise(r => setTimeout(r, 150));
+    await select('b');
+    const events = (await live).split('\n').filter(l => l.startsWith('data: ')).map(l => JSON.parse(l.slice(6)));
+    const sw = events.filter(e => e.replay).pop();
+    assert.ok(sw && sw.state.running === false && fs.realpathSync(sw.state.module) === real('b'), JSON.stringify(sw && sw.state));
+    let st = await state();
+    assert.strictEqual(st.running, false);
+    assert.deepStrictEqual(st.others.map(d => fs.realpathSync(d)), [real('a')]);
+    // sesja w drugim module - w jego folderze
+    assert.strictEqual((await call(port, 'POST', '/api/term/start', { cols: 80, rows: 24 })).code, 200);
+    await new Promise(r => setTimeout(r, 500));
+    st = await state();
+    assert.strictEqual(fs.realpathSync(st.cwd), real('b'));
+    assert.match(Buffer.from((await screen()).d, 'base64').toString(), new RegExp('dir=' + real('b').replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')));
+    // powrot: sesja pierwszego modulu dalej dziala, z jego ekranem
+    await select('a');
+    st = await state();
+    assert.strictEqual(st.running, true);
+    assert.strictEqual(fs.realpathSync(st.cwd), real('a'));
+    assert.deepStrictEqual(st.others.map(d => fs.realpathSync(d)), [real('b')]);
+    const txt = Buffer.from((await screen()).d, 'base64').toString();
+    assert.ok(txt.includes('dir=' + real('a')) && !txt.includes('dir=' + real('b')), txt);
+  } finally {
+    proc.kill();
+  }
+});

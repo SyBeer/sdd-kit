@@ -168,6 +168,9 @@ wlasciciele obu stron: `D` ze zrodlem `[Biz]`, nie odczyt z istniejacego kodu (d
   testu kontraktowego nie przechodzi do `done` (`/sdd:handover status ... done` odmawia bez testu w notce).
 - **AC-SY29** Przewodnik "Jak to dziala" i CLAUDE.md: rodzaj modulu, kontrakt jako wymaganie, CO vs JAK kontraktu.
 - **AC-SY30** Demo zostaje `monolith` (brak pola albo `kind: monolith`), raport z wierszem 20, nadal 100%.
+- **AC-SY31** (0.34.2, uwaga usera: "przy kreowaniu modulu musi byc opcja wyboru MONOLIT / SERWIS"): okno "Nowy modul"
+  w Panelu ma pole "Rodzaj modulu" (monolit domyslnie / serwis, z pytaniem rozstrzygajacym i skutkiem braku kontraktu);
+  `createModule` zapisuje `kind` w SDD.yaml (zly rodzaj -> blad) i w CHANGELOG: `poziom <level>, rodzaj <kind>` jak /sdd:init.
 
 ## Testy (TDD, przed kodem)
 - `board/test/systems.test.js`: AC-SY1..AC-SY4, AC-SY5..AC-SY6, AC-SY7..AC-SY10 (tresc skilli i szablonow),

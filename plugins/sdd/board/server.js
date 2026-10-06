@@ -149,6 +149,7 @@ function selectModule(ctx, req) {
   watch(ctx);
   send(ctx.progressClients, progressPayload(ctx));
   send(ctx.boardClients, boardView(ctx));
+  if (ctx === user) termSwitch();
 }
 // Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
 // na liscie) > pierwszy z listy > zaden.
@@ -259,12 +260,33 @@ function sse(req, res, set, first) {
 }
 
 // ---------------------------------------------------------------- okno Claude Code (0.25.0, docs/specs/claude-dock.md)
-// Jedna sesja na serwer, w folderze modulu z chwili startu. Tylko Twoj modul, tylko Host lokalny.
-const term = new terminal.TermSession();
+// Sesja na modul (0.34.2, AC-T16): okno pokazuje sesje biezacego modulu; po zmianie modulu sesja poprzedniego dziala
+// dalej w tle i wraca po powrocie do niego. Tylko Twoj modul, tylko Host lokalny.
+var terms = new Map();   // folder modulu -> TermSession (var: selectModule przy starcie wola termSwitch przed ta linia)
 const termClients = new Set();
 const termSend = (res, obj, ev) => res.write((ev ? 'event: ' + ev + '\n' : '') + 'data: ' + JSON.stringify(obj) + '\n\n');
-term.on('data', c => { const d = c.toString('base64'); termClients.forEach(r => termSend(r, { d })); });
-term.on('exit', code => termClients.forEach(r => termSend(r, { code }, 'exit')));
+function termKey() { return user.req ? path.dirname(user.req) : ''; }
+function termOf(key) {
+  let t = terms.get(key);
+  if (t) return t;
+  t = new terminal.TermSession();
+  t.on('data', c => { if (key !== termKey()) return; const d = c.toString('base64'); termClients.forEach(r => termSend(r, { d })); });
+  t.on('exit', code => { if (key === termKey()) termClients.forEach(r => termSend(r, { code }, 'exit')); });
+  terms.set(key, t);
+  return t;
+}
+const term = { get cur() { return termOf(termKey()); } };
+// Zmiana modulu: okna Claude dostaja ekran i stan sesji nowego modulu (jak po ponownym podlaczeniu)
+function termSwitch() {
+  if (!terms) return;
+  termClients.forEach(r => termSend(r, { replay: true, d: term.cur.buffer().toString('base64'), state: termState() }));
+}
+// Inne moduly z dzialajaca sesja - okno pokazuje, ze Claude dziala tez gdzie indziej
+function termOthers() {
+  const k = termKey(), out = [];
+  terms.forEach((t, key) => { if (key !== k && t.state().running) out.push(key); });
+  return out;
+}
 function termState() {
   const mod = user.req ? path.dirname(user.req) : null;
   // zapisana rozmowa Claude Code w folderze modulu -> mozna wznowic po restarcie serwera (AC-T12)
@@ -272,16 +294,16 @@ function termState() {
   if (mod) { try { canResume = terminal.hasHistory(fs.realpathSync(mod)); } catch (e) { canResume = false; } }
   // platform / windowsBuild: przegladarka ustawia xterm pod ConPTY; reason: dlaczego terminal niedostepny (AC-W11)
   const av = terminal.availability();
-  return Object.assign(term.state(), { available: av.ok, reason: av.reason, platform: process.platform,
+  return Object.assign(term.cur.state(), { others: termOthers(), available: av.ok, reason: av.reason, platform: process.platform,
     windowsBuild: process.platform === 'win32' ? terminal.windowsBuild(require('os').release()) : null, module: mod, canResume });
 }
-['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { term.stop(); if (sig !== 'exit') process.exit(0); }));
+['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { terms.forEach(t => t.stop()); if (sig !== 'exit') process.exit(0); }));
 function termRoute(req, res, url) {
   if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
   if (url === '/api/term' && req.method === 'GET') return json(res, 200, termState());
   if (url === '/term-events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-    termSend(res, { replay: true, d: term.buffer().toString('base64'), state: termState() });
+    termSend(res, { replay: true, d: term.cur.buffer().toString('base64'), state: termState() });
     termClients.add(res);
     return req.on('close', () => termClients.delete(res));
   }
@@ -292,13 +314,13 @@ function termRoute(req, res, url) {
     if (url === '/api/term/start') {
       if (!terminal.available()) return json(res, 501, { error: terminal.availability().reason });
       if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
-      try { term.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true }); }
+      try { term.cur.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true }); }
       catch (e) { return json(res, 500, { error: e.message }); }
       return json(res, 200, termState());
     }
-    if (url === '/api/term/input') { term.write(String(body.data || '')); return json(res, 200, { ok: true }); }
-    if (url === '/api/term/resize') { return json(res, 200, { ok: true, sent: term.resize(body.cols, body.rows, body.force === true) }); }
-    if (url === '/api/term/stop') { term.stop(); return json(res, 200, { ok: true }); }
+    if (url === '/api/term/input') { term.cur.write(String(body.data || '')); return json(res, 200, { ok: true }); }
+    if (url === '/api/term/resize') { return json(res, 200, { ok: true, sent: term.cur.resize(body.cols, body.rows, body.force === true) }); }
+    if (url === '/api/term/stop') { term.cur.stop(); return json(res, 200, { ok: true }); }
     json(res, 404, { error: 'Nie ma takiego adresu.' });
   });
 }

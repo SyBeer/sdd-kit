@@ -231,6 +231,11 @@ dialog .err,.missing .err{color:var(--hot-ink);font-size:12px;font-weight:600;mi
         <option value="full">pełny: dokument wymagań (PRD) dla biznesu + pliki dla programistów</option>
         <option value="light">lekki: jeden krótki SPEC.md, do małych rzeczy</option>
       </select></label>
+    <label>Rodzaj modułu <small>czy ta część jest wdrażana osobno i inne mogą z nią rozmawiać tylko przez kontrakt? Tak = serwis. Brak kontraktu: monolit - ostrzeżenie, serwis - blokada</small>
+      <select name="kind">
+        <option value="monolith" selected>monolit - aplikacja wdrażana w całości</option>
+        <option value="service">serwis - wdrażany osobno, przez kontrakt</option>
+      </select></label>
     <label>Kto akceptuje wymagania, decyzje i słownik pojęć? <small>rola, nie osoba, np. właściciel procesu, kierownik działu</small>
       <input name="approver" value="właściciel procesu"></label>
     <label>Kto zatwierdza cały dokument na koniec? <small>opcjonalnie, np. sponsor, zarząd; puste = ta sama osoba co wyżej</small>
@@ -615,7 +620,7 @@ dialog .err,.missing .err{color:var(--hot-ink);font-size:12px;font-weight:600;mi
   $('#modcancel').onclick=function(){ $('#dlg').close(); };
   $('#modform').onsubmit=function(e){
     e.preventDefault();
-    var f=e.target, el=f.elements, body={name:el['name'].value.trim(),level:el.level.value,approver:el.approver.value.trim(),sponsor:el.sponsor.value.trim()};
+    var f=e.target, el=f.elements, body={name:el['name'].value.trim(),level:el.level.value,kind:el.kind.value,approver:el.approver.value.trim(),sponsor:el.sponsor.value.trim()};
     api('/api/modules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(){ uplog=[]; f.reset(); $('#dlg').close(); })
       .catch(function(err){ $('#moderr').textContent=err.message; });
