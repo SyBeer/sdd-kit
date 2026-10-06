@@ -250,12 +250,16 @@
   }
 
   // ---------------------------------------------------------------- nowa wersja z GitHuba (0.27.0, docs/specs/update.md)
+  // Od 0.35.1 (AC-UP9): zielona strzalka w dol tuz za numerem wersji w pasku stanu; Konfiguracja otwiera to samo okienko.
+  let openUpd = null;
+  api.openUpdate = function () { if (openUpd) openUpd(true); return !!openUpd; };
   function updateChip(bar) {
     fetch('/api/update').then(function (r) { return r.ok ? r.json() : null; }).then(function (st) {
       if (!st || !st.newer) return;
-      const ver = bar.querySelector('.theme-btn'), wrap = document.createElement('span');
+      const ver = verSlot(), wrap = document.createElement('span');
+      if (!ver) return;
       wrap.className = 'upd';
-      wrap.innerHTML = '<button type="button" class="upd-btn" aria-expanded="false" title="Dostępna nowa wersja sdd-kit">↑ ' + st.latest + '</button>' +
+      wrap.innerHTML = '<button type="button" class="upd-btn" aria-expanded="false" title="Dostępna nowa wersja ' + st.latest + ' - kliknij, żeby zaktualizować" aria-label="Dostępna nowa wersja ' + st.latest + '">↓</button>' +
         '<div class="upd-pop" role="dialog" aria-label="Nowa wersja sdd-kit" hidden>' +
         '<p><b>Dostępna wersja ' + st.latest + '</b> (masz ' + st.current + ').</p>' +
         '<p><a href="' + (st.url || '#') + '" target="_blank" rel="noopener">Co nowego ↗</a></p>' +
@@ -264,9 +268,10 @@
         '<p class="upd-msg" hidden></p><pre class="upd-log" hidden></pre>' +
         '<div class="upd-row">' + (st.canUpdate ? '<button type="button" class="upd-go">Aktualizuj</button>' : '') +
         '<button type="button" class="upd-x">Później</button></div></div>';
-      (ver ? ver.parentNode : bar.querySelector('.right')).insertBefore(wrap, ver);
+      ver.parentNode.insertBefore(wrap, ver.nextSibling);
       const btn = wrap.querySelector('.upd-btn'), pop = wrap.querySelector('.upd-pop');
-      function open(on) { pop.hidden = !on; btn.setAttribute('aria-expanded', on); }
+      function open(on) { pop.hidden = !on; btn.setAttribute('aria-expanded', on); if (on) { const g = pop.querySelector('.upd-go') || pop.querySelector('.upd-x'); if (g) g.focus(); } }
+      openUpd = open;
       btn.onclick = function () { open(pop.hidden); };
       wrap.querySelector('.upd-x').onclick = function () { open(false); btn.focus(); };
       pop.addEventListener('keydown', function (e) { if (e.key === 'Escape') { open(false); btn.focus(); } });

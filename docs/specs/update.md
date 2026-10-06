@@ -57,3 +57,8 @@ znajomosci komend `git` i `claude plugin`.
   `POST /api/update` bez `X-SDD` -> 403; z demo -> 403; z kitem `github` i atrapa claude -> `ok: true`, log 2 krokow.
 - AC-UP8 (reczne): w panelu i na tablicy przy starszej wersji widac "↑ X", okienko z linkiem do Release,
   "Aktualizuj" konczy sie komunikatem o restarcie; przy aktualnej wersji przycisku nie ma.
+- AC-UP9 (0.35.1, uwaga usera: "Przy nr wersji - jezeli jest aktualizacja - powinna pojawic sie ikona zielonej strzalki
+  w dol. To samo w menu SETTINGS ... jest nowa wersja"): znaczek nowej wersji to zielone kolko ze strzalka ↓ tuz za
+  numerem wersji w pasku stanu (zamiast "↑ X" w naglowku); klik otwiera to samo okienko (Co nowego, Aktualizuj / Pozniej).
+  Konfiguracja, karta Serwer: przy wersji ta sama strzalka, "jest nowa wersja X", "co nowego ↗" i "Aktualizuj…"
+  (otwiera okienko z paska stanu). Tylko Twoj modul (nie demo).

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.35.1] - 2026-10-06
+- Nowa wersja sdd-kit: zielona strzalka w dol tuz za numerem wersji w pasku stanu (zamiast "↑ X" w naglowku) - klik
+  otwiera okienko aktualizacji. W Konfiguracji, w karcie Serwer: ta sama strzalka, "jest nowa wersja X", link do
+  opisu zmian i "Aktualizuj…" (docs/specs/update.md AC-UP9).
+
 ## [0.35.0] - 2026-10-06
 - Tablica: eksport do PDF jako jedna duza strona (docs/specs/board-pdf.md, AC-BP1..AC-BP6). Przycisk "PDF" w pasku
   narzedzi otwiera nowe okno z cala tablica w ukladzie wydruku i okno drukowania - jedna strona o rozmiarze tablicy

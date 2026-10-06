@@ -186,21 +186,20 @@ html.claude-on .cdock{display:flex}
   .cdock .cd-grip{display:none}
 }
 
-/* Nowa wersja z GitHuba (0.27.0, docs/specs/update.md) */
-.topbar .upd{position:relative;display:inline-flex}
-.topbar .upd-btn{font:600 11.5px/1 var(--mono);height:20px;padding:0 8px;border:1px solid var(--rm);border-radius:3px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
-.topbar .upd-btn:hover,.topbar .upd-btn[aria-expanded="true"]{background:var(--rm)}
-.topbar .upd-btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.topbar .upd-pop{position:absolute;top:calc(100% + 8px);right:0;z-index:45;width:min(340px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);padding:12px 14px;font-family:var(--sans);font-size:13px;line-height:1.45;color:var(--ink);white-space:normal}
-.topbar .upd-pop[hidden]{display:none}
-.topbar .upd-pop p{margin:0 0 8px}
-.topbar .upd-pop a{color:var(--ink)}
-.topbar .upd-note{color:var(--muted)}
-.topbar .upd-msg[hidden],.topbar .upd-log[hidden]{display:none}
-.topbar .upd-log{max-height:160px;overflow:auto;margin:0 0 8px;padding:6px 8px;background:var(--bg);border-radius:4px;font-size:11.5px;white-space:pre-wrap}
-.topbar .upd-row{display:flex;gap:8px;justify-content:flex-end}
-.topbar .upd-row button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);cursor:pointer}
-.topbar .upd-row .upd-go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.topbar .upd-row button:disabled{opacity:.5;cursor:default}
-@media (max-width:640px){.topbar .upd-pop{position:fixed;top:56px;left:16px;right:16px;width:auto}}
-
+/* Nowa wersja z GitHuba (0.27.0, docs/specs/update.md); od 0.35.1 zielona strzalka w dol za numerem wersji w pasku stanu (AC-UP9) */
+.upd{position:relative;display:inline-flex;align-items:center}
+.statusbar .upd-btn{display:grid;place-items:center;width:16px;height:16px;padding:0;border:0;border-radius:50%;background:#2f9e5b;color:#fff;font:700 11px/1 var(--sans);cursor:pointer}
+.statusbar .upd-btn:hover,.statusbar .upd-btn[aria-expanded="true"]{background:#3bb56c;box-shadow:0 0 0 2px rgba(92,194,122,.35)}
+.statusbar .upd-btn:focus-visible{outline:2px solid #5cc27a;outline-offset:2px}
+.upd-pop{position:absolute;top:calc(100% + 8px);left:0;z-index:45;width:min(340px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);padding:12px 14px;font-family:var(--sans);font-size:13px;line-height:1.45;color:var(--ink);white-space:normal}
+.upd-pop[hidden]{display:none}
+.upd-pop p{margin:0 0 8px}
+.upd-pop a{color:var(--ink);text-decoration:underline}
+.upd-note{color:var(--muted)}
+.upd-msg[hidden],.upd-log[hidden]{display:none}
+.upd-log{max-height:160px;overflow:auto;margin:0 0 8px;padding:6px 8px;background:var(--bg);border-radius:3px;font:11.5px var(--mono);white-space:pre-wrap}
+.upd-row{display:flex;gap:8px;justify-content:flex-end}
+.upd-row button{height:28px;padding:0 12px;border:1px solid var(--input-line);border-radius:3px;background:transparent;color:var(--ink);font:600 12px var(--sans);cursor:pointer}
+.upd-row .upd-go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.upd-row button:disabled{opacity:.5;cursor:default}
+@media (max-width:640px){.upd-pop{position:fixed;top:56px;left:16px;right:16px;width:auto}}

@@ -174,3 +174,20 @@ test('AC-UP7: serwer - /api/update stan i aktualizacja', async () => {
     assert.match(fs.readFileSync(fc.log, 'utf8'), /plugin update sdd@sdd-kit/);
   } finally { proc.kill(); rel.close(); }
 });
+
+test('AC-UP9: nowa wersja - zielona strzalka w dol przy numerze wersji w pasku stanu i informacja w Konfiguracji', () => {
+  const B = path.join(__dirname, '..');
+  const js = fs.readFileSync(path.join(B, 'ui.js'), 'utf8'), css = fs.readFileSync(path.join(B, 'ui.css'), 'utf8');
+  const info = fs.readFileSync(path.join(B, 'info.html'), 'utf8');
+  // znaczek przy wersji w pasku stanu (nie w naglowku), zielone kolko ze strzalka w dol
+  assert.match(js, /ver\.parentNode\.insertBefore\(wrap, ver\.nextSibling\)/);
+  assert.match(js, /class="upd-btn"[\s\S]{0,200}aria-label="Dostępna nowa wersja/);
+  assert.match(js, />↓<\/button>/);
+  assert.doesNotMatch(js, /'↑ ' \+ st\.latest/);
+  assert.match(css, /\.statusbar \.upd-btn\{[^}]*border-radius:50%[^}]*background:#2f9e5b/);
+  // Konfiguracja (karta Serwer): ta sama strzalka + "jest nowa wersja X" + Aktualizuj otwiera to samo okienko
+  assert.match(js, /api\.openUpdate = /);
+  assert.match(info, /jest nowa wersja '\+esc\(u\.latest\)/);
+  assert.match(info, /SddUI\.openUpdate\(\)/);
+  assert.match(info, /fetch\(BASE\+'\/api\/update'\)/);
+});
