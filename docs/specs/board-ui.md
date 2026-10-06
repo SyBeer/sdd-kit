@@ -285,3 +285,7 @@ pytania, demo, telefon <= 640 px) bez zmian. Panel, Modul, Jak to dziala, Konfig
 - AC-B58 (reczne): wyglad zgodny z makieta w jasnym i ciemnym motywie; telefon - panel od dolu, strona przewija sie.
 - Zmiana 0.35.0 (uwaga usera: "karteczki 'nie wiem' musza byc CZERWONE"): `--hot` = `#f25a48` (jasny) / `#e8503f` (ciemny)
   zamiast `#ff9d8d` / `#e57c6c` z handoffu; tekst karteczki ciemny `#1d1b16` (kontrast 5,2:1 / 4,8:1).
+- Zmiana 0.35.2 (uwaga usera: "na czerwonych karteczkach tekst powinien byc BIALY"): karteczka "nie wiemy" ma bialy tekst
+  i biala mete; `--hot` = `#d63a2f` (jasny) / `#c8392d` (ciemny), zeby bialy tekst mial kontrast >= 4,5:1.
+  Tekst czerwonej karteczki w grubosci 500. Pozostale karteczki pastelowe w jasnym motywie (uwaga usera: "moze pozostale
+  karteczki powinny byc bardziej pastelowe?"): `--ev:#ffd3a8; --cmd:#c3defa; --act:#fbeba6; --pol:#e6d2f6; --rm:#c9eac6`.

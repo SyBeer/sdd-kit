@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.2] - 2026-10-06
+- Karteczki "nie wiemy": bialy tekst na ciemniejszej czerwieni - `#d63a2f` w jasnym motywie, `#c8392d` w ciemnym
+  (kontrast z biela 4,7:1 / 5,1:1; na dawnej `#f25a48` bialy tekst bylby nieczytelny). Meta karteczki tez biala,
+  tekst w grubosci 500 (bialy na czerwonym w zwyklej grubosci wygladal za cienko).
+- Pozostale karteczki pastelowe w jasnym motywie, zeby czerwone pytania sie wybijaly: zdarzenie `#ffd3a8`, komenda
+  `#c3defa`, kto `#fbeba6`, regula `#e6d2f6`, widok `#c9eac6`. Ciemny motyw bez zmian.
+
 ## [0.35.1] - 2026-10-06
 - Nowa wersja sdd-kit: zielona strzalka w dol tuz za numerem wersji w pasku stanu (zamiast "↑ X" w naglowku) - klik
   otwiera okienko aktualizacji. W Konfiguracji, w karcie Serwer: ta sama strzalka, "jest nowa wersja X", link do

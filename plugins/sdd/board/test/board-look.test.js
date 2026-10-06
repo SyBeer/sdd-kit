@@ -75,9 +75,14 @@ test('AC-B56: tablica - id dla skryptu, pasek stanu, linijka kolumn, karteczka 1
   assert.match(html, /#drawer\{[^}]*width:300px/);
   // tokeny wspolne dla stron w ui.css od 0.34.0 (AC-F1)
   assert.match(css, /--hot-ink:#c2412f/);
-  // karteczka "nie wiemy" czerwona (0.35.0, uwaga usera: "karteczki nie wiem musza byc CZERWONE")
-  assert.match(css, /--hot:#f25a48/);
-  assert.match(css, /--hot:#e8503f/);
+  // karteczka "nie wiemy" czerwona z bialym tekstem (0.35.0 / 0.35.2, uwagi usera: "CZERWONE", "tekst powinien byc BIALY")
+  assert.match(css, /--hot:#d63a2f/);
+  assert.match(css, /--hot:#c8392d/);
+  assert.match(html, /\.note\.hot\{color:#fff\}/);
+  assert.match(html, /\.note\.hot \.txt\{font-weight:500/);
+  // pozostale karteczki pastelowe w jasnym motywie (0.35.2) - czerwone pytania sie wybijaja
+  assert.match(css, /--ev:#ffd3a8; --cmd:#c3defa; --act:#fbeba6; --pol:#e6d2f6; --rm:#c9eac6;/);
+  assert.match(html, /\.note\.hot \.meta\{color:rgba\(255,255,255,\.85\)\}/);
   assert.match(html, /ODPOWIEDŹ CZEKA/);
   assert.match(css, /--sans:"IBM Plex Sans"/);
   assert.match(html, /font-family:var\(--sans\)/);

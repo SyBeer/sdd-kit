@@ -1,7 +1,7 @@
 {
   "name": "sdd",
   "description": "Spec-Driven Development: zbieranie i interaktywna analiza wymagan biznesowych z AI. Skille: init, intake, interview, domain, spec, validate, handover, status.",
-  "version": "0.35.1",
+  "version": "0.35.2",
   "author": { "name": "Zelu" },
   "license": "MIT"
 }

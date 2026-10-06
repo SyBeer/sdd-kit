@@ -129,6 +129,11 @@ main{display:flex;flex-direction:column;min-width:0}
 .note .sync{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border:2px solid var(--bg);font-size:10px}
 .note.ev{background:var(--ev)}.note.cmd{background:var(--cmd)}.note.act{background:var(--act)}
 .note.pol{background:var(--pol)}.note.rm{background:var(--rm)}.note.hot{background:var(--hot)}
+/* "nie wiemy": czerwona z bialym tekstem (0.35.2, uwaga usera) - kontrast 4,7:1 jasny / 5,1:1 ciemny */
+.note.hot{color:#fff}
+.note.hot .txt{font-weight:500;letter-spacing:.005em}
+.note.hot .meta{color:rgba(255,255,255,.85)}
+.note.hot .ans{border-top-color:rgba(255,255,255,.4)}
 .note.space{background:transparent;box-shadow:none;border:1px dashed var(--dash);color:var(--muted);min-height:40px}
 .note.space .txt{font-style:italic;opacity:.8}
 .note.draft{cursor:default}.note.draft.none{background:var(--draft)}.note.draft .txt.ph{opacity:.55}
