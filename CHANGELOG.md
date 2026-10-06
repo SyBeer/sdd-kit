@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.36.0] - 2026-10-06
+- Tablica: procesy docelowe i widok "dziś / docelowo / oba" (docs/specs/board-target.md, AC-BT1..AC-BT9).
+  - Karteczka docelowa (`target: true` w board.json) - wymaganie, ktorego aplikacja jeszcze nie ma: przerywana
+    obwodka i etykieta DOCELOWO. Proces, ktorego wszystkie karteczki sa docelowe, ma znacznik DOCELOWO i kreskowane tlo.
+  - Przelacznik widoku w pasku narzedzi (widac go, gdy sa docelowe): "dziś" chowa docelowe, "docelowo" przygasza
+    reszte, "oba" pokazuje wszystko; wybor zapamietany w przegladarce. Pasek stanu: "N docelowo".
+  - Panel karteczki: pole "docelowo - jeszcze nie ma w aplikacji"; kopia docelowej jest docelowa.
+  - PDF eksportuje wybrany widok, w naglowku "widok: …".
+  - `/sdd:board processes` dokłada z PRD kroki i procesy, ktorych nie ma w kodzie, jako docelowe (zrodlo
+    `[Biz] PRD R-xxx`); `/sdd:board sync` traktuje docelowe jak wymagania do zbudowania. Starsze tablice bez zmian.
+
 ## [0.35.2] - 2026-10-06
 - Karteczki "nie wiemy": bialy tekst na ciemniejszej czerwieni - `#d63a2f` w jasnym motywie, `#c8392d` w ciemnym
   (kontrast z biela 4,7:1 / 5,1:1; na dawnej `#f25a48` bialy tekst bylby nieczytelny). Meta karteczki tez biala,

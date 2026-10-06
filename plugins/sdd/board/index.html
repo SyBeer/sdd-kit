@@ -261,6 +261,26 @@ body.hideq .note.hot,body.hideq .lane.qonly{display:none}
   #drawer{top:auto;left:0;width:auto;max-height:75vh;border-left:0;border-top:1px solid var(--line);border-radius:10px 10px 0 0;transform:translateY(105%)}
   #drawer.open{transform:none}
 }
+/* Procesy docelowe (0.36.0, docs/specs/board-target.md): przerywana obwodka, etykieta DOCELOWO, widok dzis / docelowo / oba */
+.note.target{border:1.5px dashed rgba(29,27,22,.55);box-shadow:none}
+.note.hot.target{border-color:rgba(255,255,255,.75)}
+.note .tgt{align-self:flex-start;font:600 9.5px/1 var(--mono);letter-spacing:.02em;padding:2px 4px;border:1px dashed currentColor;border-radius:2px;opacity:.85}
+.lane.target{background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(227,154,59,.07) 10px 20px)}
+.lane .ltag{font:600 9.5px/1 var(--mono);letter-spacing:.04em;color:var(--accent);border:1px dashed var(--accent);border-radius:2px;padding:2px 4px;margin-top:2px}
+.vseg{display:inline-flex;align-items:center;gap:6px;margin-left:2px}
+.vseg[hidden]{display:none}
+.vseg .vlbl{font:11px var(--mono);color:var(--faint)}
+.vseg .vbtns{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.vseg button{height:22px;padding:0 8px;border:0;border-left:1px solid var(--line);background:none;font:11.5px var(--sans);color:var(--muted);cursor:pointer}
+.vseg button:first-child{border-left:0}
+.vseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.vseg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+body.v-dzis .note.target,body.v-dzis .lane.target{display:none}
+body.v-docelowo .note:not(.target){opacity:.35}
+.syncbar .sync.tg{background:none;border:1px dashed currentColor;font-size:8px}
+.tgtrow{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);cursor:pointer}
+.tgtrow input{width:auto;height:auto;margin:0}
+
 /* Eksport do PDF (0.35.0, docs/specs/board-pdf.md): jedna strona o rozmiarze tablicy (@page z exportPdf), jasne kolory */
 #printhead{display:none}
 html.printing #printhead{display:block;padding:0 0 14px}
@@ -324,6 +344,7 @@ html.printing{padding-right:0!important}
   </span>
   <span class="vsep pdfsep" aria-hidden="true"></span>
   <button class="b" id="pdf" title="Eksport całej tablicy do PDF - jedna strona">PDF</button>
+  <span class="vseg" id="view" role="group" aria-label="Widok tablicy" hidden><span class="vlbl">widok</span><span class="vbtns"><button type="button" data-view="dzis" title="Tylko to, co aplikacja robi dziś">dziś</button><button type="button" data-view="docelowo" title="Zakres do zbudowania - reszta przygaszona">docelowo</button><button type="button" data-view="oba" title="Dziś i docelowo razem">oba</button></span></span>
 </div>
 <div class="msg" id="msg" role="status"></div>
 <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
@@ -358,6 +379,7 @@ html.printing{padding-right:0!important}
       <label for="f-lane">proces</label><select id="f-lane"></select>
       <label for="f-ref">id</label><input id="f-ref" autocomplete="off" placeholder="np. R-014" title="R – wymaganie · Q – pytanie · A – założenie · D – decyzja · BR – reguła biznesowa">
     </div>
+    <label class="tgtrow" title="Karteczka z wymagań, których aplikacja jeszcze nie ma - widok „docelowo”"><input type="checkbox" id="f-target"> docelowo – jeszcze nie ma w aplikacji</label>
     <div class="ansbox" id="ansbox" hidden>
       <label for="f-ans">odpowiedź biznesu</label><textarea id="f-ans" rows="3" placeholder="Co odpowiedział biznes – słowami biznesu"></textarea>
       <input id="f-by" list="rolelist" autocomplete="off" placeholder="kto odpowiedział (rola)" aria-label="Kto odpowiedział">
@@ -407,8 +429,12 @@ html.printing{padding-right:0!important}
     var cnt={synced:0,changed:0,missing:0,board:0};
     board.notes.forEach(function(n){ var k=syncOf(n); if(k in cnt) cnt[k]++; }); // odstepy poza licznikiem
     // pasek stanu: cztery stany z pelnym opisem (0.33.0)
+    // procesy docelowe (0.36.0): licznik, przelacznik widoku tylko gdy sa docelowe
+    var nt=ops.countTarget(board);
     $('#syncbar').innerHTML=board.notes.length?'<span class="lbl">Pliki:</span>'+['synced','changed','board','missing'].map(function(k){
-      return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join(''):'';
+      return '<span class="si"><i class="sync '+k+'">'+SYNC[k][0]+'</i>'+cnt[k]+' '+SYNC[k][1]+'</span>'}).join('')+
+      (nt?'<span class="si" title="Karteczki z wymagań, których aplikacja jeszcze nie ma"><i class="sync tg">◇</i>'+nt+' docelowo</span>':''):'';
+    $('#view').hidden=!nt; viewClasses(nt);
     $('#pdf').hidden=!board.lanes.length;
     var inner=$('#inner'); inner.innerHTML=''; inner.classList.toggle('blank',!board.lanes.length);
     if(!board.lanes.length){
@@ -464,7 +490,9 @@ html.printing{padding-right:0!important}
     tools.appendChild(tbtn('↑','Przesuń proces wyżej',li===0,function(){ ops.moveLane(board,lane,-1); commit(); }));
     tools.appendChild(tbtn('↓','Przesuń proces niżej',li===board.lanes.length-1,function(){ ops.moveLane(board,lane,1); commit(); }));
     tools.appendChild(tbtn('✕','Usuń proces',false,function(){ removeLane(lane); },'x'));
-    t.appendChild(name);t.appendChild(meta);t.appendChild(tools);L.appendChild(t);
+    t.appendChild(name);t.appendChild(meta);
+    if(ops.targetLane(board,lane)){ L.classList.add('target'); var lt=document.createElement('span'); lt.className='ltag'; lt.textContent='DOCELOWO'; lt.title='Proces z wymagań - aplikacja go jeszcze nie ma'; t.appendChild(lt); }
+    t.appendChild(tools);L.appendChild(t);
 
     var cols=document.createElement('div');cols.className='cols';
     var notes=board.notes.filter(function(x){return x.lane===lane});
@@ -549,6 +577,7 @@ html.printing{padding-right:0!important}
     if(sel===n.id) el.classList.add('sel');
     el.draggable=!board._demo&&!draft; el.dataset.id=n.id; // przy szkicu uklad kolumn jest tymczasowy - bez przeciagania
     var tx=document.createElement('span');tx.className='txt';tx.textContent=n.text||'';el.appendChild(tx);
+    if(ops.isTarget(n)){ el.classList.add('target'); var tg=document.createElement('span'); tg.className='tgt'; tg.textContent='DOCELOWO'; el.insertBefore(tg,tx); }
     var qc=ops.closedQuestion(n,board._questions); // pytanie zamkniete w pliku - szare z dopiskiem (0.17.0)
     if(qc){ el.classList.add('closedq'); var qb=document.createElement('span'); qb.className='qclosed'; qb.textContent=qc; el.insertBefore(qb,tx); }
     var as=ops.answerState(n,board._questions); // odpowiedz z warsztatu (0.17.0)
@@ -568,7 +597,7 @@ html.printing{padding-right:0!important}
     if(line){ var m=document.createElement('span');m.className='meta';m.textContent=line;el.appendChild(m); }
     var st=syncOf(n);
     var sb=document.createElement('span'); sb.className='sync '+st; sb.textContent=SYNC[st][0]; sb.setAttribute('aria-hidden','true'); el.appendChild(sb);
-    el.title=[n.text||'','Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
+    el.title=[n.text||'',ops.isTarget(n)?'DOCELOWO - jeszcze nie ma w aplikacji':'','Pliki: '+SYNC[st][1],n.source?'Źródło: '+n.source:'',who?'Autor: '+who:'',when?'Zmieniono: '+when:''].filter(Boolean).join('\n');
     el.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',n.id); e.dataTransfer.effectAllowed='copyMove';});
     el.addEventListener('click',function(){ openNote(n.id); });
     return el;
@@ -745,6 +774,7 @@ html.printing{padding-right:0!important}
     filledFor=n?n.id:null; $('#ok').textContent=''; $('#ok').classList.remove('good');
     $('#cancel').hidden=!!n;
     $('#f-ans').value=n&&n.answer||''; $('#f-by').value=n&&n.answeredBy||'';
+    $('#f-target').checked=!!(n&&n.target===true);
     if(!n){ $('#ph').textContent='nowa'; $('#f-text').value=''; setType(null); $('#f-ref').value=''; $('#src').innerHTML=''; $('#del').hidden=true; $('#dup').hidden=true; ansBox(); return; }
     $('#del').hidden=false; $('#dup').hidden=false;
     $('#ph').textContent=phOf(n);
@@ -782,6 +812,7 @@ html.printing{padding-right:0!important}
       sel=n.id; draft=null;
     } else if(n.lane!==lane){ ops.placeNote(board,n.id,lane,ops.nextCol(board,lane)); } // stara kolumna znika, jesli pusta
     n.text=text;n.type=getType();n.lane=lane;n.ref=$('#f-ref').value.trim()||undefined;
+    if($('#f-target').checked) n.target=true; else delete n.target;
     if(n.type==='hot'){
       if((n.answer||'')!==ans) n.answeredAt=ans?new Date().toISOString():undefined;
       n.answer=ans||undefined; n.answeredBy=ans?by:undefined;
@@ -917,13 +948,29 @@ html.printing{padding-right:0!important}
   };
   setZoom(z);
 
+  // ------------------------------------------------------------ widok dzis / docelowo / oba (0.36.0, docs/specs/board-target.md)
+  var VNAME={dzis:'dziś',docelowo:'docelowo',oba:'oba'}, view='oba';
+  try{ view=ops.viewOf(localStorage.getItem('sdd-board-view')); }catch(e){}
+  function viewClasses(nt){
+    document.body.classList.toggle('v-dzis',!!nt&&view==='dzis');
+    document.body.classList.toggle('v-docelowo',!!nt&&view==='docelowo');
+    [].forEach.call(document.querySelectorAll('#view button'),function(b){ b.setAttribute('aria-pressed',b.getAttribute('data-view')===view); });
+  }
+  $('#view').onclick=function(e){
+    var b=e.target.closest('button[data-view]'); if(!b) return;
+    view=ops.viewOf(b.getAttribute('data-view'));
+    try{ localStorage.setItem('sdd-board-view',view); }catch(err){}
+    viewClasses(ops.countTarget(board));
+  };
+
   // ------------------------------------------------------------ eksport do PDF (0.35.0, docs/specs/board-pdf.md)
   function printHead(){
     var d=new Date(), p=function(v){return (v<10?'0':'')+v}, mod=$('#modbtn .mname').textContent;
     var types=[['ev','zdarzenie'],['cmd','komenda'],['act','kto'],['pol','reguła'],['rm','widok'],['hot','nie wiemy']];
     var states=[['synced','✓','w plikach'],['changed','↻','zmienione'],['board','●','tylko na tablicy'],['missing','!','brak w pliku']];
     $('#printhead').innerHTML='<div class="ph1">'+esc(mod)+(board.title?' · '+esc(board.title):'')+(board.subtitle?' <span>'+esc(board.subtitle)+'</span>':'')+'</div>'+
-      '<div class="ph2">eksport '+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+' · sdd-kit</div>'+
+      '<div class="ph2">eksport '+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+
+        (ops.countTarget(board)?' · widok: '+VNAME[view]:'')+' · sdd-kit</div>'+
       '<div class="ph3">'+types.map(function(t){return '<span class="lg"><i class="sq '+t[0]+'"></i>'+t[1]+'</span>'}).join('')+
       states.map(function(x){return '<span class="lg"><i class="sync '+x[0]+'">'+x[1]+'</i>'+x[2]+'</span>'}).join('')+'</div>';
   }

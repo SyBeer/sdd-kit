@@ -30,6 +30,9 @@ Typy: `ev` zdarzenie (cos sie stalo), `cmd` komenda (ktos cos robi), `act` kto (
 Samo przenumerowanie kolumn (wstawienie albo zamkniecie kolumny w pasie) nie zmienia `updated`. Panel pokazuje je jako RRRR-MM-DD HH:MM.
 `answer`, `answeredBy`, `answeredAt` (tylko `hot`): odpowiedz biznesu wpisana na tablicy, kto odpowiedzial (rola), kiedy.
 Tablica tylko zbiera odpowiedzi - do plikow wpisuje je agent przy `sync` (krok 3 ponizej).
+`target`: `true` - karteczka docelowa: z wymagan, ktorych aplikacja jeszcze nie ma (0.36.0, docs/specs/board-target.md).
+Brak pola = stan dzisiejszy. Proces, ktorego wszystkie karteczki sa docelowe, tablica pokazuje jako proces docelowy;
+przelacznik "dziś / docelowo / oba" chowa albo przygasza jedne albo drugie. Wdrozone -> zdejmij `target`.
 `col` to kolejnosc w pasie od lewej (0,1,2...). Karteczki z tym samym `col` stoja jedna pod druga (np. zdarzenie i jego hotspot).
 
 ## Tura warsztatu (`/sdd:board` podczas rozmowy)
@@ -59,6 +62,8 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
    - `ev` -> stany w `ENTITIES.md`
    - `pol` -> `RULES.md` jako BR-xxx (+ A niepotwierdzone, jesli zrodlo nie [Biz])
    - `cmd`, `rm` -> kandydaci R do `PRD.md` (sekcja robocza) albo notatka w `session-YYYY-MM-DD.md`
+   - karteczki docelowe (`target: true`) to wymagania do zbudowania, nie opis dzisiejszego dzialania: `cmd`/`rm` ->
+     R (albo AC istniejacego R), `pol` -> BR z powiazanym R; stan dzisiejszy z kodu (`[App]`) ich nie podwaza.
 3. Wpisz `ref` z powrotem do karteczek, zeby tablica i pliki mialy te same numery.
    Kazdej karteczce przeniesionej do plikow ustaw `synced` = teraz (ISO, `date -Iseconds`) i `file` = plik, do ktorego trafila.
    Nie zmieniaj przy tym `updated`. Panel pokazuje wtedy ✓; jesli `ref` nie ma w `file` - ! (popraw plik albo ref).
@@ -98,6 +103,12 @@ Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D an
    w QUESTIONS.md, wiec panel pokazalby "!".
 6. Decyzja mowi co innego niz kod -> karteczka opisuje stan docelowy z dopiskiem "(docelowo; dzis ...)".
    Funkcje oznaczone w PRD jako poza zakresem (makiety itp.) pomijasz.
+6a. **Docelowe** (0.36.0): wymagania R z PRD (i ich BR, D), ktorych nie ma w kodzie - nowy krok w istniejacym procesie
+   albo caly nowy proces - stawiasz jako karteczki z `target: true`, zrodlo `[Biz] PRD R-xxx` (albo `[Biz] RULES BR-xxx`),
+   `ref` = numer z pliku, `file` = plik, `synced` = teraz (sa juz w plikach). Nowy krok - w pasie procesu, w kolumnie,
+   w ktorej ma wypasc; nowy proces - osobny pas (wszystkie jego karteczki docelowe), wstawiony wg przebiegu.
+   Tylko R zatwierdzone albo robocze z sekcji zakresu - nie z "Poza zakresem". Wymaganie czesciowo zbudowane:
+   karteczka dzisiejsza + docelowa z brakujaca czescia.
 7. Rozjazd kod vs dokumentacja, funkcja opisana, a nieobecna w kodzie, zachowanie bez zrodla `[Biz]` budzace
    watpliwosc -> `hot` przy karteczce, ktorej dotyczy (zasady miejsca ponizej), `ref` = kolejne wolne Q-xxx
    z QUESTIONS.md. Pytanie o przeszlosc ("kiedy ostatnio..., jak to zrobiles?"). Najwyzej kilka - reszta przy `sync`.
@@ -105,7 +116,8 @@ Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D an
    `id` unikalne, `by: "agent"`, `created` = `updated` = teraz (`date -Iseconds`). Tytul/podtytul tablicy:
    nazwa aplikacji + wersja + "as-built", jesli byly domyslne.
 9. Linia w `CHANGELOG.md` (liczba procesow, karteczek, numery Q) i odpowiedz: lista pasow po 1 zdaniu,
-   ile karteczek jest juz w plikach (✓), a ile tylko na tablicy (do `sync`), co oznaczyles "docelowo", jakie `hot`,
+   ile karteczek jest juz w plikach (✓), a ile tylko na tablicy (do `sync`), ile docelowych (`target`) i w jakich
+   procesach, co oznaczyles "(docelowo; dzis ...)", jakie `hot`,
    jedno pytanie o przeszlosc.
 
 ## Gdzie stawiac pytanie (`hot`)

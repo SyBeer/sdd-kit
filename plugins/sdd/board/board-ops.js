@@ -120,6 +120,7 @@
     while (list.some(function (x) { return x.id === nid; })) nid = base + (k++);
     const c = { id: nid, type: n.type, text: n.text, lane: n.lane, col: n.col || 0, by: 'człowiek',
       source: (n.source ? n.source + ' ' : '') + '(kopia)', created: now, updated: now };
+    if (n.target === true) c.target = true;  // kopia docelowej jest docelowa (0.36.0, AC-BT2)
     if (!dest) { list.splice(list.indexOf(n) + 1, 0, c); return nid; }
     if (dest.newCol) insertCol(b, dest.lane, dest.col);
     c.lane = dest.lane; c.col = dest.col;
@@ -138,7 +139,7 @@
   // Daty karteczek (ISO): nowe dostaja created/updated, zmienione - updated. Daty podane w `next` (agent, klient) zostaja.
   // Przeniesienie liczy sie tylko z oznaczeniem `_moved` (przegladarka, placeNote) - sam numer `col` zmieniony przez
   // wstawienie albo zamkniecie kolumny to uklad, nie zmiana (AC-B28). `_moved` nie trafia do pliku.
-  const TRACKED = ['text', 'type', 'lane', 'ref', 'answer', 'answeredBy']; // odpowiedz na pytanie tez (AC-B46)
+  const TRACKED = ['text', 'type', 'lane', 'ref', 'answer', 'answeredBy', 'target']; // odpowiedz na pytanie tez (AC-B46)
   function changed(a, b) {
     return TRACKED.some(function (k) {
       return (a[k] == null ? '' : a[k]) !== (b[k] == null ? '' : b[k]);
@@ -354,5 +355,16 @@
     return { w: W, h: H, css: '@page{size:' + W + 'px ' + H + 'px;margin:0}' };
   }
 
-  return { boardPageSize, boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, copyNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
+  // Procesy docelowe (0.36.0, docs/specs/board-target.md AC-BT1): karteczka z target: true = jeszcze nie ma w aplikacji.
+  // Proces docelowy = wszystkie jego karteczki (bez odstepow) docelowe; osobnego pola w lanes nie ma.
+  const VIEWS = ['dzis', 'docelowo', 'oba'];
+  function isTarget(n) { return !!n && n.target === true; }
+  function targetLane(b, lane) {
+    const l = notes(b).filter(function (n) { return n.lane === lane && n.type !== 'space'; });
+    return l.length > 0 && l.every(isTarget);
+  }
+  function countTarget(b) { return notes(b).filter(function (n) { return n.type !== 'space' && isTarget(n); }).length; }
+  function viewOf(stored) { return VIEWS.indexOf(stored) >= 0 ? stored : 'oba'; }
+
+  return { VIEWS, isTarget, targetLane, countTarget, viewOf, boardPageSize, boardHint, addLane, renameLane, moveLane, deleteLane, countNotes, nextCol, moveNote, stepNote, insertCol, closeCol, placeNote, copyNote, removeNote, stampNotes, fmtDate, syncState, syncMap, noteSync, boardSwitched, isQuestionsLane, missingQuestions, placeQuestions, closedQuestion, QLANE, answerState, pendingAnswers, questionOrder, createHistory };
 });
