@@ -47,24 +47,19 @@ test('AC-B54: czcionki lokalnie, @font-face w ui.css, serwer podaje tylko pliki 
   } finally { srv.kill(); fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('AC-B55: pasek tablicy - logo, sciezka modulu, krotkie zakladki, jeden przycisk motywu; inne strony bez zmian', () => {
+test('AC-B55: pasek tablicy - logo, sciezka modulu, krotkie zakladki, jeden przycisk motywu (od 0.34.0 wspolny, AC-F1)', () => {
   const b = ui.topbarHtml('board', '', 'light');
   assert.match(b, /class="logo"/);
   assert.match(b, /class="crumb"/);
   assert.match(b, /<span class="tab" aria-current="page">Tablica<\/span>/);
-  ['Panel', 'Moduł', 'Jak to działa', 'Konfiguracja'].forEach(t => assert.match(b, new RegExp('>' + t + '</a>'), t));
-  assert.match(b, /class="theme-btn"[^>]*title="Ciemny motyw"[^>]*>☾</);
+  ['Panel', 'Moduł', 'Jak to działa'].forEach(t => assert.match(b, new RegExp('>' + t + '</a>'), t));
+  assert.match(b, /<a class="ic cfg" href="\/config" title="Konfiguracja"/);
+  assert.match(b, /class="ic theme-btn"[^>]*title="Ciemny motyw"[^>]*>☾</);
   assert.match(ui.topbarHtml('board', '', 'dark'), /title="Jasny motyw"[^>]*>☀</);
   assert.doesNotMatch(b, /name="sdd-theme"/);
   assert.doesNotMatch(b, /class="xlink"/);
   assert.match(b, /class="slot-q"/);
-  // Panel i pozostale strony jak dotad
-  const p = ui.topbarHtml('panel', '', 'light');
-  assert.match(p, /Panel modułu/);
-  assert.match(p, /name="sdd-theme"/);
-  assert.match(p, /class="xlink"/);
-  assert.doesNotMatch(p, /class="logo"/);
-  assert.match(css, /\.topbar\[data-page="board"\]\{[^}]*height:36px/);
+  assert.match(css, /\.topbar\{[^}]*height:36px/);
 });
 
 test('AC-B56: tablica - id dla skryptu, pasek stanu, linijka kolumn, karteczka 128 px bez obrotu, tokeny', () => {
@@ -78,10 +73,12 @@ test('AC-B56: tablica - id dla skryptu, pasek stanu, linijka kolumn, karteczka 1
   assert.match(html, /\.note\{width:128px/);
   assert.doesNotMatch(html, /rotate\(-1deg\)|nth-child\(odd\)\{transform/);
   assert.match(html, /#drawer\{[^}]*width:300px/);
-  assert.match(html, /--hot-ink:#c2412f/);
-  assert.match(html, /--hot:#ff9d8d/);
+  // tokeny wspolne dla stron w ui.css od 0.34.0 (AC-F1)
+  assert.match(css, /--hot-ink:#c2412f/);
+  assert.match(css, /--hot:#ff9d8d/);
   assert.match(html, /ODPOWIEDŹ CZEKA/);
-  assert.match(html, /font-family:"IBM Plex Sans"/);
+  assert.match(css, /--sans:"IBM Plex Sans"/);
+  assert.match(html, /font-family:var\(--sans\)/);
 });
 
 test('AC-B57: klawisze 1-7 ustawiaja typ, poza polem tekstowym, bez Cmd/Ctrl, nie w demo', () => {

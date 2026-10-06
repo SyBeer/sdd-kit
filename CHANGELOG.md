@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.34.0] - 2026-10-06
+- Nowy wyglad calego panelu wg `design_handoff_sdd_kit_ui` (spec: docs/specs/ui-frame.md, AC-F1..AC-F8) - ten sam
+  styl co Tablica od 0.33.0. Zmienia sie wyglad i uklad; logika, zapis plikow, demo, okno Claude, aktualizacje
+  i zachowanie na telefonie bez zmian.
+  - wspolna rama na kazdej stronie: pasek stanu (polaczenie; "3 z 6 etapow gotowych · poziom · rodzaj"; po prawej
+    "nic nie blokuje dev" / "brak pytan u biznesu" albo liczby) i naglowek 36 px (logo, `sdd-kit / modul ▾`, krotkie
+    zakladki, motyw ☾/☀, ⚙ Konfiguracja, Claude); pasek i naglowek stoja, tresc sie przewija;
+  - Konfiguracja nie jest juz zakladka - ikona ⚙ w naglowku; wersja sdd-kit i "Przyklad gotowego modulu" w
+    Konfiguracji (karta Serwer) i w podpowiedzi logo, w pasku tylko ostrzezenie o nieaktualnej wersji;
+  - tokeny jasnego i ciemnego motywu oraz czcionki IBM Plex wspolne w `ui.css`;
+  - Panel: karta "Aktualny krok" z polem komendy, pasek szesciu etapow z kolorem stanu, lista etapow jako akordeon,
+    liczniki jako przyciski z lista pod spodem (ID · tresc · znacznik, "do" / "skad", ×), karta boczna z blokerami,
+    pytaniami u biznesu i ostatnimi zmianami;
+  - Jak to dziala: spis tresci z boku z podswietlaniem biezacej sekcji, numerowane karty, tabela komend z wariantami
+    jako sufiksami, uklady sekcji z makiety (zrodla, identyfikatory i statusy, monolit / serwis, typy karteczek,
+    Redmine); teksty bez zmian;
+  - Konfiguracja: wiersze z podpowiedzia pod nazwa, Backlog i Rodzaj modulu jako przelaczniki, blok Redmine z
+    kropka stanu klucza, role z przelacznikami uprawnien (rola uzyta w plikach - dopisek i nieaktywne "Usun"),
+    przyklejony pasek zapisu ze stanem "niezapisane zmiany / zapisano / bez zmian";
+  - Modul i dialogi Panelu w nowym stylu kart, pol i przyciskow.
+- `/api/config`: nowe pole tylko do odczytu `sdd.usedRoles` - role, ktorych nazwa stoi w plikach (ta sama regula co
+  przy zapisie).
+
 ## [0.33.0] - 2026-10-06
 - Tablica warsztatowa - odchudzony interfejs wg `design_handoff_tablica_warsztatowa` (spec: docs/specs/board-ui.md,
   AC-B54..AC-B58). Zmienia sie tylko wyglad, logika tablicy bez zmian; Panel, Modul, Jak to dziala, Konfiguracja

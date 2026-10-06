@@ -173,7 +173,10 @@ function configView(ctx) {
   let sdd = null;
   if (ctx.req) {
     const y = fs.existsSync(sddFile(ctx)) ? fs.readFileSync(sddFile(ctx), 'utf8').replace(/\r\n?/g, '\n') : '';
-    sdd = { project: info.yamlField(y, 'project'), level: info.yamlField(y, 'level') || 'full', owners: info.parseOwners(y),
+    const owners = info.parseOwners(y);
+    // usedRoles (0.34.0, AC-F7): role, ktorych nazwa stoi w plikach - Konfiguracja nie pozwala ich usunac (ta sama regula co przy zapisie)
+    sdd = { project: info.yamlField(y, 'project'), level: info.yamlField(y, 'level') || 'full', owners,
+      usedRoles: info.roleChangeBlocked(ctx.req, owners, []).map(b => b.role),
       kind: info.yamlField(y, 'kind') === 'service' ? 'service' : 'monolith', kindsAllowed: info.KINDS,
       gate: info.yamlField(y, 'gate_blocking_status'), backlog: info.yamlField(y, 'backlog') || 'none',
       redmineUrl: info.yamlField(y, 'redmine_url'), redmineProject: info.yamlField(y, 'redmine_project'),

@@ -10,115 +10,229 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/ui.js"></script>
 <style>
-/* Zakladki Modul / Jak to dziala / Konfiguracja (0.16.0). Tokeny jak w panelu (progress.html). */
-:root{
-  --bg:#e9e6df; --board:#f6f4ee; --ink:#26241f; --muted:#6b675c; --line:#cfcabd; --panel:#fff;
-  --ev:#f5a13a; --cmd:#5aa0e6; --act:#f7e36b; --pol:#c79ae3; --rm:#8fd18f; --hot:#e8503f;
-  --shadow:0 2px 0 rgba(0,0,0,.08),0 6px 14px rgba(0,0,0,.10);
-  --done:var(--rm); --active:var(--ev); --todo:var(--line);
-}
-:root{color-scheme:light dark}
-:root[data-theme="light"]{color-scheme:light}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#1b1a17;--board:#23221e;--ink:#ece8dd;--muted:#a39d8f;--line:#3a3831;--panel:#2b2a25;--shadow:0 2px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}
+/* Modul / Jak to dziala / Konfiguracja (0.34.0, design_handoff_sdd_kit_ui 3-4, docs/specs/ui-frame.md AC-F6..F8).
+   Tokeny, rama, karta (.box), pola (.fld) i przyciski (.btn) - ui.css. */
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45}
-header .meta{color:var(--muted)}
-header nav{margin-left:auto;display:flex;gap:14px;font-size:14px;align-items:baseline}
-header nav .conn{color:var(--muted);font-size:13px}
-header nav .conn b{color:var(--ink);font-weight:600}
-main{padding:0 20px 32px;max-width:1100px}
-code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--bg);padding:1px 6px;border-radius:3px;border:1px solid var(--line);overflow-wrap:anywhere}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.starts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.start{border:1px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--bg)}
-.start h3{margin:0 0 4px;font-size:15px}
-.start p{margin:0 0 6px;font-size:13px}
-.start ol{margin:0;padding-left:20px;font-size:14px;line-height:1.45}
-.tbl tr.hasvar td,.tbl tr.var td{border-bottom:0}
-.tbl tr.var.last td{border-bottom:1px solid var(--line)}
-.tbl tr.var td{font-size:13px;color:var(--muted);padding-top:2px}
-.tbl tr.var td:first-child{padding-left:18px}
-.tbl tr.var code{font-size:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
-.card.wide{grid-column:1 / -1}
-.card h2{margin:0 0 8px;font-size:16px}
-.card[id]{scroll-margin-top:12px}
-.toc ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 8px}
-.toc a{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;font-size:13.5px;background:var(--bg)}
-.toc a:hover{border-color:var(--ink)}
-.toc a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.card h3{margin:14px 0 6px;font-size:14px}
-.card p{margin:0 0 6px}
-.muted,.card .hint{color:var(--muted);font-size:13.5px}
-.md ul,.md ol{margin:0 0 6px;padding-left:20px}
-.md p{margin:0 0 6px}
-.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:0;font-size:14px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.45}
+main{max-width:880px;padding:16px;display:flex;flex-direction:column;gap:12px}
+body.guide main{max-width:1080px}
+code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:2px;padding:1px 4px;overflow-wrap:anywhere}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:12.5px;margin:0}
+.box h2{margin:0;font:600 10.5px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.box h2 .nn{color:var(--faint)}
+.box .bb{padding:12px 16px}
+.box .bb>p{margin:0 0 8px}
+.box .bb>p:last-child{margin-bottom:0}
+.tag{display:inline-block;font:600 10.5px/1.2 var(--mono);padding:4px 6px;border-radius:2px;color:#1d1b16;background:var(--bg);white-space:nowrap}
+.tag.bad{background:var(--hot-ink);color:#fff}
+.err{color:var(--hot-ink);font-size:12px;font-weight:600;margin:0}
+.err:empty{display:none}
+.ok{color:var(--ok);font-size:12px;font-weight:600;margin:0}
+
+/* ---------- Modul */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.mgrid .wide{grid-column:1 / -1}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0;font-size:12.5px}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
-.counts{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
-.counts b{color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums}
-.counts .warn b{color:var(--hot)}
-.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
-.list.bullets{display:block;list-style:disc;padding-left:20px}
-.list.bullets li{margin:0 0 6px}
-.list.bullets li:last-child{margin-bottom:0}
-.log li{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);word-break:break-word}
-.tag{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
-.tag.bad{background:var(--hot);border-color:var(--hot);color:#fff}
-/* Jak to dziala */
-.stages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:st}
-.stages>li{display:grid;grid-template-columns:32px 1fr;gap:2px 12px;counter-increment:st}
-.stages>li::before{content:counter(st);grid-row:1 / 4;width:28px;height:28px;border-radius:50%;border:3px solid var(--active);display:grid;place-items:center;font-size:12px;font-weight:700}
-.stages .nm{font-weight:700}
-.stages ol{margin:4px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted)}
-.tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th,.tbl td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
-.tbl td:first-child{white-space:nowrap}
-.scroll{overflow-x:auto}
-/* Konfiguracja */
-.field{display:flex;flex-direction:column;gap:4px;margin:10px 0}
-.field>span{font-size:13px;font-weight:600}
-.field small{color:var(--muted);font-weight:400}
-input[type=text],select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.row input[type=text]{flex:1 1 240px}
-/* klucz API: zwykly tekst bez maski - maska (pole hasla albo -webkit-text-security) wlacza w Safari logowanie z aplikacji Hasla (0.28.7) */
-button.b{font:inherit;font-size:13px;padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
-button.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-button.b.danger{border-color:var(--hot);color:var(--hot)}
-button.b:disabled{opacity:.45;cursor:not-allowed}
-button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
-.err{color:var(--hot);font-size:13px;margin:6px 0 0;min-height:1.2em}
-.ok{color:var(--muted);font-size:13px;margin:6px 0 0}
-.lock{border-left:4px solid var(--line);padding:6px 10px;background:var(--bg);border-radius:0 4px 4px 0;font-size:13.5px;margin:8px 0}
-.lock b{display:block}
-.owner{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-.owner .ap{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13.5px}
-.owner .ap label{display:inline-flex;gap:4px;align-items:center;cursor:pointer}
-.preview{font-size:13.5px;margin:8px 0 0}
-.mods li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
-.mods li:last-child{border-bottom:0}
-.mods .path{flex:1 1 200px;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow-wrap:anywhere}
-@media(max-width:800px){.grid,.starts{grid-template-columns:1fr}}
-@media(max-width:640px){main{padding-left:16px;padding-right:16px}header nav{margin-left:0;width:100%}}
+.md ul,.md ol{margin:0 0 6px;padding-left:20px}
+.md p{margin:0 0 6px}
+.counts{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:0;list-style:none}
+.counts li{display:inline-flex;align-items:baseline;gap:5px;padding:5px 9px;border:1px solid var(--line);border-radius:3px;background:var(--bg);font-size:12px;color:var(--muted)}
+.counts b{font:600 14px var(--mono);color:var(--ink)}
+.counts .warn b{color:var(--hot-ink)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.log{list-style:none;margin:0;padding:0}
+.log li{padding:6px 0;border-top:1px solid var(--line-soft);font:11.5px/1.5 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.log li:first-child{border-top:0}
+
+/* ---------- Jak to dziala: spis tresci + tresc (3.1) */
+.gwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.toc{flex:0 0 190px;position:sticky;top:calc(var(--chrome-h,62px) + 16px);padding-bottom:6px}
+.toc h2{padding:10px 12px 6px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc a{display:flex;gap:4px;padding:5px 12px;border-left:2px solid transparent;font-size:12.5px;color:var(--muted)}
+.toc a:hover{color:var(--ink);text-decoration:none;background:var(--hover)}
+.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.toc a .nn{flex:0 0 16px;font:10.5px/1.8 var(--mono);color:var(--faint)}
+.toc a[aria-current="true"]{border-left-color:var(--accent);background:var(--cur-row);color:var(--ink);font-weight:600}
+.toc .ex{display:block;margin-top:6px;padding:8px 12px 2px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted)}
+.gmain{flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.gmain>.box{scroll-margin-top:calc(var(--chrome-h,62px) + 16px)}
+.gmain .bh .q{font-size:12.5px;color:var(--muted)}
+.lead{margin:0 0 4px;font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border-top:1px solid var(--line-soft)}
+.cols>div{padding:12px 16px;border-left:1px solid var(--line-soft);min-width:0}
+.cols>div:first-child{border-left:0}
+.cols .ab{font:600 11px var(--mono);color:var(--accent);margin-right:6px}
+.cols h3{margin:0 0 4px;font-size:14px;font-weight:600}
+.cols p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12.5px;line-height:1.5}
+.steps li{display:flex;gap:8px}
+.steps .sn{flex:none;font:11px/1.7 var(--mono);color:var(--faint)}
+.steps.muted li{color:var(--muted)}
+.prow{display:grid;grid-template-columns:minmax(150px,190px) minmax(0,1fr);gap:4px 16px;padding:12px 16px;border-top:1px solid var(--line-soft)}
+.prow:first-child{border-top:0}
+.prow .pn{display:flex;gap:6px;align-items:baseline}
+.prow .pn .sn{font:11px var(--mono);color:var(--faint)}
+.prow .pn b{font-size:14px;font-weight:600}
+.cmdc{display:inline-block;margin-top:6px;font:12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:4px 6px;white-space:nowrap}
+.cmdc::before{content:"› ";color:var(--accent);white-space:pre}
+.prow .pd{margin:0 0 6px;font-size:13px;line-height:1.5;font-weight:500}
+.ctbl .th,.ctbl .tr{display:grid;grid-template-columns:minmax(150px,200px) minmax(0,1fr) minmax(120px,170px);gap:4px 14px;padding:8px 16px}
+.ctbl .th{background:var(--bg);border-bottom:1px solid var(--line-soft);font:600 10px var(--mono);letter-spacing:.08em;color:var(--faint)}
+.ctbl .grp{border-top:1px solid var(--line-soft)}
+.ctbl .grp:first-of-type{border-top:0}
+.ctbl .c1{font:600 12px var(--mono);overflow-wrap:anywhere}
+.ctbl .c2{font-size:12.5px;line-height:1.5}
+.ctbl .c3{font-size:12.5px;color:var(--muted)}
+.ctbl .var{padding-top:0}
+.ctbl .var .c1{padding-left:12px;font:11.5px var(--mono);color:var(--muted)}
+.ctbl .var .c2{grid-column:2 / 4;font-size:12px;color:var(--muted)}
+.frows .fr{display:grid;grid-template-columns:minmax(150px,200px) minmax(0,1fr);gap:4px 16px;padding:8px 16px;border-top:1px solid var(--line-soft)}
+.frows .fr:first-child{border-top:0}
+.frows .fp{font:600 12px var(--mono);overflow-wrap:anywhere}
+.frows .fd{font-size:12.5px;color:var(--muted)}
+.dash{list-style:none;margin:0;padding:12px 16px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;line-height:1.55}
+.dash li{display:flex;gap:8px}
+.dash li::before{content:"–";color:var(--faint);flex:none}
+.thesis{margin:0;padding:12px 16px 0;font-size:14px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:10px 16px;background:var(--bg);border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted)}
+.legend .lg{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;color:#fff;font:700 10px/1 var(--sans);font-style:normal}
+.srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 16px;padding:12px 16px}
+.srcs .sh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.srcs .tag{font-size:12px}
+.srcs .rk{font:10.5px var(--mono);color:var(--faint)}
+.srcs p{margin:0;font-size:12.5px;color:var(--muted)}
+.t-biz{background:var(--st-done)!important}.t-app{background:var(--st-app)!important}.t-dok{background:var(--bg)!important;color:var(--ink)!important;border:1px solid var(--line)}.t-ai{background:var(--st-work)!important}
+.para{margin:0;padding:12px 16px;border-top:1px solid var(--line-soft);font-size:12.5px;line-height:1.55;color:var(--muted)}
+.para b{color:var(--ink)}
+.ids{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 16px;padding:12px 16px;font-size:12.5px}
+.ids div{display:flex;gap:8px}
+.ids b{flex:0 0 28px;font:600 12px var(--mono)}
+.ids span{color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:10px 16px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted)}
+.tag.ln{background:transparent;border:1px solid var(--line);color:var(--muted);padding:3px 5px}
+.tag.okc{background:var(--st-done)}
+.tag.hotc{background:transparent;border:1px solid var(--hot-ink);color:var(--hot-ink);padding:3px 5px}
+.kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));border-bottom:1px solid var(--line-soft)}
+.kinds>div{padding:12px 16px;border-left:1px solid var(--line-soft)}
+.kinds>div:first-child{border-left:0}
+.kinds b.kn{display:block;margin-bottom:4px;font:600 12.5px var(--mono)}
+.kinds p{margin:0;font-size:12.5px;color:var(--muted)}
+.w-acc{color:var(--accent);font-weight:600}.w-hot{color:var(--hot-ink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--line);border-radius:3px;background:var(--bg);font-size:12px}
+.chip i{width:10px;height:10px;border-radius:2px}
+.pairs .pr{display:grid;grid-template-columns:minmax(130px,170px) minmax(0,1fr);gap:4px 16px;padding:10px 16px;border-top:1px solid var(--line-soft)}
+.pairs .pr:first-child{border-top:0}
+.pairs .pk{font-size:12.5px;font-weight:600}
+.pairs .pv{font-size:12.5px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+
+/* ---------- Konfiguracja (4) */
+.bh .path{font:11px var(--mono);color:var(--faint);overflow-wrap:anywhere}
+.fr2{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 16px;border-top:1px solid var(--line-soft)}
+.box>.bh+.fr2{border-top:0}
+.fr2 .fl{flex:0 0 200px;min-width:0}
+.fr2 .fl>b{display:block;font-size:13px;font-weight:600}
+.fr2 .fl>small{display:block;margin-top:2px;font-size:11.5px;line-height:1.4;color:var(--muted)}
+.fr2 .fc{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.fr2 .fc>.fld{width:100%}
+.fr2 .fc .w360{max-width:360px}.fr2 .fc .w280{max-width:280px}
+.fr2 .rowc{display:flex;flex-wrap:wrap;gap:8px;width:100%;align-items:center}
+.fr2 .rowc .fld{flex:1 1 220px}
+.seg{display:inline-flex;border:1px solid var(--input-line);border-radius:3px;overflow:hidden;align-self:flex-start}
+.seg button{height:28px;padding:0 12px;border:0;border-left:1px solid var(--input-line);background:var(--input);color:var(--ink);font:12px var(--mono);cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.seg button:disabled{cursor:not-allowed}
+.khint{font-size:12px;color:var(--muted)}
+.rmbox{margin:0 16px 12px;border:1px solid var(--line);border-radius:3px;background:var(--bg)}
+.rmbox[hidden]{display:none}
+.rmbox>.sl-lbl{display:block;padding:10px 12px 0}
+.rmbox .fr2{padding:10px 12px;border-top-color:var(--line-soft)}
+.rmbox .fr2:nth-child(2){border-top:0}
+.rmbox .fr2 .fl{flex-basis:188px}
+.kst{display:inline-flex!important;align-items:center;gap:6px;margin-top:4px!important}
+.kst i{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.kst.set i{background:#2f9e5b}.kst.new i{background:var(--accent)}.kst.none i{background:var(--hot-ink)}
+.knote{font-size:11.5px;color:var(--muted);margin:0}
+.roles{display:flex;flex-direction:column;gap:8px;width:100%}
+.role{border:1px solid var(--line);border-radius:3px;background:var(--bg);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.role .rh{display:flex;align-items:baseline;gap:8px}
+.role .rn{font-weight:600}
+.role .rs{font:10.5px var(--mono);color:var(--faint)}
+.role .rdel{margin-left:auto;border:0;background:none;padding:0;font:12px var(--sans);color:var(--hot-ink);cursor:pointer}
+.role .rdel:disabled{color:var(--faint);cursor:not-allowed}
+.role .rn-in{height:26px}
+.perms{display:flex;flex-wrap:wrap;gap:6px}
+.perm{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--muted);font:12px var(--sans);cursor:pointer}
+.perm .bx{display:grid;place-items:center;width:12px;height:12px;border:1px solid var(--input-line);border-radius:2px;color:#fff;font-size:9px;line-height:1}
+.perm .cd{font:600 11.5px var(--mono)}
+.perm[aria-pressed="true"]{border-color:var(--input-line);background:var(--input);color:var(--ink)}
+.perm[aria-pressed="true"] .bx{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.perm:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.perm:disabled{cursor:not-allowed}
+.addr{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.addr .fld{flex:1 1 220px;max-width:360px}
+.zc{font:600 10px/1 var(--mono);letter-spacing:.06em;border:1px solid var(--line);border-radius:2px;padding:3px 4px;color:var(--muted);display:inline-block!important;margin-top:6px!important}
+.val{font:600 13px var(--mono)}
+.cmdf{display:flex;align-items:stretch;height:28px;border:1px solid var(--input-line);border-radius:3px;background:var(--input);overflow:hidden;max-width:100%}
+.cmdf code{display:flex;align-items:center;border:0;border-radius:0;background:none;padding:0 9px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdf code::before{content:"› ";color:var(--accent);white-space:pre}
+.cmdf button{flex:none;border:0;border-left:1px solid var(--input-line);background:var(--ink);color:var(--bg);font:600 12px/1 var(--sans);padding:0 10px;cursor:pointer}
+.savebar{position:sticky;bottom:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);border-radius:0 0 4px 4px}
+.savebar #savesdd{height:30px}
+.savebar #savesdd:disabled{background:transparent;border-color:var(--line);color:var(--faint);opacity:1}
+.savebar #resetsdd:disabled{opacity:.5}
+.sst{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--faint)}
+.sst i{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.sst.dirty{color:var(--accent)}.sst.dirty i{background:var(--accent)}
+.sst.saved{color:#2f9e5b}.sst.saved i{background:#2f9e5b}
+.sst.err{color:var(--hot-ink);font-weight:600}.sst.err i{background:var(--hot-ink)}
+.mods{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}
+.mods li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 6px 6px 10px;border:1px solid var(--line);border-radius:3px;background:var(--bg)}
+.mods .path{flex:1 1 200px;min-width:0;font:12px var(--mono);overflow-wrap:anywhere}
+.preview{font-size:12.5px;width:100%}
+.preview p{margin:0 0 6px}
+.srv .sv{display:flex;flex-wrap:wrap;gap:2px 16px;padding:7px 16px;border-top:1px solid var(--line-soft)}
+.srv .sv:first-of-type{border-top:0}
+.srv .sk{flex:0 0 200px;font-size:12.5px;color:var(--muted)}
+.srv .sval{flex:1 1 260px;min-width:0;font:500 12px var(--mono);overflow-wrap:anywhere}
+.srv .sval small{font:11.5px var(--sans);color:var(--faint);margin-left:6px}
+.srv .sval a{text-decoration:underline}
+.srv .sval .stale{color:var(--hot-ink);font-weight:600}
+@media(max-width:640px){
+  main{padding:12px}
+  .toc{position:static;flex-basis:100%}
+  .prow,.ctbl .th,.ctbl .tr,.frows .fr,.pairs .pr{grid-template-columns:1fr}
+  .ctbl .th{display:none}
+  .ctbl .var .c2{grid-column:auto}
+  .fr2 .fl{flex-basis:100%}
+}
 </style>
 </head>
 <body>
-<nav class="topbar" id="topbar" aria-label="Widok"></nav>
-<header>
-  <h1><span class="lbl">Wymagania do modułu:</span> <span class="modsw">
+<div class="chrome">
+<div class="statusbar">
+  <span class="live" id="live"><i aria-hidden="true"></i><span>na żywo: <span id="conn">łączę…</span></span></span>
+  <span class="meta" id="meta"></span>
+</div>
+<nav class="topbar" id="topbar" aria-label="Widok">
+  <span class="modsw" data-slot="mod">
     <button type="button" id="modbtn" aria-haspopup="true" aria-expanded="false" aria-controls="modmenu" title="Przełącz moduł albo załóż nowy"><span class="mname">…</span><span class="car" aria-hidden="true">▾</span></button>
     <div id="modmenu" class="modmenu" role="menu" hidden></div>
-  </span></h1>
-  <span class="meta" id="meta"></span>
-  <nav><span class="conn">na żywo: <b id="conn">…</b></span></nav>
-</header>
+  </span>
+</nav>
+</div>
 <script>
   // strona z adresu: /module, /guide, /config (z przedrostkiem /demo albo /demo/start)
   var PAGE=(location.pathname.match(/\/(module|guide|config)\/?$/)||[])[1]||'guide';
   document.getElementById('topbar').setAttribute('data-page',PAGE);
+  document.body.className=PAGE;
 </script>
 <main id="app"><p class="muted">Wczytuję…</p></main>
 <script>
@@ -159,7 +273,8 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
   function header(p){
     var cur=p.module?(p.module.dir||p.module.name):'';
     setModule(cur,p.modules||[],p.demo);
-    $('#meta').textContent=p.exists?('poziom: '+(LEVEL[p.level]||p.level)+' · '+(p.kind==='service'?'serwis':'monolit')):'';
+    // pasek stanu jak w Panelu (handoff 1.1): "3 z 6 etapow gotowych · poziom pelny · monolit"
+    $('#meta').innerHTML=p.exists?('<b>'+(p.stages||[]).filter(function(x){return x.status==='done'}).length+' z 6</b> etapów gotowych · poziom '+esc(LEVEL[p.level]||p.level)+' · '+(p.kind==='service'?'serwis':'monolit')):'';
     if(lastModuleKey!==null&&lastModuleKey!==cur) editing=false; // inny modul - formularz od nowa
     lastModuleKey=cur;
   }
@@ -167,8 +282,8 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
   function refresh(){ clearTimeout(timer); timer=setTimeout(load,150); }
   if(BASE!=='/demo/start'){
     var es=new EventSource(BASE+'/progress-events');
-    es.onopen=function(){$('#conn').textContent='połączono'};
-    es.onerror=function(){$('#conn').textContent='rozłączono - uruchom sdd-board'};
+    es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
+    es.onerror=function(){$('#conn').textContent='rozłączono - uruchom sdd-board';$('#live').classList.add('off')};
     es.onmessage=function(e){ header(JSON.parse(e.data)); refresh(); };
   } else { $('#conn').textContent='podgląd'; SddUI.demoBar('start'); load(); }
 
@@ -177,175 +292,261 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     if(PAGE==='module') return api('/api/module').then(renderModule).catch(fail);
     if(PAGE==='config'){ if(editing) return; return api('/api/config').then(renderConfig).catch(fail); }
   }
-  function fail(e){ $('#app').innerHTML='<div class="card"><h2>Nie udało się wczytać</h2><p class="muted">'+esc(e.message)+'</p></div>'; }
+  function fail(e){ $('#app').innerHTML='<section class="box"><div class="bh"><h2>Nie udało się wczytać</h2></div><div class="bb"><p class="hint">'+esc(e.message)+'</p></div></section>'; }
 
   // ---------------------------------------------------------------- Modul
   var SECT=[['cel','Cel'],['zakres','Zakres'],['pozaZakresem','Poza zakresem'],['aktorzy','Aktorzy']];
+  function pad(n){return (n<10?'0':'')+n}
+  function box(title,body,cls,extra){return '<section class="box'+(cls?' '+cls:'')+'"><div class="bh"><h2>'+title+'</h2>'+(extra||'')+'</div>'+body+'</section>'}
   function renderModule(m){
     var c=m.counts, cnt=function(v,l,warn){return '<li'+(warn&&v>0?' class="warn"':'')+'><b>'+esc(v)+'</b> '+esc(l)+'</li>'};
-    var h='<div class="grid">';
-    h+='<section class="card wide"><h2>'+esc(m.project||m.name)+'</h2><dl class="kv">'+
+    var h='<div class="mgrid">';
+    h+=box(esc(m.project||m.name),'<div class="bb"><dl class="kv">'+
       '<dt>Folder</dt><dd>'+(m.dir?'<code>'+esc(m.dir)+'</code>':esc(m.name))+'</dd>'+
       '<dt>Poziom</dt><dd>'+esc(LEVEL[m.level]||m.level)+' · spec w <code>'+esc(m.specFile)+'</code></dd>'+
       '<dt>Rodzaj</dt><dd>'+esc(KIND[m.kind]||m.kind||KIND.monolith)+'</dd>'+
       (m.next?'<dt>Aktualny krok</dt><dd><b>'+esc(m.next.name)+'</b> · <code>'+esc(m.next.command||'')+'</code></dd>':'')+
-      '</dl></section>';
+      '</dl></div>','wide');
     SECT.forEach(function(s){
       var t=m.sections[s[0]];
-      h+='<section class="card"><h2>'+s[1]+'</h2>'+(t?'<div class="md">'+md(t)+'</div>':'<p class="muted">Jeszcze nie spisane - powstanie w <code>/sdd:spec</code>.</p>')+'</section>';
+      h+=box(s[1],'<div class="bb">'+(t?'<div class="md">'+md(t)+'</div>':'<p class="hint">Jeszcze nie spisane - powstanie w <code>/sdd:spec</code>.</p>')+'</div>');
     });
-    h+='<section class="card"><h2>Stan wymagań</h2><ul class="counts">'+
+    h+=box('Stan wymagań','<div class="bb"><ul class="counts">'+
       cnt(c.requirements,'wymagań (R)')+cnt(c.approved,'zatwierdzonych')+cnt(c.review,'do przeglądu',1)+
       cnt(c.rules,'reguł biznesowych (BR)')+cnt(c.systems,'systemów (S)')+cnt(c.critical,'integracji krytycznych')+cnt(c.terms,'haseł słownika')+cnt(c.decisions,'decyzji (D)')+cnt(c.assumptions,'założeń (A)')+
       cnt(c.questions,'pytań (Q)')+cnt(c.open,'otwartych')+cnt(c.blockers,'blokujących',1)+'</ul>'+
-      '<h3>Tablica warsztatowa</h3><p class="muted">'+(m.board.notes?('<b>'+m.board.notes+'</b> karteczek w '+m.board.lanes+' procesach, w plikach: <b>'+m.board.synced+'</b>'):'Tablica jest pusta.')+'</p></section>';
-    h+='<section class="card"><h2>Kto zatwierdza</h2>'+(m.owners.length?'<ul class="list">'+m.owners.map(function(o){
-      return '<li><b>'+esc(o.role)+'</b> – '+esc(o.approves.map(function(a){return SddUI.ABBR[a]?SddUI.ABBR[a]+' ('+a+')':a}).join(', ')||'nic')+'</li>'}).join('')+'</ul>':'<p class="muted">Brak ról w SDD.yaml.</p>')+
-      '<p class="hint">Zmienisz w zakładce Konfiguracja.</p></section>';
-    h+='<section class="card wide"><h2>Ostatnie zmiany</h2>'+(m.changelog.length?'<ul class="list log">'+m.changelog.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>':'<p class="muted">Brak wpisów.</p>')+'</section>';
+      '<p class="hint">Tablica warsztatowa: '+(m.board.notes?('<b>'+m.board.notes+'</b> karteczek w '+m.board.lanes+' procesach, w plikach: <b>'+m.board.synced+'</b>'):'tablica jest pusta.')+'</p></div>');
+    h+=box('Kto zatwierdza','<div class="bb">'+(m.owners.length?'<ul class="list">'+m.owners.map(function(o){
+      return '<li><b>'+esc(o.role)+'</b> – '+esc(o.approves.map(function(a){return SddUI.ABBR[a]?SddUI.ABBR[a]+' ('+a+')':a}).join(', ')||'nic')+'</li>'}).join('')+'</ul>':'<p class="hint">Brak ról w SDD.yaml.</p>')+
+      '<p class="hint" style="margin-top:8px">Zmienisz w Konfiguracji (⚙ w nagłówku).</p></div>');
+    h+=box('Ostatnie zmiany','<div class="bb">'+(m.changelog.length?'<ul class="log">'+m.changelog.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>':'<p class="hint">Brak wpisów.</p>')+'</div>','wide');
     $('#app').innerHTML=h+'</div>';
   }
 
-  // ---------------------------------------------------------------- Jak to dziala
+  // ---------------------------------------------------------------- Jak to dziala (0.34.0, handoff 3): spis tresci + numerowane karty
+  var CMD=/(\/sdd:[a-z]+(?: (?:--[a-z]+|live|async|sync|rebuild|start|processes|status|zatwierdz))?)/g;
+  function cmds(t){return esc(t).replace(CMD,'<code>$1</code>')}
+  function hl(t){return SddUI.marks(t).replace(/\bblokuje\b/g,'<span class="w-hot">blokuje</span>').replace(/\bostrzega\b/g,'<span class="w-acc">ostrzega</span>')}
+  function dash(items){return '<ul class="dash">'+items.map(function(i){return '<li><span>'+hl(esc(i))+'</span></li>'}).join('')+'</ul>'}
+  function stepList(list,muted){return '<ol class="steps'+(muted?' muted':'')+'">'+list.map(function(x,i){return '<li><span class="sn">'+pad(i+1)+'</span><span>'+cmds(x)+'</span></li>'}).join('')+'</ol>'}
+  var NOTE_TYPES=[['--ev','zdarzenie'],['--cmd','komenda'],['--act','kto'],['--pol','reguła'],['--rm','widok'],['--hot','nie wiemy']];
+  var SRC_RANK=['najwyższe','2','3','najniższe'], SRC_CLS={Biz:'t-biz',App:'t-app',Dok:'t-dok',AI:'t-ai'};
+  // Uklad sekcji z makiety; teksty bez zmian z info.js (guide().sections). Nierozpoznany ksztalt -> zwykla lista.
+  var SECTION_BODY={
+    'Tablica i panel':function(s){
+      var it=s.items.slice(), first=it.shift(), dot=first.indexOf('. '), legend=null;
+      it=it.filter(function(x){ if(/^Znaczki/.test(x)){ legend=x; return false; } return true; });
+      if(dot>0) it.unshift(first.slice(dot+2)); else it.unshift(first);
+      var lis=it.map(function(i){return '<li><span>'+hl(esc(i)).replace(/^(Z tablicy do plików|Z plików na tablicę)/,'<b>$1</b>')+'</span></li>'}).join('');
+      return (dot>0?'<p class="thesis">'+esc(first.slice(0,dot+1))+'</p>':'')+'<ul class="dash">'+lis+'</ul>'+
+        (legend?'<div class="legend"><span class="lg"><i style="background:#2f9e5b">✓</i>w plikach</span><span class="lg"><i style="background:var(--accent)">↻</i>zmienione</span>'+
+          '<span class="lg"><i style="background:var(--hot-ink)">!</i>brak w pliku</span><span>'+esc(legend.replace(/^.*\)\s*/,''))+'</span></div>':'');
+    },
+    'Źródła i wiarygodność':function(s){
+      var src=s.items.filter(function(i){return /^\[(Biz|App|Dok|AI)\] – /.test(i)}), rest=s.items.filter(function(i){return !/^\[(Biz|App|Dok|AI)\] – /.test(i)});
+      var order=rest.filter(function(i){return /^Kolejność/.test(i)}), other=rest.filter(function(i){return !/^Kolejność/.test(i)});
+      return order.map(function(i){return '<p class="para" style="border-top:0">'+SddUI.marks(esc(i))+'</p>'}).join('')+
+        '<div class="srcs">'+src.map(function(i,n){var m=i.match(/^\[(\w+)\] – (.*)$/);
+          return '<div><div class="sh"><span class="tag '+SRC_CLS[m[1]]+'">['+m[1]+']</span><span class="rk">'+SRC_RANK[n]+'</span></div><p>'+esc(m[2])+'</p></div>'}).join('')+'</div>'+
+        other.map(function(i){var d=i.indexOf('. ');return '<p class="para">'+(d>0?'<b>'+SddUI.marks(esc(i.slice(0,d+1)))+'</b>'+SddUI.marks(esc(i.slice(d+1))):SddUI.marks(esc(i)))+'</p>'}).join('');
+    },
+    'Identyfikatory i statusy':function(s){
+      var ids=[], rest=[];
+      s.items.forEach(function(i){var m=i.match(/^\*\*(\w+)\*\* – (.*)$/); if(m) ids.push(m); else rest.push(i);});
+      return '<div class="ids">'+ids.map(function(m){return '<div><b>'+esc(m[1])+'</b><span>'+esc(m[2])+'</span></div>'}).join('')+'</div>'+
+        rest.map(function(i){
+          var f=i.match(/^Statusy: robocze → zatwierdzone; zakwestionowane \(Q-xxx\), (.*)$/);
+          if(f) return '<div class="flow"><span class="tag ln">robocze</span>→<span class="tag okc">zatwierdzone</span>albo<span class="tag hotc">zakwestionowane (Q-xxx)</span><span>'+esc(f[1])+'</span></div>';
+          return '<p class="para">'+SddUI.marks(esc(i))+'</p>';
+        }).join('');
+    },
+    'Rodzaj modułu i kontrakt':function(s){
+      var m=s.items[0].match(/^(.*?): monolit - (.*?); serwis - (.*?)\. (Pytanie rozstrzygające: .*)$/);
+      var k=s.items.filter(function(i){return /^Monolit: .* Serwis: /.test(i)})[0];
+      if(!m||!k) return dash(s.items);
+      var kk=k.match(/^Monolit: (.*?) Serwis: (.*)$/);
+      function eff(t){return esc(t).replace(/ostrzeżenie/,'<span class="w-acc">ostrzeżenie</span>').replace(/blokada/,'<span class="w-hot">blokada</span>')}
+      return '<div class="kinds"><div><b class="kn">monolit</b><p>'+esc(m[2])+'.</p><p style="margin-top:6px">'+eff(kk[1])+'</p></div>'+
+        '<div><b class="kn">serwis</b><p>'+esc(m[3])+'.</p><p style="margin-top:6px">'+eff(kk[2])+'</p></div></div>'+
+        '<p class="para" style="border-top:0">'+cmds(m[1])+'.</p>'+
+        s.items.slice(1).filter(function(i){return i!==k}).map(function(i){return '<p class="para">'+SddUI.marks(esc(i))+'</p>'}).join('');
+    },
+    'Tablica warsztatowa':function(s){
+      var it=s.items.filter(function(i){return !/^Karteczki:/.test(i)});
+      return '<div class="chips">'+NOTE_TYPES.map(function(t){return '<span class="chip"><i style="background:var('+t[0]+')"></i>'+t[1]+'</span>'}).join('')+'</div>'+dash(it);
+    },
+    'Integracja z Redmine':function(s){
+      return '<div class="pairs">'+s.items.map(function(i){var m=i.match(/^\*\*(.+?)\*\* – ([\s\S]*)$/);
+        return m?'<div class="pr"><span class="pk">'+esc(m[1])+'</span><span class="pv">'+SddUI.marks(esc(m[2]))+'</span></div>':'<div class="pr"><span></span><span class="pv">'+SddUI.marks(esc(i))+'</span></div>'}).join('')+'</div>';
+    }
+  };
+  var SECTION_HEAD={'Rodzaj modułu i kontrakt':function(s){var m=s.items[0].match(/(Pytanie rozstrzygające: .*)$/);return m?'<span class="q">'+esc(m[1])+'</span>':''}};
   function renderGuide(g){
-    var h='<div class="grid">';
-    // Dwa punkty startu (0.17.0, AC-C19)
-    if(g.starts) h+='<section class="card wide"><h2>Od czego zacząć</h2><p class="hint">Są dwie drogi - obie kończą się w tych samych plikach i w tym samym procesie.</p><div class="starts">'+
-      g.starts.map(function(st,i){return '<div class="start"><h3>'+(i+1)+'. '+esc(st.title)+'</h3><p class="muted">'+esc(st.lead)+'</p><ol>'+
-        st.steps.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></div>'}).join('')+'</div></section>';
-    // Spis tresci pod "Od czego zaczac" (0.28.9, AC-C25): link do kazdej karty ponizej
-    var cards=[['Proces w sześciu krokach'],['Komendy'],['Folder requirements/']].concat(g.sections.map(function(s){return [s.title]}));
-    h+='<nav class="card wide toc" aria-label="Na tej stronie"><h2>Na tej stronie</h2><ul>'+
-      cards.map(function(c){return '<li><a href="#'+SddUI.slug(c[0])+'">'+esc(c[0])+'</a></li>'}).join('')+'</ul></nav>';
-    h+='<section class="card wide" id="'+SddUI.slug('Proces w sześciu krokach')+'"><h2>Proces w sześciu krokach</h2><p class="hint">Każdy krok uruchamiasz komendą w Claude Code, w folderze modułu. Panel pokazuje, który krok jest teraz.</p><ol class="stages">'+
-      g.stages.map(function(s){return '<li><span class="nm">'+esc(s.name)+' <code>'+esc(s.command)+'</code></span><span>'+esc(s.desc)+'</span>'+
-        (s.howto&&s.howto.length?'<ol>'+s.howto.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')+'</li>'}).join('')+'</ol></section>';
-    h+='<section class="card wide" id="'+SddUI.slug('Komendy')+'"><h2>Komendy</h2><div class="scroll"><table class="tbl"><thead><tr><th>Komenda</th><th>Co robi</th><th>Kiedy</th></tr></thead><tbody>'+
+    var n=0, toc=[];
+    function card(title,body,head){ var id=SddUI.slug(title), nn=pad(n++); toc.push([nn,title,id]);
+      return '<section class="box" id="'+id+'"><div class="bh"><h2><span class="nn">'+nn+' · </span>'+esc(title)+'</h2>'+(head||'')+'</div>'+body+'</section>'; }
+    var h='';
+    // 00 Dwa punkty startu (0.17.0, AC-C19)
+    if(g.starts) h+=card('Od czego zacząć','<div class="bb"><p class="lead">Dwie drogi, ten sam wynik</p><p class="hint">Są dwie drogi - obie kończą się w tych samych plikach i w tym samym procesie.</p></div>'+
+      '<div class="cols">'+g.starts.map(function(st,i){return '<div><h3><span class="ab">'+'AB'[i]+'</span>'+esc(st.title)+'</h3><p>'+esc(st.lead)+'</p>'+stepList(st.steps)+'</div>'}).join('')+'</div>');
+    h+=card('Proces w sześciu krokach','<div>'+g.stages.map(function(s,i){
+        return '<div class="prow"><div><div class="pn"><span class="sn">'+pad(i+1)+'</span><b>'+esc(s.name)+'</b></div><span class="cmdc">'+esc(s.command)+'</span></div>'+
+          '<div><p class="pd">'+esc(s.desc)+'</p>'+(s.howto&&s.howto.length?stepList(s.howto,true):'')+'</div></div>'}).join('')+'</div>',
+      '<span class="q">Każdy krok uruchamiasz komendą w Claude Code, w folderze modułu. Panel pokazuje, który krok jest teraz.</span>');
+    // Komendy: warianty jako sam sufiks pod komenda glowna (handoff 3.2)
+    h+=card('Komendy','<div class="ctbl" role="table"><div class="th" role="row"><span>KOMENDA</span><span>CO ROBI</span><span>KIEDY</span></div>'+
       g.skills.map(function(s){var vs=s.variants||[];
-        return '<tr'+(vs.length?' class="hasvar"':'')+'><td><code>'+esc(s.command)+'</code></td><td>'+esc(s.desc)+'</td><td class="muted">'+esc(s.when)+'</td></tr>'+
-        vs.map(function(v,i){return '<tr class="var'+(i===vs.length-1?' last':'')+'"><td><code>'+esc(v.command)+'</code></td><td colspan="2">'+esc(v.desc)+'</td></tr>'}).join('')}).join('')+'</tbody></table></div></section>';
-    h+='<section class="card wide" id="'+SddUI.slug('Folder requirements/')+'"><h2>Folder requirements/</h2><dl class="kv">'+
-      g.folders.map(function(f){return '<dt><code>'+esc(f.path)+'</code></dt><dd>'+esc(f.desc)+'</dd>'}).join('')+'</dl></section>';
-    g.sections.forEach(function(s){ h+='<section class="card" id="'+SddUI.slug(s.title)+'"><h2>'+esc(s.title)+'</h2><ul class="list bullets">'+s.items.map(function(i){return '<li>'+SddUI.marks(esc(i))+'</li>'}).join('')+'</ul></section>'; });
-    $('#app').innerHTML=h+'</div>';
+        return '<div class="grp" role="rowgroup"><div class="tr" role="row"><span class="c1">'+esc(s.command)+'</span><span class="c2">'+esc(s.desc)+'</span><span class="c3">'+esc(s.when)+'</span></div>'+
+          vs.map(function(v){var suf=v.command.indexOf(s.command)===0?v.command.slice(s.command.length).trim():v.command;
+            return '<div class="tr var" role="row"><span class="c1">'+esc(suf||'(domyślnie)')+'</span><span class="c2">'+esc(v.desc)+'</span></div>'}).join('')+'</div>'}).join('')+'</div>');
+    h+=card('Folder requirements/','<div class="frows">'+g.folders.map(function(f){return '<div class="fr"><span class="fp">'+esc(f.path)+'</span><span class="fd">'+esc(f.desc)+'</span></div>'}).join('')+'</div>');
+    // Pozostale sekcje: uklad z SECTION_BODY, inaczej lista "–" (AC-C22)
+    g.sections.forEach(function(s){ var f=SECTION_BODY[s.title]; h+=card(s.title,f?f(s):'<ul class="dash">'+s.items.map(function(i){return '<li><span>'+SddUI.marks(esc(i))+'</span></li>'}).join('')+'</ul>',SECTION_HEAD[s.title]&&SECTION_HEAD[s.title](s)); });
+    // Spis tresci (AC-C25, handoff 3.1): kotwice z SddUI.slug, scroll-spy
+    var nav='<nav class="box toc" aria-label="Na tej stronie"><h2>Na tej stronie</h2><ul>'+
+      toc.map(function(t){return '<li><a href="#'+t[2]+'"><span class="nn">'+t[0]+'</span><span>'+esc(t[1])+'</span></a></li>'}).join('')+'</ul>'+
+      (BASE?'':'<a class="ex" href="/demo" target="_blank" rel="noopener">Przykład gotowego modułu ↗</a>')+'</nav>';
+    $('#app').innerHTML='<div class="gwrap">'+nav+'<div class="gmain">'+h+'</div></div>';
+    tocSpy();
+  }
+  function chromeH(){ var c=document.querySelector('.chrome'); return c&&getComputedStyle(c).position==='sticky'?c.getBoundingClientRect().height:0; }
+  var spyOn=false;
+  function tocSpy(){
+    document.documentElement.style.setProperty('--chrome-h',chromeH()+'px');
+    function spy(){
+      var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]')); if(!links.length) return;
+      var top=chromeH()+40, cur=links[0];
+      links.forEach(function(a){ var s=document.getElementById(a.getAttribute('href').slice(1)); if(s&&s.getBoundingClientRect().top<=top) cur=a; });
+      if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2) cur=links[links.length-1];
+      links.forEach(function(a){ if(a===cur) a.setAttribute('aria-current','true'); else a.removeAttribute('aria-current'); });
+    }
+    document.querySelector('.toc').onclick=function(e){
+      var a=e.target.closest('a[href^="#"]'); if(!a) return;
+      var s=document.getElementById(a.getAttribute('href').slice(1)); if(!s) return;
+      e.preventDefault(); history.replaceState(null,'','#'+s.id);
+      window.scrollTo({top:s.getBoundingClientRect().top+window.scrollY-chromeH()-16,behavior:'smooth'});
+    };
+    if(!spyOn){ spyOn=true; window.addEventListener('scroll',spy,{passive:true}); window.addEventListener('resize',function(){document.documentElement.style.setProperty('--chrome-h',chromeH()+'px');spy();}); }
+    spy();
+    // wejscie z kotwica (#integracja-z-redmine): przewin po zbudowaniu strony
+    if(location.hash&&!tocSpy.done){ tocSpy.done=true; var s=document.getElementById(location.hash.slice(1)); if(s) window.scrollTo({top:s.getBoundingClientRect().top+window.scrollY-chromeH()-16}); }
   }
 
-  // ---------------------------------------------------------------- Konfiguracja
-  var editing=false, cfg=null, ownersDraft=null, msg={};
-  var SRC={env:'zmienna SDD_MODULES_ROOT (ma pierwszeństwo, zmiana tutaj nie zadziała po restarcie)',config:'wybór z panelu (~/.sdd-kit/config.json)',project:'folder nad bieżącym projektem'};
-  var KEYSRC={file:'ustawiony (plik .env)',env:'ustawiony (zmienna REDMINE_API_KEY)',keychain:'ustawiony (Pęk kluczy macOS)',none:'brak'};
+  // ---------------------------------------------------------------- Konfiguracja (0.34.0, handoff 4)
+  var editing=false, cfg=null, ownersDraft=null, msg={}, savedTimer=null;
+  var SRC={env:'zmienna SDD_MODULES_ROOT (ma pierwszeństwo, zmiana tutaj nie zadziała po restarcie)',config:'wybór z panelu',project:'folder nad bieżącym projektem'};
+  var KEYSRC={file:'ustawiony (plik .env)',env:'ustawiony (zmienna REDMINE_API_KEY)',keychain:'ustawiony (Pęk kluczy macOS)',none:'brak klucza'};
+  var BACKLOG={none:'brak',file:'plik',linear:'linear',jira:'jira',redmine:'redmine'};
+  var KIND_SHORT={monolith:'monolit',service:'serwis'};
+  var KIND_HINT={monolith:'Aplikacja wdrażana w całości. Brak kontraktu dla integracji → ostrzeżenie.',service:'Wdrażany osobno, z własnymi danymi. Brak kontraktu → blokada.'};
   function saveKey(v){
     msg.keyerr=''; msg.keyok='';
     api('/api/secrets',{method:'PUT',body:JSON.stringify({REDMINE_API_KEY:v})}).then(function(c){ msg.keyok=v?'Klucz zapisany.':'Klucz usunięty.'; renderConfig(c); })
       .catch(function(err){ $('#keyerr').textContent=err.message; });
   }
+  // wiersz formularza (4.1): etykieta z podpowiedzia pod nazwa + kontrolka
+  function frow(label,hint,control,extraLabel){
+    return '<div class="fr2"><div class="fl"><b>'+label+'</b>'+(hint?'<small>'+hint+'</small>':'')+(extraLabel||'')+'</div><div class="fc">'+control+'</div></div>';
+  }
+  // przelacznik segmentowy nad ukrytym <select> - zapis czyta select jak dotad
+  function seg(id,values,cur,labels,demo){
+    return '<select id="'+id+'" hidden'+(demo?' disabled':'')+'>'+values.map(function(v){return '<option value="'+v+'"'+(v===cur?' selected':'')+'>'+v+'</option>'}).join('')+'</select>'+
+      '<div class="seg" role="group" data-seg="'+id+'">'+values.map(function(v){return '<button type="button" data-v="'+v+'" aria-pressed="'+(v===cur)+'"'+(demo?' disabled':'')+'>'+esc(labels[v]||v)+'</button>'}).join('')+'</div>';
+  }
+  function keyState(){
+    var typed=$('#f-rmkey')&&$('#f-rmkey').value.trim();
+    if(typed) return ['new','nowy klucz – zapisz, aby zastąpić'];
+    return cfg.redmineKey&&cfg.redmineKey!=='none'?['set',KEYSRC[cfg.redmineKey]]:['none','brak klucza'];
+  }
   function renderConfig(c){
     cfg=c; ownersDraft=c.sdd?JSON.parse(JSON.stringify(c.sdd.owners)):null;
-    var demo=!!c.demo, h='<div class="grid">';
-    // modul (SDD.yaml)
-    h+='<section class="card wide" id="sdd"><h2>Ustawienia modułu <span class="muted">SDD.yaml</span></h2>';
-    if(!c.sdd) h+='<p class="muted">Nie wybrano modułu.</p>';
+    var demo=!!c.demo, h='';
+    // USTAWIENIA MODULU (SDD.yaml)
+    h+='<section class="box" id="sdd"><div class="bh"><h2>Ustawienia modułu</h2><span class="fn-chip">SDD.yaml</span>'+(c.sdd&&c.sdd.file?'<span class="path">'+esc(c.sdd.file)+'</span>':'')+'</div>';
+    if(!c.sdd) h+='<div class="bb"><p class="hint">Nie wybrano modułu.</p></div>';
     else {
-      h+=(c.sdd.file?'<p class="hint"><code>'+esc(c.sdd.file)+'</code></p>':'')+
-        '<label class="field"><span>Nazwa projektu</span><input type="text" id="f-project" value="'+esc(c.sdd.project)+'"'+(demo?' disabled':'')+'></label>'+
-        '<label class="field"><span>Backlog <small>czytany dopiero przy /sdd:handover</small></span><select id="f-backlog"'+(demo?' disabled':'')+'>'+
-          c.sdd.backlogsAllowed.map(function(b){return '<option'+(b===c.sdd.backlog?' selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
+      var ks=['set','x'];
+      h+=frow('Nazwa projektu','','<input type="text" class="fld w360" id="f-project" value="'+esc(c.sdd.project)+'"'+(demo?' disabled':'')+'>')+
+        frow('Backlog','czytany dopiero przy /sdd:handover',seg('f-backlog',['none','file','linear','jira','redmine'].filter(function(b){return c.sdd.backlogsAllowed.indexOf(b)>=0}).concat(c.sdd.backlogsAllowed.filter(function(b){return !BACKLOG[b]})),c.sdd.backlog,BACKLOG,demo))+
         // Rodzaj modulu (0.31.0, AC-SY21): decyduje, czy kontrakt jest obowiazkowy (walidacja kontrola 20)
-        '<label class="field"><span>Rodzaj modułu <small>czy ta część jest wdrażana osobno i inne mogą z nią rozmawiać tylko przez kontrakt? Tak = serwis</small></span><select id="f-kind"'+(demo?' disabled':'')+'>'+
-          (c.sdd.kindsAllowed||['monolith','service']).map(function(k){return '<option value="'+k+'"'+(k===c.sdd.kind?' selected':'')+'>'+esc(KIND[k]||k)+'</option>'}).join('')+'</select></label>'+
-        // Redmine (0.28.4): adres i projekt; klucz API poza plikami (REDMINE_API_KEY albo Pek kluczy)
-        '<div id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'>'+
-          '<label class="field"><span>Adres Redmine <small>np. https://redmine.firma.pl</small></span><input type="text" inputmode="url" id="f-rmurl" name="sdd-rm-url" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'></label>'+
-          '<label class="field"><span>Projekt w Redmine <small>identyfikator, np. pilotaz-dev; możesz wkleić adres projektu z przeglądarki</small></span><input type="text" id="f-rmproj" name="sdd-rm-project" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'></label>'+
-          // Klucz API (0.28.5, docs/specs/secrets.md): zapis do ~/.sdd-kit/.env, panel widzi tylko, skad jest
-          '<div class="field"><span>Klucz API Redmine <small>'+esc(KEYSRC[c.redmineKey]||'brak')+'</small></span>'+
-          (demo?'':'<div class="row"><input type="text" id="f-rmkey" name="sdd-rm-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="'+(c.redmineKey==='none'?'wklej klucz z Redmine: Moje konto → Klucz dostępu do API':'nowy klucz (zastąpi obecny)')+'">'+
-            (c.redmineKey==='file'?'<button class="b" type="button" id="delkey">Usuń klucz</button>':'')+'</div>')+
-          '<p class="hint">Klucz widać tylko podczas wklejania - po zapisie pole jest puste. Zapisuje go przycisk „Zapisz ustawienia modułu” niżej. Klucz trafia do <code>~/.sdd-kit/.env</code> na tym komputerze - czyta go tylko sdd-kit, Claude go nie otwiera i nie widzi w panelu. Nie trafia do repo.</p>'+
-          '<p class="err" id="keyerr">'+esc(msg.keyerr||'')+'</p>'+(msg.keyok?'<p class="ok">'+esc(msg.keyok)+'</p>':'')+'</div>'+
+        frow('Rodzaj modułu','czy ta część jest wdrażana osobno i inne mogą z nią rozmawiać tylko przez kontrakt? Tak = serwis',
+          seg('f-kind',c.sdd.kindsAllowed||['monolith','service'],c.sdd.kind,KIND_SHORT,demo)+'<span class="khint" id="kindhint">'+esc(KIND_HINT[c.sdd.kind]||'')+'</span>')+
+        // Redmine (0.28.4): adres i projekt; klucz API poza plikami (0.28.5, docs/specs/secrets.md)
+        '<div class="rmbox" id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'><span class="sl-lbl">Redmine</span>'+
+          frow('Adres Redmine','np. https://redmine.firma.pl','<input type="text" class="fld mono" inputmode="url" id="f-rmurl" name="sdd-rm-url" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'>')+
+          frow('Projekt','identyfikator albo wklejony adres projektu','<input type="text" class="fld w280" id="f-rmproj" name="sdd-rm-project" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineProject||'')+'"'+(demo?' disabled':'')+'>')+
+          frow('Klucz API','',(demo?'<p class="knote">W demo klucza nie ustawiasz.</p>':
+            // klucz: zwykly tekst bez maski - maska wlacza w Safari logowanie z aplikacji Hasla (0.28.7)
+            '<div class="rowc"><input type="text" class="fld mono w280" id="f-rmkey" name="sdd-rm-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="'+(c.redmineKey==='none'?'wklej klucz: Moje konto → Klucz dostępu do API':'nowy klucz (zastąpi obecny)')+'">'+
+            '<button class="btn danger" type="button" id="delkey"'+(c.redmineKey==='file'?'':' disabled title="'+(c.redmineKey==='none'?'Brak klucza':'Klucz nie jest w pliku .env - usuń go tam, gdzie jest ustawiony')+'"')+'>Usuń klucz</button></div>')+
+            '<p class="knote">Klucz widać tylko podczas wklejania. Trafia do <code>~/.sdd-kit/.env</code> na tym komputerze – czyta go tylko sdd-kit, Claude go nie otwiera, nie trafia do repo.</p>'+
+            '<p class="err" id="keyerr">'+esc(msg.keyerr||'')+'</p>'+(msg.keyok?'<p class="ok">'+esc(msg.keyok)+'</p>':''),
+            '<small class="kst" id="kst"></small>')+
         '</div>'+
-        '<div class="field"><span>Role i co zatwierdzają <small>rola, nie osoba; nazwy użytej już w plikach nie da się tu zmienić ani usunąć</small></span><div id="owners"></div>'+
-        (demo?'':'<div class="row"><button class="b" type="button" id="addrole">+ Dodaj rolę</button></div>')+'</div>'+
-        '<div class="lock"><b>Poziom: '+esc(LEVEL[c.sdd.level]||c.sdd.level)+'</b>Zmiana przebudowuje pliki (PRD.md ↔ SPEC.md), więc robi ją Claude. W Claude Code, w folderze modułu, napisz np. „zmień poziom modułu na '+(c.sdd.level==='full'?'lekki':'pełny')+'”.</div>'+
-        '<div class="lock"><b>Etykieta pytań blokujących: „'+esc(c.sdd.gate)+'”</b>Pytania w QUESTIONS.md mają tę etykietę; zmiana tylko tutaj po cichu odblokowałaby go-live. Poproś Claude o zmianę etykiety - przepisze ją też w pytaniach.</div>'+
-        (demo?'':'<div class="row"><button class="b p" type="button" id="savesdd">Zapisz ustawienia modułu</button><button class="b" type="button" id="resetsdd">Cofnij zmiany</button></div>')+
-        '<p class="err" id="sdderr">'+esc(msg.sdderr||'')+'</p>'+(msg.sddok?'<p class="ok">'+esc(msg.sddok)+'</p>':'');
+        frow('Role i co zatwierdzają','rola, nie osoba; roli użytej już w plikach nie da się tu usunąć','<div class="roles" id="owners"></div>'+
+          (demo?'':'<div class="addr"><input type="text" class="fld" id="f-role" placeholder="nazwa roli, np. księgowość" autocomplete="off"><button class="btn" type="button" id="addrole">+ Dodaj rolę</button></div>'))+
+        frow('Poziom','','<span class="val">'+esc(LEVEL[c.sdd.level]||c.sdd.level)+'</span><span class="khint">Zmiana przebudowuje pliki (PRD.md ↔ SPEC.md), więc robi ją Claude. W Claude Code, w folderze modułu:</span>'+
+          '<div class="cmdf"><code id="lvlcmd">zmień poziom modułu na '+(c.sdd.level==='full'?'lekki':'pełny')+'</code><button type="button" id="lvlcopy">Kopiuj</button></div>','<small class="zc">ZMIENIA CLAUDE</small>')+
+        frow('Etykieta pytań blokujących','','<span class="val">„'+esc(c.sdd.gate)+'”</span><span class="khint">Pytania w QUESTIONS.md mają tę etykietę; zmiana tylko tutaj po cichu odblokowałaby go-live. Poproś Claude o zmianę etykiety - przepisze ją też w pytaniach.</span>','<small class="zc">ZMIENIA CLAUDE</small>')+
+        (demo?'':'<div class="savebar"><button class="btn p" type="button" id="savesdd">Zapisz ustawienia modułu</button><button class="btn" type="button" id="resetsdd">Cofnij zmiany</button>'+
+          '<span class="sst" id="sst"><i aria-hidden="true"></i><span></span></span><span class="err" id="sdderr">'+esc(msg.sdderr||'')+'</span></div>');
     }
     h+='</section>';
-    // katalog
-    h+='<section class="card" id="katalog"><h2>Katalog modułów</h2>';
-    if(demo) h+='<p class="muted">W demo katalog jest stały.</p>';
+    // KATALOG MODULOW (ten komputer)
+    h+='<section class="box" id="katalog"><div class="bh"><h2>Katalog modułów</h2><span class="path">ten komputer · ~/.sdd-kit/config.json</span></div>';
+    if(demo) h+='<div class="bb"><p class="hint">W demo katalog jest stały.</p></div>';
     else {
-      h+='<dl class="kv"><dt>Teraz</dt><dd>'+(c.modulesRoot?'<code>'+esc(c.modulesRoot)+'</code>':'nie wybrano')+'</dd><dt>Skąd</dt><dd>'+esc(SRC[c.rootSource]||'-')+'</dd></dl>'+
-        '<p class="hint">Zmiana nie przenosi ani nie kasuje plików - panel szuka modułów w innym miejscu.</p>'+
-        '<div class="row"><input type="text" id="f-root" placeholder="/Users/…/wymagania albo ~/wymagania" value="'+esc(msg.root||'')+'"><button class="b" type="button" id="checkroot">Sprawdź</button></div>'+
-        '<div class="preview" id="rootprev">'+(msg.rootprev||'')+'</div><p class="err" id="rooterr">'+esc(msg.rooterr||'')+'</p>';
+      h+=frow('Teraz',esc(SRC[c.rootSource]||'wybór z panelu'),'<span class="val" style="font-size:12.5px;overflow-wrap:anywhere">'+(c.modulesRoot?esc(c.modulesRoot):'nie wybrano')+'</span>'+
+          '<div class="rowc"><input type="text" class="fld mono" id="f-root" placeholder="/Users/…/wymagania albo ~/wymagania" value="'+esc(msg.root||'')+'"><button class="btn" type="button" id="checkroot">Sprawdź</button></div>'+
+          '<div class="preview" id="rootprev">'+(msg.rootprev||'')+'</div><p class="err" id="rooterr">'+esc(msg.rooterr||'')+'</p>'+
+          '<p class="knote">Zmiana nie przenosi ani nie kasuje plików – panel szuka modułów w innym miejscu.</p>')+
+        frow('Projekty spoza katalogu','usunięcie z listy nie kasuje plików',(c.modules.length?'<ul class="mods">'+c.modules.map(function(m){
+            return '<li><span class="path">'+esc(m.dir)+'</span>'+(m.exists?'':'<span class="tag bad">nie ma folderu</span>')+
+              (msg.rmask===m.dir?'<button class="btn danger" type="button" data-rmok="'+esc(m.dir)+'">Tak, usuń z listy</button><button class="btn" type="button" data-rmno="1">Nie</button>'
+                :'<button class="btn danger" type="button" data-rm="'+esc(m.dir)+'">Usuń z listy</button>')+'</li>'}).join('')+'</ul>'
+          :'<p class="knote">Brak. Moduły z katalogu są widoczne bez dodawania.</p>')+
+          '<div class="rowc"><input type="text" class="fld mono" id="f-add" placeholder="ścieżka projektu z requirements/SDD.yaml"><button class="btn" type="button" id="addmod">Dodaj</button></div>'+
+          '<p class="err" id="adderr">'+esc(msg.adderr||'')+'</p>');
     }
     h+='</section>';
-    // projekty dodane
-    h+='<section class="card"><h2>Projekty dodane spoza katalogu</h2>';
-    if(demo) h+='<p class="muted">Brak w demo.</p>';
-    else {
-      h+=(c.modules.length?'<ul class="list mods">'+c.modules.map(function(m){
-          return '<li><span class="path">'+esc(m.dir)+'</span>'+(m.exists?'':'<span class="tag bad">nie ma folderu</span>')+
-            (msg.rmask===m.dir?'<button class="b danger" type="button" data-rmok="'+esc(m.dir)+'">Tak, usuń z listy</button><button class="b" type="button" data-rmno="1">Nie</button>'
-              :'<button class="b" type="button" data-rm="'+esc(m.dir)+'">Usuń z listy</button>')+'</li>'}).join('')+'</ul>'
-        :'<p class="muted">Brak. Moduły z katalogu są widoczne bez dodawania.</p>')+
-        '<p class="hint">Usunięcie z listy nie kasuje plików projektu.</p>'+
-        '<div class="row"><input type="text" id="f-add" placeholder="ścieżka projektu z requirements/SDD.yaml"><button class="b" type="button" id="addmod">Dodaj</button></div>'+
-        '<p class="err" id="adderr">'+esc(msg.adderr||'')+'</p>';
-    }
-    h+='</section>';
-    // serwer
+    // SERWER (tylko podglad); wersja z ostrzezeniami i "Przyklad gotowego modulu" przeniesione z naglowka (handoff 1.2)
     var s=c.server||{};
-    h+='<section class="card wide"><h2>Serwer <span class="muted">tylko podgląd</span></h2><dl class="kv">'+
-      '<dt>Wersja sdd-kit</dt><dd>'+esc(s.version||'-')+'</dd><dt>Port</dt><dd>'+esc(s.port)+' <span class="muted">(inny port: sdd-board &lt;plik tablicy&gt; &lt;port&gt;)</span></dd>'+
-      (s.board?'<dt>Plik tablicy</dt><dd><code>'+esc(s.board)+'</code></dd>':'')+
-      (s.config?'<dt>Konfiguracja</dt><dd><code>'+esc(s.config)+'</code></dd>':'')+
-      (c.lastModule?'<dt>Ostatni moduł</dt><dd><code>'+esc(c.lastModule)+'</code> <span class="muted">(otwierany przy starcie)</span></dd>':'')+
-      (c.kitDir?'<dt>Aplikacja</dt><dd><code>'+esc(c.kitDir)+'</code></dd>':'')+'</dl></section>';
-    $('#app').innerHTML=h+'</div>';
+    function sv(k,v,note){return '<div class="sv"><span class="sk">'+k+'</span><span class="sval">'+v+(note?'<small>'+note+'</small>':'')+'</span></div>'}
+    h+='<section class="box srv"><div class="bh"><h2>Serwer</h2><span class="path">tylko podgląd</span></div>'+
+      sv('Wersja sdd-kit','<a id="srvver" href="https://github.com/SyBeer/sdd-kit/releases/tag/v'+esc(s.version||'')+'" target="_blank" rel="noopener" title="Opis zmian tej wersji na GitHubie">'+esc(s.version||'-')+'</a>')+
+      sv('Port',esc(s.port),'inny port: sdd-board &lt;plik tablicy&gt; &lt;port&gt;')+
+      (s.board?sv('Plik tablicy',esc(s.board)):'')+
+      (s.config?sv('Konfiguracja',esc(s.config)):'')+
+      (c.lastModule?sv('Ostatni moduł',esc(c.lastModule),'otwierany przy starcie'):'')+
+      (c.kitDir?sv('Aplikacja',esc(c.kitDir)):'')+
+      (BASE?'':sv('Przykład','<a href="/demo" target="_blank" rel="noopener">Przykład gotowego modułu ↗</a>'))+'</section>';
+    $('#app').innerHTML=h;
     if(c.sdd) drawOwners();
     msg.rmask=null; msg.adderr=''; msg.sdderr=''; msg.rooterr=''; msg.rootprev=''; msg.root='';
+    versionNote();
+    if(c.sdd) dirty();
     if(!demo) bindConfig();
   }
+  // Wersja w karcie Serwer: ostrzezenia jak w naglowku (serwer / plugin / sesja Claude nieaktualne)
+  function versionNote(){
+    fetch(BASE+'/api/version').then(function(r){return r.ok?r.json():null}).then(function(v){
+      var x=SddUI.versionBadge(v), el=$('#srvver'); if(!x||!el) return;
+      el.textContent=x.text; el.title=x.title; el.href=x.href; el.classList.toggle('stale',x.stale);
+    }).catch(function(){});
+  }
   function drawOwners(){
-    var demo=!!cfg.demo, all=cfg.sdd.approvesAllowed;
+    var demo=!!cfg.demo, all=cfg.sdd.approvesAllowed, used=cfg.sdd.usedRoles||[];
+    var saved=cfg.sdd.owners.map(function(o){return o.role});
     $('#owners').innerHTML=ownersDraft.map(function(o,i){
-      return '<div class="owner"><input type="text" data-role="'+i+'" value="'+esc(o.role)+'" aria-label="Nazwa roli"'+(demo?' disabled':'')+'>'+
-        (demo?'<span></span>':'<button class="b" type="button" data-delrole="'+i+'" aria-label="Usuń rolę '+esc(o.role)+'">Usuń</button>')+
-        '<div class="ap">zatwierdza: '+all.map(function(a){return '<label><input type="checkbox" data-ap="'+i+'" value="'+a+'"'+(o.approves.indexOf(a)>=0?' checked':'')+(demo?' disabled':'')+'>'+esc(SddUI.abbr(a))+'</label>'}).join('')+'</div></div>';
+      var isUsed=used.indexOf(o.role)>=0, isNew=saved.indexOf(o.role)<0;
+      return '<div class="role"><div class="rh"><span class="rn">'+esc(o.role)+'</span><span class="rs">'+(isUsed?'użyta w plikach':isNew?'nowa':'')+'</span>'+
+        (demo?'':'<button class="rdel" type="button" data-delrole="'+i+'" aria-label="Usuń rolę '+esc(o.role)+'"'+(isUsed?' disabled title="Rola występuje w plikach wymagań - zmianę nazwy we wszystkich plikach zrobi Claude"':'')+'>Usuń</button>')+'</div>'+
+        '<div class="perms" role="group" aria-label="Co zatwierdza '+esc(o.role)+'">'+all.map(function(a){var on=o.approves.indexOf(a)>=0;
+          return '<button type="button" class="perm" data-ap="'+i+'" data-v="'+a+'" aria-pressed="'+on+'"'+(demo?' disabled':'')+'><span class="bx" aria-hidden="true">'+(on?'✓':'')+'</span><span class="cd">'+esc(a)+'</span><span>'+esc(SddUI.ABBR[a]||'')+'</span></button>'}).join('')+'</div></div>';
     }).join('');
   }
-  function bindConfig(){
-    var app=$('#app');
-    app.oninput=function(e){
-      editing=true; msg.sddok='';
-      var t=e.target;
-      if(t.hasAttribute('data-role')) ownersDraft[+t.getAttribute('data-role')].role=t.value;
-    };
-    app.onchange=function(e){
-      var t=e.target; editing=true;
-      if(t.id==='f-backlog'){ var rf=$('#rmf'); if(rf) rf.hidden=t.value!=='redmine'; }
-      if(t.hasAttribute('data-ap')){ var o=ownersDraft[+t.getAttribute('data-ap')]; o.approves=o.approves.filter(function(a){return a!==t.value}); if(t.checked) o.approves.push(t.value); }
-    };
-    app.onclick=function(e){
-      var t=e.target.closest('button'); if(!t) return;
-      if(t.id==='delkey'){ if(confirm('Usunąć klucz API Redmine z ~/.sdd-kit/.env?')) saveKey(''); return; }
-      if(t.id==='addrole'){ editing=true; ownersDraft.push({role:'',approves:[]}); drawOwners(); var l=app.querySelectorAll('[data-role]'); l[l.length-1].focus(); }
-      else if(t.hasAttribute('data-delrole')){ editing=true; ownersDraft.splice(+t.getAttribute('data-delrole'),1); drawOwners(); }
-      else if(t.id==='resetsdd'){ editing=false; load(); }
-      else if(t.id==='savesdd') saveSdd(t);
-      else if(t.id==='checkroot') checkRoot();
-      else if(t.id==='setroot') setRoot(t);
-      else if(t.hasAttribute('data-rm')){ msg.rmask=t.getAttribute('data-rm'); renderConfig(cfg); }
-      else if(t.hasAttribute('data-rmno')) renderConfig(cfg);
-      else if(t.hasAttribute('data-rmok')) api('/api/modules?dir='+encodeURIComponent(t.getAttribute('data-rmok')),{method:'DELETE'}).then(renderConfig).catch(function(err){msg.adderr=err.message;renderConfig(cfg)});
-      else if(t.id==='addmod') api('/api/modules/add',{method:'POST',body:JSON.stringify({path:$('#f-add').value})}).then(function(){editing=false;load()}).catch(function(err){$('#adderr').textContent=err.message});
-    };
-  }
-  function saveSdd(btn){
-    // tylko zmienione pola - wpis w CHANGELOG.md mowi, co naprawde sie zmienilo
+  // Co sie zmienilo wzgledem SDD.yaml - to samo, co trafi do zapisu (pasek zapisu 4.2)
+  function changes(){
     var body={}, owners=ownersDraft.map(function(o){return {role:o.role.trim(),approves:o.approves.slice().sort()}});
     var was=cfg.sdd.owners.map(function(o){return {role:o.role,approves:o.approves.slice().sort()}});
     if($('#f-project').value.trim()!==cfg.sdd.project) body.project=$('#f-project').value;
@@ -357,14 +558,72 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
     }
     if(JSON.stringify(owners)!==JSON.stringify(was)) body.owners=owners;
     var key=$('#f-backlog').value==='redmine'&&$('#f-rmkey')?$('#f-rmkey').value.trim():'';
-    var hasSdd=Object.keys(body).length>0;
-    if(!hasSdd&&!key){ $('#sdderr').textContent='Brak zmian do zapisania.'; return; }
+    return {body:body,key:key,any:Object.keys(body).length>0||!!key};
+  }
+  function dirty(){
+    var k=keyState(), kst=$('#kst'); if(kst){ kst.className='kst '+k[0]; kst.innerHTML='<i aria-hidden="true"></i>'+esc(k[1]); }
+    var sv=$('#savesdd'); if(!sv) return;
+    var ch=changes(), st=$('#sst'), err=$('#sdderr');
+    sv.disabled=!ch.any; $('#resetsdd').disabled=!ch.any;
+    var state=ch.any?['dirty','niezapisane zmiany']:msg.sddok?['saved','zapisano w SDD.yaml']:['','bez zmian'];
+    if(err&&err.textContent) state=['err',''];
+    st.className='sst '+state[0]; st.lastChild.textContent=state[1]; st.firstChild.hidden=!state[1];
+  }
+  function bindConfig(){
+    var app=$('#app');
+    app.oninput=function(e){
+      editing=true; msg.sddok=''; if($('#sdderr')) $('#sdderr').textContent='';
+      dirty();
+    };
+    app.onkeydown=function(e){ if(e.key==='Enter'&&e.target.id==='f-role'){ e.preventDefault(); addRole(); } };
+    function addRole(){
+      var i=$('#f-role'), n=i.value.trim(); if(!n) { i.focus(); return; }
+      editing=true; msg.sddok=''; ownersDraft.push({role:n,approves:[]}); drawOwners(); i.value=''; i.focus(); dirty();
+    }
+    app.onclick=function(e){
+      var t=e.target.closest('button'); if(!t||t.disabled) return;
+      var sg=t.parentNode.getAttribute('data-seg');
+      if(sg){
+        editing=true; msg.sddok=''; var sel=$('#'+sg); sel.value=t.getAttribute('data-v');
+        [].forEach.call(t.parentNode.children,function(b){b.setAttribute('aria-pressed',b===t)});
+        if(sg==='f-backlog'){ var rf=$('#rmf'); if(rf) rf.hidden=sel.value!=='redmine'; }
+        if(sg==='f-kind') $('#kindhint').textContent=KIND_HINT[sel.value]||'';
+        dirty(); return;
+      }
+      if(t.hasAttribute('data-ap')){
+        editing=true; msg.sddok=''; var o=ownersDraft[+t.getAttribute('data-ap')], v=t.getAttribute('data-v');
+        o.approves=o.approves.filter(function(a){return a!==v}); if(t.getAttribute('aria-pressed')!=='true') o.approves.push(v);
+        drawOwners(); var nb=app.querySelector('.perm[data-ap="'+t.getAttribute('data-ap')+'"][data-v="'+v+'"]'); if(nb) nb.focus(); dirty(); return;
+      }
+      if(t.id==='lvlcopy'){ try{navigator.clipboard.writeText($('#lvlcmd').textContent).then(function(){t.textContent='Skopiowano';setTimeout(function(){t.textContent='Kopiuj'},1500)})}catch(err){} return; }
+      if(t.id==='delkey'){ if(confirm('Usunąć klucz API Redmine z ~/.sdd-kit/.env?')) saveKey(''); return; }
+      if(t.id==='addrole') addRole();
+      else if(t.hasAttribute('data-delrole')){ editing=true; msg.sddok=''; ownersDraft.splice(+t.getAttribute('data-delrole'),1); drawOwners(); dirty(); }
+      else if(t.id==='resetsdd'){ editing=false; msg.sddok=''; load(); }
+      else if(t.id==='savesdd') saveSdd(t);
+      else if(t.id==='checkroot') checkRoot();
+      else if(t.id==='setroot') setRoot(t);
+      else if(t.hasAttribute('data-rm')){ msg.rmask=t.getAttribute('data-rm'); renderConfig(cfg); }
+      else if(t.hasAttribute('data-rmno')) renderConfig(cfg);
+      else if(t.hasAttribute('data-rmok')) api('/api/modules?dir='+encodeURIComponent(t.getAttribute('data-rmok')),{method:'DELETE'}).then(renderConfig).catch(function(err){msg.adderr=err.message;renderConfig(cfg)});
+      else if(t.id==='addmod') api('/api/modules/add',{method:'POST',body:JSON.stringify({path:$('#f-add').value})}).then(function(){editing=false;load()}).catch(function(err){$('#adderr').textContent=err.message});
+    };
+  }
+  function saveSdd(btn){
+    // tylko zmienione pola - wpis w CHANGELOG.md mowi, co naprawde sie zmienilo
+    var ch=changes(), body=ch.body, key=ch.key, hasSdd=Object.keys(body).length>0;
+    if(!ch.any){ $('#sdderr').textContent='Brak zmian do zapisania.'; dirty(); return; }
     btn.disabled=true; $('#sdderr').textContent=''; msg.keyok=''; msg.keyerr='';
     var done=[];
     (hasSdd?api('/api/config',{method:'PUT',body:JSON.stringify(body)}).then(function(c){ done.push('SDD.yaml i CHANGELOG.md'); return c; }):Promise.resolve(null))
       .then(function(c){ return key?api('/api/secrets',{method:'PUT',body:JSON.stringify({REDMINE_API_KEY:key})}).then(function(c2){ done.push('klucz w ~/.sdd-kit/.env'); return c2; }):c; })
-      .then(function(c){ editing=false; msg.sddok='Zapisane: '+done.join(', ')+'.'; renderConfig(c); })
-      .catch(function(err){ btn.disabled=false; $('#sdderr').textContent=(done.length?'Zapisane: '+done.join(', ')+'. ':'')+err.message; });
+      .then(function(c){
+        editing=false; msg.sddok='Zapisane: '+done.join(', ')+'.'; if(done.length===1&&!hasSdd) msg.keyok='Klucz zapisany.';
+        renderConfig(c);
+        // "zapisano w SDD.yaml" przez 2,5 s, potem "bez zmian"
+        clearTimeout(savedTimer); savedTimer=setTimeout(function(){ msg.sddok=''; if(!editing&&$('#sst')) dirty(); },2500);
+      })
+      .catch(function(err){ btn.disabled=false; $('#sdderr').textContent=(done.length?'Zapisane: '+done.join(', ')+'. ':'')+err.message; dirty(); });
   }
   function checkRoot(){
     var p=$('#f-root').value.trim(); $('#rooterr').textContent=''; $('#rootprev').innerHTML='';
@@ -373,7 +632,7 @@ button.b:focus-visible,input:focus-visible,select:focus-visible{outline:2px soli
       var h='<p><code>'+esc(r.path)+'</code>'+(r.exists?'':' - folder zostanie założony')+'</p>';
       h+='<p>Będą widoczne: '+(r.visible.length?'<b>'+r.visible.map(esc).join(', ')+'</b>':'<span class="muted">żadne moduły</span>')+'</p>';
       if(r.hidden.length) h+='<p>Znikną z listy: <b>'+r.hidden.map(esc).join(', ')+'</b> <span class="muted">(pliki zostają; żeby je widzieć, dodaj je w „Projekty dodane”)</span></p>';
-      h+='<div class="row"><button class="b p" type="button" id="setroot" data-path="'+esc(r.path)+'">Zmień katalog na ten</button></div>';
+      h+='<button class="btn p" type="button" id="setroot" data-path="'+esc(r.path)+'">Zmień katalog na ten</button>';
       $('#rootprev').innerHTML=h;
     }).catch(function(err){ $('#rooterr').textContent=err.message; });
   }

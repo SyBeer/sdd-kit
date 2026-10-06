@@ -24,13 +24,16 @@ function tmpModule(name) {
   return { root, req };
 }
 
-test('AC-C1: tabs - piec zakladek, biezaca zaznaczona, /demo/start: Tablica i Jak to dziala', () => {
+test('AC-C1: tabs - cztery zakladki (Konfiguracja jako ⚙ od 0.34.0, AC-F2), biezaca zaznaczona, /demo/start: Tablica i Jak to dziala', () => {
   const t = ui.tabs('config');
-  assert.deepStrictEqual(t.map(x => x.href), ['/', '/board', '/module', '/guide', '/config']);
-  assert.deepStrictEqual(t.map(x => x.current), [false, false, false, false, true]);
-  assert.deepStrictEqual(ui.tabs('panel').map(x => x.current), [true, false, false, false, false]);
-  assert.deepStrictEqual(ui.tabs('cos').map(x => x.current), [false, false, false, false, false]);
-  assert.deepStrictEqual(ui.tabs('module', '/demo').map(x => x.href), ['/demo', '/demo/board', '/demo/module', '/demo/guide', '/demo/config']);
+  assert.deepStrictEqual(t.map(x => x.href), ['/', '/board', '/module', '/guide']);
+  assert.deepStrictEqual(t.map(x => x.current), [false, false, false, false]);
+  assert.deepStrictEqual(ui.tabs('panel').map(x => x.current), [true, false, false, false]);
+  assert.deepStrictEqual(ui.tabs('cos').map(x => x.current), [false, false, false, false]);
+  assert.deepStrictEqual(ui.tabs('module', '/demo').map(x => x.href), ['/demo', '/demo/board', '/demo/module', '/demo/guide']);
+  assert.strictEqual(ui.cfgHref(''), '/config');
+  assert.strictEqual(ui.cfgHref('/demo'), '/demo/config');
+  assert.strictEqual(ui.cfgHref('/demo/start'), null);
   const s = ui.tabs('board', '/demo/start');
   assert.deepStrictEqual(s.map(x => x.href), ['/demo/start', '/demo/start/guide']);
   assert.deepStrictEqual(s.map(x => x.current), [true, false]);
@@ -317,10 +320,10 @@ test('AC-C23: SddUI.marks pogrubia zrodla w nawiasach i **tekst**', () => {
   assert.strictEqual(ui.marks('[App] i [XYZ], **D** – decyzja'), '<strong>[App]</strong> i [XYZ], <strong>D</strong> – decyzja');
 });
 
-test('AC-C22: sekcje przewodnika jako lista punktowana z pogrubionymi skrotami', () => {
+test('AC-C22: sekcje przewodnika jako lista "–" (0.34.0, handoff 3.2) z pogrubionymi skrotami', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
-  assert.match(html, /\.list\.bullets\{[^}]*list-style:\s*disc/);
-  assert.match(html, /g\.sections\.forEach[^\n]*class="list bullets"[^\n]*SddUI\.marks\(esc\(i\)\)/);
+  assert.match(html, /\.dash li::before\{content:"–"/);
+  assert.match(html, /g\.sections\.forEach[^\n]*class="dash"[^\n]*SddUI\.marks\(esc\(i\)\)/);
 });
 
 test('AC-C24: przewodnik - sekcja o integracji z Redmine', () => {
@@ -340,14 +343,18 @@ test('AC-RM20: przewodnik i skill handover - wtyczka UAT w Redmine', () => {
   assert.match(sk, /Nie zaczynaj linii w kryteriach od\s+punktu listy/);
 });
 
-test('AC-C25: spis tresci Jak to dziala - slug i karta z linkami pod Od czego zaczac', () => {
+test('AC-C25: spis tresci Jak to dziala - slug, karta z boku ze scroll-spy (0.34.0)', () => {
   assert.strictEqual(ui.slug('Integracja z Redmine'), 'integracja-z-redmine');
   assert.strictEqual(ui.slug('Źródła i wiarygodność'), 'zrodla-i-wiarygodnosc');
   assert.strictEqual(ui.slug('Folder requirements/'), 'folder-requirements');
   assert.strictEqual(ui.slug('Proces w sześciu krokach'), 'proces-w-szesciu-krokach');
+  // 0.34.0 (handoff 3.1): spis tresci jako karta z boku, pozycja na kazda sekcje, kotwice z SddUI.slug
   const html = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
-  const guide = html.slice(html.indexOf('function renderGuide'), html.indexOf('function renderGuide') + 4000);
-  assert.ok(guide.indexOf('Od czego zacząć') < guide.indexOf('Na tej stronie'), 'spis pod Od czego zaczac');
-  assert.ok(guide.indexOf('Na tej stronie') < guide.indexOf('<h2>Proces w sześciu krokach'), 'spis przed reszta');
-  assert.match(guide, /id="'\+SddUI\.slug\(/);
+  const guide = html.slice(html.indexOf('function renderGuide'), html.indexOf('function renderGuide') + 6000);
+  assert.ok(guide.indexOf("card('Od czego zacząć'") < guide.indexOf("card('Proces w sześciu krokach'"), 'Od czego zaczac pierwsze');
+  assert.match(guide, /class="box toc" aria-label="Na tej stronie"/);
+  assert.match(html, /\.toc\{[^}]*position:sticky/);
+  assert.match(html, /aria-current','true'/);
+  assert.match(guide, /id="'\+id\+'"/);
+  assert.match(guide, /var id=SddUI\.slug\(title\)/);
 });

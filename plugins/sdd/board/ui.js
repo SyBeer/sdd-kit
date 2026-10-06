@@ -1,4 +1,4 @@
-// Pasek na gorze panelu i tablicy: zakladki Panel / Tablica i motyw jasny / ciemny (slonce / ksiezyc).
+// Naglowek wszystkich stron: zakladki, przelacznik modulu, motyw jasny / ciemny (☾ / ☀), Konfiguracja (⚙), okno Claude.
 // Wspolny dla przegladarki (window.SddUI) i testow (require). Kryteria: docs/specs/ui-switch.md.
 // W przegladarce ladowany w <head> bez defer, zeby motyw byl ustawiony przed pierwszym malowaniem.
 (function (root, factory) {
@@ -8,12 +8,6 @@
   'use strict';
 
   const KEY = 'sdd-theme';
-  const SUN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
-    '<circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
-  const MOON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">' +
-    '<path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
-  const THEMES = [['light', 'Jasny motyw', SUN], ['dark', 'Ciemny motyw', MOON]];
-
   // Zapisany wybor ('light' / 'dark') albo motyw systemu. Nie ma "auto".
   function pickTheme(stored, systemDark) {
     return stored === 'light' || stored === 'dark' ? stored : (systemDark ? 'dark' : 'light');
@@ -32,15 +26,16 @@
       { href: b, label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
       { href: b + '/guide', label: 'Jak to działa', short: 'Jak działa', current: page === 'guide' },
     ];
-    // Modul, Jak to dziala, Konfiguracja (zmiana 0.16.0, AC-C1)
+    // Modul, Jak to dziala (0.16.0, AC-C1); Konfiguracja od 0.34.0 nie jest zakladka - ikona ⚙ w naglowku (cfgHref)
     return [
       { href: b || '/', label: 'Panel modułu', short: 'Panel', current: page === 'panel' },
       { href: b + '/board', label: 'Tablica warsztatowa', short: 'Tablica', current: page === 'board' },
       { href: b + '/module', label: 'Moduł', short: 'Moduł', current: page === 'module' },
       { href: b + '/guide', label: 'Jak to działa', short: 'Jak działa', current: page === 'guide' },
-      { href: b + '/config', label: 'Konfiguracja', short: 'Ustawienia', current: page === 'config' },
     ];
   }
+  // Konfiguracja (0.34.0, AC-F2): link ⚙ w naglowku; /demo/start nie ma konfiguracji
+  function cfgHref(b) { b = b || ''; return b === '/demo/start' ? null : b + '/config'; }
 
   const LEVEL = { full: 'pełny', light: 'lekki' };
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -70,20 +65,33 @@
 
   // Lista pozycji pod licznikiem karty (zmiana 0.15.0, AC-57). detail = {file, items:[{id,title,status,note,warn}]}.
   // Status ze znanym slowem -> znacznik (pelny w dymku), inny (np. "zdecydowal: X · data") -> linia szczegolow.
+  // Wyglad 0.34.0 (handoff 2.3, AC-F4): naglowek z plikiem i ×, pozycja = ID · tresc · znacznik, pod spodem "do" / "skad".
   const STATUS_WORD = /^(zatwierdzone|robocze|potwierdzone|niepotwierdzone|obalone|do przegladu|zakwestionowane|odpowiedziane|otwarte|zadane|sprzeczne|zaparkowane)/i;
-  function countList(label, d) {
+  function tagClass(word) {
+    return /obalone|zakwestionowane|sprzeczne|blokuje/i.test(word) ? ' bad' : /^(zatwierdzone|potwierdzone|odpowiedziane)/i.test(word) ? ' ok'
+      : /^(otwarte|zadane)/i.test(word) ? ' work' : '';
+  }
+  // "do: rola · skąd: plik" -> etykieta (faint) + wartosc; zrodlo mono z lamaniem dlugich sciezek
+  function metaHtml(meta) {
+    return meta.split(' · ').filter(Boolean).map(function (part) {
+      const m = /^(do|skąd|zamknięte): (.*)$/.exec(part);
+      if (!m) return '<span>' + esc(part) + '</span>';
+      return '<span><span class="ml">' + m[1] + '</span> ' + (m[1] === 'skąd' ? '<span class="src">' + esc(m[2]) + '</span>' : esc(m[2])) + '</span>';
+    }).join('');
+  }
+  function countList(label, d, closable) {
     const items = (d && d.items) || [];
     let out = '<div class="files qs cl"><div class="clh"><b>' + items.length + '</b> ' + esc(label) +
-      (d && d.file ? ' <span class="clf">· <code>' + esc(d.file) + '</code></span>' : '') + '</div>';
+      (d && d.file ? ' <span class="clf"><code>' + esc(d.file) + '</code></span>' : '') +
+      (closable ? '<button type="button" class="clx" aria-label="Zamknij listę" title="Zamknij listę">×</button>' : '') + '</div>';
     if (!items.length) return out + '<p class="nofiles">Brak pozycji.</p></div>';
     return out + '<ul>' + items.map(function (it) {
       const st = String(it.status || ''), m = st.match(STATUS_WORD);
-      const tag = m ? '<span class="tag' + (/obalone|zakwestionowane|sprzeczne/i.test(m[1]) ? ' bad' : /^zatwierdzone|^potwierdzone/i.test(m[1]) ? ' ok' : '') +
-        '" title="' + esc(st) + '">' + esc(m[1].toLowerCase()) + '</span>' : '<span></span>';
+      const tag = m ? '<span class="tag' + tagClass(m[1]) + '" title="' + esc(st) + '">' + esc(m[1].toLowerCase()) + '</span>' : '<span></span>';
       const meta = [m ? '' : st, it.note].filter(Boolean).join(' · ');
       return '<li><span class="qid">' + esc(it.id || '') + '</span><span class="qt">' + esc(it.title) +
         (it.warn ? ' <span class="tag bad warn">' + esc(it.warn) + '</span>' : '') + '</span>' + tag +
-        (meta ? '<span class="qm">' + esc(meta) + '</span>' : '') + '</li>';
+        (meta ? '<span class="qm">' + metaHtml(meta) + '</span>' : '') + '</li>';
     }).join('') + '</ul></div>';
   }
 
@@ -158,42 +166,31 @@
     return null;
   }
 
-  // Zawartosc gornego paska (0.33.0, AC-B55). Tablica (data-page="board"): odchudzony naglowek z handoffu - logo,
-  // sdd-kit / modul (gniazdo .slot-mod), krotkie zakladki, gniazdo pytan (.slot-q), motyw jednym przyciskiem.
-  // Pozostale strony bez zmian. Gniazda wypelnia render() elementami ze strony (data-slot) - te same wezly.
+  // Naglowek wszystkich stron (0.34.0, design_handoff_sdd_kit_ui 1.2, AC-F1): logo, sdd-kit / modul (gniazdo .slot-mod),
+  // krotkie zakladki, po prawej: [pytania tablicy] · ostrzezenie wersji · motyw ☾/☀ · ⚙ Konfiguracja · Claude.
+  // Gniazda wypelnia render() elementami ze strony (data-slot) - te same wezly, wiec skrypty stron dzialaja bez zmian.
   const SHORT = { 'Panel modułu': 'Panel', 'Tablica warsztatowa': 'Tablica' };
+  function themeNext(t) { return t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾']; }
   function topbarHtml(page, b, t) {
-    const list = tabs(page, b);
+    b = b || '';
+    const list = tabs(page, b), next = themeNext(t), cfg = cfgHref(b);
     const claude = b ? '' : '<button type="button" class="cl-btn" aria-pressed="false" title="Claude Code w oknie z prawej, w folderze modułu">Claude</button>';
-    if (page === 'board') {
-      const next = t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾'];
-      return '<span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
-        '<span class="crumb"><span class="kit">sdd-kit</span><span class="sl">/</span><span class="slot-mod"></span></span>' +
-        '<div class="tabs">' + list.map(function (x) {
-          const l = SHORT[x.label] || x.label;
-          return x.current ? '<span class="tab" aria-current="page">' + l + '</span>' : '<a class="tab" href="' + x.href + '">' + l + '</a>';
-        }).join('') + '</div>' +
-        '<div class="right"><span class="slot-q"></span><span class="vsep" aria-hidden="true"></span>' +
-        '<a class="ver" target="_blank" rel="noopener" hidden></a>' +
-        '<button type="button" class="theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
-        claude + '</div>';
-    }
-    // Twoj modul: link do przykladu w nowym oknie; demo: powrot do Twojego modulu (zmiana 0.12.0)
-    const link = b ? '<a class="xlink" href="/"><span class="long">← Twój moduł</span><span class="short">← Twój</span></a>'
-      : '<a class="xlink" href="/demo" target="_blank" rel="noopener"><span class="long">Przykład gotowego modułu ↗</span><span class="short">Przykład ↗</span></a>';
-    return '<div class="tabs">' + list.map(function (x) {
-        const inner = '<span class="long">' + x.label + '</span><span class="short">' + x.short + '</span>';
-        return x.current ? '<span class="tab" aria-current="page">' + inner + '</span>' : '<a class="tab" href="' + x.href + '">' + inner + '</a>';
+    // demo: powrot do Twojego modulu (0.12.0); przyklad gotowego modulu jest w Konfiguracji i w Jak to dziala
+    const back = b ? '<a class="xlink" href="/">← Twój moduł</a>' : '';
+    return '<span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
+      '<span class="crumb"><span class="kit">sdd-kit</span><span class="sl">/</span><span class="slot-mod"></span></span>' +
+      '<div class="tabs">' + list.map(function (x) {
+        const l = SHORT[x.label] || x.label;
+        return x.current ? '<span class="tab" aria-current="page">' + l + '</span>' : '<a class="tab" href="' + x.href + '">' + l + '</a>';
       }).join('') + '</div>' +
-      '<div class="right">' + claude +
-      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + link +
-      '<div class="theme" role="radiogroup" aria-label="Motyw">' + THEMES.map(function (x) {
-        return '<label title="' + x[1] + '"><input type="radio" name="sdd-theme" value="' + x[0] + '" aria-label="' + x[1] + '"' +
-          (x[0] === t ? ' checked' : '') + '><span>' + x[2] + '</span></label>';
-      }).join('') + '</div></div>';
+      '<div class="right">' + (page === 'board' ? '<span class="slot-q"></span><span class="vsep" aria-hidden="true"></span>' : '') +
+      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + back +
+      '<button type="button" class="ic theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
+      (cfg ? '<a class="ic cfg" href="' + cfg + '" title="Konfiguracja" aria-label="Konfiguracja"' + (page === 'config' ? ' aria-current="page"' : '') + '>⚙︎</a>' : '') +
+      claude + '</div>';
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, modMenu, cardOpen, countList, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -208,27 +205,22 @@
   }
   apply();
 
+  // Motyw: jeden przycisk ☾/☀ (0.33.0 tablica, od 0.34.0 wszystkie strony)
   function mark(bar, t) {
-    bar.querySelectorAll('input[name="sdd-theme"]').forEach(function (i) { i.checked = i.value === t; });
-    const tb = bar.querySelector('.theme-btn');  // tablica: jeden przycisk ☾/☀ (0.33.0)
-    if (tb) { const n = t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾'];
-      tb.setAttribute('data-next', n[0]); tb.title = n[1]; tb.setAttribute('aria-label', n[1]); tb.textContent = n[2]; }
+    const tb = bar.querySelector('.theme-btn');
+    if (tb) { const n = themeNext(t); tb.setAttribute('data-next', n[0]); tb.title = n[1]; tb.setAttribute('aria-label', n[1]); tb.textContent = n[2]; }
   }
 
   function render(bar) {
     const page = bar.getAttribute('data-page');
     const t = load();
     const b = base(location.pathname);
-    // Gniazda tablicy (0.33.0): przycisk modulu i pytania stoja w HTML strony, tu tylko trafiaja na miejsce
+    // Gniazda (0.33.0 tablica, 0.34.0 wszystkie strony): przelacznik modulu i pytania stoja w HTML strony, tu trafiaja na miejsce
     const slots = [].slice.call(bar.querySelectorAll('[data-slot]'));
     bar.innerHTML = topbarHtml(page, b, t);
     slots.forEach(function (el) { const to = bar.querySelector('.slot-' + el.getAttribute('data-slot')); if (to) to.replaceWith(el); });
     const tb = bar.querySelector('.theme-btn');
     if (tb) tb.onclick = function () { save(pickTheme(tb.getAttribute('data-next'), false)); apply(); mark(bar, load()); };
-    bar.addEventListener('change', function (e) {
-      if (e.target.name !== 'sdd-theme') return;
-      save(pickTheme(e.target.value, false)); apply();
-    });
     // zmiana w innej karcie (panel <-> tablica)
     window.addEventListener('storage', function (e) {
       if (e.key !== KEY && e.key !== null) return;
@@ -241,9 +233,10 @@
       const x = versionBadge(v), el = bar.querySelector('.ver');
       if (!x || !el) return;
       el.textContent = x.text; el.title = x.title; el.href = x.href; el.classList.toggle('stale', x.stale);
-      // tablica: wersja w podpowiedzi logo, w pasku tylko ostrzezenie (0.33.0, AC-B55)
+      // wersja w podpowiedzi logo i w Konfiguracji (sekcja Serwer); w pasku tylko ostrzezenie (0.34.0, AC-F1)
       const logo = bar.querySelector('.logo');
-      if (logo) { logo.title = 'sdd-kit ' + x.text + (x.stale ? '\n' + x.title : ''); el.hidden = !x.stale; } else el.hidden = false;
+      if (logo) logo.title = 'sdd-kit ' + x.text + (x.stale ? '\n' + x.title : '');
+      el.hidden = !x.stale;
     }).catch(function () {});
     if (!b) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
   }
