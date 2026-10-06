@@ -21,8 +21,8 @@ okno Claude, aktualizacje, zachowanie na telefonie, id elementow uzywane przez s
 - **AC-F1** Wspolna rama (`ui.css`, `ui.js`): tokeny jasne i ciemne z handoffu (6) w `:root` w `ui.css`, czcionki IBM Plex,
   pasek stanu 26 px (`.statusbar`: na zywo, etapy/poziom/rodzaj, po prawej blokery i pytania u biznesu), naglowek 36 px
   na kazdej stronie: logo, `sdd-kit / <modul> ▾` (gniazdo `#modbtn` + `#modmenu`), krotkie zakladki, motyw jednym
-  przyciskiem ☾/☀ (zapis `sdd-theme` jak dotad), ⚙, Claude. Wersja w podpowiedzi logo i w Konfiguracji; w pasku tylko
-  ostrzezenie (`.ver.stale`) i chip aktualizacji. Pasek stanu i naglowek stoja (`.chrome`, sticky), tresc sie przewija.
+  przyciskiem ☾/☀ (zapis `sdd-theme` jak dotad), ⚙, Claude; w naglowku chip aktualizacji. Wersja - AC-F9.
+  Pasek stanu i naglowek stoja (`.chrome`, sticky), tresc sie przewija.
 - **AC-F2** Konfiguracja nie jest zakladka: `tabs()` zwraca 4 pozycje, `cfgHref(b)` daje link ⚙ (`/config`, `/demo/config`,
   brak na `/demo/start`); na stronie Konfiguracji ⚙ ma `aria-current="page"`.
 - **AC-F3** Panel: karta "Aktualny krok" (etykieta, NN / 06, nazwa, opis, pole komendy `#nextcmd` + `#copy` "Kopiuj" ->
@@ -46,6 +46,11 @@ okno Claude, aktualizacje, zachowanie na telefonie, id elementow uzywane przez s
   Karta Serwer: wersja z linkiem do Release Notes i ostrzezeniami, "Przyklad gotowego modulu ↗". Id pol i przyciskow z handoffu 4 bez zmian.
 - **AC-F8** Telefon (<= 640 px): pasek stanu i naglowek zawijaja sie i nie stoja, zakladki przewijaja sie w poziomie, etykieta
   pola nad kontrolka, strona bez poziomego przewijania.
+
+- **AC-F9** (0.34.1, uwaga usera: "nie ma na nowym layoucie informacji o wersji - powinna byc w czarnym pasku na gorze
+  po lewej stronie"): wersja sdd-kit na lewym brzegu paska stanu na kazdej stronie (mono, link do Release Notes);
+  serwer / plugin / sesja Claude nieaktualne - dopisek w tym samym miejscu, czerwony, podpowiedz z instrukcja.
+  W naglowku wersji nie ma (tylko w podpowiedzi logo); w Konfiguracji - karta Serwer.
 
 ## Testy
 `board/test/ui-frame.test.js` (AC-F1..F8) + zaktualizowane AC-C1, AC-C22, AC-C25, AC-B55, AC-B56 (zmiany wynikaja z handoffu).

@@ -167,7 +167,7 @@
   }
 
   // Naglowek wszystkich stron (0.34.0, design_handoff_sdd_kit_ui 1.2, AC-F1): logo, sdd-kit / modul (gniazdo .slot-mod),
-  // krotkie zakladki, po prawej: [pytania tablicy] · ostrzezenie wersji · motyw ☾/☀ · ⚙ Konfiguracja · Claude.
+  // krotkie zakladki, po prawej: [pytania tablicy] · motyw ☾/☀ · ⚙ Konfiguracja · Claude. Wersja - w pasku stanu (verSlot).
   // Gniazda wypelnia render() elementami ze strony (data-slot) - te same wezly, wiec skrypty stron dzialaja bez zmian.
   const SHORT = { 'Panel modułu': 'Panel', 'Tablica warsztatowa': 'Tablica' };
   function themeNext(t) { return t === 'dark' ? ['light', 'Jasny motyw', '☀'] : ['dark', 'Ciemny motyw', '☾']; }
@@ -184,7 +184,7 @@
         return x.current ? '<span class="tab" aria-current="page">' + l + '</span>' : '<a class="tab" href="' + x.href + '">' + l + '</a>';
       }).join('') + '</div>' +
       '<div class="right">' + (page === 'board' ? '<span class="slot-q"></span><span class="vsep" aria-hidden="true"></span>' : '') +
-      '<a class="ver" target="_blank" rel="noopener" hidden></a>' + back +
+      back +
       '<button type="button" class="ic theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
       (cfg ? '<a class="ic cfg" href="' + cfg + '" title="Konfiguracja" aria-label="Konfiguracja"' + (page === 'config' ? ' aria-current="page"' : '') + '>⚙︎</a>' : '') +
       claude + '</div>';
@@ -211,6 +211,14 @@
     if (tb) { const n = themeNext(t); tb.setAttribute('data-next', n[0]); tb.title = n[1]; tb.setAttribute('aria-label', n[1]); tb.textContent = n[2]; }
   }
 
+  // Miejsce na wersje: pierwszy element paska stanu strony (.statusbar)
+  function verSlot() {
+    const sb = document.querySelector('.statusbar');
+    if (!sb) return null;
+    let el = sb.querySelector('.ver');
+    if (!el) { el = document.createElement('a'); el.className = 'ver'; el.target = '_blank'; el.rel = 'noopener'; el.hidden = true; sb.insertBefore(el, sb.firstChild); }
+    return el;
+  }
   function render(bar) {
     const page = bar.getAttribute('data-page');
     const t = load();
@@ -228,15 +236,14 @@
     });
     // bez zapisanego wyboru zaznaczenie idzie za systemem
     if (mq && mq.addEventListener) mq.addEventListener('change', function () { mark(bar, load()); });
-    // Wersja sdd-kit w pasku (zmiana 0.18.1); stary serwer po aktualizacji -> ostrzezenie
+    // Wersja sdd-kit na lewym brzegu paska stanu (0.34.1, AC-F9); stary serwer / plugin / sesja -> ostrzezenie w tym miejscu
+    const el = verSlot();
     fetch(b + '/api/version').then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
-      const x = versionBadge(v), el = bar.querySelector('.ver');
+      const x = versionBadge(v);
       if (!x || !el) return;
-      el.textContent = x.text; el.title = x.title; el.href = x.href; el.classList.toggle('stale', x.stale);
-      // wersja w podpowiedzi logo i w Konfiguracji (sekcja Serwer); w pasku tylko ostrzezenie (0.34.0, AC-F1)
+      el.textContent = x.text; el.title = x.title; el.href = x.href; el.classList.toggle('stale', x.stale); el.hidden = false;
       const logo = bar.querySelector('.logo');
-      if (logo) logo.title = 'sdd-kit ' + x.text + (x.stale ? '\n' + x.title : '');
-      el.hidden = !x.stale;
+      if (logo) logo.title = 'sdd-kit ' + x.text;
     }).catch(function () {});
     if (!b) { claudeDock(bar.querySelector('.cl-btn')); updateChip(bar); }
   }
@@ -245,7 +252,7 @@
   function updateChip(bar) {
     fetch('/api/update').then(function (r) { return r.ok ? r.json() : null; }).then(function (st) {
       if (!st || !st.newer) return;
-      const ver = bar.querySelector('.ver'), wrap = document.createElement('span');
+      const ver = bar.querySelector('.theme-btn'), wrap = document.createElement('span');
       wrap.className = 'upd';
       wrap.innerHTML = '<button type="button" class="upd-btn" aria-expanded="false" title="Dostępna nowa wersja sdd-kit">↑ ' + st.latest + '</button>' +
         '<div class="upd-pop" role="dialog" aria-label="Nowa wersja sdd-kit" hidden>' +
@@ -256,7 +263,7 @@
         '<p class="upd-msg" hidden></p><pre class="upd-log" hidden></pre>' +
         '<div class="upd-row">' + (st.canUpdate ? '<button type="button" class="upd-go">Aktualizuj</button>' : '') +
         '<button type="button" class="upd-x">Później</button></div></div>';
-      (ver ? ver.parentNode : bar.querySelector('.right')).insertBefore(wrap, ver ? ver.nextSibling : null);
+      (ver ? ver.parentNode : bar.querySelector('.right')).insertBefore(wrap, ver);
       const btn = wrap.querySelector('.upd-btn'), pop = wrap.querySelector('.upd-pop');
       function open(on) { pop.hidden = !on; btn.setAttribute('aria-expanded', on); }
       btn.onclick = function () { open(pop.hidden); };

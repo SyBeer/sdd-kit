@@ -219,3 +219,11 @@ test('AC-T13: kontener terminala bez odstepow (border-box + FitAddon), odstepy n
   const js = fs.readFileSync(path.join(__dirname, '..', 'ui.js'), 'utf8');
   assert.match(js, /document\.fonts/);
 });
+
+test('AC-T14: okno Claude nie przesuwa panelu karteczki (panel w ukladzie tablicy, nie fixed)', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'ui.css'), 'utf8');
+  const board = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  assert.doesNotMatch(css, /claude-on #drawer\{right/);
+  assert.match(css, /html\.claude-on\{padding-right:var\(--claude-w\)\}/);
+  assert.match(board, /@media\(min-width:641px\)\{[\s\S]*?#drawer\{position:relative;flex:none/);
+});

@@ -538,7 +538,19 @@ server.on('error', e => {
   throw e;
 });
 
+// IPv6 (0.34.1, AC-T15): Windows rozwiazuje "localhost" najpierw na ::1. Serwer tylko na 127.0.0.1 = kazde nowe polaczenie
+// czeka ~2 s na odmowe z ::1, zanim przegladarka sprobuje IPv4 (wolne przelaczanie zakladek). Drugi nasluch na ::1 -
+// nadal tylko lokalnie. Brak IPv6 albo port zajety na ::1 nie zatrzymuje serwera.
+function listen6() {
+  const s6 = http.createServer((req, res) => server.emit('request', req, res));
+  s6.on('error', e => {
+    if (e.code === 'EADDRINUSE') console.error(`Uwaga: port ${PORT} na ::1 zajmuje inny program - otwieraj http://127.0.0.1:${PORT}`);
+  });
+  s6.listen(PORT, '::1');
+}
+
 server.listen(PORT, '127.0.0.1', () => {
+  listen6();
   console.log(`Panel:    http://localhost:${PORT}`);
   console.log(`Tablica:  http://localhost:${PORT}/board`);
   console.log(`Demo:     http://localhost:${PORT}/demo  (start warsztatu: /demo/start)`);

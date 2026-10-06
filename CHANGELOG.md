@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.34.1] - 2026-10-06
+- Poprawka: po otwarciu okna Claude panel karteczki na Tablicy przesuwal sie w lewo na tablice (zgloszenie z Chrome
+  na Windows; dotyczylo kazdej przegladarki). Pozostalosc z czasow, gdy panel byl przyklejony do prawej krawedzi
+  ekranu - od 0.33.0 stoi w ukladzie tablicy, wiec okno Claude go nie przesuwa (docs/specs/claude-dock.md AC-T14).
+- Poprawka (Windows): wolne przelaczanie zakladek pod http://localhost:8012. Windows laczy "localhost" najpierw przez
+  IPv6 (::1), a serwer sluchal tylko na 127.0.0.1 - kazde nowe polaczenie czekalo ok. 2 s na odmowe. Serwer slucha teraz
+  takze na ::1, nadal tylko lokalnie (AC-T15). Po aktualizacji trzeba zrestartowac sdd-board.
+- Wersja sdd-kit wraca na kazda strone - na lewym brzegu czarnego paska stanu, razem z ostrzezeniem o nieaktualnym
+  serwerze, pluginie albo sesji Claude (docs/specs/ui-frame.md AC-F9). Z naglowka znika.
+
 ## [0.34.0] - 2026-10-06
 - Nowy wyglad calego panelu wg `design_handoff_sdd_kit_ui` (spec: docs/specs/ui-frame.md, AC-F1..AC-F8) - ten sam
   styl co Tablica od 0.33.0. Zmienia sie wyglad i uklad; logika, zapis plikow, demo, okno Claude, aktualizacje

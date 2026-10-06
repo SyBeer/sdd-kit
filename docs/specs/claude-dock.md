@@ -24,7 +24,7 @@ z `claude` uruchomionym przez serwer kitu.
      `POST /api/term/input {data}`; `POST /api/term/resize {cols, rows}`; `POST /api/term/stop`;
      `GET /term-events` (SSE: `{replay, d}` base64, zdarzenie `exit`).
    - Bezpieczenstwo (terminal = wykonanie polecen): zapisy jak dotad tylko z naglowkiem `X-SDD: 1` i Host lokalny;
-     strumien i stan tez tylko przy Host lokalnym (ochrona przed DNS rebinding); serwer slucha tylko na 127.0.0.1.
+     strumien i stan tez tylko przy Host lokalnym (ochrona przed DNS rebinding); serwer slucha tylko na petli zwrotnej: 127.0.0.1 i ::1 (AC-T15).
      Sesja startuje wylacznie po kliknieciu "Uruchom Claude" - nigdy sama.
 2. Przegladarka (`board/ui.js`, `board/ui.css`; wszystkie strony z gornym paskiem, nie w demo):
    - Przycisk "Claude" w gornym pasku otwiera / zamyka okno z prawej; stan otwarcia i szerokosc pamietane
@@ -74,6 +74,14 @@ z `claude` uruchomionym przez serwer kitu.
   kontenera razem z odstepami (12 px za duzo -> czasem jeden wiersz za duzo). Odstepy na elemencie `.xterm`
   (FitAddon je odejmuje). Przeliczenie wierszy takze po zaladowaniu czcionek (`document.fonts`). Reczne/pomiar:
   wiersze x wysokosc wiersza <= wysokosc terminala dla wielu wysokosci okna.
+- AC-T14 (0.34.1, zgloszenie usera: "na Tablicy zakladka Karteczki zle sie pozycjonuje na Chrome i Windows ... po
+  uruchomieniu okna Claude"): panel karteczki na szerokim oknie stoi w ukladzie tablicy (od 0.33.0 nie `position:fixed`),
+  wiec okno Claude go nie przesuwa - `ui.css` nie ustawia `right` dla `#drawer`; strona ma `padding-right` szerokosci
+  okna Claude, panel konczy sie tuz przed nim (tez zwiniety). Pomiar: okno 1400 px, Claude 520 px -> panel 580..880.
+- AC-T15 (0.34.1, zgloszenie usera: "na windows wolno przelaczaja sie zakladki ... na localhost dziala zle a na 127.0.0.1
+  dobrze"): serwer slucha na 127.0.0.1 i na ::1 (tylko petla zwrotna). Windows laczy "localhost" najpierw z ::1 - przy
+  samym IPv4 kazde nowe polaczenie czekalo ~2 s na odmowe. Brak IPv6 albo zajety port na ::1 nie zatrzymuje serwera
+  (ostrzezenie przy zajetym). Adres w instrukcjach zostaje http://localhost:8012 - inny adres to inne ustawienia przegladarki.
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez

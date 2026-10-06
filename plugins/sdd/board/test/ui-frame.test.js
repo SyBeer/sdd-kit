@@ -35,8 +35,11 @@ test('AC-F1: wspolna rama - tokeny w ui.css, pasek stanu, naglowek 36 px na kazd
     assert.match(h, /id="conn"/);
     assert.doesNotMatch(h, /Wymagania do modułu:/);
   });
-  // wersja tylko w podpowiedzi logo, w pasku tylko ostrzezenie
-  assert.match(read('ui.js'), /el\.hidden = !x\.stale;/);
+  // wersja na lewym brzegu paska stanu (AC-F9), nie w naglowku
+  assert.doesNotMatch(ui.topbarHtml('panel', '', 'light'), /class="ver"/);
+  assert.match(read('ui.js'), /sb\.insertBefore\(el, sb\.firstChild\)/);
+  assert.match(css, /\.statusbar \.ver\{/);
+  assert.match(css, /\.statusbar \.ver\.stale\{/);
 });
 
 test('AC-F2: Konfiguracja jako ⚙ w naglowku, nie zakladka', () => {
