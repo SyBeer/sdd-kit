@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.1] - 2026-10-06
+- Sesje Claude Code w panelu (docs/specs/session-version.md AC-SV9..AC-SV12): znacznik sesji zapisuje teraz obok
+  Session ID takze PID procesu Claude Code, a panel sprawdza, czy ten proces jeszcze dziala - zamknieta sesja znika
+  od razu. Wczesniej na Windows zamkniecie okna terminala nie uruchamialo hooka SessionEnd i panel pokazywal wiele
+  zamknietych sesji (do 12 h). Znaczniki sprzed tej wersji (bez PID) znikaja po 12 h albo po usunieciu plikow
+  z `%USERPROFILE%\.sdd-kit\sessions`.
+
 ## [0.36.0] - 2026-10-06
 - Tablica: procesy docelowe i widok "dziś / docelowo / oba" (docs/specs/board-target.md, AC-BT1..AC-BT9).
   - Karteczka docelowa (`target: true` w board.json) - wymaganie, ktorego aplikacja jeszcze nie ma: przerywana

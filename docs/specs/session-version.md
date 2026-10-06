@@ -65,3 +65,19 @@ nowa sesja -> dopisek znika po zamknieciu starej.
 - 2026-10-05, panel z repo na fv-manager, sztuczny znacznik sesji 0.30.0 przy pluginie 0.31.0: plakietka
   "v0.31.0 · sesja Claude nieaktualna" (czerwona), podpowiedz z folderem i wersja. Hook w prawdziwej sesji -
   do sprawdzenia po wydaniu (sesja otwarta po instalacji 0.32.0 zapisuje znacznik w ~/.sdd-kit/sessions/).
+
+## Zmiana 0.36.1 - PID procesu Claude Code
+Zgloszenie usera (2026-10-06, Windows): "SDD-kit pokazuje wiele sesji Claude, ktore zostaly juz zamkniete ... trzeba
+zabezpieczyc ten proces tak, zeby zbieral pare Session ID i PID". Na Windows zamkniecie okna terminala nie uruchamia
+`SessionEnd` - znacznik zostawal, a panel liczyl sesje jako otwarta do 12 h od ostatniej zmiany transkryptu.
+- **AC-SV9** `claudePid(chain)`: z lancucha przodkow hooka (najblizszy pierwszy) pierwszy proces z "claude" w poleceniu
+  (`claude`, `claude.exe`, `node …claude-code/cli.js`), z pominieciem samego hooka i jego powloki (polecenie
+  z `session-mark.js`); brak - `null`.
+- **AC-SV10** Lancuch przodkow: macOS / Linux `ps -o pid=,ppid=,command=` po kolei, Windows jedno wywolanie PowerShell
+  (`Get-CimInstance Win32_Process`, linie "pid<TAB>ppid<TAB>polecenie"), najwyzej 8 poziomow; `parseChain` czyta oba.
+- **AC-SV11** Lista sesji: znacznik z `pid` - sesja zywa, dopoki proces istnieje (`process.kill(pid, 0)`, EPERM = istnieje),
+  niezaleznie od wieku transkryptu; proces nie istnieje - znacznik usuniety od razu. Znacznik bez `pid` (starsze wersje,
+  nie znaleziono Claude) - regula 12 h jak dotad.
+- **AC-SV12** `start` zapisuje `pid` Claude Code w znaczniku (gdy znaleziony); dalej bez wyjscia i zawsze kod 0.
+Znaczniki zapisane przed 0.36.1 nie maja PID - znikaja po 12 h bez zmian transkryptu albo recznie (folder
+`~/.sdd-kit/sessions`, na Windows `%USERPROFILE%\.sdd-kit\sessions`).
