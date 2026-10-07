@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.39.0] - 2026-10-08
+- Wywiad w stylu BIZ bez straszenia praca (docs/specs/interview-style.md AC-IS12..AC-IS14): na poczatku Claude pyta,
+  ile masz czasu, potem jednym zdaniem mowi, od jakich tematow zacznie (najwazniejsze najpierw) - bez liczby pytan
+  i zalozen. Pilnuje czasu (`date`): kilka minut przed koncem zamyka temat, zapisuje i mowi, co zostalo na nastepny raz.
+- Czat (docs/specs/claude-chat.md AC-CH10): pod pytaniem o czas gotowe odpowiedzi 15 / 30 / 45 min / 1 h, w naglowku okna
+  zegar odliczajacy czas rozmowy (ostatnie 5 minut wyrozniane); czas wpisany slowami tez uruchamia zegar.
+- Styl BIZ prostszy (uwaga usera po wywiadzie w czacie na fv-manager): takze nowa decyzja jednym-dwoma zdaniami
+  ("Czyli przyjmujemy: … Zapisuję?"), bez punktow, numerow, kaskady i nowych pytan w tresci - pelny wpis tylko na prosbe;
+  po wznowieniu rozmowy Claude nie powtarza pytania, na ktore odpowiedz jest juz w sesji (docs/specs/interview-style.md
+  AC-IS9..AC-IS11). W plikach wszystko jak dotad.
+- Czat (docs/specs/claude-chat.md AC-CH9): tylko po polsku i bez komentowania wlasnych krokow; szukanie w plikach
+  prostymi poleceniami (grep, cat, head…) nie jest juz odrzucane; polecenia w linijce dzialan tylko jako liczba;
+  odrzucenie po polsku zamiast komunikatu Claude Code; naprawione znikajace "(</>)".
+
 ## [0.38.0] - 2026-10-08
 - Okno Claude: widok **czat** obok terminala (docs/specs/claude-chat.md, AC-CH1..AC-CH8). Przelacznik dwoch ikon
   w naglowku okna (czat / `</>` terminal), wybor zapamietany. Czat to ten sam Claude Code w trybie wymiany wiadomosci

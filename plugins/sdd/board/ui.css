@@ -241,3 +241,13 @@ html.claude-on .cdock{display:flex}
 .cdock .cd-mic:hover{border-color:var(--ink)}
 .cdock .cd-mic:disabled,.cdock .cd-send:disabled{opacity:.4;cursor:default}
 .cdock .cd-hint{margin-top:6px;display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--faint)}
+/* Czas rozmowy (0.39.0): zegar w naglowku okna i gotowe odpowiedzi o czas */
+.cdock .cd-clock{white-space:nowrap;flex:none}
+.cdock .cd-head .cd-clock{border:1px solid var(--line);border-radius:12px;padding:2px 9px;background:none;font:600 12px var(--mono);color:var(--ink)}
+.cdock .cd-head .cd-clock[hidden]{display:none}
+.cdock .cd-clock.low{border-color:var(--accent);color:var(--accent)}
+.cdock .cd-clock.over{border-color:var(--hot-ink);color:var(--hot-ink)}
+.cdock .cd-quick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;color:var(--muted)}
+.cdock .cd-quick[hidden]{display:none}
+.cdock .cd-quick button{height:26px;padding:0 10px;border:1px solid var(--input-line);border-radius:13px;background:var(--input);color:var(--ink);font:12px var(--sans);cursor:pointer}
+.cdock .cd-quick button:hover{border-color:var(--ink)}

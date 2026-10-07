@@ -45,16 +45,31 @@ sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/sp
 **BIZ - swobodna rozmowa (domyslnie)**. Ma brzmiec jak rozmowa z czlowiekiem, nie jak czytanie dokumentacji. Bez ozdobnikow.
 1. Pytanie: jedno-dwa zdania kontekstu jezykiem rozmowcy (tak, jak on nazywa rzeczy), potem pytanie. Bez naglowkow,
    punktow, pogrubien, numerow pytan, nazw plikow, wersji kodu i numerow BR/A/D w tresci. ID tylko dopiskiem na koncu: "(Q-027)".
-2. Postep tylko od czasu do czasu, zdaniem ("zostaly jeszcze dwa"), nie licznikiem przy kazdym pytaniu.
-3. Po odpowiedzi: parafraza i propozycja zapisu w 1-2 zdaniach - "Czyli … Zapisuje jako potwierdzone, ok?".
-   Pelny wpis (rodzaj, tresc, kaskada, powod) pokazujesz tylko, gdy cos sie dzieje: nowa decyzja D, sprzecznosc,
-   obalenie A, zmiana dotyka R. Kaskade i tak liczysz i zapisujesz w plikach (krok 3) - nie pokazujesz pustej.
+2. Czas zamiast liczby pytan (0.39.0). Na starcie, razem z pytaniem o autora: "Ile masz dzis czasu na rozmowe?".
+   Zapisz godzine startu (`date`) i deklarowany czas w sesji. Potem jednym zdaniem tematy na dzis od najwazniejszego
+   (sprzeczne i blokujace go-live najpierw), zwyklymi slowami: "Zaczne od cen pradu, potem okresy rozliczeniowe."
+   Nie podajesz liczby pytan, zalozen ani "listy do przejscia" - to straszy. Przed kazdym kolejnym pytaniem sprawdz
+   `date`: gdy zostaje okolo 5 minut, konczysz biezacy temat, zapisujesz i mowisz krotko, co udalo sie ustalic,
+   oraz "Na nastepny raz zostalo: <tematy>". Gdy czas sie skonczyl, nie zaczynasz nowego tematu. Brak odpowiedzi
+   o czas ("nie wiem", "ile trzeba") - przyjmij 30 minut.
+3. Po odpowiedzi: parafraza i propozycja zapisu w 1-2 zdaniach - "Czyli … Zapisuje jako potwierdzone, ok?" -
+   takze przy nowej decyzji D: "Czyli przyjmujemy: <decyzja jednym zdaniem>. Zapisuje?". Bez punktow, numerow D/A/BR,
+   kaskady i powodu w tresci. Pelny wpis (rodzaj, tresc, powod, kaskada) pokazujesz tylko na prosbe ("szczegoly?",
+   "co to zmienia?"). Nowe pytania odlozone na pozniej, kaskade i numery zapisujesz bez komentarza (krok 3 - w plikach
+   wszystko jak dotad). Wyjatek: sprzecznosc z wczesniejsza decyzja albo obalenie zalozenia - jednym zdaniem, co sie
+   nie zgadza, i pytanie, ktora wersja jest prawdziwa.
+   Przyklad (fv-manager, Q-048, odpowiedz "nie wiem, przyjmuj pierwszy dzien miesiaca"):
+   > Czyli przyjmujemy: sposób rozliczenia miesiąca bierzemy z okresu obowiązującego 1. dnia miesiąca, tak jak liczy
+   > dziś aplikacja. Zapisuję? (Q-048)
 4. Po "tak" zapis i nastepne pytanie w jednej wiadomosci: "Zapisane. Teraz o …". Bez osobnych komunikatow
    "A-xxx jest potwierdzone, a Q-xxx ma status …".
 5. Regula odczytana z kodu (stan dzisiejszy, as-built): wystarczy proste "tak ma zostac?" albo lista do potwierdzenia
    hurtowego (krok 2c). Pytania o przeszlosc tam, gdzie odkrywasz, jak rozmowca naprawde pracuje - nie
    "kiedy ostatnio formularz pokazal blad", gdy chodzi tylko o potwierdzenie reguly.
 6. "Nie wiem" / "nie dotyczy mnie" -> od razu jedno zdanie z propozycja odlozenia z warunkiem (punkt 6 kroku 2a), bez dodatkowej rundy.
+7. Wznowiona rozmowa: odpowiedz juz jest w `01-interview/session-*.md` - nie pytasz drugi raz, tylko proponujesz zapis
+   ("Mam Twoja odpowiedz z poprzedniej rozmowy: … Zapisuje?"). Sprawdzasz to przed kazdym pytaniem po wznowieniu.
+8. Nie opisujesz swoich krokow ("czytam plik", "teraz zapisuje") - panel czatu pokazuje dzialania sam.
 
 Przyklad BIZ (fv-manager, Q-027):
 > Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
@@ -70,7 +85,8 @@ pelny wpis po kazdej odpowiedzi). Autor tez raz na poczatku.
 ## Krok 2a: tryb `live` (warsztat)
 JEDNO pytanie naraz. Nigdy partia pytan - prowadzacy zbiera odpowiedzi na zywo i nie ma jak odpowiedziec na piec naraz.
 
-1. Na start powiedz tylko, ile jest pytan i w jakiej kolejnosci idziesz (priorytet jak wyzej). Listy pytan nie pokazuj.
+1. Start wg stylu: w stylu BIZ - czas i tematy (sekcja "Styl rozmowy", punkt 2).
+   W stylu INZ na start powiedz, ile jest pytan i w jakiej kolejnosci idziesz (priorytet jak wyzej). Listy pytan nie pokazuj.
 2. Uklad pytania wg stylu (sekcja "Styl rozmowy"). W stylu BIZ - kontekst i pytanie w 1-3 zdaniach, ID dopiskiem.
    W stylu INZ kazde pytanie w tym samym ukladzie: naglowek `Pytanie X z N (Q-xxx): <temat>` (N rosnie, gdy odpowiedzi
    otwieraja nowe pytania), 1-3 punkty, co mowia zrodla (przy sprzecznosci cytaty obu stron), samo pytanie.

@@ -51,6 +51,21 @@ autor raz na poczatku (punkt 1).
 - **AC-IS7** Przewodnik: wariant `/sdd:interview live inz` w komendach, zdanie o stylu w sekcji Konfiguracji/wywiadu.
 - **AC-IS8** (reczne) rozmowa BIZ na fv-manager: pytania i potwierdzenia jak w przykladzie z 2026-10-07; pliki jak w INZ.
 
+- **AC-IS9** (0.38.1, uwaga usera: "dlaczego tak skomplikowanie odpowiedziales ... uprosc. Jezeli uzytkownik bedzie chcial,
+  dopyta"): w BIZ takze nowa decyzja D jednym-dwoma zdaniami ("Czyli przyjmujemy: … Zapisuje?"); pelny wpis (rodzaj, tresc,
+  powod, kaskada) tylko na prosbe.
+- **AC-IS10** Nowe pytania odlozone na pozniej, kaskada i numery - zapisywane bez komentarza; sprzecznosc / obalenie -
+  jednym zdaniem i pytanie, ktora wersja prawdziwa.
+- **AC-IS11** Wznowiona rozmowa: odpowiedz jest juz w `session-*.md` - bez powtarzania pytania, od razu propozycja zapisu.
+
+- **AC-IS12** (0.39.0, uwaga usera: "nie strasz liczba pytan albo pracy do zrobienia. zapytaj na poczatku ile czasu
+  uzytkownik ma na rozmowe (pokaz zegar) i z listy tematow - zrob najpierw najwazniejsze i staraj sie zmiescic w czasie"):
+  BIZ na starcie pyta "Ile masz dzis czasu na rozmowe?"; nie podaje liczby pytan, zalozen ani listy do przejscia.
+- **AC-IS13** Tematy na dzis jednym zdaniem od najwazniejszego (sprzeczne, blokujace go-live najpierw); start i czas w sesji
+  (`date`); przed kolejnym pytaniem kontrola czasu - ok. 5 min przed koncem zamkniecie tematu, zapis, krotkie podsumowanie
+  i "Na nastepny raz zostalo: …"; bez odpowiedzi o czas - 30 min.
+- **AC-IS14** INZ bez zmian: na start liczba pytan i kolejnosc.
+
 ## Przyklad BIZ (z sesji fv-manager, Q-027)
 > Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
 > i z ładowania auta. Kiedy ostatnio liczyłeś, w jakim stopniu instalacja już się zwróciła, to co brałeś pod uwagę? (Q-027)

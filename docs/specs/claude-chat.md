@@ -75,6 +75,19 @@ Metryka: wywiad `/sdd:interview live` prowadzony w czacie od poczatku do konca b
   pomija pytanie Claude Code o zaufanie do folderu (terminal je zadaje) - czat uruchamia sie tylko w folderze modulu
   wybranego w panelu. Dyktowanie: nie klikane na zywo (macOS wymaga zgody Dostepnosc, Windows - do sprawdzenia u usera).
 
+## Zmiana 0.38.1
+- **AC-CH9** Czat: instrukcja - tylko po polsku, bez opisywania swoich krokow, szukanie przez Grep/Read; dozwolony odczyt
+  prostymi poleceniami (`cd`, `grep`, `cat`, `head`, `tail`, `wc`); w podsumowaniu dzialan polecenia powloki tylko licznikiem
+  ("1 polecenie"), tresc w podpowiedzi; odrzucone polecenie: "pominięto polecenie spoza czatu …" (angielski komunikat
+  Claude Code tylko w podpowiedzi), "(</>)" escapowane (wczesniej znikalo jako znacznik HTML).
+
+## Zmiana 0.39.0
+- **AC-CH10** Czas rozmowy w czacie: gdy ostatnia wiadomosc Claude pyta o czas (`asksTime`), nad polem gotowe odpowiedzi
+  15 min / 30 min / 45 min / 1 h; klik wysyla "Mam … ." i uruchamia zegar w naglowku okna (odliczanie, ostatnie 5 min -
+  kolor akcentu, po czasie "czas minął"); czas wpisany recznie ("mam 20 minut", "pół godziny") tez uruchamia zegar
+  (`parseMinutes`); klik w zegar - zmiana czasu. Koniec czasu zapisany w przegladarce per modul.
+  Sprawdzone 2026-10-08 z udawanym Claude (stream-json): podpowiedzi, "Mam 30 min.", zegar "⏱ 29:59".
+
 ## Wycofanie dyktowania
 1. Usun `plugins/sdd/board/dictate.js` i jego test `board/test/dictate.test.js`.
 2. W `server.js` i `ui.js` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.

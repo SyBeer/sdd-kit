@@ -213,19 +213,36 @@
   const WRITES = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'], READS = ['Read', 'Glob', 'Grep'];
   function toolSummary(list) {
     const w = [], other = [];
-    let r = 0;
+    let r = 0, sh = 0;
     (list || []).forEach(function (t) {
       if (WRITES.indexOf(t.name) >= 0) { if (t.target && w.indexOf(t.target) < 0) w.push(t.target); }
       else if (READS.indexOf(t.name) >= 0) r++;
-      else other.push((t.name === 'Skill' ? 'skill ' : t.name === 'Bash' ? '$ ' : t.name + ' ') + (t.target || '').slice(0, 60));
+      else if (t.name === 'Bash') sh++;  // tresc polecenia tylko w podpowiedzi (0.38.1, AC-CH9)
+      else other.push((t.name === 'Skill' ? 'skill ' : t.name + ' ') + (t.target || '').slice(0, 60));
     });
     const parts = [];
     if (w.length) parts.push('zapisano ' + w.join(', '));
     if (r) parts.push('odczyt ' + r + ' ' + (r === 1 ? 'pliku' : 'plików'));
+    if (sh) parts.push(sh + ' ' + (sh === 1 ? 'polecenie' : sh < 5 ? 'polecenia' : 'poleceń'));
     return parts.concat(other).join(' · ');
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary };
+  // Czas rozmowy (0.39.0, AC-CH10): Claude pyta, ile jest czasu - panel daje gotowe odpowiedzi i odlicza czas.
+  function asksTime(text) { return /ile\s+(masz|mamy|macie)\b[^?]{0,40}czasu/i.test(String(text || '')); }
+  function parseMinutes(text) {
+    const t = String(text || '').toLowerCase();
+    if (/półtorej\s+godz|1[.,]5\s*(h|godz)/.test(t)) return 90;
+    if (/pół\s+godz/.test(t)) return 30;
+    let m = t.match(/(\d+)\s*(h|godz)/); if (m) return +m[1] * 60;
+    m = t.match(/(\d+)\s*(min|m\b)/); if (m) return +m[1];
+    if (/(^|\s)godzin(ę|a|e)(?![a-ząćęłńóśźż])/.test(t)) return 60;
+    m = t.match(/^\s*(\d{1,3})\s*\.?\s*$/); if (m) return +m[1];
+    return null;
+  }
+  function clockText(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function clockState(ms) { return ms <= 0 ? 'over' : ms <= 5 * 60e3 ? 'low' : ''; }
+
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary, asksTime, parseMinutes, clockText, clockState };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -370,11 +387,16 @@
       '<button type="button" data-view="chat" title="Czat – rozmowa w stylu BIZ" aria-label="Czat">' + ICON_CHAT + '</button>' +
       '<button type="button" data-view="code" title="Terminal – styl INŻ" aria-label="Terminal">' + ICON_CODE + '</button></span>' +
       '<span class="cd-style" title="Styl rozmowy wywiadu w tym widoku"></span>' +
+      '<button type="button" class="cd-clock" hidden title="Czas na rozmowę - kliknij, żeby zmienić"></button>' +
       '<button type="button" class="cd-run" hidden>Uruchom Claude</button><button type="button" class="cd-new" hidden>Nowa rozmowa</button>' +
       '<button type="button" class="cd-stop" hidden>Zakończ</button>' +
       '<button type="button" class="cd-x" aria-label="Zamknij okno" title="Zamknij okno (Claude działa dalej)">×</button></div>' +
       '<p class="cd-msg" hidden></p><div class="cd-term"></div>' +
-      '<div class="cd-chat"><div class="cd-log" aria-live="polite"></div><div class="cd-in"><div class="cd-box">' +
+      '<div class="cd-chat"><div class="cd-log" aria-live="polite"></div><div class="cd-in">' +
+      '<div class="cd-quick" hidden role="group" aria-label="Ile masz czasu"><span>Ile masz czasu?</span>' +
+      '<button type="button" data-min="15">15 min</button><button type="button" data-min="30">30 min</button>' +
+      '<button type="button" data-min="45">45 min</button><button type="button" data-min="60">1 h</button></div>' +
+      '<div class="cd-box">' +
       '<textarea class="cd-input" rows="2" placeholder="Napisz wiadomość…" aria-label="Wiadomość do Claude"></textarea>' +
       '<button type="button" class="cd-send" title="Wyślij (Enter)" aria-label="Wyślij">↑</button></div>' +
       '<div class="cd-hint"><span>Enter wysyła · Shift+Enter nowa linia</span><span class="cd-hint2"></span></div></div></div>';
@@ -580,14 +602,14 @@
     function chatRender() {
       const out = [], log = q('.cd-log');
       let tools = [];
-      const flushTools = function () { if (tools.length) { out.push('<div class="tool"><i>✓</i>' + esc(toolSummary(tools)) + '</div>'); tools = []; } };
+      const flushTools = function () { if (tools.length) { out.push('<div class="tool" title="' + esc(tools.map(function (t) { return t.name + ': ' + t.target; }).join('\n')) + '"><i>✓</i>' + esc(toolSummary(tools)) + '</div>'); tools = []; } };
       clog.forEach(function (e) {
         if (e.kind === 'tool') { tools.push(e); return; }
         if (e.kind === 'init' || e.kind === 'done') return;
         flushTools();
         if (e.kind === 'user') out.push('<div class="m u">' + esc(e.text).replace(/\n/g, '<br>') + '</div>');
         else if (e.kind === 'text') out.push('<div class="m a">' + chatMd(e.text) + '</div>');
-        else if (e.kind === 'denied') out.push('<div class="tool den"><i>✕</i>odrzucone: ' + esc(e.text.slice(0, 160)) + ' – w czacie tylko odczyt i zapis w module; resztę zrób w terminalu (</>)</div>');
+        else if (e.kind === 'denied') out.push('<div class="tool den" title="' + esc(e.text) + '"><i>✕</i>pominięto polecenie spoza czatu – w czacie tylko odczyt i zapis w module; resztę zrób w terminalu (&lt;/&gt;)</div>');
         else if (e.kind === 'start') out.push('<div class="sys">' + (e.resume ? 'rozmowa wznowiona' : 'nowa rozmowa') + ' · styl ' + (e.style === 'inz' ? 'INŻ' : 'BIZ') + '</div>');
         else if (e.kind === 'exit') out.push('<div class="sys">rozmowa zakończona</div>');
         else if (e.kind === 'error') out.push('<div class="tool den"><i>!</i>' + esc(e.text) + '</div>');
@@ -597,7 +619,37 @@
       const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
       log.innerHTML = out.join('');
       if (atEnd) log.scrollTop = log.scrollHeight;
+      quickShow(); clockTick();
     }
+    // ---------------- czas rozmowy (0.39.0): koniec zapisany per modul w przegladarce
+    const CLOCK_KEY = 'sdd-chat-clock';
+    let clockTimer = null, quickOff = false;
+    function clockGet() { try { const c = JSON.parse(localStorage.getItem(CLOCK_KEY)) || {}; return c.mod === cstate.module ? c : null; } catch (e) { return null; } }
+    function clockSet(min) {
+      try { if (min) localStorage.setItem(CLOCK_KEY, JSON.stringify({ mod: cstate.module, end: Date.now() + min * 60e3, min: min })); else localStorage.removeItem(CLOCK_KEY); } catch (e) {}
+      clockTick();
+    }
+    function clockTick() {
+      const c = clockGet(), el = q('.cd-clock');
+      clearTimeout(clockTimer);
+      if (!c || !isChat()) { el.hidden = true; return; }
+      const left = c.end - Date.now();
+      el.hidden = false; el.className = 'cd-clock ' + clockState(left);
+      el.textContent = '⏱ ' + (left > 0 ? clockText(left) : 'czas minął');
+      el.title = 'Czas na rozmowę: ' + c.min + ' min - kliknij, żeby zmienić';
+      if (left > 0) clockTimer = setTimeout(clockTick, 1000);
+    }
+    function quickShow() {
+      const last = clog.filter(function (e) { return e.kind === 'text' || e.kind === 'user'; }).pop();
+      q('.cd-quick').hidden = !(cstate.running && last && last.kind === 'text' && asksTime(last.text) && !quickOff);
+    }
+    q('.cd-quick').onclick = function (e) {
+      const b = e.target.closest('button[data-min]'); if (!b) return;
+      const min = +b.getAttribute('data-min');
+      clockSet(min); quickOff = true; q('.cd-quick').hidden = true;
+      q('.cd-input').value = 'Mam ' + b.textContent + '.'; chatSend();
+    };
+    q('.cd-clock').onclick = function () { quickOff = false; q('.cd-quick').hidden = false; };
     function chatStart(resume) {
       api('/api/chat/start', { resume: resume }).then(function (s) { chatShow(s); q('.cd-input').focus(); }).catch(function (e) { msg(e.message); });
     }
@@ -605,6 +657,7 @@
       const t = q('.cd-input'), text = t.value.trim();
       if (!text || !cstate.running) return;
       t.value = '';
+      if (!q('.cd-quick').hidden) { const min = parseMinutes(text); if (min) clockSet(min); quickOff = true; q('.cd-quick').hidden = true; }
       api('/api/chat/send', { text: text }).catch(function (e) { msg(e.message); t.value = text; });
     }
     q('.cd-send').onclick = chatSend;
