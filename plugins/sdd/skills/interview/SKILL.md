@@ -58,27 +58,37 @@ sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/sp
    - kontynuujemy -> nowy czas M (zapisz w sesji), dalej jak wczesniej; po nim ta sama wiadomosc jeszcze raz,
    - konczymy -> zapis, krotko, co udalo sie ustalic, i "Na nastepny raz zostalo: <tematy>",
    - bez odpowiedzi nie zaczynasz nowego pytania.
-3. Po odpowiedzi: Parafraza jest pytaniem (0.39.1) - w 1-2 zdaniach, jak zrozumiales, ze znakiem zapytania na koncu;
-   to jest zgoda na zapis (krok 3), bez osobnego "Zapisuje?" i bez "robie z tego decyzje". Tak samo przy nowej decyzji D.
+3. Po odpowiedzi (0.40.0) - nie powtarzasz tego, co rozmowca juz jasno powiedzial.
+   Odpowiedz jasna i pelna -> zapisujesz od razu (krok 3, zrodlo `[Biz]` z sesji) i w jednej wiadomosci: jedno krotkie
+   zdanie, co zapisales, plus nastepne pytanie (punkt 4). Rozmowca nadal moze poprawic ("nie, to nie tak") - wtedy
+   poprawiasz zapis.
+   Przyklad (fv-manager, Q-053, odpowiedz "z aplikacji firmy, z ktorej korzystalem, z ladowarki"):
+   > Zapisane – aplikacja operatora ładowarki to drugie ręczne źródło. Teraz o …
+   Parafraza jest pytaniem tylko, gdy jest powod: odpowiedz niejasna, niepelna albo wieloznaczna; Twoja interpretacja
+   wychodzi poza to, co rozmowca powiedzial; z odpowiedzi powstaje nowa decyzja D; sprzecznosc z wczesniejsza decyzja
+   albo obalenie zalozenia. Wtedy w 1-2 zdaniach, jak zrozumiales, ze znakiem zapytania na koncu - to jest zgoda na zapis:
    - "tak" (albo "zgadza sie", "dokladnie") -> zapisujesz D albo A bez komentarza i od razu nastepne pytanie (punkt 4),
    - "nie" albo inna odpowiedz -> dopytujesz jednym zdaniem, czego nie zrozumiales; zapisu jeszcze nie ma.
+   To, co jest tylko porzadkiem w plikach (rejestr systemow, nowe Q na pozniej, kaskada, numery), nie jest powodem do
+   pytania - zapisujesz i co najwyzej wspominasz w zdaniu potwierdzenia.
+   Bez "Ok?", "Zapisuje?" i "robie z tego decyzje" - pytaniem jest sama parafraza albo nie ma pytania.
    Bez punktow, numerow D/A/BR, kaskady i powodu w tresci (powod bierzesz ze slow rozmowcy). Pelny wpis (rodzaj, tresc,
    powod, kaskada) pokazujesz tylko na prosbe ("szczegoly?", "co to zmienia?").
    Nowe pytania odlozone na pozniej, kaskade i numery zapisujesz bez komentarza (krok 3 - w plikach wszystko jak dotad).
    Wyjatek - sprzecznosc z wczesniejsza decyzja albo obalenie zalozenia: jednym zdaniem, co sie nie zgadza, i pytanie,
    ktora wersja jest prawdziwa.
-   Przyklad (fv-manager, Q-049, odpowiedz "potrzebuje jej po to, zeby pozniej namierzyc te fakture"):
+   Przyklad parafrazy z powodem - nowa D (fv-manager, Q-049, odpowiedz "potrzebuje jej po to, zeby pozniej namierzyc te fakture"):
    > Czyli numer i kwota faktury w odczycie służą Ci do tego, żeby później łatwo znaleźć tę fakturę. Nie musisz ich mieć w obliczeniach? (Q-049)
-   Przyklad (Q-048, odpowiedz "nie wiem, przyjmuj pierwszy dzien miesiaca"):
+   Przyklad - odpowiedz niepelna (Q-048, odpowiedz "nie wiem, przyjmuj pierwszy dzien miesiaca"):
    > Czyli sposób rozliczenia miesiąca bierzemy z okresu obowiązującego 1. dnia miesiąca, tak jak liczy dziś aplikacja? (Q-048)
-4. Po "tak" zapis i nastepne pytanie w jednej wiadomosci: "Zapisane. Teraz o …". Bez osobnych komunikatow
-   "A-xxx jest potwierdzone, a Q-xxx ma status …".
+4. Zapis i nastepne pytanie w jednej wiadomosci: "Zapisane. Teraz o …". Bez osobnych komunikatow
+   "A-xxx jest potwierdzone, a Q-xxx ma status …" i bez licznika ("ostatnie pytanie", "jeszcze dwa") - zwykle "Teraz o …".
 5. Regula odczytana z kodu (stan dzisiejszy, as-built): wystarczy proste "tak ma zostac?" albo lista do potwierdzenia
    hurtowego (krok 2c). Pytania o przeszlosc tam, gdzie odkrywasz, jak rozmowca naprawde pracuje - nie
    "kiedy ostatnio formularz pokazal blad", gdy chodzi tylko o potwierdzenie reguly.
 6. "Nie wiem" / "nie dotyczy mnie" -> od razu jedno zdanie z propozycja odlozenia z warunkiem (punkt 6 kroku 2a), bez dodatkowej rundy.
-7. Wznowiona rozmowa: odpowiedz juz jest w `01-interview/session-*.md` - nie pytasz drugi raz, tylko proponujesz zapis
-   ("Mam Twoja odpowiedz z poprzedniej rozmowy: … Zapisuje?"). Sprawdzasz to przed kazdym pytaniem po wznowieniu.
+7. Wznowiona rozmowa: odpowiedz juz jest w `01-interview/session-*.md` - nie pytasz drugi raz; jasna -
+   zapis i jedno zdanie ("Z poprzedniej rozmowy mam: … – zapisane."), niejasna - parafraza jako pytanie (punkt 3). Sprawdzasz to przed kazdym pytaniem po wznowieniu.
 8. Nie opisujesz swoich krokow ("czytam plik", "teraz zapisuje") - panel czatu pokazuje dzialania sam.
 
 Przyklad BIZ (fv-manager, Q-027):
@@ -149,7 +159,7 @@ INZ: 3-5 linijek):
 - tresc wpisu - tylko to, co padlo; bez wlasnych dopowiedzen
 - kaskada: ktore R, AC, A na tym stoja (przeszukaj PRD, RULES, ASSUMPTIONS)
 - powod: jesli nie padl, zaproponuj go jednym zdaniem do potwierdzenia
-Czekaj na "tak". Powod niepotwierdzony wpisz jako `[AI] wniosek prowadzacego, niepotwierdzony - ...` (regula 2 wroci z nim jako pytanie). Dopiero wtedy: wpis do DECISIONS/ASSUMPTIONS, status Q -> `odpowiedziane`, wypelnij "Zamkniete przez", dopisz dotkniete R do sekcji "Do przegladu" w PRD, linia w CHANGELOG.
+Czekaj na "tak" (BIZ: odpowiedz jasna i pelna - zapis bez czekania, punkt 3 sekcji "Styl rozmowy"). Powod niepotwierdzony wpisz jako `[AI] wniosek prowadzacego, niepotwierdzony - ...` (regula 2 wroci z nim jako pytanie). Dopiero wtedy: wpis do DECISIONS/ASSUMPTIONS, status Q -> `odpowiedziane`, wypelnij "Zamkniete przez", dopisz dotkniete R do sekcji "Do przegladu" w PRD, linia w CHANGELOG.
 
 Jesli odpowiedz jest niejasna lub otwiera nowe pytanie, dodaj nowe Q z "Skad" = odpowiedz na Q-xxx. To normalne.
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.0] - 2026-10-08
+- Styl BIZ bez zbednych powtorzen (docs/specs/interview-style.md AC-IS17, uwaga usera po wywiadzie na fv-manager:
+  "jak mam dobrej jakosci odpowiedz to po co powtarzac"): jasna i pelna odpowiedz jest zapisywana od razu, a Claude
+  mowi jednym zdaniem, co zapisal, i przechodzi do nastepnego pytania. Parafraza w formie pytania tylko, gdy jest powod:
+  odpowiedz niejasna lub niepelna, interpretacja wychodzi poza slowa rozmowcy, nowa decyzja, sprzecznosc. Porzadek
+  w plikach (np. dopisanie do rejestru systemow) nie jest powodem do pytania. Bez "Ok?" / "Zapisuje?" i bez
+  "ostatnie pytanie". Rozmowca nadal moze poprawic zapis ("nie, to nie tak").
+
 ## [0.39.2] - 2026-10-08
 - Koniec czasu rozmowy decyduje rozmowca, nie Claude (docs/specs/interview-style.md AC-IS16): Claude nie urywa w polowie
   tematu - konczy biezace pytanie, a tuz przed koncem albo po nim mowi, ze czas minal, ile pytan zostalo (tylko tu)

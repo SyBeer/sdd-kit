@@ -25,7 +25,7 @@ sprzecznosci, kaskady na R).
 ## Styl BIZ (zasady dla skilla)
 1. Autor raz na poczatku ("Rozmawiam z Toba jako <rola>, tak?"); dalej pytasz tylko, gdy zmienia sie rozmowca.
 2. Pytanie: jedno-dwa zdania kontekstu jezykiem rozmowcy + pytanie. Bez naglowkow, punktow, numerow pytan, nazw plikow
-   i wersji kodu; ID tylko dopiskiem na koncu, np. "(Q-027)". Postep od czasu do czasu ("zostaly jeszcze dwa").
+   i wersji kodu; ID tylko dopiskiem na koncu, np. "(Q-027)". Bez licznika pytan (0.39.0, 0.40.0).
 3. Po odpowiedzi: parafraza i propozycja zapisu w 1-2 zdaniach ("Czyli … Zapisuje jako potwierdzone, ok?").
    Pelny wpis (rodzaj, tresc, kaskada) tylko gdy cos sie dzieje: nowa decyzja D, sprzecznosc, obalenie A, zmiana
    dotyka R. Kaskade i tak liczysz i zapisujesz w plikach.
@@ -76,6 +76,14 @@ autor raz na poczatku (punkt 1).
   (pozostale x tempo rozmowy, min. 2 min/pytanie, w gore do 5), "Kontynuujemy czy konczymy na dzis?"; bez odpowiedzi
   nowego pytania nie zaczyna; kontynuacja -> nowy czas M w sesji; koniec -> zapis i "Na nastepny raz zostalo: …".
   Zastepuje samodzielne zamykanie z AC-IS13.
+
+- **AC-IS17** (0.40.0, uwaga usera po Q-052/Q-053 na fv-manager: "jak mam dobrej jakosci odpowiedz to po co powtarzac"):
+  odpowiedz jasna i pelna -> zapis od razu (zrodlo `[Biz]` z sesji) i jedno zdanie potwierdzenia razem z nastepnym pytaniem
+  ("Zapisane – aplikacja operatora ładowarki to drugie ręczne źródło. Teraz o …"); parafraza-pytanie z AC-IS15 tylko
+  z powodem: odpowiedz niejasna / niepelna / wieloznaczna, interpretacja wychodzi poza slowa rozmowcy, nowa D,
+  sprzecznosc albo obalenie A. Porzadek w plikach (rejestr systemow, nowe Q, kaskada) nie jest powodem do pytania.
+  Bez "Ok?" / "Zapisuje?" i bez licznika ("ostatnie pytanie"). Wznowiona rozmowa: jasna odpowiedz z sesji - zapis
+  i jedno zdanie. Krok 3 skilla: wyjatek BIZ od "czekaj na tak".
 
 ## Przyklad BIZ (z sesji fv-manager, Q-027)
 > Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
