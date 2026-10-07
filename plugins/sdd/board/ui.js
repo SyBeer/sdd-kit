@@ -239,10 +239,12 @@
     m = t.match(/^\s*(\d{1,3})\s*\.?\s*$/); if (m) return +m[1];
     return null;
   }
+  // Koniec czasu (0.39.2, AC-CH15): Claude pyta, czy kontynuowac - panel daje "Kontynuujmy (+N min)" / "Kończymy na dziś"
+  function asksContinue(text) { return /kontynuujemy czy kończymy|czy (chcesz )?kontynuować|czy ciągniemy dalej/i.test(String(text || '')); }
   function clockText(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
   function clockState(ms) { return ms <= 0 ? 'over' : ms <= 5 * 60e3 ? 'low' : ''; }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary, asksTime, parseMinutes, clockText, clockState };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -396,6 +398,8 @@
       '<div class="cd-quick" hidden role="group" aria-label="Ile masz czasu"><span>Ile masz czasu?</span>' +
       '<button type="button" data-min="15">15 min</button><button type="button" data-min="30">30 min</button>' +
       '<button type="button" data-min="45">45 min</button><button type="button" data-min="60">1 h</button></div>' +
+      '<div class="cd-quick cd-cont" hidden role="group" aria-label="Czy kontynuować"><button type="button" data-cont="1"></button>' +
+      '<button type="button" data-cont="0">Kończymy na dziś</button></div>' +
       '<div class="cd-box">' +
       '<textarea class="cd-input" rows="2" placeholder="Napisz wiadomość…" aria-label="Wiadomość do Claude"></textarea>' +
       '<button type="button" class="cd-send" title="Wyślij (Enter)" aria-label="Wyślij">↑</button></div>' +
@@ -639,17 +643,29 @@
       el.title = 'Czas na rozmowę: ' + c.min + ' min - kliknij, żeby zmienić';
       if (left > 0) clockTimer = setTimeout(clockTick, 1000);
     }
+    let contFor = null;
     function quickShow() {
       const last = clog.filter(function (e) { return e.kind === 'text' || e.kind === 'user'; }).pop();
-      q('.cd-quick').hidden = !(cstate.running && last && last.kind === 'text' && asksTime(last.text) && !quickOff);
+      const lastText = cstate.running && last && last.kind === 'text' ? last.text : '';
+      q('.cd-quick:not(.cd-cont)').hidden = !(lastText && asksTime(lastText) && !quickOff);
+      const cont = q('.cd-cont'), show = !!lastText && asksContinue(lastText) && contFor !== last;
+      cont.hidden = !show;
+      if (show) { const m = parseMinutes(lastText) || 10; const b = cont.querySelector('[data-cont="1"]'); b.textContent = 'Kontynuujmy (+' + m + ' min)'; b.setAttribute('data-min', m); cont.last = last; }
     }
-    q('.cd-quick').onclick = function (e) {
+    q('.cd-cont').onclick = function (e) {
+      const b = e.target.closest('button[data-cont]'); if (!b) return;
+      contFor = this.last; this.hidden = true;
+      if (b.getAttribute('data-cont') === '1') { clockSet(+b.getAttribute('data-min')); q('.cd-input').value = 'Kontynuujmy.'; }
+      else q('.cd-input').value = 'Kończymy na dziś.';
+      chatSend();
+    };
+    q('.cd-quick:not(.cd-cont)').onclick = function (e) {
       const b = e.target.closest('button[data-min]'); if (!b) return;
       const min = +b.getAttribute('data-min');
       clockSet(min); quickOff = true; q('.cd-quick').hidden = true;
       q('.cd-input').value = 'Mam ' + b.textContent + '.'; chatSend();
     };
-    q('.cd-clock').onclick = function () { quickOff = false; q('.cd-quick').hidden = false; };
+    q('.cd-clock').onclick = function () { quickOff = false; q('.cd-quick:not(.cd-cont)').hidden = false; };
     function chatStart(resume) {
       api('/api/chat/start', { resume: resume }).then(function (s) { chatShow(s); q('.cd-input').focus(); }).catch(function (e) { msg(e.message); });
     }
@@ -657,7 +673,10 @@
       const t = q('.cd-input'), text = t.value.trim();
       if (!text || !cstate.running) return;
       t.value = '';
-      if (!q('.cd-quick').hidden) { const min = parseMinutes(text); if (min) clockSet(min); quickOff = true; q('.cd-quick').hidden = true; }
+      const tq = q('.cd-quick:not(.cd-cont)');
+      if (!tq.hidden) { const min = parseMinutes(text); if (min) clockSet(min); quickOff = true; tq.hidden = true; }
+      const cq = q('.cd-cont');
+      if (!cq.hidden) { contFor = cq.last; cq.hidden = true; if (/^(tak|kontynu|dalej|ok)/i.test(text)) clockSet(+cq.querySelector('[data-cont="1"]').getAttribute('data-min') || 10); }
       api('/api/chat/send', { text: text }).catch(function (e) { msg(e.message); t.value = text; });
     }
     q('.cd-send').onclick = chatSend;

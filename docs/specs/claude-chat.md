@@ -98,6 +98,12 @@ uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem,
 - **AC-CH13** Konfiguracja: karta "Dyktowanie w czacie" (ten komputer) - pole skrotu i zapis do `~/.sdd-kit/config.json`
   (`POST /api/chat/dictate-keys`, `dictateKeys`); tylko w blokach DYKTOWANIE (takze w `info.html`).
 
+## Zmiana 0.39.2
+- **AC-CH15** Gdy ostatnia wiadomosc Claude pyta o kontynuacje (`asksContinue`: "Kontynuujemy czy konczymy…"), nad polem
+  przyciski "Kontynuujmy (+N min)" (N z wiadomosci, `parseMinutes`, domyslnie 10) i "Konczymy na dzis"; klik wysyla
+  odpowiedz, "Kontynuujmy" ustawia zegar na N min; wpisane "tak" / "kontynu…" tez; przyciski nie wracaja po odpowiedzi.
+  Sprawdzone 2026-10-08 z udawanym Claude: przyciski pod pytaniem, klik -> "Kontynuujmy.", zegar "⏱ 9:59", nastepne pytanie.
+
 ## Wycofanie dyktowania
 1. Usun `plugins/sdd/board/dictate.js` i jego test `board/test/dictate.test.js`.
 2. W `server.js`, `ui.js` i `info.html` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.

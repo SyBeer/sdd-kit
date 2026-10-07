@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.39.2] - 2026-10-08
+- Koniec czasu rozmowy decyduje rozmowca, nie Claude (docs/specs/interview-style.md AC-IS16): Claude nie urywa w polowie
+  tematu - konczy biezace pytanie, a tuz przed koncem albo po nim mowi, ze czas minal, ile pytan zostalo (tylko tu)
+  i ile minut jeszcze potrzebuje (z tempa tej rozmowy), i pyta "Kontynuujemy czy konczymy na dzis?". Kontynuacja = nowy
+  czas; zakonczenie = zapis i "Na nastepny raz zostalo: …".
+- Czat (docs/specs/claude-chat.md AC-CH15): pod tym pytaniem gotowe odpowiedzi "Kontynuujmy (+N min)" (przedluza zegar)
+  i "Konczymy na dzis"; wpisane "tak" / "kontynuujmy" tez przedluza zegar.
+
 ## [0.39.1] - 2026-10-08
 - Dyktowanie w czacie: wlasny skrot programu zamiast dyktowania systemu (Konfiguracja -> "Dyktowanie w czacie", zapis
   w `~/.sdd-kit/config.json`), np. `option+space` dla Superwhisper; przycisk 🎙 naciska go za Ciebie (macOS przez

@@ -48,10 +48,16 @@ sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/sp
 2. Czas zamiast liczby pytan (0.39.0). Na starcie, razem z pytaniem o autora: "Ile masz dzis czasu na rozmowe?".
    Zapisz godzine startu (`date`) i deklarowany czas w sesji. Potem jednym zdaniem tematy na dzis od najwazniejszego
    (sprzeczne i blokujace go-live najpierw), zwyklymi slowami: "Zaczne od cen pradu, potem okresy rozliczeniowe."
-   Nie podajesz liczby pytan, zalozen ani "listy do przejscia" - to straszy. Przed kazdym kolejnym pytaniem sprawdz
-   `date`: gdy zostaje okolo 5 minut, konczysz biezacy temat, zapisujesz i mowisz krotko, co udalo sie ustalic,
-   oraz "Na nastepny raz zostalo: <tematy>". Gdy czas sie skonczyl, nie zaczynasz nowego tematu. Brak odpowiedzi
-   o czas ("nie wiem", "ile trzeba") - przyjmij 30 minut.
+   Nie podajesz liczby pytan, zalozen ani "listy do przejscia" - to straszy. Brak odpowiedzi o czas ("nie wiem",
+   "ile trzeba") - przyjmij 30 minut.
+   Koniec czasu (0.39.2) - decyduje rozmowca, nie Ty. Nie przerywasz w polowie tematu: konczysz biezace pytanie
+   (zapis), a przed kolejnym sprawdzasz `date`. Gdy zostaly ok. 2 minuty albo czas minal - jedna wiadomosc:
+   "Czas, który mieliśmy, minął. Zostały jeszcze <N> pytania (<tematy>) – potrzebowałbym około <M> minut.
+   Kontynuujemy czy kończymy na dziś?". Tu (i tylko tu) podajesz liczbe pytan. M = pozostale pytania x srednie tempo
+   tej rozmowy (minuty od startu / liczba omowionych pytan; co najmniej 2 min na pytanie), zaokraglone w gore do 5.
+   - kontynuujemy -> nowy czas M (zapisz w sesji), dalej jak wczesniej; po nim ta sama wiadomosc jeszcze raz,
+   - konczymy -> zapis, krotko, co udalo sie ustalic, i "Na nastepny raz zostalo: <tematy>",
+   - bez odpowiedzi nie zaczynasz nowego pytania.
 3. Po odpowiedzi: Parafraza jest pytaniem (0.39.1) - w 1-2 zdaniach, jak zrozumiales, ze znakiem zapytania na koncu;
    to jest zgoda na zapis (krok 3), bez osobnego "Zapisuje?" i bez "robie z tego decyzje". Tak samo przy nowej decyzji D.
    - "tak" (albo "zgadza sie", "dokladnie") -> zapisujesz D albo A bez komentarza i od razu nastepne pytanie (punkt 4),

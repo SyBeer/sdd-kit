@@ -70,6 +70,13 @@ autor raz na poczatku (punkt 1).
   Tu w zaleznosci od odpowiedzi - TAK - zapisujesz decyzje - NIE lub inna odpowiedz - dopytujesz"): parafraza jest pytaniem
   i zgoda na zapis; "tak" -> zapis bez komentarza i nastepne pytanie; "nie" / inna odpowiedz -> dopytanie, bez zapisu.
 
+- **AC-IS16** (0.39.2, uwaga usera: "jak czas sie skonczy to - nie przerywasz raptownie ... nie ty decydujesz tylko rozmowca.
+  Mowisz ile pytan zostalo. Jezeli ciagniecie dalej rozmowe to ile jeszcze czasu potrzebujesz"): biezace pytanie konczone
+  do zapisu; ok. 2 min przed koncem albo po czasie - jedna wiadomosc: czas minal, N pytan zostalo (z tematami), ok. M minut
+  (pozostale x tempo rozmowy, min. 2 min/pytanie, w gore do 5), "Kontynuujemy czy konczymy na dzis?"; bez odpowiedzi
+  nowego pytania nie zaczyna; kontynuacja -> nowy czas M w sesji; koniec -> zapis i "Na nastepny raz zostalo: …".
+  Zastepuje samodzielne zamykanie z AC-IS13.
+
 ## Przyklad BIZ (z sesji fv-manager, Q-027)
 > Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
 > i z ładowania auta. Kiedy ostatnio liczyłeś, w jakim stopniu instalacja już się zwróciła, to co brałeś pod uwagę? (Q-027)
