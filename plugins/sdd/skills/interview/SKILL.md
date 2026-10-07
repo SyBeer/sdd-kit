@@ -32,19 +32,50 @@ Zasady formulowania:
 
 Priorytet: sprzeczne > otwarte z etykieta blokujaca > reszta. Grupuj per adresat (rola).
 
+## Styl rozmowy (BIZ / INZ)
+Dotyczy rozmowy na zywo (`live`) i tur warsztatu `/sdd:board`. Pliki (sesja, D, A, Q, kaskada, CHANGELOG) w obu stylach
+sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/specs/interview-style.md).
+- Styl bierzesz z `interview_style` w `SDD.yaml`; brak pola = domyslnie `biz`. Argument nadpisuje na te rozmowe:
+  `/sdd:interview live biz`, `/sdd:interview live inz`. W trakcie: "przejdz na BIZ" / "przejdz na INZ" - od nastepnego pytania.
+- **Autor raz na poczatku** (oba style): "Rozmawiam z Toba jako <rola z SDD.yaml>, tak?". Dalej kazda odpowiedz ma tego
+  autora; pytasz ponownie tylko, gdy user powie, ze odpowiada ktos inny. Nie dopisuj pod pytaniami prosby o autora.
+
+**BIZ - swobodna rozmowa (domyslnie)**. Ma brzmiec jak rozmowa z czlowiekiem, nie jak czytanie dokumentacji. Bez ozdobnikow.
+1. Pytanie: jedno-dwa zdania kontekstu jezykiem rozmowcy (tak, jak on nazywa rzeczy), potem pytanie. Bez naglowkow,
+   punktow, pogrubien, numerow pytan, nazw plikow, wersji kodu i numerow BR/A/D w tresci. ID tylko dopiskiem na koncu: "(Q-027)".
+2. Postep tylko od czasu do czasu, zdaniem ("zostaly jeszcze dwa"), nie licznikiem przy kazdym pytaniu.
+3. Po odpowiedzi: parafraza i propozycja zapisu w 1-2 zdaniach - "Czyli … Zapisuje jako potwierdzone, ok?".
+   Pelny wpis (rodzaj, tresc, kaskada, powod) pokazujesz tylko, gdy cos sie dzieje: nowa decyzja D, sprzecznosc,
+   obalenie A, zmiana dotyka R. Kaskade i tak liczysz i zapisujesz w plikach (krok 3) - nie pokazujesz pustej.
+4. Po "tak" zapis i nastepne pytanie w jednej wiadomosci: "Zapisane. Teraz o …". Bez osobnych komunikatow
+   "A-xxx jest potwierdzone, a Q-xxx ma status …".
+5. Regula odczytana z kodu (stan dzisiejszy, as-built): wystarczy proste "tak ma zostac?" albo lista do potwierdzenia
+   hurtowego (krok 2c). Pytania o przeszlosc tam, gdzie odkrywasz, jak rozmowca naprawde pracuje - nie
+   "kiedy ostatnio formularz pokazal blad", gdy chodzi tylko o potwierdzenie reguly.
+6. "Nie wiem" / "nie dotyczy mnie" -> od razu jedno zdanie z propozycja odlozenia z warunkiem (punkt 6 kroku 2a), bez dodatkowej rundy.
+
+Przyklad BIZ (fv-manager, Q-027):
+> Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
+> i z ładowania auta. Kiedy ostatnio liczyłeś, w jakim stopniu instalacja już się zwróciła, to co brałeś pod uwagę? (Q-027)
+
+Po odpowiedzi "inwestycje - oszczednosci z domu i EV":
+> Czyli tak samo jak aplikacja - EV to tylko ładowanie domowe. Zapisuję jako potwierdzone; liczba miesięcy do zwrotu
+> zostaje na później. Ok?
+
+**INZ - pelne wpisy**. Uklad pytania i propozycji jak w krokach 2a i 3 ponizej (naglowek, fakty z kodu z numerami,
+pelny wpis po kazdej odpowiedzi). Autor tez raz na poczatku.
+
 ## Krok 2a: tryb `live` (warsztat)
 JEDNO pytanie naraz. Nigdy partia pytan - prowadzacy zbiera odpowiedzi na zywo i nie ma jak odpowiedziec na piec naraz.
 
 1. Na start powiedz tylko, ile jest pytan i w jakiej kolejnosci idziesz (priorytet jak wyzej). Listy pytan nie pokazuj.
-2. Kazde pytanie w tym samym ukladzie:
-   - naglowek `Pytanie X z N (Q-xxx): <temat>` - N rosnie, gdy odpowiedzi otwieraja nowe pytania,
-   - 1-3 punkty, co mowia zrodla (przy sprzecznosci cytaty obu stron),
-   - samo pytanie, o przeszlosc,
-   - ostatnia linia doslownie: `Zarejestruj kto udzielił odpowiedzi na pytanie.`
-3. Po odpowiedzi od razu zapisz do `01-interview/session-YYYY-MM-DD.md`: pytanie, odpowiedz doslownie, kto.
-   Brak "kto" -> `Kto: (do uzupelnienia)` i popros o to w propozycji wpisu (krok 3), nie osobnym pytaniem.
+2. Uklad pytania wg stylu (sekcja "Styl rozmowy"). W stylu BIZ - kontekst i pytanie w 1-3 zdaniach, ID dopiskiem.
+   W stylu INZ kazde pytanie w tym samym ukladzie: naglowek `Pytanie X z N (Q-xxx): <temat>` (N rosnie, gdy odpowiedzi
+   otwieraja nowe pytania), 1-3 punkty, co mowia zrodla (przy sprzecznosci cytaty obu stron), samo pytanie.
+3. Po odpowiedzi od razu zapisz do `01-interview/session-YYYY-MM-DD.md`: pytanie, odpowiedz doslownie, kto
+   (autor ustalony na poczatku rozmowy; zmiana rozmowcy - nowy autor od tej odpowiedzi).
    Kazde dopowiedzenie przy zatwierdzaniu tez dopisz doslownie do sesji.
-4. Niejasna odpowiedz -> dopytaj raz, w tym samym ukladzie (`Dopytanie do Q-xxx:`). Jesli odpowiedz na dopytanie
+4. Niejasna odpowiedz -> dopytaj raz (BIZ: zwyklym zdaniem; INZ: `Dopytanie do Q-xxx:`). Jesli odpowiedz na dopytanie
    dotyczy czegos innego, nie dopytuj drugi raz - zapisz, co pewne, reszta idzie do nowego Q.
 5. Odpowiedz o stanie docelowym ("powinien...") zamiast o przeszlosci - przyjmij, ale oznacz w sesji
    "stan docelowy" i w D napisz, jesli dzisiejsza aplikacja dziala inaczej.
@@ -85,7 +116,8 @@ odpowiedziala. Fakt odczytany z kodu, aplikacji albo dokumentu - nawet zatwierdz
 `niepotwierdzone` z tym zrodlem, nie `D` (validate kontrola 16 = BLOCK). Zgoda na wpis nie zastepuje zrodla.
 Odpowiedzi moga przyjsc tez z Tablicy warsztatowej (pole "Odpowiedź" na czerwonej karteczce, `answer` w board.json) -
 `/sdd:board sync` przetwarza je tym samym krokiem.
-Dla kazdej odpowiedzi zaproponuj w 3-5 linijkach:
+Dla kazdej odpowiedzi zaproponuj (BIZ: 1-2 zdania, pelny wpis tylko gdy cos sie dzieje - sekcja "Styl rozmowy";
+INZ: 3-5 linijek):
 - czy to decyzja D (rozstrzyga) czy potwierdzenie/obalenie A, czy nowe pytanie
 - tresc wpisu - tylko to, co padlo; bez wlasnych dopowiedzen
 - kaskada: ktore R, AC, A na tym stoja (przeszukaj PRD, RULES, ASSUMPTIONS)

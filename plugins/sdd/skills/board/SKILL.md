@@ -41,6 +41,7 @@ Po KAZDEJ wypowiedzi usera:
 2. Dopisz karteczki do `board.json` (edytuj plik, zachowaj istniejace). Kazda z `source` (kto powiedzial, data, [Biz]) i `file` (gdzie trafi po warsztacie). `by: "agent"`.
 3. Luka, puste "dlaczego", sprzecznosc ze znanym zrodlem -> czerwona `hot` obok karteczki, ktorej dotyczy (ten sam `lane` i `col`). Tresc = pytanie, `ref` = nastepny wolny Q-xxx (sprawdz QUESTIONS.md).
 4. Odpowiedz tekstem KROTKO: co postawiles (jedno zdanie) i jedno pytanie doprecyzowujace. Pytaj o przeszlosc, nie o hipotezy.
+   Styl wg `interview_style` w SDD.yaml (domyslnie biz) - zasady w skillu /sdd:interview, sekcja "Styl rozmowy (BIZ / INZ)".
 5. Pomylka w interpretacji: popraw lub usun karteczke, nie dopisuj obok.
 
 Piszesz do board.json sam, bez pytania (odtwarzalne).

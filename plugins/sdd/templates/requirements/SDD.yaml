@@ -2,6 +2,7 @@
 project: "<nazwa projektu>"
 level: full            # full | light
 kind: monolith         # monolith | service - service: wdrazany osobno, rozmawia z reszta tylko przez kontrakt
+interview_style: biz   # biz | inz - styl wywiadu: biz swobodna rozmowa, inz z numerami i pelnym wpisem
 owners:                # role biznesowe, ktore zatwierdzaja (rola, nie osoba)
   - role: "wlasciciel procesu"
     approves: [R, D, GLOSSARY]

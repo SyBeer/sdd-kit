@@ -24,6 +24,7 @@ Tworzy szkielet procesu w biezacym projekcie.
    - poziom: `full` czy `light`. Argument `--light` pomija pytanie. Przy `light` usun `03-spec/PRD.md`, zostaw `SPEC.md`. Przy `full` odwrotnie.
    - rodzaj modulu (`kind` w SDD.yaml): "Czy ta czesc jest wdrazana osobno i inne czesci moga z nia rozmawiac tylko
      przez kontrakt?" Tak -> `kind: service` (serwis), nie -> `kind: monolith` (monolit, aplikacja wdrazana w calosci).
+   - styl wywiadu `interview_style` zostaw z szablonu (`biz` - swobodna rozmowa); nie pytaj - user zmienia go w Konfiguracji.
      Mozesz podpowiedziec z repo (np. openapi.yaml, osobny Dockerfile) - to podpowiedz `[AI]`, wybiera czlowiek.
      Od rodzaju zalezy, czy kontrakt (wejscie/wyjscie) jest obowiazkowym wymaganiem (walidacja kontrola 20).
 5. Zapytaj o zatwierdzajacych jezykiem biznesu, dwa pytania po kolei (bez skrotow R/D/GLOSSARY/BR w pytaniu):

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.37.0] - 2026-10-07
+- Wywiad: styl rozmowy BIZ / INZ (docs/specs/interview-style.md, AC-IS1..AC-IS8). Analiza sesji na fv-manager pokazala,
+  ze rozmowa czyta sie jak dokumentacja (naglowki "Pytanie N z 7", numery BR/A/D, prosba o autora pod kazdym
+  pytaniem, 5-punktowy wpis po kazdej odpowiedzi).
+  - **BIZ** (domyslnie): pytanie wlasnymi slowami w 1-3 zdaniach, ID tylko dopiskiem, po odpowiedzi parafraza
+    i "zapisuje, ok?"; pelny wpis tylko przy nowej decyzji, sprzecznosci albo zmianie dotykajacej wymagan;
+    potwierdzenie zapisu i nastepne pytanie w jednej wiadomosci.
+  - **INZ**: jak dotad - naglowek, fakty z kodu z numerami, pelny wpis z kaskada.
+  - W obu: autor odpowiedzi ustalany raz na poczatku rozmowy; pliki (sesja, D, A, Q, kaskada) bez zmian.
+  - `interview_style: biz | inz` w SDD.yaml (szablon: biz), przelacznik "Styl rozmowy" w Konfiguracji,
+    `/sdd:interview live inz|biz` na jedna rozmowe, "przejdz na BIZ/INZ" w trakcie; dotyczy tez tur warsztatu /sdd:board.
+
 ## [0.36.1] - 2026-10-06
 - Sesje Claude Code w panelu (docs/specs/session-version.md AC-SV9..AC-SV12): znacznik sesji zapisuje teraz obok
   Session ID takze PID procesu Claude Code, a panel sprawdza, czy ten proces jeszcze dziala - zamknieta sesja znika

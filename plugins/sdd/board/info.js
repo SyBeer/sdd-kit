@@ -8,6 +8,7 @@ const { readProgress, STAGES } = require('./progress');
 const APPROVES = ['R', 'D', 'GLOSSARY', 'BR', 'PRD'];
 const BACKLOGS = ['none', 'linear', 'jira', 'redmine', 'file'];
 const KINDS = ['monolith', 'service'];  // rodzaj modulu (0.31.0, docs/specs/systems.md czesc B)
+const STYLES = ['biz', 'inz'];  // styl rozmowy wywiadu (0.37.0, docs/specs/interview-style.md)
 
 // CRLF (Windows) -> \n jak w progress.js (0.27.1, AC-W4)
 function read(file) {
@@ -95,6 +96,17 @@ function yamlSet(text, changes) {
         '# monolith | service - service: wdrazany osobno, rozmawia z reszta tylko przez kontrakt');
     }
     else out = setLine(out, 'kind', changes.kind);
+  }
+  if ('interview_style' in changes) {
+    if (STYLES.indexOf(changes.interview_style) < 0) throw new Error('interview_style: dozwolone ' + STYLES.join(', ') + ' (BIZ albo INŻ).');
+    // modul sprzed 0.37.0 nie ma linii - wstaw pod kind (albo level), z komentarzem jak w szablonie (AC-IS1)
+    const anchor = out.match(/^kind:.*$/m) || out.match(/^level:.*$/m);
+    if (!/^interview_style:/m.test(out) && anchor) {
+      const col = anchor[0].indexOf('#') > 0 ? anchor[0].indexOf('#') : 23, head = 'interview_style: ' + changes.interview_style;
+      out = out.replace(anchor[0], () => anchor[0] + '\n' + head + ' '.repeat(Math.max(1, col - head.length)) +
+        '# biz | inz - styl wywiadu: biz swobodna rozmowa, inz z numerami i pelnym wpisem');
+    }
+    else out = setLine(out, 'interview_style', changes.interview_style);
   }
   // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml.
   // Wklejony adres projektu (.../projects/<id>) - rozdzielamy sami (AC-RM14).
@@ -271,7 +283,8 @@ const VARIANTS = {
     ['/sdd:intake', 'Domyślnie: nowe pliki z 00-intake/. Eksport czatu z narzędzia no-code (Base44, Lovable) rozbija na polecenia biznesu, odpowiedzi AI i dokumentację.'],
     ['/sdd:intake --message', 'Wklejona wiadomość (mail, Teams): zapisuje ją jako plik w 00-intake/ i od razu katalogi.']],
   '/sdd:interview': [
-    ['/sdd:interview live', 'Warsztat na żywo: jedno pytanie naraz, odpowiedź zapisywana od razu (dobrze działa razem z tablicą).'],
+    ['/sdd:interview live', 'Warsztat na żywo: jedno pytanie naraz, odpowiedź zapisywana od razu (dobrze działa razem z tablicą). Styl rozmowy z Konfiguracji - domyślnie BIZ, swobodna rozmowa.'],
+    ['/sdd:interview live inz', 'Ta sama rozmowa w stylu INŻ: pytania z numerami i faktami z kodu, po odpowiedzi pełny wpis z kaskadą (live biz - odwrotnie).'],
     ['/sdd:interview async', 'Rundy w plikach: pytania do każdej roli w Q-round-N-<rola>.md z terminem; potem wklejasz odpowiedzi.']],
   '/sdd:domain': [
     ['/sdd:domain', 'Także przebudowa modelu, gdy /sdd:intake zgłosi, że nowe źródło podważa słownik, encje albo reguły.'],
@@ -329,4 +342,4 @@ function rootPreview(mods, newRoot) {
   return (mods || []).filter(m => !m.external && path.dirname(path.resolve(m.dir)) !== r).map(m => m.name);
 }
 
-module.exports = { APPROVES, BACKLOGS, KINDS, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };
+module.exports = { APPROVES, BACKLOGS, KINDS, STYLES, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };

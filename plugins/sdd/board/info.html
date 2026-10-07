@@ -443,6 +443,9 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
   var KEYSRC={file:'ustawiony (plik .env)',env:'ustawiony (zmienna REDMINE_API_KEY)',keychain:'ustawiony (Pęk kluczy macOS)',none:'brak klucza'};
   var BACKLOG={none:'brak',file:'plik',linear:'linear',jira:'jira',redmine:'redmine'};
   var KIND_SHORT={monolith:'monolit',service:'serwis'};
+  // styl rozmowy wywiadu (0.37.0, docs/specs/interview-style.md AC-IS3)
+  var STYLE_SHORT={biz:'BIZ',inz:'INŻ'};
+  var STYLE_HINT={biz:'Swobodna rozmowa: pytania własnymi słowami, krótkie potwierdzenia, numery tylko dopiskiem. W plikach to samo co w INŻ.',inz:'Pytania z nagłówkiem i faktami z kodu (numery BR, A, D), po każdej odpowiedzi pełny wpis z kaskadą.'};
   var KIND_HINT={monolith:'Aplikacja wdrażana w całości. Brak kontraktu dla integracji → ostrzeżenie.',service:'Wdrażany osobno, z własnymi danymi. Brak kontraktu → blokada.'};
   function saveKey(v){
     msg.keyerr=''; msg.keyok='';
@@ -476,6 +479,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
         // Rodzaj modulu (0.31.0, AC-SY21): decyduje, czy kontrakt jest obowiazkowy (walidacja kontrola 20)
         frow('Rodzaj modułu','czy ta część jest wdrażana osobno i inne mogą z nią rozmawiać tylko przez kontrakt? Tak = serwis',
           seg('f-kind',c.sdd.kindsAllowed||['monolith','service'],c.sdd.kind,KIND_SHORT,demo)+'<span class="khint" id="kindhint">'+esc(KIND_HINT[c.sdd.kind]||'')+'</span>')+
+        frow('Styl rozmowy','jak Claude prowadzi wywiad na żywo (/sdd:interview live i warsztat na Tablicy); jednorazowo: /sdd:interview live inz',
+          seg('f-style',c.sdd.stylesAllowed||['biz','inz'],c.sdd.interviewStyle||'biz',STYLE_SHORT,demo)+'<span class="khint" id="stylehint">'+esc(STYLE_HINT[c.sdd.interviewStyle||'biz'])+'</span>')+
         // Redmine (0.28.4): adres i projekt; klucz API poza plikami (0.28.5, docs/specs/secrets.md)
         '<div class="rmbox" id="rmf"'+(c.sdd.backlog==='redmine'?'':' hidden')+'><span class="sl-lbl">Redmine</span>'+
           frow('Adres Redmine','np. https://redmine.firma.pl','<input type="text" class="fld mono" inputmode="url" id="f-rmurl" name="sdd-rm-url" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" value="'+esc(c.sdd.redmineUrl||'')+'"'+(demo?' disabled':'')+'>')+
@@ -567,6 +572,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     if($('#f-project').value.trim()!==cfg.sdd.project) body.project=$('#f-project').value;
     if($('#f-backlog').value!==cfg.sdd.backlog) body.backlog=$('#f-backlog').value;
     if($('#f-kind')&&$('#f-kind').value!==cfg.sdd.kind) body.kind=$('#f-kind').value;
+    if($('#f-style')&&$('#f-style').value!==(cfg.sdd.interviewStyle||'biz')) body.interview_style=$('#f-style').value;
     if($('#f-backlog').value==='redmine'){
       if($('#f-rmurl').value.trim()!==(cfg.sdd.redmineUrl||'')) body.redmine_url=$('#f-rmurl').value;
       if($('#f-rmproj').value.trim()!==(cfg.sdd.redmineProject||'')) body.redmine_project=$('#f-rmproj').value;
@@ -603,6 +609,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
         [].forEach.call(t.parentNode.children,function(b){b.setAttribute('aria-pressed',b===t)});
         if(sg==='f-backlog'){ var rf=$('#rmf'); if(rf) rf.hidden=sel.value!=='redmine'; }
         if(sg==='f-kind') $('#kindhint').textContent=KIND_HINT[sel.value]||'';
+        if(sg==='f-style') $('#stylehint').textContent=STYLE_HINT[sel.value]||'';
         dirty(); return;
       }
       if(t.hasAttribute('data-ap')){
