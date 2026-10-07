@@ -190,7 +190,42 @@
       claude + '</div>';
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY };
+  // ---------------------------------------------------------------- czat (0.38.0, docs/specs/claude-chat.md)
+  // Prosty markdown odpowiedzi Claude: akapity, listy, **pogrubienie**, *kursywa*, `kod`; HTML zawsze escapowany.
+  function chatInline(t) {
+    return esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
+  }
+  function chatMd(text) {
+    const out = []; let list = null, para = [];
+    const flush = function () { if (para.length) { out.push('<p>' + para.map(chatInline).join('<br>') + '</p>'); para = []; } };
+    const close = function () { if (list) { out.push('</' + list + '>'); list = null; } };
+    String(text || '').replace(/\r/g, '').split('\n').forEach(function (l) {
+      const m = l.match(/^\s*(?:([-*•])|(\d+)[.)])\s+(.*)$/);
+      if (m) { flush(); const t = m[2] ? 'ol' : 'ul'; if (list !== t) { close(); out.push('<' + t + '>'); list = t; } out.push('<li>' + chatInline(m[3]) + '</li>'); return; }
+      if (!l.trim()) { flush(); close(); return; }
+      close(); para.push(l.trim());
+    });
+    flush(); close();
+    return out.join('');
+  }
+  // Dzialania Claude w jednej linijce: "zapisano A.md, B.md · odczyt 2 plików · skill interview"
+  const WRITES = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'], READS = ['Read', 'Glob', 'Grep'];
+  function toolSummary(list) {
+    const w = [], other = [];
+    let r = 0;
+    (list || []).forEach(function (t) {
+      if (WRITES.indexOf(t.name) >= 0) { if (t.target && w.indexOf(t.target) < 0) w.push(t.target); }
+      else if (READS.indexOf(t.name) >= 0) r++;
+      else other.push((t.name === 'Skill' ? 'skill ' : t.name === 'Bash' ? '$ ' : t.name + ' ') + (t.target || '').slice(0, 60));
+    });
+    const parts = [];
+    if (w.length) parts.push('zapisano ' + w.join(', '));
+    if (r) parts.push('odczyt ' + r + ' ' + (r === 1 ? 'pliku' : 'plików'));
+    return parts.concat(other).join(' · ');
+  }
+
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -320,6 +355,8 @@
   function dockPrefs() { try { return JSON.parse(localStorage.getItem(DOCK_KEY)) || {}; } catch (e) { return {}; } }
   function saveDock(p) { try { localStorage.setItem(DOCK_KEY, JSON.stringify(p)); } catch (e) {} }
 
+  const ICON_CHAT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
+  const ICON_CODE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>';
   function claudeDock(btn) {
     if (!btn) return;
     const root = document.documentElement, prefs = dockPrefs();
@@ -328,10 +365,19 @@
     dock.className = 'cdock'; dock.setAttribute('aria-label', 'Claude Code');
     dock.innerHTML = '<div class="cd-grip" title="Przeciągnij, żeby zmienić szerokość"></div>' +
       '<div class="cd-head"><b>Claude Code</b><span class="cd-cwd"></span>' +
+      // widok okna (0.38.0): czat = styl BIZ, terminal = styl INZ
+      '<span class="cd-view" role="group" aria-label="Widok okna Claude">' +
+      '<button type="button" data-view="chat" title="Czat – rozmowa w stylu BIZ" aria-label="Czat">' + ICON_CHAT + '</button>' +
+      '<button type="button" data-view="code" title="Terminal – styl INŻ" aria-label="Terminal">' + ICON_CODE + '</button></span>' +
+      '<span class="cd-style" title="Styl rozmowy wywiadu w tym widoku"></span>' +
       '<button type="button" class="cd-run" hidden>Uruchom Claude</button><button type="button" class="cd-new" hidden>Nowa rozmowa</button>' +
       '<button type="button" class="cd-stop" hidden>Zakończ</button>' +
       '<button type="button" class="cd-x" aria-label="Zamknij okno" title="Zamknij okno (Claude działa dalej)">×</button></div>' +
-      '<p class="cd-msg" hidden></p><div class="cd-term"></div>';
+      '<p class="cd-msg" hidden></p><div class="cd-term"></div>' +
+      '<div class="cd-chat"><div class="cd-log" aria-live="polite"></div><div class="cd-in"><div class="cd-box">' +
+      '<textarea class="cd-input" rows="2" placeholder="Napisz wiadomość…" aria-label="Wiadomość do Claude"></textarea>' +
+      '<button type="button" class="cd-send" title="Wyślij (Enter)" aria-label="Wyślij">↑</button></div>' +
+      '<div class="cd-hint"><span>Enter wysyła · Shift+Enter nowa linia</span><span class="cd-hint2"></span></div></div></div>';
     document.body.appendChild(dock);
     const q = function (s) { return dock.querySelector(s); };
     // Klawisze w terminalu nie uruchamiaja skrotow strony (Escape, Cmd+Z, Cmd+D, Cmd+Enter).
@@ -466,8 +512,9 @@
     function open(on) {
       root.classList.toggle('claude-on', on); btn.setAttribute('aria-pressed', on);
       prefs.open = on; saveDock(prefs);
-      if (on) { layout(); refresh(); setup().then(function () { refit(); if (term) term.focus(); }); }
-      else if (es) { es.close(); es = null; }
+      if (on && isChat()) { layout(); chatConnect(); }
+      else if (on) { layout(); refresh(); setup().then(function () { refit(); if (term) term.focus(); }); }
+      else { if (es) { es.close(); es = null; } chatClose(); }
       window.dispatchEvent(new Event('resize'));
     }
     btn.onclick = function () { open(!root.classList.contains('claude-on')); };
@@ -479,12 +526,113 @@
         return api('/api/term/start', { cols: term.cols, rows: term.rows, resume: resume }).then(function (s) { show(s); connect(); term.focus(); });
       }).catch(function (e) { msg(e.message); });
     }
-    q('.cd-run').onclick = function () { start(!!state.canResume); };
-    q('.cd-new').onclick = function () { start(false); };
+    q('.cd-run').onclick = function () { if (isChat()) chatStart(!!cstate.canResume); else start(!!state.canResume); };
+    q('.cd-new').onclick = function () { if (isChat()) chatStart(false); else start(false); };
     q('.cd-stop').onclick = function () {
-      if (!confirm('Zakończyć sesję Claude Code? Rozmowa w terminalu zostanie przerwana.')) return;
-      api('/api/term/stop').catch(function (e) { msg(e.message); });
+      if (!confirm('Zakończyć sesję Claude Code? Rozmowa zostanie przerwana (zostaje zapisana - możesz ją wznowić).')) return;
+      api(isChat() ? '/api/chat/stop' : '/api/term/stop').catch(function (e) { msg(e.message); });
     };
+
+    // ------------------------------------------------ widok okna: czat / terminal (0.38.0, docs/specs/claude-chat.md)
+    let ces = null, cstate = {}, clog = [];
+    function isChat() { return prefs.view === 'chat'; }
+    function markView() {
+      dock.classList.toggle('chatmode', isChat());
+      [].forEach.call(dock.querySelectorAll('.cd-view button'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-view') === (isChat() ? 'chat' : 'code')); });
+      q('.cd-style').textContent = isChat() ? 'BIZ' : 'INŻ';
+    }
+    q('.cd-view').onclick = function (e) {
+      const b = e.target.closest('button[data-view]'); if (!b) return;
+      const v = b.getAttribute('data-view'); if ((v === 'chat') === isChat()) return;
+      prefs.view = v; saveDock(prefs); markView();
+      if (!root.classList.contains('claude-on')) return;
+      if (isChat()) { if (es) { es.close(); es = null; } chatConnect(); }
+      else { chatClose(); refresh(); setup().then(function () { refit(); if (term) term.focus(); }); }
+    };
+    function chatClose() { if (ces) { ces.close(); ces = null; } }
+    function chatConnect() {
+      chatClose();
+      fetch('/api/chat').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(chatShow).catch(function () {
+        msg('Serwer sdd-board nie obsługuje jeszcze czatu (działa na starszym kodzie). Zrestartuj serwer i odśwież stronę.');
+      });
+      ces = new EventSource('/chat-events');
+      ces.onmessage = function (e) {
+        const j = JSON.parse(e.data);
+        if (j.replay) clog = j.log || []; else if (j.ev) clog.push(j.ev);
+        if (j.state) chatShow(j.state); else chatRender();
+      };
+    }
+    function chatShow(s) {
+      cstate = s || cstate;
+      const run = !!cstate.running, resume = !run && !!cstate.canResume;
+      q('.cd-run').hidden = run; q('.cd-stop').hidden = !run; q('.cd-new').hidden = !resume;
+      q('.cd-run').textContent = resume ? 'Wznów rozmowę' : 'Uruchom Claude';
+      const dir = cstate.module, c = q('.cd-cwd');
+      c.textContent = dir ? '· ' + dir.split(/[\\/]/).filter(Boolean).pop() : ''; c.title = dir || '';
+      if (!run && cstate.termRunning) msg('Rozmowa działa teraz w terminalu. „' + q('.cd-run').textContent + '” przeniesie ją tutaj.');
+      else if (!run && resume) msg('W tym module jest zapisana rozmowa z Claude - możesz ją wznowić albo zacząć nową.');
+      else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (dir ? ' ' + dir : '') + '.');
+      else msg('');
+      q('.cd-input').disabled = !run;
+      chatExtras(cstate);
+      chatRender();
+    }
+    function chatRender() {
+      const out = [], log = q('.cd-log');
+      let tools = [];
+      const flushTools = function () { if (tools.length) { out.push('<div class="tool"><i>✓</i>' + esc(toolSummary(tools)) + '</div>'); tools = []; } };
+      clog.forEach(function (e) {
+        if (e.kind === 'tool') { tools.push(e); return; }
+        if (e.kind === 'init' || e.kind === 'done') return;
+        flushTools();
+        if (e.kind === 'user') out.push('<div class="m u">' + esc(e.text).replace(/\n/g, '<br>') + '</div>');
+        else if (e.kind === 'text') out.push('<div class="m a">' + chatMd(e.text) + '</div>');
+        else if (e.kind === 'denied') out.push('<div class="tool den"><i>✕</i>odrzucone: ' + esc(e.text.slice(0, 160)) + ' – w czacie tylko odczyt i zapis w module; resztę zrób w terminalu (</>)</div>');
+        else if (e.kind === 'start') out.push('<div class="sys">' + (e.resume ? 'rozmowa wznowiona' : 'nowa rozmowa') + ' · styl ' + (e.style === 'inz' ? 'INŻ' : 'BIZ') + '</div>');
+        else if (e.kind === 'exit') out.push('<div class="sys">rozmowa zakończona</div>');
+        else if (e.kind === 'error') out.push('<div class="tool den"><i>!</i>' + esc(e.text) + '</div>');
+      });
+      flushTools();
+      if (cstate.busy) out.push('<div class="dots" aria-label="Claude pisze"><span></span><span></span><span></span></div>');
+      const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+      log.innerHTML = out.join('');
+      if (atEnd) log.scrollTop = log.scrollHeight;
+    }
+    function chatStart(resume) {
+      api('/api/chat/start', { resume: resume }).then(function (s) { chatShow(s); q('.cd-input').focus(); }).catch(function (e) { msg(e.message); });
+    }
+    function chatSend() {
+      const t = q('.cd-input'), text = t.value.trim();
+      if (!text || !cstate.running) return;
+      t.value = '';
+      api('/api/chat/send', { text: text }).catch(function (e) { msg(e.message); t.value = text; });
+    }
+    q('.cd-send').onclick = chatSend;
+    q('.cd-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); chatSend(); }
+    });
+    // Dodatki zalezne od serwera - wylaczalne bloki (docs/specs/claude-chat.md)
+    function chatExtras(st) {
+      // DYKTOWANIE (0.38.0) start
+      // przycisk 🎙: kursor w polu wiadomosci, serwer uruchamia dyktowanie systemu (dictate.js); wycofanie - docs/specs/claude-chat.md
+      let mic = q('.cd-mic');
+      if (!st.dictate) { if (mic) mic.remove(); return; }
+      if (!mic) {
+        mic = document.createElement('button'); mic.type = 'button'; mic.className = 'cd-mic';
+        mic.title = 'Dyktuj - dyktowanie systemu (macOS: Edycja → Rozpocznij dyktowanie, Windows: Win+H)'; mic.setAttribute('aria-label', 'Dyktuj');
+        mic.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+        q('.cd-send').before(mic);
+        q('.cd-input').placeholder = 'Napisz albo podyktuj wiadomość…';
+        mic.onclick = function () {
+          const t = q('.cd-input'); t.focus();
+          api('/api/chat/dictate', {}).then(function () { q('.cd-hint2').textContent = 'dyktowanie włączone - mów, potem popraw i wyślij'; })
+            .catch(function (e) { msg(e.message); });
+        };
+      }
+      mic.disabled = !st.running;
+      // DYKTOWANIE (0.38.0) koniec
+    }
+    markView();
     // Szerokosc: uchwyt po lewej krawedzi
     q('.cd-grip').addEventListener('pointerdown', function (e) {
       if (e.button !== 0) return;

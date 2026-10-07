@@ -35,6 +35,8 @@ Priorytet: sprzeczne > otwarte z etykieta blokujaca > reszta. Grupuj per adresat
 ## Styl rozmowy (BIZ / INZ)
 Dotyczy rozmowy na zywo (`live`) i tur warsztatu `/sdd:board`. Pliki (sesja, D, A, Q, kaskada, CHANGELOG) w obu stylach
 sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/specs/interview-style.md).
+- Rozmowa w panelu sdd-board (0.38.0): okno czatu panelu = BIZ, terminal panelu = INZ - panel dopisuje to w instrukcji
+  startowej i ma to pierwszenstwo przed `interview_style`.
 - Styl bierzesz z `interview_style` w `SDD.yaml`; brak pola = domyslnie `biz`. Argument nadpisuje na te rozmowe:
   `/sdd:interview live biz`, `/sdd:interview live inz`. W trakcie: "przejdz na BIZ" / "przejdz na INZ" - od nastepnego pytania.
 - **Autor raz na poczatku** (oba style): "Rozmawiam z Toba jako <rola z SDD.yaml>, tak?". Dalej kazda odpowiedz ma tego

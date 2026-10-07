@@ -19,6 +19,10 @@ const { listSessions } = require('./session-mark');  // wersja skilli w sesjach 
 const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
 const info = require('./info');
 const terminal = require('./terminal');
+const chat = require('./chat');
+// DYKTOWANIE (0.38.0) start
+const dictate = require('./dictate');
+// DYKTOWANIE (0.38.0) koniec
 const update = require('./update');
 const secrets = require('./secrets');
 
@@ -149,7 +153,7 @@ function selectModule(ctx, req) {
   watch(ctx);
   send(ctx.progressClients, progressPayload(ctx));
   send(ctx.boardClients, boardView(ctx));
-  if (ctx === user) termSwitch();
+  if (ctx === user) { termSwitch(); chatSwitch(); }
 }
 // Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
 // na liscie) > pierwszy z listy > zaden.
@@ -299,7 +303,7 @@ function termState() {
   return Object.assign(term.cur.state(), { others: termOthers(), available: av.ok, reason: av.reason, platform: process.platform,
     windowsBuild: process.platform === 'win32' ? terminal.windowsBuild(require('os').release()) : null, module: mod, canResume });
 }
-['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { terms.forEach(t => t.stop()); if (sig !== 'exit') process.exit(0); }));
+['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { terms.forEach(t => t.stop()); chats.forEach(c => c.stop()); if (sig !== 'exit') process.exit(0); }));
 function termRoute(req, res, url) {
   if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
   if (url === '/api/term' && req.method === 'GET') return json(res, 200, termState());
@@ -316,13 +320,77 @@ function termRoute(req, res, url) {
     if (url === '/api/term/start') {
       if (!terminal.available()) return json(res, 501, { error: terminal.availability().reason });
       if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
-      try { term.cur.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true }); }
+      chatOf(termKey()).stop();  // jedna rozmowa na modul: czat konczy sie, rozmowa wraca w terminalu (--continue)
+      try { term.cur.start({ cwd: path.dirname(user.req), cols: body.cols, rows: body.rows, resume: body.resume === true,
+        args: ['--append-system-prompt', chat.STYLE_PROMPT.inz] }); }
       catch (e) { return json(res, 500, { error: e.message }); }
       return json(res, 200, termState());
     }
     if (url === '/api/term/input') { term.cur.write(String(body.data || '')); return json(res, 200, { ok: true }); }
     if (url === '/api/term/resize') { return json(res, 200, { ok: true, sent: term.cur.resize(body.cols, body.rows, body.force === true) }); }
     if (url === '/api/term/stop') { term.cur.stop(); return json(res, 200, { ok: true }); }
+    json(res, 404, { error: 'Nie ma takiego adresu.' });
+  });
+}
+
+// ---------------------------------------------------------------- okno Claude jako czat (0.38.0, docs/specs/claude-chat.md)
+// Sesja czatu na modul jak terminal (AC-T16); jedna rozmowa na modul - start czatu konczy terminal i odwrotnie.
+var chats = new Map();   // folder modulu -> ChatSession (var: selectModule przy starcie wola chatSwitch przed ta linia)
+const chatClients = new Set();
+function chatOf(key) {
+  let c = chats.get(key);
+  if (c) return c;
+  c = new chat.ChatSession();
+  c.on('event', ev => { if (key === termKey()) chatClients.forEach(r => termSend(r, { ev, state: chatState() })); });
+  chats.set(key, c);
+  return c;
+}
+function chatState() {
+  const t = termState();
+  return Object.assign(chatOf(termKey()).state(), { module: t.module, canResume: t.canResume, termRunning: t.running,
+    // DYKTOWANIE (0.38.0) start
+    dictate: dictate.enabled(process.env, process.platform),
+    // DYKTOWANIE (0.38.0) koniec
+  });
+}
+function chatSwitch() {
+  if (!chats) return;
+  chatClients.forEach(r => termSend(r, { replay: true, log: chatOf(termKey()).log(), state: chatState() }));
+}
+function chatRoute(req, res, url) {
+  if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+  if (url === '/api/chat' && req.method === 'GET') return json(res, 200, chatState());
+  if (url === '/chat-events') {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+    termSend(res, { replay: true, log: chatOf(termKey()).log(), state: chatState() });
+    chatClients.add(res);
+    return req.on('close', () => chatClients.delete(res));
+  }
+  if (req.method !== 'POST') return json(res, 404, { error: 'Nie ma takiego adresu.' });
+  return readBody(req, 256 * 1024, buf => {
+    let body = {};
+    try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+    const c = chatOf(termKey());
+    if (url === '/api/chat/start') {
+      if (!user.req) return json(res, 409, { error: 'Najpierw wybierz moduł.' });
+      term.cur.stop();  // jedna rozmowa na modul: terminal konczy sie, rozmowa wraca w czacie (--continue)
+      const mod = path.dirname(user.req);
+      let resume = body.resume === true;
+      if (body.resume === undefined) { try { resume = terminal.hasHistory(fs.realpathSync(mod)); } catch (e) { resume = false; } }
+      try { c.start({ cwd: mod, resume, style: 'biz' }); } catch (e) { return json(res, 500, { error: e.message }); }
+      return json(res, 200, chatState());
+    }
+    if (url === '/api/chat/send') {
+      if (!c.send(body.text)) return json(res, 409, { error: c.state().running ? 'Pusta wiadomość.' : 'Czat nie działa - uruchom go.' });
+      return json(res, 200, { ok: true });
+    }
+    if (url === '/api/chat/stop') { c.stop(); return json(res, 200, { ok: true }); }
+    // DYKTOWANIE (0.38.0) start
+    if (url === '/api/chat/dictate') {
+      if (!dictate.enabled(process.env, process.platform)) return json(res, 404, { error: 'Dyktowanie wyłączone.' });
+      return dictate.run(process.platform).then(r => json(res, r.ok ? 200 : 500, r)).catch(e => json(res, 500, { ok: false, error: e.message }));
+    }
+    // DYKTOWANIE (0.38.0) koniec
     json(res, 404, { error: 'Nie ma takiego adresu.' });
   });
 }
@@ -379,6 +447,10 @@ const server = http.createServer((req, res) => {
   if (url === '/api/term' || url.startsWith('/api/term/') || url === '/term-events') {
     if (ctx.demo) return json(res, 403, { error: READ_ONLY });
     return termRoute(req, res, url);
+  }
+  if (url === '/api/chat' || url.startsWith('/api/chat/') || url === '/chat-events') {
+    if (ctx.demo) return json(res, 403, { error: READ_ONLY });
+    return chatRoute(req, res, url);
   }
 
   // /demo/start ma tylko tablice (bez plikow requirements/)

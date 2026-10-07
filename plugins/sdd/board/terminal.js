@@ -74,13 +74,14 @@ function windowsClaude(env, fsx, opts) {
   env = env || process.env;
   fsx = fsx || { exists: isFile, read: p => fs.readFileSync(p, 'utf8') };
   const resume = !!(opts && opts.resume);
-  const extra = resume ? ['--continue'] : [];
-  if (env.SDD_CLAUDE_CMD) return { line: env.SDD_CLAUDE_CMD + (resume ? ' --continue' : ''), how: 'env' };
+  const args = (opts && opts.args) || [];  // 0.38.0 (AC-CH1): argumenty czatu / stylu
+  const extra = (resume ? ['--continue'] : []).concat(args);
+  if (env.SDD_CLAUDE_CMD) return { line: env.SDD_CLAUDE_CMD + (extra.length ? ' ' + winCommandLine(extra) : ''), how: 'env', shell: true };
   const pathVar = env.PATH || env.Path || Object.keys(env).filter(k => k.toUpperCase() === 'PATH').map(k => env[k])[0] || '';
   const dirs = String(pathVar).split(';').map(d => d.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean);
   const local = env.USERPROFILE ? [W.join(env.USERPROFILE, '.local', 'bin')] : [];
   const exe = dirs.concat(local).map(d => W.join(d, 'claude.exe')).find(fsx.exists);
-  if (exe) return { line: winCommandLine([exe].concat(extra)), how: 'exe' };
+  if (exe) return { line: winCommandLine([exe].concat(extra)), argv: [exe].concat(extra), how: 'exe' };
   const shimDir = dirs.find(d => fsx.exists(W.join(d, 'claude.cmd')));
   if (shimDir) {
     let shim = '';
@@ -88,15 +89,16 @@ function windowsClaude(env, fsx, opts) {
     const m = /"%dp0%\\([^"]+)"\s+%\*/.exec(shim) || /"%~dp0\\([^"]+)"\s+%\*/.exec(shim);
     if (m) {
       const target = W.join(shimDir, m[1]);
-      if (/\.exe$/i.test(target) && fsx.exists(target)) return { line: winCommandLine([target].concat(extra)), how: 'npm' };
+      if (/\.exe$/i.test(target) && fsx.exists(target)) return { line: winCommandLine([target].concat(extra)), argv: [target].concat(extra), how: 'npm' };
       if (/\.m?js$/i.test(target) && fsx.exists(target)) {
         const nodeExe = [W.join(shimDir, 'node.exe')].concat(dirs.map(d => W.join(d, 'node.exe'))).find(fsx.exists);
-        if (nodeExe) return { line: winCommandLine([nodeExe, target].concat(extra)), how: 'npm' };
+        if (nodeExe) return { line: winCommandLine([nodeExe, target].concat(extra)), argv: [nodeExe, target].concat(extra), how: 'npm' };
       }
     }
   }
   const comspec = env.ComSpec || env.COMSPEC || 'cmd.exe';
-  return { line: winCommandLine([comspec, '/d', '/s', '/c', 'claude' + (resume ? ' --continue' : '')]), how: 'cmd' };
+  const cmdArgv = [comspec, '/d', '/s', '/c', 'claude'].concat(extra);
+  return { line: winCommandLine([comspec, '/d', '/s', '/c', 'claude' + (resume ? ' --continue' : '')].concat(args)), argv: cmdArgv, how: 'cmd' };
 }
 
 // Argumenty powershell.exe dla pomocnika (AC-W10): -EncodedCommand - zasady wykonywania skryptow go nie dotycza;
@@ -124,9 +126,12 @@ const WIN_EXIT = {
 
 // Powloka logowania: PATH z Homebrew i ~/.zprofile, bez aliasow z .zshrc (np. claude=ccs).
 // opts.resume: --continue - ostatnia rozmowa w folderze modulu (po restarcie serwera, AC-T11).
+// args (0.38.0, AC-CH1): dodatkowe argumenty Claude Code (czat, styl) - w pojedynczym cudzyslowie dla powloki
+const shq = a => "'" + String(a).replace(/'/g, "'\\''") + "'";
 function claudeArgv(env, opts) {
   env = env || process.env;
-  const cmd = (env.SDD_CLAUDE_CMD || 'claude') + (opts && opts.resume ? ' --continue' : '');
+  const extra = (opts && opts.args || []).map(shq).join(' ');
+  const cmd = (env.SDD_CLAUDE_CMD || 'claude') + (opts && opts.resume ? ' --continue' : '') + (extra ? ' ' + extra : '');
   return [env.SHELL || '/bin/zsh', '-l', '-c', 'exec ' + cmd];
 }
 
@@ -179,13 +184,13 @@ class TermSession extends EventEmitter {
     if (win) {
       const ps = powershell(o.env);
       if (!ps) throw new Error(availability(o.env).reason);
-      const line = o.line || (o.argv ? winCommandLine(o.argv) : windowsClaude(o.env, null, { resume: o.resume }).line);
+      const line = o.line || (o.argv ? winCommandLine(o.argv) : windowsClaude(o.env, null, { resume: o.resume, args: o.args }).line);
       // windowsHide: bez migajacego okna konsoli przy kazdym starcie
       p = spawn(ps, helperArgs({ cols, rows, line, cwd: o.cwd }), { cwd: o.cwd, env: childEnv(o.env), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     } else {
       const py = python(o.env);
       if (!py) throw new Error(availability(o.env).reason);
-      const argv = o.argv || claudeArgv(o.env, { resume: o.resume });
+      const argv = o.argv || claudeArgv(o.env, { resume: o.resume, args: o.args });
       p = spawn(py, [HELPER, String(cols), String(rows)].concat(argv),
         { cwd: o.cwd, env: childEnv(o.env), stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
     }

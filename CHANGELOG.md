@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.38.0] - 2026-10-08
+- Okno Claude: widok **czat** obok terminala (docs/specs/claude-chat.md, AC-CH1..AC-CH8). Przelacznik dwoch ikon
+  w naglowku okna (czat / `</>` terminal), wybor zapamietany. Czat to ten sam Claude Code w trybie wymiany wiadomosci
+  (stream-json), w folderze modulu, z ta sama rozmowa (`--continue`): dymki, formatowanie tekstu, dzialania Claude
+  zwiniete do jednej linijki ("✓ zapisano A.md, B.md"), kropki, gdy Claude pracuje, pole wiadomosci (Enter wysyla).
+  W czacie bez pytan o zgode: odczyt, zapis plikow modulu, skille; reszta polecen odrzucana - Claude odsyla do terminala.
+- Styl rozmowy wynika z widoku: czat = BIZ, terminal z panelu = INZ (instrukcja startowa ma pierwszenstwo przed
+  `interview_style`, ktore dotyczy Claude Code uruchomionego poza panelem). Jedna rozmowa na modul - zmiana widoku
+  konczy jeden tryb i wznawia rozmowe w drugim.
+- Dyktowanie w czacie: przycisk 🎙 ustawia kursor w polu i uruchamia dyktowanie systemu - Windows: Win+H (Pisanie
+  glosowe), macOS: Edycja -> Rozpocznij dyktowanie (zgoda Dostepnosc dla programu, ktory uruchamia sdd-board).
+  Wylaczenie: `SDD_DICTATE=0`; wycofanie z kodu opisane w specyfikacji (osobny `dictate.js` + oznaczone bloki).
+
 ## [0.37.0] - 2026-10-07
 - Wywiad: styl rozmowy BIZ / INZ (docs/specs/interview-style.md, AC-IS1..AC-IS8). Analiza sesji na fv-manager pokazala,
   ze rozmowa czyta sie jak dokumentacja (naglowki "Pytanie N z 7", numery BR/A/D, prosba o autora pod kazdym

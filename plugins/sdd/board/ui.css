@@ -157,7 +157,7 @@ a:hover{text-decoration:underline}
 /* Okno Claude Code z prawej (0.25.0, docs/specs/claude-dock.md). Strona zweza sie o szerokosc okna. */
 html.claude-on{padding-right:var(--claude-w)}
 /* Okno zawsze czarne jak terminal, niezaleznie od motywu strony (zmiana 0.25.0, prosba usera) - wlasne tokeny okna */
-.cdock{--panel:#000;--bg:#141414;--ink:#e6e6e6;--muted:#8c8c8c;--line:#2e2e2e;--sel:#3a3d41;color-scheme:dark}
+.cdock:not(.chatmode){--panel:#000;--bg:#141414;--ink:#e6e6e6;--muted:#8c8c8c;--line:#2e2e2e;--sel:#3a3d41;color-scheme:dark}
 .cdock{position:fixed;top:0;right:0;bottom:0;width:var(--claude-w);z-index:40;display:none;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);color:var(--ink);font-family:var(--sans)}
 html.claude-on .cdock{display:flex}
 /* Panel karteczki tablicy od 0.33.0 stoi w ukladzie (.work), nie jest fixed - okno Claude go nie przesuwa (0.34.1, AC-T14);
@@ -203,3 +203,41 @@ html.claude-on .cdock{display:flex}
 .upd-row .upd-go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .upd-row button:disabled{opacity:.5;cursor:default}
 @media (max-width:640px){.upd-pop{position:fixed;top:56px;left:16px;right:16px;width:auto}}
+
+/* Okno Claude jako czat (0.38.0, docs/specs/claude-chat.md): kolory panelu; terminal zostaje czarny */
+.cdock .cd-view{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex:none}
+.cdock .cd-head .cd-view button{width:30px;height:24px;padding:0;border:0;border-radius:0;background:none;color:var(--muted);display:grid;place-items:center;position:relative}
+.cdock .cd-head .cd-view button+button{border-left:1px solid var(--line)}
+.cdock .cd-head .cd-view button[aria-pressed="true"]{background:var(--hover,#2b2a25);color:var(--ink)}
+.cdock .cd-head .cd-view button[aria-pressed="true"]::after{content:"";position:absolute;top:3px;right:4px;width:5px;height:5px;border-radius:50%;background:#2f80ed}
+.cdock .cd-style{font:600 10px/1 var(--mono);letter-spacing:.06em;border:1px solid var(--line);border-radius:3px;padding:3px 5px;color:var(--muted);flex:none}
+.cdock .cd-chat{display:none;flex:1;min-height:0;flex-direction:column}
+.cdock.chatmode .cd-chat{display:flex}
+.cdock.chatmode .cd-term{display:none}
+.cdock.chatmode .cd-head b{color:var(--ink)}
+.cdock .cd-log{flex:1;min-height:0;overflow:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.cdock .sys{align-self:center;font:11px var(--mono);color:var(--faint)}
+.cdock .m{max-width:86%;font-size:13.5px;line-height:1.5;padding:9px 12px;border-radius:12px;overflow-wrap:anywhere}
+.cdock .m p{margin:0 0 8px}.cdock .m p:last-child{margin-bottom:0}
+.cdock .m ul,.cdock .m ol{margin:0 0 8px;padding-left:20px}
+.cdock .m code{font:12px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:0 3px}
+.cdock .m.u{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.cdock .m.a{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.cdock .tool{align-self:flex-start;display:flex;gap:6px;align-items:baseline;font-size:12px;color:var(--muted);padding:0 4px}
+.cdock .tool i{font-style:normal;color:#2f9e5b}
+.cdock .tool.den i{color:var(--hot-ink)}
+.cdock .dots{align-self:flex-start;display:flex;gap:4px;padding:10px 12px}
+.cdock .dots span{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:cddot 1s infinite ease-in-out}
+.cdock .dots span:nth-child(2){animation-delay:.15s}.cdock .dots span:nth-child(3){animation-delay:.3s}
+@keyframes cddot{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.cdock .cd-in{flex:none;border-top:1px solid var(--line);padding:10px 12px;background:var(--panel)}
+.cdock .cd-box{display:flex;gap:8px;align-items:flex-end;border:1px solid var(--input-line);border-radius:10px;background:var(--input);padding:8px 8px 8px 12px}
+.cdock .cd-box:focus-within{outline:2px solid var(--accent);outline-offset:-1px}
+.cdock .cd-input{flex:1;min-width:0;border:0;outline:0;resize:none;background:none;font:13.5px/1.45 var(--sans);color:var(--ink);max-height:160px}
+.cdock .cd-input:disabled{opacity:.5}
+.cdock .cd-send,.cdock .cd-mic{flex:none;width:30px;height:30px;border-radius:8px;cursor:pointer;display:grid;place-items:center;font-size:15px}
+.cdock .cd-send{border:0;background:var(--ink);color:var(--bg)}
+.cdock .cd-mic{border:1px solid var(--line);background:none;color:var(--ink)}
+.cdock .cd-mic:hover{border-color:var(--ink)}
+.cdock .cd-mic:disabled,.cdock .cd-send:disabled{opacity:.4;cursor:default}
+.cdock .cd-hint{margin-top:6px;display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--faint)}
