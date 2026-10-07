@@ -66,6 +66,10 @@ autor raz na poczatku (punkt 1).
   i "Na nastepny raz zostalo: …"; bez odpowiedzi o czas - 30 min.
 - **AC-IS14** INZ bez zmian: na start liczba pytan i kolejnosc.
 
+- **AC-IS15** (0.39.1, uwaga usera: "Mozna to inaczej podsumowywac? np. 'Czyli … Nie musisz ich miec w obliczeniach?'
+  Tu w zaleznosci od odpowiedzi - TAK - zapisujesz decyzje - NIE lub inna odpowiedz - dopytujesz"): parafraza jest pytaniem
+  i zgoda na zapis; "tak" -> zapis bez komentarza i nastepne pytanie; "nie" / inna odpowiedz -> dopytanie, bez zapisu.
+
 ## Przyklad BIZ (z sesji fv-manager, Q-027)
 > Teraz o zwrocie z inwestycji. Aplikacja pokazuje „pozostało do zwrotu”: inwestycja minus oszczędności z domu
 > i z ładowania auta. Kiedy ostatnio liczyłeś, w jakim stopniu instalacja już się zwróciła, to co brałeś pod uwagę? (Q-027)

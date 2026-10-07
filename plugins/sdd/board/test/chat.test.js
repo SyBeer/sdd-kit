@@ -155,3 +155,9 @@ test('AC-CH5: skill interview - instrukcja z panelu ma pierwszenstwo przed inter
   const s = fs.readFileSync(path.join(B, '..', 'skills', 'interview', 'SKILL.md'), 'utf8');
   assert.match(s, /okno czatu panelu[^\n]*BIZ[^\n]*terminal panelu[^\n]*INZ|panel sdd-board[^\n]*pierwszenstwo/);
 });
+
+test('AC-CH14: okno w trybie terminala ma wlasne ciemne podswietlenie (bez bialego tla przelacznika)', () => {
+  const css = read('ui.css');
+  const dark = (css.match(/\.cdock:not\(\.chatmode\)\{[^}]*\}/) || [''])[0];
+  ['--hover:#2a2a2a', '--faint:', '--input:', '--input-line:'].forEach(t => assert.ok(dark.includes(t), t));
+});

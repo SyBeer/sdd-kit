@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.39.1] - 2026-10-08
+- Dyktowanie w czacie: wlasny skrot programu zamiast dyktowania systemu (Konfiguracja -> "Dyktowanie w czacie", zapis
+  w `~/.sdd-kit/config.json`), np. `option+space` dla Superwhisper; przycisk 🎙 naciska go za Ciebie (macOS przez
+  System Events, Windows przez keybd_event). Gdy brakuje zgody "Dostepnosc", wskazowka podaje dokladna sciezke
+  aplikacji, ktora uruchomila serwer (np. Homebrew Python.app przy starcie z HQAI) - docs/specs/claude-chat.md AC-CH11..AC-CH13.
+- Styl BIZ: parafraza odpowiedzi jest pytaniem ("Czyli … ? (Q-049)") - "tak" = zapis bez komentarza i nastepne
+  pytanie, "nie" albo inna odpowiedz = dopytanie; bez "Zapisuje?" i "robie z tego decyzje" (docs/specs/interview-style.md AC-IS15).
+- Poprawka: w trybie terminala przelacznik czat / terminal mial biale podswietlenie z bialym znakiem - okno terminala
+  dostalo wlasne ciemne kolory podswietlenia i pol (AC-CH14).
+
 ## [0.39.0] - 2026-10-08
 - Wywiad w stylu BIZ bez straszenia praca (docs/specs/interview-style.md AC-IS12..AC-IS14): na poczatku Claude pyta,
   ile masz czasu, potem jednym zdaniem mowi, od jakich tematow zacznie (najwazniejsze najpierw) - bez liczby pytan

@@ -52,15 +52,19 @@ sa takie same - styl zmienia tylko to, co user czyta na ekranie (0.37.0, docs/sp
    `date`: gdy zostaje okolo 5 minut, konczysz biezacy temat, zapisujesz i mowisz krotko, co udalo sie ustalic,
    oraz "Na nastepny raz zostalo: <tematy>". Gdy czas sie skonczyl, nie zaczynasz nowego tematu. Brak odpowiedzi
    o czas ("nie wiem", "ile trzeba") - przyjmij 30 minut.
-3. Po odpowiedzi: parafraza i propozycja zapisu w 1-2 zdaniach - "Czyli … Zapisuje jako potwierdzone, ok?" -
-   takze przy nowej decyzji D: "Czyli przyjmujemy: <decyzja jednym zdaniem>. Zapisuje?". Bez punktow, numerow D/A/BR,
-   kaskady i powodu w tresci. Pelny wpis (rodzaj, tresc, powod, kaskada) pokazujesz tylko na prosbe ("szczegoly?",
-   "co to zmienia?"). Nowe pytania odlozone na pozniej, kaskade i numery zapisujesz bez komentarza (krok 3 - w plikach
-   wszystko jak dotad). Wyjatek: sprzecznosc z wczesniejsza decyzja albo obalenie zalozenia - jednym zdaniem, co sie
-   nie zgadza, i pytanie, ktora wersja jest prawdziwa.
-   Przyklad (fv-manager, Q-048, odpowiedz "nie wiem, przyjmuj pierwszy dzien miesiaca"):
-   > Czyli przyjmujemy: sposób rozliczenia miesiąca bierzemy z okresu obowiązującego 1. dnia miesiąca, tak jak liczy
-   > dziś aplikacja. Zapisuję? (Q-048)
+3. Po odpowiedzi: Parafraza jest pytaniem (0.39.1) - w 1-2 zdaniach, jak zrozumiales, ze znakiem zapytania na koncu;
+   to jest zgoda na zapis (krok 3), bez osobnego "Zapisuje?" i bez "robie z tego decyzje". Tak samo przy nowej decyzji D.
+   - "tak" (albo "zgadza sie", "dokladnie") -> zapisujesz D albo A bez komentarza i od razu nastepne pytanie (punkt 4),
+   - "nie" albo inna odpowiedz -> dopytujesz jednym zdaniem, czego nie zrozumiales; zapisu jeszcze nie ma.
+   Bez punktow, numerow D/A/BR, kaskady i powodu w tresci (powod bierzesz ze slow rozmowcy). Pelny wpis (rodzaj, tresc,
+   powod, kaskada) pokazujesz tylko na prosbe ("szczegoly?", "co to zmienia?").
+   Nowe pytania odlozone na pozniej, kaskade i numery zapisujesz bez komentarza (krok 3 - w plikach wszystko jak dotad).
+   Wyjatek - sprzecznosc z wczesniejsza decyzja albo obalenie zalozenia: jednym zdaniem, co sie nie zgadza, i pytanie,
+   ktora wersja jest prawdziwa.
+   Przyklad (fv-manager, Q-049, odpowiedz "potrzebuje jej po to, zeby pozniej namierzyc te fakture"):
+   > Czyli numer i kwota faktury w odczycie służą Ci do tego, żeby później łatwo znaleźć tę fakturę. Nie musisz ich mieć w obliczeniach? (Q-049)
+   Przyklad (Q-048, odpowiedz "nie wiem, przyjmuj pierwszy dzien miesiaca"):
+   > Czyli sposób rozliczenia miesiąca bierzemy z okresu obowiązującego 1. dnia miesiąca, tak jak liczy dziś aplikacja? (Q-048)
 4. Po "tak" zapis i nastepne pytanie w jednej wiadomosci: "Zapisane. Teraz o …". Bez osobnych komunikatow
    "A-xxx jest potwierdzone, a Q-xxx ma status …".
 5. Regula odczytana z kodu (stan dzisiejszy, as-built): wystarczy proste "tak ma zostac?" albo lista do potwierdzenia
@@ -76,8 +80,7 @@ Przyklad BIZ (fv-manager, Q-027):
 > i z ładowania auta. Kiedy ostatnio liczyłeś, w jakim stopniu instalacja już się zwróciła, to co brałeś pod uwagę? (Q-027)
 
 Po odpowiedzi "inwestycje - oszczednosci z domu i EV":
-> Czyli tak samo jak aplikacja - EV to tylko ładowanie domowe. Zapisuję jako potwierdzone; liczba miesięcy do zwrotu
-> zostaje na później. Ok?
+> Czyli liczysz tak samo jak aplikacja, a EV to tylko ładowanie domowe?
 
 **INZ - pelne wpisy**. Uklad pytania i propozycji jak w krokach 2a i 3 ponizej (naglowek, fakty z kodu z numerami,
 pelny wpis po kazdej odpowiedzi). Autor tez raz na poczatku.

@@ -672,7 +672,7 @@
       if (!st.dictate) { if (mic) mic.remove(); return; }
       if (!mic) {
         mic = document.createElement('button'); mic.type = 'button'; mic.className = 'cd-mic';
-        mic.title = 'Dyktuj - dyktowanie systemu (macOS: Edycja → Rozpocznij dyktowanie, Windows: Win+H)'; mic.setAttribute('aria-label', 'Dyktuj');
+        mic.title = 'Dyktuj - dyktowanie systemu albo skrót Twojego programu (Konfiguracja → Dyktowanie w czacie)'; mic.setAttribute('aria-label', 'Dyktuj');
         mic.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
         q('.cd-send').before(mic);
         q('.cd-input').placeholder = 'Napisz albo podyktuj wiadomość…';

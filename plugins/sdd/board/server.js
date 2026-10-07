@@ -197,6 +197,9 @@ function configView(ctx) {
     modules: (Array.isArray(cfg.modules) ? cfg.modules : []).filter(d => typeof d === 'string')
       .map(d => ({ dir: d, name: path.basename(d), exists: fs.existsSync(path.join(d, 'requirements', 'SDD.yaml')) })),
     lastModule: demo ? null : (cfg.lastModule || null),
+    // DYKTOWANIE (0.38.0) start
+    dictateKeys: demo ? '' : String(cfg.dictateKeys || ''), dictate: !demo && dictate.enabled(process.env, process.platform),
+    // DYKTOWANIE (0.38.0) koniec
     sdd,
     // Klucz Redmine: tylko skad jest, nigdy wartosc (AC-S3)
     redmineKey: demo ? 'none' : secrets.redmineKey().source,
@@ -388,7 +391,14 @@ function chatRoute(req, res, url) {
     // DYKTOWANIE (0.38.0) start
     if (url === '/api/chat/dictate') {
       if (!dictate.enabled(process.env, process.platform)) return json(res, 404, { error: 'Dyktowanie wyłączone.' });
-      return dictate.run(process.platform).then(r => json(res, r.ok ? 200 : 500, r)).catch(e => json(res, 500, { ok: false, error: e.message }));
+      // wlasny skrot programu do dyktowania (0.39.1, AC-CH11) z ~/.sdd-kit/config.json, np. Superwhisper option+space
+      return dictate.run(process.platform, { keys: readConfig(CONFIG).dictateKeys }).then(r => json(res, r.ok ? 200 : 500, r)).catch(e => json(res, 500, { ok: false, error: e.message }));
+    }
+    if (url === '/api/chat/dictate-keys') {
+      const keys = String(body.keys || '').trim();
+      if (keys && !dictate.parseKeys(keys)) return json(res, 400, { error: 'Nie rozumiem skrótu „' + keys + '”. Przykłady: option+space, ctrl+alt+d, f5.' });
+      try { writeConfig(CONFIG, { dictateKeys: keys || undefined }); } catch (e) { return json(res, 500, { error: e.message }); }
+      return json(res, 200, { ok: true, dictateKeys: keys });
     }
     // DYKTOWANIE (0.38.0) koniec
     json(res, 404, { error: 'Nie ma takiego adresu.' });

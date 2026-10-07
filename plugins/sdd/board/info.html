@@ -522,6 +522,14 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     // SERWER (tylko podglad); wersja z ostrzezeniami i "Przyklad gotowego modulu" przeniesione z naglowka (handoff 1.2)
     var s=c.server||{};
     function sv(k,v,note){return '<div class="sv"><span class="sk">'+k+'</span><span class="sval">'+v+(note?'<small>'+note+'</small>':'')+'</span></div>'}
+    // DYKTOWANIE (0.38.0) start
+    // przycisk 🎙 w czacie: dyktowanie systemu albo skrot Twojego programu (0.39.1, AC-CH13), zapis w ~/.sdd-kit/config.json
+    if(c.dictate) h+='<section class="box" id="dyktowanie"><div class="bh"><h2>Dyktowanie w czacie</h2><span class="path">ten komputer · ~/.sdd-kit/config.json</span></div>'+
+      frow('Skrót programu','puste = dyktowanie systemu (macOS: Edycja → Rozpocznij dyktowanie, Windows: Win+H); np. option+space dla Superwhisper',
+        '<div class="rowc"><input type="text" class="fld mono w280" id="f-dictate" autocomplete="off" placeholder="option+space" value="'+esc(c.dictateKeys||'')+'">'+
+        '<button class="btn" type="button" id="savedictate">Zapisz skrót</button></div><p class="knote" id="dictatemsg"></p>'+
+        '<p class="knote">Przycisk 🎙 naciska ten skrót za Ciebie - serwer sdd-board potrzebuje zgody „Dostępność” w macOS.</p>')+'</section>';
+    // DYKTOWANIE (0.38.0) koniec
     h+='<section class="box srv"><div class="bh"><h2>Serwer</h2><span class="path">tylko podgląd</span></div>'+
       sv('Wersja sdd-kit','<a id="srvver" href="https://github.com/SyBeer/sdd-kit/releases/tag/v'+esc(s.version||'')+'" target="_blank" rel="noopener" title="Opis zmian tej wersji na GitHubie">'+esc(s.version||'-')+'</a><span class="srvupd" id="srvupd" hidden></span>')+
       sv('Port',esc(s.port),'inny port: sdd-board &lt;plik tablicy&gt; &lt;port&gt;')+
@@ -531,6 +539,15 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       (c.kitDir?sv('Aplikacja',esc(c.kitDir)):'')+
       (BASE?'':sv('Przykład','<a href="/demo" target="_blank" rel="noopener">Przykład gotowego modułu ↗</a>'))+'</section>';
     $('#app').innerHTML=h;
+    // DYKTOWANIE (0.38.0) start
+    var dk=$('#savedictate');
+    if(dk) dk.onclick=function(e){
+      e.stopPropagation();
+      api('/api/chat/dictate-keys',{method:'POST',body:JSON.stringify({keys:$('#f-dictate').value})})
+        .then(function(r){ $('#dictatemsg').className='ok'; $('#dictatemsg').textContent=r.dictateKeys?'Zapisano: 🎙 naciśnie '+r.dictateKeys+'.':'Zapisano: 🎙 uruchomi dyktowanie systemu.'; })
+        .catch(function(err){ $('#dictatemsg').className='err'; $('#dictatemsg').textContent=err.message; });
+    };
+    // DYKTOWANIE (0.38.0) koniec
     if(c.sdd) drawOwners();
     msg.rmask=null; msg.adderr=''; msg.sdderr=''; msg.rooterr=''; msg.rootprev=''; msg.root='';
     versionNote();

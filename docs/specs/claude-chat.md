@@ -88,9 +88,19 @@ Metryka: wywiad `/sdd:interview live` prowadzony w czacie od poczatku do konca b
   (`parseMinutes`); klik w zegar - zmiana czasu. Koniec czasu zapisany w przegladarce per modul.
   Sprawdzone 2026-10-08 z udawanym Claude (stream-json): podpowiedzi, "Mam 30 min.", zegar "⏱ 29:59".
 
+## Zmiana 0.39.1 (zgloszenie usera: "na mac nie uruchomil mi sie mikrofon" - dyktowanie macOS wylaczone, serwer z HQAI
+uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem, skrot option+space)
+- **AC-CH11** Wlasny skrot programu do dyktowania: `parseKeys` (modyfikatory option/alt, control/ctrl, command/cmd/win, shift
+  + litera, cyfra, space, f1-f12, return, tab, esc); macOS `key code` / `keystroke … using {…}` przez System Events, Windows
+  `keybd_event`; pusty skrot = dyktowanie systemu jak w 0.38.0.
+- **AC-CH12** Brak zgody Dostepnosc -> wskazowka z dokladna sciezka aplikacji `.app`, ktora uruchomila serwer
+  (`responsibleApp` z lancucha przodkow), do wklejenia przez Cmd+Shift+G.
+- **AC-CH13** Konfiguracja: karta "Dyktowanie w czacie" (ten komputer) - pole skrotu i zapis do `~/.sdd-kit/config.json`
+  (`POST /api/chat/dictate-keys`, `dictateKeys`); tylko w blokach DYKTOWANIE (takze w `info.html`).
+
 ## Wycofanie dyktowania
 1. Usun `plugins/sdd/board/dictate.js` i jego test `board/test/dictate.test.js`.
-2. W `server.js` i `ui.js` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.
+2. W `server.js`, `ui.js` i `info.html` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.
 3. Usun AC-CH6/AC-CH7 z tego pliku i linie o dyktowaniu z CHANGELOG nastepnej wersji.
 Bez usuwania kodu: zmienna srodowiskowa `SDD_DICTATE=0` przy starcie sdd-board chowa przycisk i blokuje `/api/chat/dictate`.
 

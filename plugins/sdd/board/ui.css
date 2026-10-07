@@ -157,7 +157,7 @@ a:hover{text-decoration:underline}
 /* Okno Claude Code z prawej (0.25.0, docs/specs/claude-dock.md). Strona zweza sie o szerokosc okna. */
 html.claude-on{padding-right:var(--claude-w)}
 /* Okno zawsze czarne jak terminal, niezaleznie od motywu strony (zmiana 0.25.0, prosba usera) - wlasne tokeny okna */
-.cdock:not(.chatmode){--panel:#000;--bg:#141414;--ink:#e6e6e6;--muted:#8c8c8c;--line:#2e2e2e;--sel:#3a3d41;color-scheme:dark}
+.cdock:not(.chatmode){--panel:#000;--bg:#141414;--ink:#e6e6e6;--muted:#8c8c8c;--line:#2e2e2e;--sel:#3a3d41;--hover:#2a2a2a;--faint:#6a6a6a;--input:#141414;--input-line:#3a3a3a;color-scheme:dark}
 .cdock{position:fixed;top:0;right:0;bottom:0;width:var(--claude-w);z-index:40;display:none;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);color:var(--ink);font-family:var(--sans)}
 html.claude-on .cdock{display:flex}
 /* Panel karteczki tablicy od 0.33.0 stoi w ukladzie (.work), nie jest fixed - okno Claude go nie przesuwa (0.34.1, AC-T14);

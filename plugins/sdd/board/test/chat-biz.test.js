@@ -11,15 +11,15 @@ const chat = require('../chat');
 const ui = require('../ui.js');
 
 test('AC-IS9: BIZ - takze nowa decyzja jednym-dwoma zdaniami, pelny wpis tylko na prosbe', () => {
-  assert.match(skill, /takze przy nowej decyzji D/);
-  assert.match(skill, /Pelny wpis[^\n]*tylko na prosbe/);
+  assert.match(skill, /Tak samo przy nowej decyzji D/);
+  assert.match(skill, /Pelny wpis \(rodzaj, tresc,\s+powod, kaskada\) pokazujesz tylko na prosbe/);
   assert.match(skill, /sposób rozliczenia miesiąca bierzemy z okresu obowiązującego 1\. dnia miesiąca/);
   assert.doesNotMatch(skill, /Pelny wpis \(rodzaj, tresc, kaskada, powod\) pokazujesz tylko, gdy cos sie dzieje/);
 });
 
 test('AC-IS10: BIZ - nowe pytania i kaskada bez komentarza; sprzecznosc jednym zdaniem', () => {
   assert.match(skill, /Nowe pytania odlozone na pozniej, kaskade i numery zapisujesz bez komentarza/);
-  assert.match(skill, /sprzecznosc[^\n]*jednym zdaniem/i);
+  assert.match(skill, /sprzecznosc z wczesniejsza decyzja albo obalenie zalozenia: jednym zdaniem/i);
 });
 
 test('AC-IS11: wznowiona rozmowa - nie powtarzasz pytania z odpowiedzia w sesji', () => {
@@ -37,4 +37,12 @@ test('AC-CH9: czat - po polsku, bez komentowania krokow, odczyt przez proste pol
   const src = fs.readFileSync(path.join(B, 'ui.js'), 'utf8');
   assert.doesNotMatch(src, /terminalu \(<\/>\)/);
   assert.match(src, /pominięto polecenie spoza czatu/);
+});
+
+test('AC-IS15: BIZ - parafraza jest pytaniem; "tak" = zapis bez komentarza, inna odpowiedz = dopytanie', () => {
+  assert.match(skill, /Parafraza jest pytaniem/);
+  assert.match(skill, /"tak"[^\n]*zapisujesz[^\n]*bez komentarza/);
+  assert.match(skill, /"nie" albo inna odpowiedz[^\n]*dopytujesz/);
+  assert.match(skill, /Nie musisz ich mieć w obliczeniach\? \(Q-049\)/);
+  assert.doesNotMatch(skill, /Z tego robie nowa decyzje|Zapisuj[eę]\? \(Q-048\)/);
 });
