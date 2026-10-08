@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.40.1] - 2026-10-08
+- Czat: tabele wyswietlane jako tabele (naglowek, linie, przewijanie w poziomie, formatowanie w komorkach) zamiast
+  tekstu z kreskami, np. podsumowanie /sdd:domain (docs/specs/claude-chat.md AC-CH16).
+- Czat: gdy Claude czeka na odpowiedz, propozycja odpowiedzi (np. "Tak, zatwierdzam") jest juz wpisana w pole wiadomosci -
+  zaznaczona, wiec Enter ja wysyla, a pisanie albo dyktowanie ja zastepuje (AC-CH17).
+
 ## [0.40.0] - 2026-10-08
 - Styl BIZ bez zbednych powtorzen (docs/specs/interview-style.md AC-IS17, uwaga usera po wywiadzie na fv-manager:
   "jak mam dobrej jakosci odpowiedz to po co powtarzac"): jasna i pelna odpowiedz jest zapisywana od razu, a Claude

@@ -10,7 +10,9 @@ const terminal = require('./terminal');
 const STYLE_PROMPT = {
   biz: 'Ta rozmowa toczy sie w oknie czatu panelu sdd-board. Wywiad i warsztat prowadzisz w stylu BIZ (sekcja "Styl rozmowy ' +
     '(BIZ / INZ)" w skillu /sdd:interview) - niezaleznie od interview_style w SDD.yaml. Piszesz zwyklym tekstem: akapity, ' +
-    'pogrubienie, listy; bez blokow kodu, tabel i ramek. Piszesz tylko po polsku. Nie opisuj swoich krokow (czytanie, ' +
+    'pogrubienie, listy, krotkie tabele; bez blokow kodu i ramek. Gdy czekasz na odpowiedz rozmowcy, w ostatniej linii ' +
+    'podaj propozycje odpowiedzi w formacie [[odpowiedz: …]] - krotko, slowami rozmowcy, np. [[odpowiedz: Tak, zatwierdzam]]; ' +
+    'panel wpisze ja w pole wiadomosci (nie powtarzaj jej w tresci). Piszesz tylko po polsku. Nie opisuj swoich krokow (czytanie, ' +
     'szukanie, zapisywanie plikow) - panel pokazuje je sam. Do szukania w plikach uzywaj narzedzi Grep i Read. Polecenia ' +
     'powloki inne niz odczyt sa tu zablokowane - gdy sa potrzebne, powiedz jednym zdaniem, ze trzeba przelaczyc okno na ' +
     'terminal (ikona </>).',

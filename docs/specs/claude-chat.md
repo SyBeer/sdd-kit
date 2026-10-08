@@ -104,6 +104,18 @@ uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem,
   odpowiedz, "Kontynuujmy" ustawia zegar na N min; wpisane "tak" / "kontynu…" tez; przyciski nie wracaja po odpowiedzi.
   Sprawdzone 2026-10-08 z udawanym Claude: przyciski pod pytaniem, klik -> "Kontynuujmy.", zegar "⏱ 9:59", nastepne pytanie.
 
+## Zmiana 0.40.1 (uwagi usera 2026-10-08: tabela z podsumowania /sdd:domain wyswietlala sie jako tekst z kreskami;
+"jezeli spodziewasz sie odpowiedzi - wpisz propozycje w pole")
+- **AC-CH16** `chatMd`: tabela markdown (wiersze `| a | b |`, opcjonalna linia `|---|` po naglowku) -> `<table>` w `div.tbl`
+  (przewijanie w poziomie), naglowek `th`, formatowanie i escapowanie w komorkach, pierwsza kolumna bez lamania;
+  instrukcja czatu nie zabrania juz krotkich tabel.
+- **AC-CH17** Propozycja odpowiedzi: instrukcja czatu prosi Claude o ostatnia linie `[[odpowiedz: …]]`, gdy czeka na
+  odpowiedz; `replyHint(text)` usuwa znacznik z dymka i zwraca propozycje (zapasowo z "Odpisz „…”"); okno wpisuje ja
+  w puste pole raz na wiadomosc, zaznaczona (pisanie albo dyktowanie ja zastepuje, Enter wysyla), nie obok przyciskow
+  czasu / kontynuacji.
+  Sprawdzone 2026-10-08 z udawanym Claude: tabela 3 kolumny z pogrubieniem i `kod`, znacznik niewidoczny, w polu
+  "Tak, zatwierdzam" zaznaczone, Enter wyslal, kolejna wiadomosc bez propozycji.
+
 ## Wycofanie dyktowania
 1. Usun `plugins/sdd/board/dictate.js` i jego test `board/test/dictate.test.js`.
 2. W `server.js`, `ui.js` i `info.html` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.
@@ -111,4 +123,5 @@ uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem,
 Bez usuwania kodu: zmienna srodowiskowa `SDD_DICTATE=0` przy starcie sdd-board chowa przycisk i blokuje `/api/chat/dictate`.
 
 ## Testy (TDD, przed kodem)
-`board/test/chat.test.js` (AC-CH1..AC-CH5), `board/test/dictate.test.js` (AC-CH6, AC-CH7).
+`board/test/chat.test.js` (AC-CH1..AC-CH5), `board/test/dictate.test.js` (AC-CH6, AC-CH7),
+`board/test/chat-reply.test.js` (AC-CH16, AC-CH17).

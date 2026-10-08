@@ -196,18 +196,41 @@
     return esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
   }
+  // Tabela markdown (0.40.1, AC-CH16): wiersze "| a | b |", opcjonalna linia "|---|---|" po naglowku
+  const TROW = /^\s*\|.*\|\s*$/, TSEP = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+  function chatCells(l) { return l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (c) { return chatInline(c.trim()); }); }
+  function chatTable(rows) {
+    let head = null;
+    if (rows.length > 1 && TSEP.test(rows[1])) { head = chatCells(rows[0]); rows = rows.slice(2); }
+    const tr = function (cells, tag) { return '<tr>' + cells.map(function (c) { return '<' + tag + '>' + c + '</' + tag + '>'; }).join('') + '</tr>'; };
+    return '<div class="tbl"><table>' + (head ? '<thead>' + tr(head, 'th') + '</thead>' : '') +
+      '<tbody>' + rows.filter(function (r) { return !TSEP.test(r); }).map(function (r) { return tr(chatCells(r), 'td'); }).join('') + '</tbody></table></div>';
+  }
   function chatMd(text) {
-    const out = []; let list = null, para = [];
+    const out = []; let list = null, para = [], table = [];
     const flush = function () { if (para.length) { out.push('<p>' + para.map(chatInline).join('<br>') + '</p>'); para = []; } };
     const close = function () { if (list) { out.push('</' + list + '>'); list = null; } };
+    const closeT = function () { if (table.length) { out.push(chatTable(table)); table = []; } };
     String(text || '').replace(/\r/g, '').split('\n').forEach(function (l) {
+      if (TROW.test(l) || (table.length && TSEP.test(l))) { flush(); close(); table.push(l); return; }
+      closeT();
       const m = l.match(/^\s*(?:([-*•])|(\d+)[.)])\s+(.*)$/);
       if (m) { flush(); const t = m[2] ? 'ol' : 'ul'; if (list !== t) { close(); out.push('<' + t + '>'); list = t; } out.push('<li>' + chatInline(m[3]) + '</li>'); return; }
       if (!l.trim()) { flush(); close(); return; }
       close(); para.push(l.trim());
     });
-    flush(); close();
+    flush(); close(); closeT();
     return out.join('');
+  }
+  // Propozycja odpowiedzi (0.40.1, AC-CH17): znacznik "[[odpowiedz: …]]" z instrukcji czatu, zapasowo "Odpisz „…”"
+  function replyHint(text) {
+    let t = String(text || ''), hint = '';
+    const re = /\[\[\s*odpowied[zź]\s*:\s*([^\]]{1,200}?)\s*\]\]/gi;
+    let m;
+    while ((m = re.exec(t))) hint = m[1].trim();
+    t = t.replace(re, '').replace(/\s+$/, '');
+    if (!hint) { const o = /(?:Odpisz|Napisz|Odpowiedz)\s+[„"»]([^”"«\n]{1,60})[”"«]/i.exec(t); if (o) hint = o[1].trim(); }
+    return { text: t, hint: hint };
   }
   // Dzialania Claude w jednej linijce: "zapisano A.md, B.md · odczyt 2 plików · skill interview"
   const WRITES = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'], READS = ['Read', 'Glob', 'Grep'];
@@ -244,7 +267,7 @@
   function clockText(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
   function clockState(ms) { return ms <= 0 ? 'over' : ms <= 5 * 60e3 ? 'low' : ''; }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -612,7 +635,7 @@
         if (e.kind === 'init' || e.kind === 'done') return;
         flushTools();
         if (e.kind === 'user') out.push('<div class="m u">' + esc(e.text).replace(/\n/g, '<br>') + '</div>');
-        else if (e.kind === 'text') out.push('<div class="m a">' + chatMd(e.text) + '</div>');
+        else if (e.kind === 'text') out.push('<div class="m a">' + chatMd(replyHint(e.text).text) + '</div>');
         else if (e.kind === 'denied') out.push('<div class="tool den" title="' + esc(e.text) + '"><i>✕</i>pominięto polecenie spoza czatu – w czacie tylko odczyt i zapis w module; resztę zrób w terminalu (&lt;/&gt;)</div>');
         else if (e.kind === 'start') out.push('<div class="sys">' + (e.resume ? 'rozmowa wznowiona' : 'nowa rozmowa') + ' · styl ' + (e.style === 'inz' ? 'INŻ' : 'BIZ') + '</div>');
         else if (e.kind === 'exit') out.push('<div class="sys">rozmowa zakończona</div>');
@@ -643,7 +666,7 @@
       el.title = 'Czas na rozmowę: ' + c.min + ' min - kliknij, żeby zmienić';
       if (left > 0) clockTimer = setTimeout(clockTick, 1000);
     }
-    let contFor = null;
+    let contFor = null, hintFor = null;
     function quickShow() {
       const last = clog.filter(function (e) { return e.kind === 'text' || e.kind === 'user'; }).pop();
       const lastText = cstate.running && last && last.kind === 'text' ? last.text : '';
@@ -651,6 +674,12 @@
       const cont = q('.cd-cont'), show = !!lastText && asksContinue(lastText) && contFor !== last;
       cont.hidden = !show;
       if (show) { const m = parseMinutes(lastText) || 10; const b = cont.querySelector('[data-cont="1"]'); b.textContent = 'Kontynuujmy (+' + m + ' min)'; b.setAttribute('data-min', m); cont.last = last; }
+      // propozycja odpowiedzi w polu (AC-CH17): raz na wiadomosc, tylko w puste pole i nie obok przyciskow
+      const t = q('.cd-input'), hint = lastText ? replyHint(lastText).hint : '';
+      if (hint && hintFor !== last && !t.value.trim() && q('.cd-quick:not(.cd-cont)').hidden && cont.hidden) {
+        hintFor = last; t.value = hint; t.classList.add('hinted');
+        if (document.activeElement === t) t.select();
+      }
     }
     q('.cd-cont').onclick = function (e) {
       const b = e.target.closest('button[data-cont]'); if (!b) return;
@@ -672,7 +701,7 @@
     function chatSend() {
       const t = q('.cd-input'), text = t.value.trim();
       if (!text || !cstate.running) return;
-      t.value = '';
+      t.value = ''; t.classList.remove('hinted');
       const tq = q('.cd-quick:not(.cd-cont)');
       if (!tq.hidden) { const min = parseMinutes(text); if (min) clockSet(min); quickOff = true; tq.hidden = true; }
       const cq = q('.cd-cont');
@@ -680,6 +709,9 @@
       api('/api/chat/send', { text: text }).catch(function (e) { msg(e.message); t.value = text; });
     }
     q('.cd-send').onclick = chatSend;
+    // propozycja zaznaczona: nowy tekst ja zastepuje, Enter wysyla
+    q('.cd-input').addEventListener('focus', function () { if (this.classList.contains('hinted')) this.select(); });
+    q('.cd-input').addEventListener('input', function () { this.classList.remove('hinted'); });
     q('.cd-input').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); chatSend(); }
     });
