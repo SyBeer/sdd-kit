@@ -201,8 +201,167 @@
       '<div class="right">' + (page === 'board' ? '<span class="slot-q"></span><span class="vsep" aria-hidden="true"></span>' : '') +
       back +
       '<button type="button" class="ic theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
+      (b ? '' : '<button type="button" class="ic save" title="Zapisz wersję" aria-label="Zapisz wersję" aria-expanded="false" aria-haspopup="dialog">' + SAVE_SVG + '</button>') +
       (cfg ? '<a class="ic cfg" href="' + cfg + '" title="Konfiguracja" aria-label="Konfiguracja"' + (page === 'config' ? ' aria-current="page"' : '') + '>⚙︎</a>' : '') +
       claude + '</div>';
+  }
+
+  // ---------------------------------------------------------------- Zapisz wersje przy zebatce (0.42.0, docs/specs/quick-save.md)
+  const SAVE_SVG = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5 2.5v3.5h5V2.5"/><rect x="4.5" y="9" width="7" height="4.5"/></svg>';
+  function savePopHtml(b) {
+    return '<div class="qs-pop" role="dialog" aria-label="Zapisz wersję"><div class="mh">Zapisz wersję</div>' +
+      '<p class="qs-hint">Ważny moment z nazwą, np. pokazane biznesowi – wspólny dla zespołu.</p>' +
+      '<div class="qs-row"><input type="text" class="fld" id="qs-name" placeholder="nazwa wersji" autocomplete="off">' +
+      '<button type="button" class="btn p" id="qs-save">Zapisz wersję</button></div>' +
+      '<p class="qs-msg" id="qs-msg" aria-live="polite"></p>' +
+      '<a href="' + esc((b || '') + '/config#kopia') + '" class="qs-all">Zobacz poprzednie wersje</a></div>';
+  }
+  // res = { name, version } po udanym POST /api/copy/version; err = blad z serwera
+  function saveResult(res, err) {
+    if (err && err.name === 'AbortError') return { ok: false, html: 'Serwer nie odpowiada. Zamknij albo odśwież inne karty panelu sdd-kit i spróbuj ponownie.' };
+    if (err) return { ok: false, html: esc(err.message || err) };
+    const v = res && res.version || {};
+    return { ok: true, html: 'Zapisano: ' + esc(res && res.name) + (v.sent ? ' · na serwerze' : '') };
+  }
+  function savePop(btn, b) {
+    if (!btn || typeof document === 'undefined') return;
+    let pop = null;
+    function close() { if (pop) { pop.remove(); pop = null; } btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('mousedown', outside, true); }
+    function outside(e) { if (pop && !pop.contains(e.target) && !btn.contains(e.target)) close(); }
+    function send() {
+      const i = pop.querySelector('#qs-name'), go = pop.querySelector('#qs-save'), msg = pop.querySelector('#qs-msg'), n = i.value.trim();
+      if (!n) { i.focus(); return; }
+      go.disabled = true; go.textContent = 'Zapisuję…'; msg.className = 'qs-msg'; msg.textContent = '';
+      // AC-QS5: prosba moze czekac w kolejce przegladarki (limit 6 polaczen) - po 15 s przerwij i powiedz dlaczego
+      const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const tm = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+      fetch(b + '/api/copy/version', { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }), signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (x) { if (!r.ok) throw new Error(x.error || ('HTTP ' + r.status)); return x; }); })
+        .then(function (x) { return saveResult({ name: n, version: x.version }, null); }, function (e) { return saveResult(null, e); })
+        .then(function (x) { clearTimeout(tm); if (!pop) return; go.disabled = false; go.textContent = 'Zapisz wersję'; msg.innerHTML = x.html; msg.classList.add(x.ok ? 'ok' : 'err'); if (x.ok) i.value = ''; i.focus(); });
+    }
+    btn.onclick = function () {
+      if (pop) { close(); return; }
+      btn.parentNode.insertAdjacentHTML('beforeend', savePopHtml(b));
+      pop = btn.parentNode.lastElementChild;
+      btn.setAttribute('aria-expanded', 'true');
+      pop.querySelector('#qs-save').onclick = send;
+      pop.onkeydown = function (e) { if (e.key === 'Enter' && e.target.id === 'qs-name') send(); else if (e.key === 'Escape') { close(); btn.focus(); } };
+      document.addEventListener('mousedown', outside, true);
+      pop.querySelector('#qs-name').focus();
+    };
+  }
+
+  // Pokaz zmiany / Przywroc przy wersjach (0.42.0, docs/specs/version-restore.md AC-VR5)
+  // dwie czesci (AC-VR5, AC-VR8): co nowego w tej wersji (wzgledem poprzedniej) i od tej wersji do dzis
+  const VSINCE = { st: { changed: 'zmieniony', added: 'dodany po tej wersji', removed: 'usunięty po tej wersji' }, was: 'było w wersji', now: 'jest teraz' };
+  const VNEWS = { st: { changed: 'zmieniony', added: 'dodany w tej wersji', removed: 'usunięty w tej wersji' }, was: 'było wcześniej', now: 'jest w tej wersji' };
+  function filesWord(n) {
+    const t = n % 10, h = n % 100;
+    return n === 1 ? 'plik' : (t >= 2 && t <= 4 && (h < 12 || h > 14)) ? 'pliki' : 'plików';
+  }
+  function fileList(files, L, truncated) {
+    const n = files.length;
+    return '<p class="vnote">' + n + ' ' + filesWord(n) + ' · <span class="dl del">-</span> ' + L.was + ' · <span class="dl add">+</span> ' + L.now + '</p>' +
+      files.map(function (f) {
+        const body = f.binary ? '<p class="vnote">plik binarny – bez podglądu</p>' :
+          '<pre class="dp">' + String(f.patch || '').split('\n').map(function (l) {
+            const c = l[0] === '+' ? ' add' : l[0] === '-' ? ' del' : l.slice(0, 2) === '@@' ? ' hunk' : '';
+            return '<span class="dl' + c + '">' + (c === ' hunk' ? '⋯' : esc(l)) + '</span>';
+          }).join('\n') + '</pre>';
+        return '<details class="vf"><summary><span class="vst ' + esc(f.status) + '">' + (L.st[f.status] || esc(f.status)) + '</span> ' +
+          '<span class="path">' + esc(f.file) + '</span>' + (f.binary ? '' : ' <span class="khint">+' + (f.adds | 0) + ' −' + (f.dels | 0) + '</span>') +
+          '</summary>' + body + '</details>';
+      }).join('') + (truncated ? '<p class="vnote">Pokazano część zmian – pliki są duże.</p>' : '');
+  }
+  // "Co się zmieniło w wymaganiach" (0.42.0, docs/specs/version-summary.md AC-VS5): zdania z porownania po kluczach
+  const SGROUP = { board: 'Tablica', QUESTIONS: 'Pytania', DECISIONS: 'Decyzje', ASSUMPTIONS: 'Założenia', GLOSSARY: 'Słownik',
+    RULES: 'Reguły biznesowe', ENTITIES: 'Encje', SYSTEMS: 'Systemy', ACTORS: 'Aktorzy', PRD: 'Wymagania (PRD)', other: 'Inne pliki' };
+  const NTYPE = { ev: 'zdarzenie', cmd: 'komenda', act: 'kto', pol: 'reguła', rm: 'widok', hot: 'nie wiemy', space: 'odstęp' };
+  const NFIELD = { source: 'źródło', ref: 'odwołanie', file: 'plik' };
+  // rzeczownik i rodzaj (n/f/m) z prefiksu ID, bez ID - z pliku
+  const NOUN = { Q: ['pytanie', 'n'], D: ['decyzja', 'f'], A: ['założenie', 'n'], R: ['wymaganie', 'n'], BR: ['reguła', 'f'], S: ['system', 'm'],
+    GLOSSARY: ['pojęcie', 'n'], ACTORS: ['aktor', 'm'], ENTITIES: ['encja', 'f'] };
+  const ADJ = { added: { n: 'Nowe', f: 'Nowa', m: 'Nowy' }, removed: { n: 'Usunięte', f: 'Usunięta', m: 'Usunięty' }, changed: { n: 'Zmienione', f: 'Zmieniona', m: 'Zmieniony' } };
+  const cut = v => { v = String(v == null ? '' : v); return v.length > 60 ? v.slice(0, 60).replace(/\s+\S*$/, '') + '…' : v; };
+  const q = v => '„' + esc(cut(v)) + '”';
+  const nt = t => NTYPE[t] ? ' (' + NTYPE[t] + ')' : '';
+  function sentence(it, group) {
+    if (it.type === 'note') {
+      if (it.change === 'added') return 'Dodano karteczkę ' + q(it.text) + nt(it.noteType) + ' w procesie ' + q(it.lane);
+      if (it.change === 'removed') return 'Usunięto karteczkę ' + q(it.text) + nt(it.noteType) + ' z procesu ' + q(it.lane);
+      if (it.change === 'moved') return 'Przeniesiono karteczkę ' + q(it.text) + nt(it.noteType) + ': ' + q(it.from) + ' → ' + q(it.to);
+      if (it.change === 'text') return 'Zmieniono treść karteczki' + nt(it.noteType) + ': ' + q(it.from) + ' → ' + q(it.to);
+      if (it.change === 'type') return 'Zmieniono typ karteczki ' + q(it.text) + ': ' + esc(NTYPE[it.from] || it.from) + ' → ' + esc(NTYPE[it.to] || it.to);
+      return 'Zmieniono karteczkę ' + q(it.text) + ': ' + (it.fields || []).map(function (f) { return esc(NFIELD[f] || f); }).join(', ');
+    }
+    if (it.type === 'lane') return (it.change === 'added' ? 'Nowy proces ' : 'Usunięty proces ') + q(it.name);
+    if (it.type === 'title') return 'Zmieniono ' + (it.change === 'title' ? 'tytuł' : 'podtytuł') + ' tablicy: ' + q(it.from) + ' → ' + q(it.to);
+    if (it.type === 'file') return ({ added: 'Nowy plik ', removed: 'Usunięty plik ' }[it.change] || 'Zmieniony plik ') + esc(it.file || '');
+    const m = String(it.key).match(/^([A-Z]{1,3})-\d/), noun = NOUN[m ? m[1] : group] || ['sekcja', 'f'];
+    let z = ADJ[it.change][noun[1]] + ' ' + noun[0] + ' ' + (m ? esc(it.key) + (it.title ? ' – ' + q(it.title) : '') : q(it.key));
+    if (it.change === 'changed') z += ': ' + (it.fields || []).map(function (f) {
+      return esc(f.name) + ('from' in f ? ' (' + esc(cut(f.from)) + ' → ' + esc(cut(f.to)) + ')' : '');
+    }).join(', ');
+    return z;
+  }
+  function summaryHtml(summary) {
+    const groups = (summary || []).filter(function (g) { return g.items && g.items.length; });
+    if (!groups.length) return '<p class="vnote">Tylko zmiany techniczne (kolejność, daty) – treść wymagań bez zmian.</p>';
+    return groups.map(function (g) {
+      const list = g.items.map(function (it) { return sentence(Object.assign({ file: g.file }, it), g.group); });
+      const more = list.length > 12 ? '<li class="vmore">i jeszcze ' + (list.length - 12) + '…</li>' : '';
+      return '<div class="vsg"><b>' + esc(SGROUP[g.group] || g.group) + '</b><ul>' + list.slice(0, 12).map(function (z) { return '<li>' + z + '</li>'; }).join('') + more + '</ul></div>';
+    }).join('');
+  }
+  // jedna czesc: zdania, pod nimi zwiniete szczegoly (linie)
+  function partHtml(files, L, truncated, summary) {
+    return '<p class="vsub">Co się zmieniło w wymaganiach</p>' + summaryHtml(summary) +
+      '<details class="vdet"><summary>Szczegóły – linie w plikach</summary>' + fileList(files, L, truncated) + '</details>';
+  }
+  function diffHtml(res) {
+    res = res || {};
+    const news = res.news || { base: { kind: 'none', name: '' }, files: [], truncated: false }, base = news.base || {};
+    const vs = base.kind === 'version' ? 'w porównaniu z wersją „' + esc(base.name) + '”' : base.kind === 'copy' ? 'z poprzednią kopią' : 'pierwsza kopia – wszystko nowe';
+    const since = res.files || [];
+    return '<h4 class="vh">Co nowego w tej wersji <span class="khint">' + vs + '</span></h4>' +
+      (news.files && news.files.length ? partHtml(news.files, VNEWS, news.truncated, news.summary) : '<p class="vnote">Ta wersja niczego nie zmieniła.</p>') +
+      '<h4 class="vh">Od tej wersji do dziś</h4>' +
+      (since.length ? partHtml(since, VSINCE, res.truncated, res.summary) : '<p class="vnote">Od tej wersji nic się nie zmieniło.</p>');
+  }
+  function restoreAsk(v) {
+    return '<div class="vask"><p>Przywrócić wersję „<b>' + esc(v.name) + '</b>”' + (v.at ? ' z ' + esc(copyTime(v.at)) : '') + '? ' +
+      'Pliki w requirements/ wrócą do stanu z tej wersji, a pliki dodane później znikną. ' +
+      'Najpierw zapiszę obecny stan jako wersję „przed przywróceniem …” – wrócisz do niego tym samym przyciskiem.</p>' +
+      '<div class="rowc"><button type="button" class="btn p" data-vrestore-go="' + esc(v.tag) + '">Przywróć</button>' +
+      '<button type="button" class="btn" data-vrestore-no>Anuluj</button></div></div>';
+  }
+
+  // Polaczenie na zywo (0.42.0, AC-LC1): w schowanej karcie zamkniete - przegladarka ma tylko 6 polaczen na serwer,
+  // a serwer po polaczeniu i tak wysyla pelny stan. env (testy): { EventSource, document }.
+  function liveSource(url, h, env) {
+    env = env || {};
+    const ES = env.EventSource || (typeof EventSource !== 'undefined' ? EventSource : null);
+    const doc = env.document || (typeof document !== 'undefined' ? document : null);
+    h = h || {};
+    let es = null;
+    function open() {
+      if (es || !ES) return;
+      es = new ES(url);
+      es.onopen = function (e) { if (h.open) h.open(e); };
+      es.onmessage = function (e) { if (h.message) h.message(e); };
+      es.onerror = function (e) {
+        if (h.error) h.error(e);
+        // retry (tablica): wlasne ponowienie zamiast wbudowanego w EventSource
+        if (h.retry) { shut(); wait(function () { if (!(doc && doc.hidden)) open(); }, h.retry); }
+      };
+    }
+    const wait = env.setTimeout || function (fn, ms) { setTimeout(fn, ms); };
+    function shut() { if (es) { es.close(); es = null; } }
+    if (doc && doc.addEventListener) doc.addEventListener('visibilitychange', function () { if (doc.hidden) shut(); else open(); });
+    if (!(doc && doc.hidden)) open();
+    return { close: shut };
   }
 
   // ---------------------------------------------------------------- czat (0.38.0, docs/specs/claude-chat.md)
@@ -318,7 +477,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -356,6 +515,7 @@
     bar.innerHTML = topbarHtml(page, b, t);
     slots.forEach(function (el) { const to = bar.querySelector('.slot-' + el.getAttribute('data-slot')); if (to) to.replaceWith(el); });
     const tb = bar.querySelector('.theme-btn');
+    savePop(bar.querySelector('.save'), b);
     if (tb) tb.onclick = function () { save(pickTheme(tb.getAttribute('data-next'), false)); apply(); mark(bar, load()); };
     // zmiana w innej karcie (panel <-> tablica)
     window.addEventListener('storage', function (e) {

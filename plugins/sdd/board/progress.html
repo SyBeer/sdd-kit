@@ -629,10 +629,10 @@ dialog .err,.missing .err{color:var(--hot-ink);font-size:12px;font-weight:600;mi
   if(location.hash==='#nowy-modul'){ history.replaceState(null,'',location.pathname); $('#moderr').textContent=''; $('#dlg').showModal(); $('#modform').elements['name'].focus(); }
 
   function connect(){
-    var es=new EventSource(BASE+'/progress-events');
-    es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
-    es.onmessage=function(e){var p=JSON.parse(e.data);render(p);SddUI.showCopy(p.copy)};
-    es.onerror=function(){$('#conn').textContent='rozłączono, ponawiam…';$('#live').classList.add('off')};
+    SddUI.liveSource(BASE+'/progress-events',{
+      open:function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')},
+      message:function(e){var p=JSON.parse(e.data);render(p);SddUI.showCopy(p.copy)},
+      error:function(){$('#conn').textContent='rozłączono, ponawiam…';$('#live').classList.add('off')}});
   }
   connect();
 })();

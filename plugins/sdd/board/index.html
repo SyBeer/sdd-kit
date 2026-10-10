@@ -1010,9 +1010,9 @@ html.printing{padding-right:0!important}
   }
   $('#sw-ok').onclick=function(){ $('#switched').hidden=true; };
   function connect(){
-    var es=new EventSource(BASE+'/events');
-    es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
-    es.onmessage=function(e){
+    SddUI.liveSource(BASE+'/events',{retry:1500,
+    open:function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')},
+    message:function(e){
       var b=JSON.parse(e.data), sw=ops.boardSwitched(knownFile,b);
       SddUI.showCopy(b._copy);
       if(b._file) knownFile=b._file;
@@ -1027,8 +1027,8 @@ html.printing{padding-right:0!important}
       if(got==='external'&&had) say('Tablicę zmieniono poza tą kartą (np. agent) – historię cofania wyczyszczono.');
       lastModuleName=(b._module&&b._module.name)||'';
       undoButtons(); safeRender(); pdfRendered();
-    };
-    es.onerror=function(){$('#conn').textContent='przerwane, łączę…';$('#live').classList.add('off');es.close();setTimeout(connect,1500)};
+    },
+    error:function(){$('#conn').textContent='przerwane, łączę…';$('#live').classList.add('off')}});
   }
   connect();
 })();

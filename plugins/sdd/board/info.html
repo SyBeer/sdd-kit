@@ -120,6 +120,34 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .tag.ok{background:var(--st-done)}.tag.warn{background:var(--warn)}.tag.idle{background:var(--line);color:var(--ink)}
 .chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.chk input{width:16px;height:16px;accent-color:var(--ok)}
 #kopia code{font:11.5px var(--mono);overflow-wrap:anywhere}
+/* Pokaz zmiany / Przywroc (0.42.0) */
+#verlist li{flex-wrap:wrap}
+#vermsg:empty{display:none}
+.vbtns{display:inline-flex;gap:6px;margin-left:auto}
+.btn.sm{height:24px;padding:0 8px;font-size:11.5px}
+.vbox{flex:1 1 100%;margin-top:6px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:3px;background:var(--bg);min-width:0}
+.vbox[hidden]{display:none}
+.vnote{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.vh{margin:4px 0 6px;font:600 10.5px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.vh .khint{font:400 11.5px var(--sans);letter-spacing:0;text-transform:none;color:var(--muted);margin-left:6px}
+.vsub{margin:2px 0 6px;font-size:12px;font-weight:600;color:var(--ink)}
+.vsg{margin:0 0 8px;font-size:12.5px}
+.vsg>b{display:block;font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.vsg ul{margin:0;padding-left:18px}
+.mods .vsg li{display:list-item;margin:2px 0;padding:0;border:0;border-radius:0;background:none;line-height:1.45}
+.mods .vsg .vmore{list-style:none;margin-left:-18px;color:var(--muted)}
+.vdet{margin-top:6px}
+.vdet>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.vdet[open]>summary{margin-bottom:6px}
+.vh~.vh{margin-top:12px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.vf{border-top:1px solid var(--line-soft);padding:4px 0}
+.vf summary{cursor:pointer;font-size:12.5px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.vf .path{font:12px var(--mono);overflow-wrap:anywhere}
+.vst{font:600 10.5px var(--mono);color:var(--muted)}
+.vst.added{color:var(--ok)}.vst.removed{color:var(--hot-ink)}
+.dp{margin:6px 0 2px;padding:6px 8px;max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--line-soft);border-radius:2px;font:11.5px/1.5 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.dl.add{color:var(--ok)}.dl.del{color:var(--hot-ink)}.dl.hunk{color:var(--faint)}
+.vask p{margin:0 0 8px;font-size:12.5px}
 .tag.hotc{background:transparent;border:1px solid var(--hot-ink);color:var(--hot-ink);padding:3px 5px}
 .kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));border-bottom:1px solid var(--line-soft)}
 .kinds>div{padding:12px 16px;border-left:1px solid var(--line-soft)}
@@ -295,10 +323,12 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
   var timer=null;
   function refresh(){ clearTimeout(timer); timer=setTimeout(load,150); }
   if(BASE!=='/demo/start'){
-    var es=new EventSource(BASE+'/progress-events');
-    es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
-    es.onerror=function(){$('#conn').textContent='rozłączono - uruchom sdd-board';$('#live').classList.add('off')};
-    es.onmessage=function(e){ var p=JSON.parse(e.data); header(p); SddUI.showCopy(p.copy); refresh(); };
+    // polaczenie zamkniete w schowanej karcie (AC-LC1); tresc od razu, bez czekania na pierwsze zdarzenie (0.42.0, AC-LC3)
+    SddUI.liveSource(BASE+'/progress-events',{
+      open:function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')},
+      error:function(){$('#conn').textContent='rozłączono - uruchom sdd-board';$('#live').classList.add('off')},
+      message:function(e){ var p=JSON.parse(e.data); header(p); SddUI.showCopy(p.copy); refresh(); }});
+    load();
   } else { $('#conn').textContent='podgląd'; SddUI.demoBar('start'); load(); }
 
   function load(){
@@ -595,11 +625,14 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       ((v.skipped||[]).length?frow('Pominięte pliki','większe niż 10 MB – nie trafiają do kopii','<ul class="mods">'+v.skipped.map(function(f){
         return '<li><span class="path">'+esc(f.file)+'</span><span class="khint">'+Math.round(f.size/1048576)+' MB</span></li>'}).join('')+'</ul>'):'')+
       frow('Wersje','ważny moment z nazwą, np. „pokazane biznesowi” – wspólny dla zespołu',
-        ((v.versions||[]).length?'<ul class="mods" id="verlist">'+v.versions.map(function(x){
-          return '<li><span class="val">'+esc(x.name)+'</span><span class="khint">'+esc(copyWhen(x.at))+' · '+(x.sent?'na serwerze':'tylko na tym komputerze')+'</span></li>'}).join('')+'</ul>'
+        ((v.versions||[]).length?'<ul class="mods" id="verlist">'+v.versions.map(function(x,i){
+          return '<li><span class="val">'+esc(x.name)+'</span><span class="khint">'+esc(copyWhen(x.at))+' · '+(x.sent?'na serwerze':'tylko na tym komputerze')+'</span>'+
+            // Pokaz zmiany / Przywroc (0.42.0, docs/specs/version-restore.md AC-VR6)
+            (demo?'':'<span class="vbtns"><button type="button" class="btn sm" data-vdiff="'+i+'">Pokaż zmiany</button>'+
+              '<button type="button" class="btn sm" data-vrestore="'+i+'">Przywróć</button></span><div class="vbox" hidden></div>')+'</li>'}).join('')+'</ul>'
           :'<ul class="mods" id="verlist"></ul><p class="knote">Nie ma jeszcze zapisanych wersji.</p>')+
         (demo||!r.git?'':'<div class="rowc"><input type="text" class="fld w280" id="f-ver" placeholder="nazwa, np. pokazane biznesowi" autocomplete="off"><button class="btn" type="button" id="versave">Zapisz wersję</button></div>'+
-          '<p class="err" id="vererr"></p>'))+
+          '<p class="err" id="vererr"></p><p class="ok" id="vermsg"></p>'))+
       '</div>';
     box.querySelector('.bb').outerHTML=h;
     if(location.hash==='#kopia'&&!copyScrolled){ copyScrolled=true; box.scrollIntoView({block:'start'}); }
@@ -610,6 +643,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       if(t.id==='copynow'){ t.disabled=true; t.textContent='Robię kopię…';
         api('/api/copy/now',{method:'POST'}).then(function(x){ copyRender(x,c); }).catch(function(err){ t.disabled=false; t.textContent='Zrób kopię teraz'; $('#copyerr').textContent=err.message; }); }
       else if(t.id==='versave') verSave();
+      else verAction(t,v,c);
     };
     box.onchange=function(e){ stop(e); if(e.target.id!=='f-copy') return;
       var on=e.target.checked; e.target.disabled=true;
@@ -625,6 +659,38 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     }
   }
   // KOPIA I WERSJE koniec
+  // Pokaz zmiany / Przywroc przy wersjach (0.42.0, docs/specs/version-restore.md AC-VR6); przyciski niosa numer wersji
+  // na liscie. Otwarty panel pod wersja wstrzymuje odswiezanie sekcji (copyTyping).
+  function verAction(t,v,c){
+    var list=v.versions||[];
+    function vbox(){ return t.closest('li').querySelector('.vbox'); }
+    function close(vb){ vb.hidden=true; vb.innerHTML=''; vb.removeAttribute('data-show'); copyTyping=false; }
+    if(t.hasAttribute('data-vdiff')){
+      var vb=vbox(), x=list[+t.getAttribute('data-vdiff')]; if(!x) return;
+      if(vb.getAttribute('data-show')==='diff'){ close(vb); t.textContent='Pokaż zmiany'; return; }
+      t.disabled=true; t.textContent='Porównuję…'; copyTyping=true;
+      api('/api/copy/diff?tag='+encodeURIComponent(x.tag)).then(function(d){
+        vb.innerHTML=SddUI.diffHtml(d); vb.setAttribute('data-show','diff'); vb.hidden=false; t.textContent='Ukryj zmiany';
+      }).catch(function(err){ vb.innerHTML='<p class="err">'+esc(err.message)+'</p>'; vb.removeAttribute('data-show'); vb.hidden=false; t.textContent='Pokaż zmiany'; })
+        .then(function(){ t.disabled=false; });
+    } else if(t.hasAttribute('data-vrestore')){
+      var vb2=vbox(), y=list[+t.getAttribute('data-vrestore')]; if(!y) return;
+      var d=vb2.parentNode.querySelector('[data-vdiff]'); if(d) d.textContent='Pokaż zmiany';
+      vb2.innerHTML=SddUI.restoreAsk(y); vb2.setAttribute('data-show','ask'); vb2.hidden=false; copyTyping=true;
+    } else if(t.hasAttribute('data-vrestore-no')){
+      close(t.closest('.vbox'));
+    } else if(t.hasAttribute('data-vrestore-go')){
+      var vb3=t.closest('.vbox'), id=t.getAttribute('data-vrestore-go'), z=list.filter(function(q){ return q.tag===id; })[0]||{name:id};
+      [].forEach.call(vb3.querySelectorAll('button'),function(b){ b.disabled=true; }); t.textContent='Przywracam…';
+      api('/api/copy/restore',{method:'POST',body:JSON.stringify({tag:id})}).then(function(r){
+        copyTyping=false; copyRender(r,c);
+        var m=$('#vermsg'); if(m) m.textContent='Przywrócono „'+z.name+'”. Poprzedni stan jest na liście jako „'+r.restore.before.name+'”.';
+      }).catch(function(err){
+        [].forEach.call(vb3.querySelectorAll('button'),function(b){ b.disabled=false; }); t.textContent='Przywróć';
+        var e=vb3.querySelector('.err')||vb3.appendChild(document.createElement('p')); e.className='err'; e.textContent=err.message;
+      });
+    }
+  }
   // Wersja w karcie Serwer: ostrzezenia jak w naglowku (serwer / plugin / sesja Claude nieaktualne)
   var versionScrolled=false;
   function versionNote(){
@@ -764,7 +830,6 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       .catch(function(err){ btn.disabled=false; $('#rooterr').textContent=err.message; });
   }
   if(PAGE==='guide'&&BASE==='/demo/start') return;
-  if(PAGE==='guide') load();
 })();
 </script>
 </body>

@@ -7,6 +7,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
+const reqChanges = require('./req-changes');
 
 const MAX_BYTES = 10 * 1024 * 1024;   // wieksze pliki (zwykle surowe zalaczniki) nie trafiaja do kopii
 const PUSH_TIMEOUT = 30000;
@@ -186,6 +187,128 @@ async function listVersions(dir) {
   return (await versionRefs(st)).map(v => ({ tag: v.tag, name: v.name, at: v.at, sent: v.sent }));
 }
 
+// ---------------------------------------------------------------- Pokaz zmiany / Przywroc (0.42.0, docs/specs/version-restore.md)
+const PATCH_FILE = 60 * 1024, PATCH_ALL = 300 * 1024;
+const reqPath = st => (st.rel ? st.rel + '/' : '') + 'requirements';
+// Tylko wersje tego modulu, ktore istnieja - nazwa z zewnatrz (API) nie moze wskazac dowolnego refa
+async function ownVersion(st, tag) {
+  const t = String(tag || '');
+  const ok = t.startsWith('sdd-wersja/' + st.module + '/') && !/\.\.|[\s~^:?*[\\]/.test(t) && await tipOf(st.root, 'refs/tags/' + t);
+  if (!ok) return null;
+  const v = (await versionRefs(st)).find(x => x.tag === t);
+  return { tag: t, name: v ? v.name : t };
+}
+const NO_VERSION = { ok: false, error: 'Nie ma takiej wersji tego modułu.' };
+
+// Puste drzewo (pierwsza kopia - wszystko dodane); przez tymczasowy indeks, bez stdin i bez stalej SHA-1
+async function emptyTree(root) {
+  const idx = path.join(os.tmpdir(), 'sdd-pusty-' + process.pid + '-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.idx');
+  const env = Object.assign({}, process.env, { GIT_INDEX_FILE: idx });
+  try {
+    await git(root, ['read-tree', '--empty'], { env });
+    return line(await git(root, ['write-tree'], { env }));
+  } finally { fs.rmSync(idx, { force: true }); }
+}
+// Porownanie dwoch stanow requirements/ (from -> to); from = null -> puste drzewo (wszystko dodane)
+async function diffTrees(st, from, to) {
+  const req = reqPath(st);
+  if (!from) from = await emptyTree(st.root);
+  const base = ['-c', 'core.quotePath=false', 'diff', '--no-renames', '--no-color', from, to];
+  const [ns, num, pt] = await Promise.all([git(st.root, base.concat(['--name-status', '--', req])),
+    git(st.root, base.concat(['--numstat', '--', req])), git(st.root, base.concat(['-U3', '--', req]))]);
+  if (ns.code || num.code || pt.code) return { error: clean(ns.err || num.err || pt.err) || 'Nie udało się porównać.' };
+  const short = f => f.slice(req.length + 1);
+  const counts = {};
+  line(num).split('\n').filter(Boolean).forEach(l => { const [a, d, f] = l.split('\t'); counts[f] = { a, d }; });
+  const patches = {};
+  ('\n' + pt.out).split(/\ndiff --git /).slice(1).forEach(chunk => {
+    const m = chunk.match(/^a\/(.*?) b\/\1\n/) || chunk.match(/^a\/(.*?) b\//);
+    if (!m) return;
+    const at = chunk.indexOf('\n@@');
+    patches[m[1]] = at < 0 ? '' : chunk.slice(at + 1).replace(/\n$/, '');
+  });
+  const STATUS = { M: 'changed', A: 'added', D: 'removed' };
+  let total = 0, truncated = false;
+  const files = line(ns).split('\n').filter(Boolean).map(l => {
+    const [code, f] = l.split('\t');
+    const cnt = counts[f] || { a: '0', d: '0' }, binary = cnt.a === '-';
+    let patch = binary ? '' : (patches[f] || '');
+    if (patch.length > PATCH_FILE || total + patch.length > PATCH_ALL) { patch = patch.slice(0, Math.max(0, Math.min(PATCH_FILE, PATCH_ALL - total))).replace(/\n[^\n]*$/, ''); truncated = true; }
+    total += patch.length;
+    return { file: short(f), status: STATUS[code[0]] || 'changed', adds: binary ? 0 : +cnt.a, dels: binary ? 0 : +cnt.d, patch, binary };
+  });
+  // "Co się zmieniło w wymaganiach" (docs/specs/version-summary.md AC-VS4): tresc przed i po, porownanie po kluczach
+  const show = async (ref, f) => { const r = await git(st.root, ['show', ref + ':' + req + '/' + f]); return r.code ? '' : r.out; };
+  const summary = await Promise.all(files.map(async f => {
+    const known = f.file.endsWith('board.json') || /\.md$/i.test(f.file);
+    const [a, b] = known && !f.binary ? await Promise.all([f.status === 'added' ? '' : show(from, f.file), f.status === 'removed' ? '' : show(to, f.file)]) : ['', ''];
+    return reqChanges.fileChanges(f.file, a, b, f.status);
+  }));
+  return { files, truncated, summary };
+}
+
+// "Pokaz zmiany" (AC-VR1, AC-VR8): files = od wersji do dzis (pliki na dysku - przez swieza kopie, takze niesledzone),
+// news = co nowego w tej wersji (wzgledem poprzedniej wersji; najstarsza - poprzedniej kopii; pierwsza kopia - od zera)
+async function versionDiff(dir, tag, o = {}) {
+  const st = await repoState(dir);
+  if (!st.git) return { ok: false, error: 'Moduł nie jest repozytorium git.' };
+  const v = await ownVersion(st, tag);
+  if (!v) return NO_VERSION;
+  const c = await makeCopy(dir, o);
+  if (!c.commit) return { ok: false, error: c.error || 'Nie udało się zrobić kopii.' };
+  const refs = await versionRefs(st), i = refs.findIndex(x => x.tag === v.tag), prev = refs[i + 1];
+  let base = { kind: 'none', name: '' }, from = null;
+  if (prev) { base = { kind: 'version', name: prev.name }; from = prev.tag; }
+  else {
+    const parent = await tipOf(st.root, v.tag + '^{commit}^');
+    if (parent) { base = { kind: 'copy', name: '' }; from = parent; }
+  }
+  const [since, news] = await Promise.all([diffTrees(st, v.tag, c.commit), diffTrees(st, from, v.tag)]);
+  if (since.error || news.error) return { ok: false, error: since.error || news.error };
+  return { ok: true, version: v, files: since.files, truncated: since.truncated, summary: since.summary,
+    news: { base, files: news.files, truncated: news.truncated, summary: news.summary } };
+}
+
+// Pliki w requirements/ z drzewa wersji (sciezki wzgledem korzenia repo)
+async function treeList(st, ref) {
+  const r = await git(st.root, ['ls-tree', '-r', '-z', '--name-only', ref, '--', reqPath(st)]);
+  return r.code ? null : r.out.split('\0').filter(Boolean);
+}
+const hhmm = (d, sec) => [d.getHours(), d.getMinutes()].concat(sec ? [d.getSeconds()] : []).map(v => (v < 10 ? '0' : '') + v).join(':');
+
+// Przywrocenie calego requirements/ do wersji; najpierw wersja bezpieczenstwa z obecnym stanem; tylko pliki
+// robocze (git restore --worktree) - HEAD, main i indeks bez zmian; usuwane tylko pliki, ktore sa w wersji bezpieczenstwa (AC-VR2)
+async function restoreVersion(dir, tag, o = {}) {
+  const st = await repoState(dir);
+  if (!st.git) return { ok: false, error: 'Moduł nie jest repozytorium git.' };
+  const v = await ownVersion(st, tag);
+  if (!v) return NO_VERSION;
+  const now = o.now || new Date();
+  let name = 'przed przywróceniem ' + v.name + ' ' + hhmm(now);
+  let before = await makeVersion(dir, name, Object.assign({}, o, { now }));
+  if (!before.ok && /już jest/.test(before.error || '')) {
+    name = 'przed przywróceniem ' + v.name + ' ' + hhmm(now, true);
+    before = await makeVersion(dir, name, Object.assign({}, o, { now }));
+  }
+  if (!before.ok) return { ok: false, error: 'Nie udało się zapisać obecnego stanu przed przywróceniem: ' + before.error };
+  const [cur, ver] = await Promise.all([treeList(st, before.tag), treeList(st, v.tag)]);
+  if (!cur || !ver) return { ok: false, error: 'Nie udało się odczytać plików wersji.' };
+  const keep = new Set(ver), gone = cur.filter(f => !keep.has(f));
+  const reqAbs = path.join(st.root, reqPath(st));
+  gone.forEach(f => {
+    const abs = path.join(st.root, f);
+    fs.rmSync(abs, { force: true });
+    // puste foldery po usunietych plikach - w gore, najdalej do requirements/
+    for (let d = path.dirname(abs); d.startsWith(reqAbs + path.sep); d = path.dirname(d)) {
+      try { fs.rmdirSync(d); } catch (e) { break; }
+    }
+  });
+  // tylko pliki robocze (indeks bez zmian); --overlay: git niczego sam nie usuwa - usuwanie wyzej, z lista z kopii
+  const r = await git(st.root, ['restore', '--source=' + v.tag, '--worktree', '--overlay', '--', reqPath(st)]);
+  if (r.code) return { ok: false, error: clean(r.err) || 'Nie udało się przywrócić plików.', before: { tag: before.tag, name } };
+  return { ok: true, before: { tag: before.tag, name, sent: before.sent, error: before.error || '' }, restored: ver.length, removed: gone.length };
+}
+
 // Tryb kopii z tresci SDD.yaml: copy: remote | local (brak = local)
 function copyMode(yaml) {
   const m = String(yaml || '').match(/^copy:\s*"?([a-z]+)"?/m);
@@ -239,6 +362,16 @@ function createCopier(dir, o = {}) {
         return r;
       });
     },
+    diff: tag => enqueue(() => versionDiff(dir, tag)),
+    restore(tag) {
+      return enqueue(async () => {
+        const remote = mode() === 'remote' && !!(await repoState(dir)).origin;
+        const r = await restoreVersion(dir, tag, { push: remote });
+        if (r.ok && remote) lastError = r.before.error || '';
+        await refresh();
+        return r;
+      });
+    },
     status: () => status,
     skipped: () => skipped,
     refresh: () => enqueue(refresh),
@@ -248,4 +381,4 @@ function createCopier(dir, o = {}) {
 }
 
 module.exports = { MAX_BYTES, gitEnv, slug, repoState, makeCopy, pushCopy, copyStatus, makeVersion, listVersions,
-  copyMode, copyOnce, createCopier };
+  copyMode, copyOnce, createCopier, versionDiff, restoreVersion };

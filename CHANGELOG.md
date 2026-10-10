@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.42.0] - 2026-10-10
+- "Pokaż zmiany" mowi jezykiem wymagan: "Co się zmieniło w wymaganiach" nad szczegolami linii
+  (docs/specs/version-summary.md AC-VS1..VS5, nowy `board/req-changes.js`, bez AI). Tablica po id karteczek: dodane,
+  usuniete, przeniesione miedzy procesami, zmieniona tresc / typ; nowe i usuniete procesy (kolumna i daty pomijane).
+  Pliki .md po kluczach: wiersze tabel (Q-, A-, BR-, S-, pojecia, aktorzy) i bloki z naglowkiem (R-, D-, encje, sekcje
+  PRD) - nowe, usuniete, zmienione pola, Status przed -> po. Linie w plikach zwiniete pod "Szczegóły".
+- Przy kazdej zapisanej wersji (Konfiguracja -> Kopia i wersje) "Pokaż zmiany" i "Przywróć"
+  (docs/specs/version-restore.md AC-VR1..VR8). Podglad w dwoch czesciach: "Co nowego w tej wersji" (wzgledem
+  poprzedniej wersji, dla najstarszej - poprzedniej kopii) i "Od tej wersji do dziś" (takze niezacommitowane i nowe
+  pliki); status po polsku, linie +/-. Przywrocenie calego `requirements/` po potwierdzeniu w miejscu;
+  najpierw automatyczna wersja "przed przywróceniem <nazwa> <GG:MM>" z obecnym stanem. Tylko pliki robocze
+  (`git restore --worktree --overlay`) - HEAD, indeks i kod bez zmian; usuwane tylko pliki, ktore sa w wersji
+  bezpieczenstwa (duze > 10 MB i ignorowane nietkniete). API: `GET /api/copy/diff?tag=`, `POST /api/copy/restore`.
+- Ikona "Zapisz wersję" (dyskietka) w naglowku tuz przed ⚙, na kazdej stronie panelu: okienko z nazwa, Enter zapisuje,
+  Esc zamyka, link "Zobacz poprzednie wersje" do Konfiguracji. Wczesniej przycisk byl tylko na dole Konfiguracji
+  (docs/specs/quick-save.md AC-QS1..QS3). W trakcie zapisu "Zapisuję…"; bez odpowiedzi po 15 s komunikat zamiast
+  wylaczonego przycisku bez reakcji (AC-QS5).
+- Szybsze wczytywanie przy wielu otwartych kartach: karta schowana w tle zamyka polaczenie na zywo i otwiera je po
+  powrocie (przegladarka ma tylko 6 polaczen na serwer - siodma karta czekala). Konfiguracja, Modul i "Jak to dziala"
+  rysuja tresc od razu, bez czekania na pierwsze zdarzenie (AC-LC1..LC3).
+
 ## [0.41.0] - 2026-10-10
 - Kopia wymagan w repozytorium i zapisane wersje (docs/specs/repo-copy.md, AC-RC1..AC-RC12) - bezpieczenstwo bez
   wiedzy o gicie: praca w `requirements/` kopiowana sama na osobna galaz `sdd-kopia/<login>/<komputer>/<modul>`

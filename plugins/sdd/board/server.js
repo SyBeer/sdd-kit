@@ -200,6 +200,21 @@ function copyRoute(ctx, req, res, url) {
       }).catch(fail);
     });
   }
+  // Pokaz zmiany / Przywroc (0.42.0, docs/specs/version-restore.md AC-VR4)
+  if (url === '/api/copy/diff' && req.method === 'GET') {
+    const tag = new URL(req.url, 'http://localhost').searchParams.get('tag') || '';
+    return ctx.copier.diff(tag).then(r => r.ok ? json(res, 200, r) : json(res, 409, { error: r.error }), fail);
+  }
+  if (url === '/api/copy/restore' && req.method === 'POST') {
+    return readBody(req, 16 * 1024, buf => {
+      let body = {};
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { /* zly JSON = brak wersji */ }
+      ctx.copier.restore(String(body.tag || '')).then(r => {
+        if (!r.ok) return json(res, 409, { error: r.error });
+        return copyView(ctx).then(v => json(res, 200, Object.assign(v, { restore: r })));
+      }).catch(fail);
+    });
+  }
   return json(res, 404, { error: 'Nie ma takiej operacji.' });
 }
 // Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
