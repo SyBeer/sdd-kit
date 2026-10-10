@@ -25,6 +25,7 @@ const dictate = require('./dictate');
 // DYKTOWANIE (0.38.0) koniec
 const update = require('./update');
 const secrets = require('./secrets');
+const repoCopy = require('./repo-copy');  // kopia wymagan w repozytorium (0.41.0, docs/specs/repo-copy.md)
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -57,7 +58,8 @@ let ROOT_SOURCE = resolved.source; // env / config / project - pokazywane w Konf
 function context(base, demo, board) {
   // Tablica spoza requirements/ zostaje stala przy zmianie modulu.
   return { base, demo, req: null, board: null, fixedBoard: board && !reqOf(board) ? board : null,
-    boardClients: new Set(), progressClients: new Set(), watchers: [], retry: null, btimer: null, ptimer: null };
+    boardClients: new Set(), progressClients: new Set(), watchers: [], retry: null, btimer: null, ptimer: null,
+    copier: null, copy: null };
 }
 const user = context('', null, boardArg);
 const demoWynik = context('/demo', 'wynik');
@@ -98,9 +100,10 @@ function boardView(ctx) {
   b._demo = ctx.demo || false;
   b._file = ctx.board || ''; // strona ostrzega, gdy serwer podmieni plik tablicy (AC-B37)
   b._questions = ctx.req ? questionIndex(ctx.req) : {}; // pytania z pliku na tablicy (AC-B40)
+  b._copy = ctx.copy; // stan kopii w pasku stanu (0.41.0, AC-RC10)
   return b;
 }
-const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo', '_file', '_questions'];
+const VIEW_ONLY = ['_sync', '_module', '_modules', '_demo', '_file', '_questions', '_copy'];
 function writeBoard(ctx, b) {
   VIEW_ONLY.forEach(k => { delete b[k]; });
   b.updated = new Date().toISOString();
@@ -117,6 +120,7 @@ function progressPayload(ctx) {
   p.needsRoot = !ctx.demo && !ROOT && !ctx.req;
   p.kitDir = KIT_DIR;
   p.demo = ctx.demo || false;
+  p.copy = ctx.copy;
   return p;
 }
 const send = (set, obj) => { const d = `data: ${JSON.stringify(obj)}\n\n`; for (const r of set) r.write(d); };
@@ -129,6 +133,7 @@ function watch(ctx) {
   if (ctx.demo) return; // demo sie nie zmienia
   if (ctx.req) try {
     ctx.watchers.push(fs.watch(ctx.req, { recursive: true }, () => {
+      if (ctx.copier) ctx.copier.touch();  // kopia po ciszy (0.41.0)
       broadcastProgress(ctx);
       broadcastBoard(ctx); // stan synchronizacji zalezy tez od plikow w requirements/
     }));
@@ -150,10 +155,52 @@ function selectModule(ctx, req) {
     try { writeConfig(CONFIG, { lastModule: path.dirname(req) }); } catch (e) { /* brak zapisu - bez pamieci */ }
   }
   ctx.board = ctx.fixedBoard || (req ? path.join(req, '01-interview', 'board.json') : null);
+  setupCopy(ctx);
   watch(ctx);
   send(ctx.progressClients, progressPayload(ctx));
   send(ctx.boardClients, boardView(ctx));
   if (ctx === user) { termSwitch(); chatSwitch(); }
+}
+// ---------------------------------------------------------------- kopia w repozytorium (0.41.0, docs/specs/repo-copy.md)
+// Kopista Twojego modulu: po zmianie plikow (cisza 2 min), przy starcie i wyborze modulu od razu. Tryb z SDD.yaml przy
+// kazdym przejsciu. Demo bez kopii. Stan liczony po zdarzeniu (kazde pytanie do gita to osobny proces).
+const COPY_DELAY = parseInt(process.env.SDD_COPY_DELAY_MS || '120000', 10) || 120000;
+function copyModeOf(ctx) {
+  try { return repoCopy.copyMode(fs.readFileSync(path.join(ctx.req, 'SDD.yaml'), 'utf8')); } catch (e) { return 'local'; }
+}
+function setupCopy(ctx) {
+  // poprzedni modul: ostatnia kopia od razu (zmiany sprzed 2 min ciszy nie czekaja do nastepnego startu)
+  if (ctx.copier) { ctx.copier.now(); ctx.copier.stop(); ctx.copier = null; }
+  ctx.copy = null;
+  if (ctx.demo || ctx !== user || !ctx.req || process.env.SDD_COPY === '0') return;
+  const c = repoCopy.createCopier(path.dirname(ctx.req), { delayMs: COPY_DELAY, mode: () => copyModeOf(ctx),
+    onChange: st => { if (ctx.copier !== c) return; ctx.copy = st; broadcastProgress(ctx); broadcastBoard(ctx); } });
+  ctx.copier = c;
+  c.now();
+}
+async function copyView(ctx) {
+  const dir = path.dirname(ctx.req), mode = copyModeOf(ctx);
+  const [repo, versions] = await Promise.all([repoCopy.repoState(dir), repoCopy.listVersions(dir)]);
+  const status = ctx.copier && ctx.copier.status() || await repoCopy.copyStatus(dir, mode);
+  return { mode, repo, status, versions, skipped: ctx.copier ? ctx.copier.skipped() : [] };
+}
+function copyRoute(ctx, req, res, url) {
+  if (!ctx.req || ctx.demo && req.method === 'GET') return json(res, 409, { error: ctx.demo ? READ_ONLY : 'Nie wybrano modułu.' });
+  const fail = e => json(res, 500, { error: String(e && e.message || e) });
+  if (url === '/api/copy' && req.method === 'GET') return copyView(ctx).then(v => json(res, 200, v), fail);
+  if (!ctx.copier) return json(res, 409, { error: 'Kopia jest wyłączona (SDD_COPY=0).' });
+  if (url === '/api/copy/now' && req.method === 'POST') return ctx.copier.now().then(() => copyView(ctx)).then(v => json(res, 200, v), fail);
+  if (url === '/api/copy/version' && req.method === 'POST') {
+    return readBody(req, 16 * 1024, buf => {
+      let body = {};
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { /* zly JSON = pusta nazwa */ }
+      ctx.copier.version(String(body.name || '')).then(r => {
+        if (!r.ok) return json(res, 409, { error: r.error });
+        return copyView(ctx).then(v => json(res, 200, Object.assign(v, { version: r })));
+      }).catch(fail);
+    });
+  }
+  return json(res, 404, { error: 'Nie ma takiej operacji.' });
 }
 // Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
 // na liscie) > pierwszy z listy > zaden.
@@ -185,6 +232,7 @@ function configView(ctx) {
       kind: info.yamlField(y, 'kind') === 'service' ? 'service' : 'monolith', kindsAllowed: info.KINDS,
       // styl rozmowy wywiadu (0.37.0, AC-IS2): brak pola = biz
       interviewStyle: info.yamlField(y, 'interview_style') === 'inz' ? 'inz' : 'biz', stylesAllowed: info.STYLES,
+      copy: info.copyMode(y), copiesAllowed: info.COPIES,  // kopia w repozytorium (0.41.0, AC-RC10)
       gate: info.yamlField(y, 'gate_blocking_status'), backlog: info.yamlField(y, 'backlog') || 'none',
       redmineUrl: info.yamlField(y, 'redmine_url'), redmineProject: info.yamlField(y, 'redmine_project'),
       file: demo ? '' : sddFile(ctx), approvesAllowed: info.APPROVES, backlogsAllowed: info.BACKLOGS };
@@ -212,7 +260,7 @@ function localDate() {
 }
 // Zmiana SDD.yaml z panelu: project, backlog, owners, kind (level i gate zmienia Claude - AC-C9).
 function saveSdd(ctx, body) {
-  const allowed = ['project', 'backlog', 'owners', 'redmine_url', 'redmine_project', 'kind', 'interview_style'];
+  const allowed = ['project', 'backlog', 'owners', 'redmine_url', 'redmine_project', 'kind', 'interview_style', 'copy'];
   const keys = Object.keys(body || {});
   const bad = keys.filter(k => allowed.indexOf(k) < 0);
   if (bad.length) return { code: 400, error: 'Tego nie zmienisz w przeglądarce: ' + bad.join(', ') + '. Poziom i etykietę blokującą zmienia Claude (wymaga zmian w plikach).' };
@@ -458,6 +506,7 @@ const server = http.createServer((req, res) => {
     if (ctx.demo) return json(res, 403, { error: READ_ONLY });
     return termRoute(req, res, url);
   }
+  if (url === '/api/copy' || url.startsWith('/api/copy/')) return copyRoute(ctx, req, res, url);
   if (url === '/api/chat' || url.startsWith('/api/chat/') || url === '/chat-events') {
     if (ctx.demo) return json(res, 403, { error: READ_ONLY });
     return chatRoute(req, res, url);
@@ -488,7 +537,7 @@ const server = http.createServer((req, res) => {
   if (url === '/api/version' && req.method === 'GET') {
     const plugin = pluginVersion();
     return json(res, 200, { running: VERSION, disk: diskVersion(), plugin,
-      sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion() }) });
+      sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion() }), platform: process.platform });
   }
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
@@ -578,6 +627,7 @@ const server = http.createServer((req, res) => {
       try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
       const r = saveSdd(user, body);
       if (r.code !== 200) return json(res, r.code, { error: r.error, blocked: r.blocked });
+      if ('copy' in body && user.copier) user.copier.now();  // wlaczenie wysylki od razu wysyla (AC-RC10)
       broadcastProgress(user);
       json(res, 200, configView(user));
     });

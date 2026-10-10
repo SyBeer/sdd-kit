@@ -9,6 +9,8 @@ const APPROVES = ['R', 'D', 'GLOSSARY', 'BR', 'PRD'];
 const BACKLOGS = ['none', 'linear', 'jira', 'redmine', 'file'];
 const KINDS = ['monolith', 'service'];  // rodzaj modulu (0.31.0, docs/specs/systems.md czesc B)
 const STYLES = ['biz', 'inz'];  // styl rozmowy wywiadu (0.37.0, docs/specs/interview-style.md)
+const COPIES = ['local', 'remote'];  // kopia wymagan w repozytorium (0.41.0, docs/specs/repo-copy.md)
+const { copyMode } = require('./repo-copy');
 
 // CRLF (Windows) -> \n jak w progress.js (0.27.1, AC-W4)
 function read(file) {
@@ -40,6 +42,7 @@ function parseOwners(text) {
   });
   return out;
 }
+const COPY_COMMENT = '# local | remote - remote: kopia requirements/ wysylana na serwer (origin), galaz sdd-kopia/...';
 const quote = v => '"' + String(v).replace(/"/g, "'") + '"';
 function cleanOwners(owners) {
   if (!Array.isArray(owners) || !owners.length) throw new Error('Podaj co najmniej jedną rolę.');
@@ -107,6 +110,16 @@ function yamlSet(text, changes) {
         '# biz | inz - styl wywiadu: biz swobodna rozmowa, inz z numerami i pelnym wpisem');
     }
     else out = setLine(out, 'interview_style', changes.interview_style);
+  }
+  if ('copy' in changes) {
+    if (COPIES.indexOf(changes.copy) < 0) throw new Error('copy: dozwolone ' + COPIES.join(', ') + '.');
+    // modul sprzed 0.41.0 nie ma linii - wstaw pod backlog, z komentarzem jak w szablonie (AC-RC11)
+    const anchor = out.match(/^backlog:.*$/m);
+    if (!/^copy:/m.test(out) && anchor) {
+      const col = anchor[0].indexOf('#') > 0 ? anchor[0].indexOf('#') : 23, head = 'copy: ' + changes.copy;
+      out = out.replace(anchor[0], () => anchor[0] + '\n' + head + ' '.repeat(Math.max(1, col - head.length)) + COPY_COMMENT);
+    }
+    else out = setLine(out, 'copy', changes.copy);
   }
   // Redmine (0.28.4, AC-RM7): adres i identyfikator projektu; klucz API nigdy w SDD.yaml.
   // Wklejony adres projektu (.../projects/<id>) - rozdzielamy sami (AC-RM14).
@@ -220,7 +233,7 @@ const FOLDERS = [
   ['02-domain/', 'Model: słownik (GLOSSARY), role (ACTORS), encje (ENTITIES), reguły (RULES), systemy (SYSTEMS). To jest prawda o domenie.'],
   ['03-spec/', 'Wymagania: PRD.md (poziom pełny) albo SPEC.md (lekki).'],
   ['04-validation/', 'Raporty walidacji z procentem gotowości.'],
-  ['CHANGELOG.md, SDD.yaml', 'Historia zmian wymagań i ustawienia procesu (role, poziom, backlog).'],
+  ['CHANGELOG.md, SDD.yaml', 'Historia zmian wymagań i ustawienia procesu (role, poziom, backlog, kopia).'],
 ];
 const SECTIONS = [
   { title: 'Źródła i wiarygodność', items: [
@@ -266,6 +279,17 @@ const SECTIONS = [
     'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.',
     'Okno Claude ma dwa widoki (ikony w nagłówku okna): czat - rozmowa w dymkach w stylu BIZ, z przyciskiem 🎙 uruchamiającym dyktowanie systemu (macOS: zgoda Dostępność dla programu, który uruchamia serwer; Windows: Win+H), w czacie tylko odczyt i zapis plików modułu; terminal - pełny Claude Code w stylu INŻ. Rozmowa jest jedna: zmiana widoku wznawia ją w drugim.',
     'Skille ładują się przy starcie sesji Claude Code. Po aktualizacji pluginu otwarta sesja dalej używa starych - wtedy przy wersji w górnym pasku pojawia się „· sesja Claude nieaktualna”, a podpowiedź mówi, którą sesję zamknąć i otworzyć na nowo.'] },
+  // Kopia i wersje (0.41.0, docs/specs/repo-copy.md)
+  { title: 'Kopia i wersje', items: [
+    '**Po co** – praca nad wymaganiami jest kopiowana do gita sama, bez pamiętania o zapisywaniu w repozytorium. Utrata komputera albo folderu nie zabiera wymagań, a zespół widzi pracę w toku.',
+    '**Ustawienie** – Konfiguracja → Kopia i wersje: „Wysyłaj kopię na serwer” (w SDD.yaml copy: remote). Bez tego kopia jest tylko na tym komputerze (copy: local, domyślnie) - chroni przed złą zmianą, nie przed utratą dysku. Moduł musi być repozytorium git, a do wysyłki potrzebny jest adres serwera (git remote add origin <adres>).',
+    '**Kopia** – sam folder requirements/ modułu (kod nigdy), zapisany obok Twojej pracy w gicie, na osobnej gałęzi sdd-kopia/<login>/<komputer>/<moduł>. Twoje pliki, gałąź robocza i main zostają bez zmian. Każdy komputer ma swoją gałąź, więc praca na dwóch komputerach niczego nie nadpisuje. Pliki większe niż 10 MB (np. duże załączniki w 00-intake/) są pomijane - lista w Konfiguracji.',
+    '**Kiedy** – po ok. 2 minutach od ostatniej zmiany w plikach, przy starcie panelu i wyborze modułu, na koniec sesji Claude Code (na Windows zamknięcie okna terminala tego nie uruchamia) i przyciskiem „Zrób kopię teraz”. Gdy nic się nie zmieniło, nowa kopia nie powstaje.',
+    '**Wersje** – ważny moment zapisujesz przyciskiem „Zapisz wersję” z nazwą, np. „pokazane biznesowi”. W repozytorium to tag sdd-wersja/<moduł>/<data>-<nazwa>, wspólny dla zespołu.',
+    '**Pasek stanu** – zielona kropka „kopia 14:32”: kopia jest na serwerze; szara „kopia tylko na tym komputerze”; żółta „brak kopii” albo „kopia niewysłana” - przyczyna w podpowiedzi, kliknięcie otwiera Konfigurację.',
+    '**Logowanie** – kit nie przechowuje haseł i nigdy o nie nie pyta: wysyłka używa Twojego logowania do gita (Git Credential Manager albo klucz SSH). Gdy logowanie wymaga Twojej reakcji, kopia czeka jako „niewysłana” - zrób raz git push w terminalu.',
+    '**Na main** – kopia nie trafia na main sama; robi to ktoś, kto pracuje z repozytorium (zwykle przy przekazaniu do budowy): git checkout sdd-wersja/<moduł>/<data>-<nazwa> -- <ścieżka modułu>/requirements/ i zwykły commit.',
+    '**Porównanie** – git diff main sdd-kopia/<login>/<komputer>/<moduł> -- requirements/ albo „Compare” w GitLabie.'] },
   // Integracja z Redmine (0.28.8; wtyczka UAT 0.28.14, AC-RM20; prosba usera: "dopisz w Jak to dziala sposob dzialania integracji z Redmine")
   { title: 'Integracja z Redmine', items: [
     '**Ustawienie** – Konfiguracja: backlog „redmine”, adres Redmine, projekt (można wkleić adres projektu z przeglądarki) i klucz API. W SDD.yaml modułu dodatkowo: redmine_ac_field (pole na kryteria akceptacji, np. „Kryteria akceptacji”), redmine_uat_link (link do środowiska UAT wpisywany w każde zadanie, pole „Link do środowiska UAT” albo redmine_uat_field), opcjonalnie redmine_tracker, redmine_status_start, redmine_status_done.',
@@ -343,4 +367,4 @@ function rootPreview(mods, newRoot) {
   return (mods || []).filter(m => !m.external && path.dirname(path.resolve(m.dir)) !== r).map(m => m.name);
 }
 
-module.exports = { APPROVES, BACKLOGS, KINDS, STYLES, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };
+module.exports = { APPROVES, BACKLOGS, KINDS, STYLES, COPIES, copyMode, parseOwners, ownersSet, yamlSet, roleChangeBlocked, mdSections, moduleSummary, guide, rootPreview, yamlField };

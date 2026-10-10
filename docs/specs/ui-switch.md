@@ -80,8 +80,23 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
   `versionBadge` zwraca `href` = `https://github.com/SyBeer/sdd-kit/releases/tag/v<running>`; dymek konczy sie linia
   "Kliknij: opis zmian tej wersji na GitHubie". Wersja w pasku jest linkiem (`<a class="ver">`, nowa karta,
   `rel="noopener"`), wyglada jak dotad (podkreslenie przy najechaniu); ostrzezenia AC-U10/AC-U15 bez zmian.
+  Od 0.41.0 przy ostrzezeniu (poza demo) link prowadzi do krokow w Konfiguracji - AC-U20.
   Strona Release istnieje dla wersji wypchnietych na GitHub (docs/specs/github-release.md).
 - AC-U17 (reczne): klik wersji w pasku na panelu i tablicy otwiera w nowej karcie strone Release tej wersji.
+- AC-U20 (0.41.0, user: "po kliknieciu na komunikat powinna sie otworzyc strona z informacja co zrobic"; wczesniej klik
+  "plugin nieaktualny" prowadzil na GitHub, a dla niewydanej wersji - na strone glowna repo):
+  `versionBadge(v, base)` przy `stale: true` zwraca `href` = `cfgHref(base) + '#wersja'` (Konfiguracja, karta Serwer),
+  `local: true`, dymek konczy sie "Kliknij: co zrobić krok po kroku", oraz `steps` - lista krokow `{text, cmd?}`:
+  plugin nieaktualny -> `claude plugin marketplace update sdd-kit`, `claude plugin update sdd@sdd-kit`, restart sesji;
+  serwer nieaktualny -> restart sdd-board; stara sesja Claude -> zamknij i otworz nowa. Demo (`cfgHref` null) -> GitHub jak AC-U16.
+  Bez ostrzezen - AC-U16 bez zmian (`local` false, `steps` puste). Link lokalny otwiera sie w tej samej karcie.
+  Konfiguracja: karta Serwer ma `id="wersja"`; przy ostrzezeniu pod wersja ramka "Co zrobić" z numerowanymi krokami,
+  komendy w polu z przyciskiem Kopiuj; wejscie z `#wersja` przewija do karty.
+- AC-U22 (0.41.0, zdarzenie 2026-10-10: u usera `claude` to alias na inne narzedzie - "ccs: nieznany kontekst 'plugin'"):
+  komendy w krokach i w dymku zaczynaja sie od `command claude` (omija aliasy i funkcje powloki bash/zsh); serwer w
+  GET /api/version podaje `platform` (process.platform); `platform: 'win32'` -> zwykle `claude` (PowerShell/cmd nie znaja `command`).
+- AC-U21 (reczne): plugin starszy niz kit -> klik "plugin nieaktualny" w pasku otwiera Konfiguracje na karcie Serwer z krokami;
+  Kopiuj kopiuje komende; wszystko aktualne -> klik wersji otwiera Release Notes na GitHubie.
 - AC-U18 (0.28.11, user: "dodaj ikone do aplikacji SDD-kit, zeby w przegladarce latwo bylo ja wyluskac"): ikona -
   ciemny zaokraglony kwadrat z czterema karteczkami w kolorach tablicy (zdarzenie, komenda, kto, pytanie).
   Serwer: `/favicon.svg` (image/svg+xml), `/favicon.png` 32x32 i `/favicon.ico` (PNG; przegladarki pytaja o ten adres

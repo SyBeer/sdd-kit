@@ -118,15 +118,18 @@
   // AC-U15 (0.21.0): plugin w Claude Code w innej wersji niz kit na dysku -> ostrzezenie o aktualizacji pluginu.
   // AC-U16 (0.25.0): wersja jest linkiem do Release Notes tej wersji na GitHubie.
   const RELEASES = 'https://github.com/SyBeer/sdd-kit/releases/tag/v';
-  function versionBadge(v) {
+  // AC-U20 (0.41.0): przy ostrzezeniu klik prowadzi do krokow w Konfiguracji (karta Serwer, #wersja), nie na GitHub.
+  function versionBadge(v, b) {
     if (!v || !v.running) return null;
     const server = !!v.disk && v.disk !== v.running;
     const plugin = !!v.plugin && !!v.disk && v.plugin !== v.disk;
+    // AC-U22: `command` omija alias/funkcje "claude" w bash/zsh; PowerShell i cmd go nie znaja
+    const cc = v.platform === 'win32' ? 'claude' : 'command claude';
     const tips = [];
     if (server) tips.push('Serwer działa na wersji ' + v.running + ', a zainstalowana jest ' + v.disk +
       '. Zrestartuj serwer: zatrzymaj sdd-board (Ctrl+C) i uruchom ponownie (albo restart w HQAI).');
     if (plugin) tips.push('Plugin w Claude Code ma wersję ' + v.plugin + ', a kit na dysku ' + v.disk +
-      '. Zaktualizuj: claude plugin marketplace update sdd-kit && claude plugin update sdd@sdd-kit,' +
+      '. Zaktualizuj: ' + cc + ' plugin marketplace update sdd-kit && ' + cc + ' plugin update sdd@sdd-kit,' +
       ' potem restart sesji Claude Code.');
     // Sesje Claude Code (0.32.0, AC-SV6): znaczniki z hooka pluginu - wersja skilli, ktora sesja zaladowala
     const sessions = Array.isArray(v.sessions) ? v.sessions : [];
@@ -136,11 +139,23 @@
       '\nZamknij te sesje i otwórz nową - skille ładują się przy starcie sesji.');
     else if (sessions.length) tips.push(sessions.length + ' otwart' + (sessions.length === 1 ? 'a sesja' : 'e sesje') +
       ' Claude Code na wersji ' + sessions[0].version + '.');
-    return { stale: server || plugin || old.length > 0,
+    const steps = [];
+    if (plugin) steps.push(
+      { text: 'Odśwież listę wersji pluginu (w terminalu):', cmd: cc + ' plugin marketplace update sdd-kit' },
+      { text: 'Zaktualizuj plugin z ' + v.plugin + ' do ' + v.disk + ':', cmd: cc + ' plugin update sdd@sdd-kit' },
+      { text: 'Zrestartuj sesję Claude Code - zamknij ją i otwórz nową; skille ładują się przy starcie sesji.' });
+    if (server) steps.push({ text: 'Zrestartuj serwer sdd-board (' + v.running + ' → ' + v.disk +
+      '): zatrzymaj go (Ctrl+C) i uruchom ponownie, albo restart w HQAI. Potem odśwież tę stronę.' });
+    if (old.length && !plugin) steps.push({ text: 'Zamknij sesje Claude Code na starszej wersji skilli i otwórz nową: ' +
+      old.map(s => (s.cwd || '?') + ' (' + s.version + ')').join(', ') + '.' });
+    const stale = server || plugin || old.length > 0;
+    const cfg = stale ? cfgHref(b || '') : null;
+    return { stale,
       text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : '') +
         (old.length ? ' · sesja Claude nieaktualna' : ''),
-      title: (tips.length ? tips.join('\n') : 'sdd-kit ' + v.running) + '\nKliknij: opis zmian tej wersji na GitHubie',
-      href: RELEASES + v.running };
+      title: (tips.length ? tips.join('\n') : 'sdd-kit ' + v.running) +
+        (cfg ? '\nKliknij: co zrobić krok po kroku' : '\nKliknij: opis zmian tej wersji na GitHubie'),
+      href: cfg ? cfg + '#wersja' : RELEASES + v.running, local: !!cfg, steps: cfg ? steps : [] };
   }
 
   // Szerokosc okna Claude (AC-T8): zapisana albo 520 px, w zakresie 320 px .. 70% okna.
@@ -267,7 +282,43 @@
   function clockText(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
   function clockState(ms) { return ms <= 0 ? 'over' : ms <= 5 * 60e3 ? 'low' : ''; }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState };
+  // ---------------------------------------------------------------- kopia w repozytorium (0.41.0, docs/specs/repo-copy.md AC-RC12)
+  // Dopisek w pasku stanu za "na zywo: polaczono": zielona kropka = kopia na serwerze, szara = tylko na tym komputerze,
+  // zolta = brak kopii / niewyslana (przyczyna w podpowiedzi). Szara i zolta prowadza do Konfiguracji.
+  const COPY_TIP = { nogit: 'Moduł nie jest repozytorium git – praca jest tylko na tym komputerze, bez kopii.',
+    local: 'Kopia jest tylko na tym komputerze – chroni przed złą zmianą, nie przed utratą dysku. Wysyłkę na serwer włączysz w Konfiguracji.',
+    noorigin: 'Brak adresu serwera (origin) – kopia nie ma dokąd pojechać.' };
+  function copyTime(iso, now) {
+    const d = new Date(iso), n = now || new Date(), z = v => (v < 10 ? '0' : '') + v;
+    if (isNaN(d)) return '';
+    const hm = z(d.getHours()) + ':' + z(d.getMinutes());
+    return d.toDateString() === n.toDateString() ? hm : z(d.getDate()) + '.' + z(d.getMonth() + 1) + ' ' + hm;
+  }
+  function copyLive(copy, b, now) {
+    if (!copy || !copy.state) return null;
+    const t = copy.at ? copyTime(copy.at, now) : '';
+    if (copy.state === 'ok') return { cls: 'ok', html: '<span id="copy" title="Kopia wymagań jest na serwerze (' + esc(copy.origin || '') + ')">· kopia ' + esc(t) + '</span>' };
+    const link = (txt, tip) => '<span id="copy">· <a href="' + esc((b || '') + '/config#kopia') + '" title="' + esc(tip) + '">' + esc(txt) + '</a></span>';
+    if (copy.state === 'local') return { cls: 'idle', html: link('kopia tylko na tym komputerze' + (t ? ' ' + t : ''), COPY_TIP.local) };
+    if (copy.state === 'nogit') return { cls: 'warn', html: link('brak kopii', COPY_TIP.nogit) };
+    const tip = copy.state === 'noorigin' ? COPY_TIP.noorigin : 'Kopia nie dotarła na serwer' + (copy.error ? ': ' + copy.error : '.') + (t ? ' Ostatnia kopia lokalna ' + t + '.' : '');
+    return { cls: 'warn', html: link('kopia niewysłana', tip) };
+  }
+  function showCopy(copy) {
+    if (typeof document === 'undefined') return;
+    const live = document.getElementById('live');
+    if (!live) return;
+    const old = document.getElementById('copy');
+    if (old) old.remove();
+    live.classList.remove('warn', 'idle');
+    const x = copyLive(copy, base(location.pathname));
+    if (!x) return;
+    if (x.cls !== 'ok') live.classList.add(x.cls);
+    const conn = document.getElementById('conn');
+    (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
+  }
+
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -316,9 +367,10 @@
     // Wersja sdd-kit na lewym brzegu paska stanu (0.34.1, AC-F9); stary serwer / plugin / sesja -> ostrzezenie w tym miejscu
     const el = verSlot();
     fetch(b + '/api/version').then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
-      const x = versionBadge(v);
+      const x = versionBadge(v, b);
       if (!x || !el) return;
       el.textContent = x.text; el.title = x.title; el.href = x.href; el.classList.toggle('stale', x.stale); el.hidden = false;
+      el.target = x.local ? '_self' : '_blank';
       const logo = bar.querySelector('.logo');
       if (logo) logo.title = 'sdd-kit ' + x.text;
     }).catch(function () {});

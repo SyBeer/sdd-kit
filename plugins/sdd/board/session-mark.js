@@ -73,7 +73,20 @@ function mark(cmd, input, dir = sessionsDir(), opts = {}) {
     fs.writeFileSync(file, JSON.stringify(m));
   } else if (cmd === 'end') {
     fs.rmSync(file, { force: true });
+    return copyAtEnd(String(h.cwd || ''));
   }
+}
+
+// Kopia wymagan na koniec sesji (0.41.0, docs/specs/repo-copy.md AC-RC9): gdy sesja pracowala w module
+// (cwd z requirements/SDD.yaml) - kopia, a przy copy: remote takze wysylka. Cisza, bez bledow; hook czeka na wynik.
+function copyAtEnd(cwd) {
+  try {
+    if (!cwd || process.env.SDD_COPY === '0') return null;
+    const yaml = path.join(cwd, 'requirements', 'SDD.yaml');
+    if (!fs.existsSync(yaml)) return null;
+    const rc = require('./repo-copy');
+    return rc.copyOnce(cwd, rc.copyMode(fs.readFileSync(yaml, 'utf8'))).catch(() => null);
+  } catch (e) { return null; }
 }
 
 // Zywe sesje: znacznik z PID - proces Claude Code dziala (AC-SV11; martwy -> znacznik usuniety);
@@ -110,7 +123,11 @@ if (require.main === module) {
   const chunks = [];
   try {
     process.stdin.on('data', c => chunks.push(c));
-    process.stdin.on('end', () => { try { mark(cmd, Buffer.concat(chunks).toString('utf8')); } catch (e) { /* cisza */ } process.exit(0); });
+    process.stdin.on('end', () => {
+      let p = null;
+      try { p = mark(cmd, Buffer.concat(chunks).toString('utf8')); } catch (e) { /* cisza */ }
+      Promise.resolve(p).catch(() => null).then(() => process.exit(0));
+    });
     process.stdin.on('error', () => process.exit(0));
   } catch (e) { process.exit(0); }
 }

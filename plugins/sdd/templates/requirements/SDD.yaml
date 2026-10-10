@@ -10,6 +10,7 @@ owners:                # role biznesowe, ktore zatwierdzaja (rola, nie osoba)
     approves: [BR]
 gate_blocking_status: "blokuje go-live"   # etykieta pytan blokujacych
 backlog: none          # none | linear | jira | redmine | file
+copy: local            # local | remote - remote: kopia requirements/ wysylana na serwer (origin), galaz sdd-kopia/...
 # Przy backlog: redmine (klucz API NIE tutaj - REDMINE_API_KEY albo Pek kluczy macOS):
 # redmine_url: "https://redmine.firma.pl"
 # redmine_project: "identyfikator-projektu"

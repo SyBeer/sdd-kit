@@ -5,7 +5,7 @@ html{scrollbar-gutter:stable}
   --bg:#f3efe6; --board:#f3efe6; --panel:#fbf9f4; --line:#e2dccf; --line-soft:#ece7dc;
   --ink:#24221d; --muted:#6f695c; --faint:#a29b8b; --hover:#f1ece1; --cur-row:#fdf6ea;
   --input:#fff; --input-line:#cfc7b6; --dash:#cbc3b1;
-  --accent:#e39a3b; --hot-ink:#c2412f; --ok:#2f9e5b;
+  --accent:#e39a3b; --hot-ink:#c2412f; --ok:#2f9e5b; --warn:#e0b030; --idle:#9a948a;
   --status:#2a2823; --status-ink:#e4dfd3;
   /* kolory karteczek (tablica); --hot = karteczka "nie wiemy", czerwony tekst = --hot-ink */
   --ev:#ffd3a8; --cmd:#c3defa; --act:#fbeba6; --pol:#e6d2f6; --rm:#c9eac6; --hot:#d63a2f;
@@ -21,7 +21,7 @@ html{scrollbar-gutter:stable}
   --bg:#1b1a17;--board:#1b1a17;--panel:#23221e;--line:#36342e;--line-soft:#2e2c27;
   --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;--cur-row:#2a261f;
   --input:#1b1a17;--input-line:#46433b;--dash:#4a463d;
-  --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--status:#11100e;--status-ink:#c9c3b6;
+  --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--warn:#f0c64a;--idle:#8a857a;--status:#11100e;--status-ink:#c9c3b6;
   --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#c8392d;
   --st-done:#8ec58b;--st-part:#dcc65e;--st-work:#e89a52;--st-stale:#f0a64a;--st-app:#7fb1e6;
   --shadow:0 6px 20px rgba(0,0,0,.5)}}
@@ -29,7 +29,7 @@ html{scrollbar-gutter:stable}
   --bg:#1b1a17;--board:#1b1a17;--panel:#23221e;--line:#36342e;--line-soft:#2e2c27;
   --ink:#ece8dd;--muted:#a39d8f;--faint:#6f6a5f;--hover:#2b2a25;--cur-row:#2a261f;
   --input:#1b1a17;--input-line:#46433b;--dash:#4a463d;
-  --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--status:#11100e;--status-ink:#c9c3b6;
+  --accent:#f0a64a;--hot-ink:#f08676;--ok:#5cc27a;--warn:#f0c64a;--idle:#8a857a;--status:#11100e;--status-ink:#c9c3b6;
   --ev:#e89a52;--cmd:#82b3df;--act:#dcc65e;--pol:#b89ad4;--rm:#8ec58b;--hot:#c8392d;
   --st-done:#8ec58b;--st-part:#dcc65e;--st-work:#e89a52;--st-stale:#f0a64a;--st-app:#7fb1e6;
   --shadow:0 6px 20px rgba(0,0,0,.5)}
@@ -64,6 +64,11 @@ a:hover{text-decoration:underline}
 .statusbar .live{display:inline-flex;align-items:center;gap:6px}
 .statusbar .live i{width:7px;height:7px;border-radius:50%;background:#5cc27a}
 .statusbar .live.off i{background:var(--hot-ink)}
+.statusbar .live.warn i{background:var(--warn)}
+.statusbar .live.idle i{background:var(--idle)}
+.statusbar #copy a{color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
+.statusbar .live.warn #copy a{color:var(--warn)}
+.live.off #copy{display:none}
 .statusbar .meta b{font-weight:600}
 .statusbar .sright{margin-left:auto;display:inline-flex;flex-wrap:wrap;align-items:center;gap:2px 14px}
 .statusbar .si{display:inline-flex;align-items:center;gap:5px}

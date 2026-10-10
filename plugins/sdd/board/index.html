@@ -1014,6 +1014,7 @@ html.printing{padding-right:0!important}
     es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
     es.onmessage=function(e){
       var b=JSON.parse(e.data), sw=ops.boardSwitched(knownFile,b);
+      SddUI.showCopy(b._copy);
       if(b._file) knownFile=b._file;
       if(sw){ // inna tablica niz na poczatku (AC-B37/B38)
         if(!expectSwitch) showSwitched(sw,b);

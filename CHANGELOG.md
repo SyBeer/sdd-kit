@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.41.0] - 2026-10-10
+- Kopia wymagan w repozytorium i zapisane wersje (docs/specs/repo-copy.md, AC-RC1..AC-RC12) - bezpieczenstwo bez
+  wiedzy o gicie: praca w `requirements/` kopiowana sama na osobna galaz `sdd-kopia/<login>/<komputer>/<modul>`
+  (przez tymczasowy indeks - pliki, galaz robocza i `main` bez zmian; w kopii tylko `requirements/` modulu, nigdy kod;
+  pliki > 10 MB pomijane z lista). Kiedy: ok. 2 min po zmianie, przy starcie panelu i wyborze modulu, na koniec sesji
+  Claude Code (hook) i przyciskiem "Zrob kopie teraz". Bez zmian - bez nowej kopii.
+- `SDD.yaml`: `copy: local | remote` (szablon: local). Remote = wysylka na serwer (origin): bez `--force`, bez pytan
+  o haslo (takze SSH), limit 30 s, tylko galaz kopii i wersje modulu; blad jako stan "kopia niewyslana" z przyczyna.
+- Konfiguracja -> "Kopia i wersje": gdzie jest kopia, "Wysyłaj kopię na serwer", ostatnia kopia, pominiete pliki,
+  "Zapisz wersję" (tag `sdd-wersja/<modul>/<data>-<nazwa>`) i lista wersji.
+- Pasek stanu na wszystkich stronach: zielona "kopia 14:32" (na serwerze), szara "kopia tylko na tym komputerze",
+  zolta "brak kopii" / "kopia niewysłana" z podpowiedzia i linkiem do Konfiguracji.
+- "Jak to dziala": sekcja "Kopia i wersje" (w tym przeniesienie wersji na `main` i porownanie).
+- Zbudowane od zera na podstawie opisu z innej sesji, z poprawkami: galaz na komputer i modul (Mac + Windows nie blokuja
+  sie nawzajem), tylko `requirements/` w kopii (bez niewypchnietego kodu), brak commitu przy ruchu `HEAD`, osobne
+  galezie dla modulow w jednym repo, SSH w trybie BatchMode, ponowienie przy wyscigu hook / serwer.
+
+- Klik ostrzezenia o wersji w pasku ("plugin nieaktualny", "serwer nieaktualny", "sesja Claude nieaktualna") otwiera
+  Konfiguracje -> Serwer z ramka "Co zrobic": kroki po kolei, komendy z przyciskiem Kopiuj (docs/specs/ui-switch.md
+  AC-U20). Wczesniej klik prowadzil na GitHub, a dla niewydanej wersji na strone glowna repo. Bez ostrzezen - jak dotad
+  Release Notes na GitHubie. Komendy jako `command claude ...` - dzialaja takze, gdy `claude` jest aliasem (AC-U22;
+  na Windows zwykle `claude`).
+
 ## [0.40.1] - 2026-10-08
 - Czat: tabele wyswietlane jako tabele (naglowek, linie, przewijanie w poziomie, formatowanie w komorkach) zamiast
   tekstu z kreskami, np. podsumowanie /sdd:domain (docs/specs/claude-chat.md AC-CH16).

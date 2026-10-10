@@ -116,6 +116,10 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:10px 16px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted)}
 .tag.ln{background:transparent;border:1px solid var(--line);color:var(--muted);padding:3px 5px}
 .tag.okc{background:var(--st-done)}
+/* Kopia i wersje (0.41.0) */
+.tag.ok{background:var(--st-done)}.tag.warn{background:var(--warn)}.tag.idle{background:var(--line);color:var(--ink)}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.chk input{width:16px;height:16px;accent-color:var(--ok)}
+#kopia code{font:11.5px var(--mono);overflow-wrap:anywhere}
 .tag.hotc{background:transparent;border:1px solid var(--hot-ink);color:var(--hot-ink);padding:3px 5px}
 .kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));border-bottom:1px solid var(--line-soft)}
 .kinds>div{padding:12px 16px;border-left:1px solid var(--line-soft)}
@@ -207,6 +211,11 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .srv .sval .stale{color:var(--hot-ink);font-weight:600}
 .srvupd{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-left:12px;font:600 12px var(--sans);color:#2f9e5b}
 .srvupd[hidden]{display:none}
+.vfix{flex-basis:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--hot-ink);border-radius:3px;font:13px/1.45 var(--sans)}
+.vfix[hidden]{display:none}
+.vfix ol{margin:6px 0 0;padding-left:20px}
+.vfix li{margin:6px 0}
+.vfix li .cmdf{margin-top:4px}
 .srvupd .updi{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#2f9e5b;color:#fff;font:700 11px/1 var(--sans);font-style:normal}
 .srvupd a{font-weight:400;color:var(--muted)}
 .srvupd .btn{height:26px}
@@ -289,13 +298,13 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     var es=new EventSource(BASE+'/progress-events');
     es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
     es.onerror=function(){$('#conn').textContent='rozłączono - uruchom sdd-board';$('#live').classList.add('off')};
-    es.onmessage=function(e){ header(JSON.parse(e.data)); refresh(); };
+    es.onmessage=function(e){ var p=JSON.parse(e.data); header(p); SddUI.showCopy(p.copy); refresh(); };
   } else { $('#conn').textContent='podgląd'; SddUI.demoBar('start'); load(); }
 
   function load(){
     if(PAGE==='guide') return api('/api/guide').then(renderGuide).catch(fail);
     if(PAGE==='module') return api('/api/module').then(renderModule).catch(fail);
-    if(PAGE==='config'){ if(editing) return; return api('/api/config').then(renderConfig).catch(fail); }
+    if(PAGE==='config'){ if(editing||copyTyping) return; return api('/api/config').then(renderConfig).catch(fail); }
   }
   function fail(e){ $('#app').innerHTML='<section class="box"><div class="bh"><h2>Nie udało się wczytać</h2></div><div class="bb"><p class="hint">'+esc(e.message)+'</p></div></section>'; }
 
@@ -438,7 +447,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
   }
 
   // ---------------------------------------------------------------- Konfiguracja (0.34.0, handoff 4)
-  var editing=false, cfg=null, ownersDraft=null, msg={}, savedTimer=null;
+  var editing=false, cfg=null, ownersDraft=null, msg={}, savedTimer=null, copyTyping=false, copyScrolled=false;
   var SRC={env:'zmienna SDD_MODULES_ROOT (ma pierwszeństwo, zmiana tutaj nie zadziała po restarcie)',config:'wybór z panelu',project:'folder nad bieżącym projektem'};
   var KEYSRC={file:'ustawiony (plik .env)',env:'ustawiony (zmienna REDMINE_API_KEY)',keychain:'ustawiony (Pęk kluczy macOS)',none:'brak klucza'};
   var BACKLOG={none:'brak',file:'plik',linear:'linear',jira:'jira',redmine:'redmine'};
@@ -502,6 +511,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
           '<span class="sst" id="sst"><i aria-hidden="true"></i><span></span></span><span class="err" id="sdderr">'+esc(msg.sdderr||'')+'</span></div>');
     }
     h+='</section>';
+    // KOPIA I WERSJE (0.41.0) - tresc z GET /api/copy, wypelnia copyLoad()
+    if(c.sdd) h+='<section class="box" id="kopia"><div class="bh"><h2>Kopia i wersje</h2><span class="fn-chip">SDD.yaml: copy</span></div><div class="bb"><p class="hint">Sprawdzam kopię…</p></div></section>';
     // KATALOG MODULOW (ten komputer)
     h+='<section class="box" id="katalog"><div class="bh"><h2>Katalog modułów</h2><span class="path">ten komputer · ~/.sdd-kit/config.json</span></div>';
     if(demo) h+='<div class="bb"><p class="hint">W demo katalog jest stały.</p></div>';
@@ -530,8 +541,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
         '<button class="btn" type="button" id="savedictate">Zapisz skrót</button></div><p class="knote" id="dictatemsg"></p>'+
         '<p class="knote">Przycisk 🎙 naciska ten skrót za Ciebie - serwer sdd-board potrzebuje zgody „Dostępność” w macOS.</p>')+'</section>';
     // DYKTOWANIE (0.38.0) koniec
-    h+='<section class="box srv"><div class="bh"><h2>Serwer</h2><span class="path">tylko podgląd</span></div>'+
-      sv('Wersja sdd-kit','<a id="srvver" href="https://github.com/SyBeer/sdd-kit/releases/tag/v'+esc(s.version||'')+'" target="_blank" rel="noopener" title="Opis zmian tej wersji na GitHubie">'+esc(s.version||'-')+'</a><span class="srvupd" id="srvupd" hidden></span>')+
+    h+='<section class="box srv" id="wersja"><div class="bh"><h2>Serwer</h2><span class="path">tylko podgląd</span></div>'+
+      sv('Wersja sdd-kit','<a id="srvver" href="https://github.com/SyBeer/sdd-kit/releases/tag/v'+esc(s.version||'')+'" target="_blank" rel="noopener" title="Opis zmian tej wersji na GitHubie">'+esc(s.version||'-')+'</a><span class="srvupd" id="srvupd" hidden></span><div class="vfix" id="vfix" hidden></div>')+
       sv('Port',esc(s.port),'inny port: sdd-board &lt;plik tablicy&gt; &lt;port&gt;')+
       (s.board?sv('Plik tablicy',esc(s.board)):'')+
       (s.config?sv('Konfiguracja',esc(s.config)):'')+
@@ -549,16 +560,88 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     };
     // DYKTOWANIE (0.38.0) koniec
     if(c.sdd) drawOwners();
+    if(c.sdd) copyLoad(c);
     msg.rmask=null; msg.adderr=''; msg.sdderr=''; msg.rooterr=''; msg.rootprev=''; msg.root='';
     versionNote();
     if(c.sdd) dirty();
     if(!demo) bindConfig();
   }
+  // KOPIA I WERSJE (0.41.0, docs/specs/repo-copy.md AC-RC12): bez slow gita w napisach; zdarzenia nie oznaczaja formularza SDD.yaml
+  var COPY_STATE={ok:['ok','na serwerze'],local:['idle','tylko na tym komputerze'],nogit:['warn','brak kopii'],noorigin:['warn','niewysłana – brak adresu serwera'],unsent:['warn','niewysłana']};
+  function copyWhen(iso){ if(!iso) return 'jeszcze nie ma'; var d=new Date(iso); return isNaN(d)?'':d.toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+  function copyLoad(c){
+    var box=$('#kopia'); if(!box) return;
+    api('/api/copy').then(function(v){ copyRender(v,c); }).catch(function(err){
+      box.querySelector('.bb').innerHTML='<p class="hint">'+esc(err.message)+'</p>';
+    });
+  }
+  function copyRender(v,c){
+    var box=$('#kopia'); if(!box) return;
+    var demo=!!c.demo, r=v.repo||{}, st=v.status||{}, cs=COPY_STATE[st.state]||['',''];
+    var can=!demo&&r.git&&!!r.origin, why=demo?'W demo kopii nie ma.':!r.git?'Folder modułu nie jest repozytorium git – kopia nie ma gdzie powstać. Poproś osobę od repozytorium o git init.':!r.origin?'Brak adresu serwera. W terminalu, w folderze modułu: git remote add origin <adres repozytorium>':'';
+    var h='<div class="bb">'+
+      frow('Gdzie','kopia zawiera tylko folder requirements/ tego modułu – nigdy kod',
+        '<span class="val" style="font-size:12.5px;overflow-wrap:anywhere">'+esc(c.module&&c.module.dir||'')+'</span>'+
+        '<span class="khint">Serwer: '+(r.origin?'<span class="mono">'+esc(r.origin)+'</span>':'brak adresu serwera')+'</span>'+
+        (r.copyBranch?'<span class="khint">Miejsce kopii w repozytorium (dla osoby od gita): <code>'+esc(r.copyBranch)+'</code></span>':''))+
+      frow('Wysyłka','kopia na serwerze chroni przed utratą komputera; ustawienie zapisane w SDD.yaml – dotyczy całego zespołu',
+        '<label class="chk"><input type="checkbox" id="f-copy"'+(v.mode==='remote'?' checked':'')+(can?'':' disabled')+'> Wysyłaj kopię na serwer</label>'+
+        (why?'<p class="knote">'+esc(why)+'</p>':''))+
+      frow('Ostatnia kopia','robi się sama po ok. 2 minutach od zmiany, przy starcie i na koniec sesji Claude',
+        '<span class="val">'+esc(copyWhen(st.at))+'</span> <span class="tag '+cs[0]+'">'+esc(cs[1])+'</span>'+
+        (st.error?'<p class="err">'+esc(st.error)+'</p>':'')+
+        (demo||!r.git?'':'<div class="rowc"><button class="btn" type="button" id="copynow">Zrób kopię teraz</button></div>')+
+        '<p class="err" id="copyerr"></p>')+
+      ((v.skipped||[]).length?frow('Pominięte pliki','większe niż 10 MB – nie trafiają do kopii','<ul class="mods">'+v.skipped.map(function(f){
+        return '<li><span class="path">'+esc(f.file)+'</span><span class="khint">'+Math.round(f.size/1048576)+' MB</span></li>'}).join('')+'</ul>'):'')+
+      frow('Wersje','ważny moment z nazwą, np. „pokazane biznesowi” – wspólny dla zespołu',
+        ((v.versions||[]).length?'<ul class="mods" id="verlist">'+v.versions.map(function(x){
+          return '<li><span class="val">'+esc(x.name)+'</span><span class="khint">'+esc(copyWhen(x.at))+' · '+(x.sent?'na serwerze':'tylko na tym komputerze')+'</span></li>'}).join('')+'</ul>'
+          :'<ul class="mods" id="verlist"></ul><p class="knote">Nie ma jeszcze zapisanych wersji.</p>')+
+        (demo||!r.git?'':'<div class="rowc"><input type="text" class="fld w280" id="f-ver" placeholder="nazwa, np. pokazane biznesowi" autocomplete="off"><button class="btn" type="button" id="versave">Zapisz wersję</button></div>'+
+          '<p class="err" id="vererr"></p>'))+
+      '</div>';
+    box.querySelector('.bb').outerHTML=h;
+    if(location.hash==='#kopia'&&!copyScrolled){ copyScrolled=true; box.scrollIntoView({block:'start'}); }
+    function stop(e){ e.stopPropagation(); }
+    box.oninput=function(e){ stop(e); if(e.target.id==='f-ver') copyTyping=!!e.target.value.trim(); };
+    box.onkeydown=function(e){ stop(e); if(e.key==='Enter'&&e.target.id==='f-ver'){ e.preventDefault(); verSave(); } };
+    box.onclick=function(e){ stop(e); var t=e.target.closest('button'); if(!t||t.disabled) return;
+      if(t.id==='copynow'){ t.disabled=true; t.textContent='Robię kopię…';
+        api('/api/copy/now',{method:'POST'}).then(function(x){ copyRender(x,c); }).catch(function(err){ t.disabled=false; t.textContent='Zrób kopię teraz'; $('#copyerr').textContent=err.message; }); }
+      else if(t.id==='versave') verSave();
+    };
+    box.onchange=function(e){ stop(e); if(e.target.id!=='f-copy') return;
+      var on=e.target.checked; e.target.disabled=true;
+      api('/api/config',{method:'PUT',body:JSON.stringify({copy:on?'remote':'local'})})
+        .then(function(){ setTimeout(function(){ copyLoad(c); },1500); copyLoad(c); })
+        .catch(function(err){ e.target.checked=!on; e.target.disabled=false; $('#copyerr').textContent=err.message; });
+    };
+    function verSave(){
+      var i=$('#f-ver'), n=i.value.trim(); if(!n){ i.focus(); return; }
+      $('#versave').disabled=true;
+      api('/api/copy/version',{method:'POST',body:JSON.stringify({name:n})}).then(function(x){ copyTyping=false; copyRender(x,c); })
+        .catch(function(err){ $('#versave').disabled=false; $('#vererr').textContent=err.message; });
+    }
+  }
+  // KOPIA I WERSJE koniec
   // Wersja w karcie Serwer: ostrzezenia jak w naglowku (serwer / plugin / sesja Claude nieaktualne)
+  var versionScrolled=false;
   function versionNote(){
     fetch(BASE+'/api/version').then(function(r){return r.ok?r.json():null}).then(function(v){
-      var x=SddUI.versionBadge(v), el=$('#srvver'); if(!x||!el) return;
-      el.textContent=x.text; el.title=x.title; el.href=x.href; el.classList.toggle('stale',x.stale);
+      var x=SddUI.versionBadge(v,BASE), el=$('#srvver'); if(!x||!el) return;
+      // tu link wersji zawsze na Release Notes - kroki stoja obok (AC-U20)
+      el.textContent=x.text; el.title=x.title.replace(/\nKliknij:.*$/,''); el.classList.toggle('stale',x.stale);
+      var fix=$('#vfix');
+      if(fix&&x.steps.length){
+        fix.innerHTML='<b>Co zrobić</b><ol>'+x.steps.map(function(st,i){
+          return '<li><span>'+esc(st.text)+'</span>'+(st.cmd?'<div class="cmdf"><code id="vcmd'+i+'">'+esc(st.cmd)+'</code><button type="button" data-vcopy="vcmd'+i+'">Kopiuj</button></div>':'')+'</li>';
+        }).join('')+'</ol>';
+        fix.hidden=false;
+        fix.onclick=function(e){ var t=e.target.closest('[data-vcopy]'); if(!t) return;
+          try{navigator.clipboard.writeText($('#'+t.getAttribute('data-vcopy')).textContent).then(function(){t.textContent='Skopiowano';setTimeout(function(){t.textContent='Kopiuj'},1500)})}catch(err){} };
+      }
+      if(location.hash==='#wersja'&&!versionScrolled){ versionScrolled=true; var box=$('#wersja'); if(box) box.scrollIntoView({block:'start'}); }
     }).catch(function(){});
     // nowa wersja na GitHubie (0.35.1, AC-UP9): zielona strzalka, "jest nowa wersja X", Aktualizuj = okienko z paska stanu
     if(BASE) return;

@@ -126,7 +126,7 @@ test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
     for (const u of ['/api/version', '/demo/api/version']) {
       const r = await call(port, 'GET', u);
       assert.strictEqual(r.code, 200, u);
-      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '', sessions: [] });
+      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '', sessions: [], platform: process.platform });
     }
   } finally { proc.kill(); }
 });

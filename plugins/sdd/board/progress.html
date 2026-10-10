@@ -631,7 +631,7 @@ dialog .err,.missing .err{color:var(--hot-ink);font-size:12px;font-weight:600;mi
   function connect(){
     var es=new EventSource(BASE+'/progress-events');
     es.onopen=function(){$('#conn').textContent='połączono';$('#live').classList.remove('off')};
-    es.onmessage=function(e){render(JSON.parse(e.data))};
+    es.onmessage=function(e){var p=JSON.parse(e.data);render(p);SddUI.showCopy(p.copy)};
     es.onerror=function(){$('#conn').textContent='rozłączono, ponawiam…';$('#live').classList.add('off')};
   }
   connect();
