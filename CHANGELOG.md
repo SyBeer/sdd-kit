@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.44.0] - 2026-10-12
+- "Buduj" (docs/specs/build.md AC-BD1..BD5): ikona mlotka w naglowku obok dyskietki - wybierasz wymaganie z PRD (albo
+  wlasne zadanie), panel zaklada galaz `feature/<numer>-<tytul>` w osobnym folderze `<repo>-build/...` (git worktree)
+  z dzisiejszymi wymaganiami, a Claude buduje autonomicznie w tle (SDD + TDD, `claude -p`, bez pytan). Lista
+  dozwolonych komend (edycja, testy, budowanie, git add/commit) i zablokowanych (push, reset, checkout, merge,
+  rm -rf, sudo, curl) - bez `--dangerously-skip-permissions`. Kopia robocza usera bez zmian.
+- Strona "Budowanie" (`/build`): stan, galaz, folder, przebieg na zywo, Zatrzymaj, raport. Kropka na mlotku podczas
+  budowania.
+- Konfiguracja -> "Budowanie": bazowy prompt w `requirements/build-prompt.md` (wspolny dla zespolu), pola `{zadanie}`,
+  `{galaz}`, `{folder}`, `{wymagania}`, "Przywróć domyślny". "Jak to działa": sekcja "Budowanie".
+
 ## [0.43.0] - 2026-10-12
 - Usuniete dyktowanie z panelu (docs/specs/claude-chat.md "Wycofanie dyktowania", AC-CH18): przycisk 🎙 w czacie,
   karta "Dyktowanie w czacie" w Konfiguracji, `/api/chat/dictate`, `/api/chat/dictate-keys`, `dictate.js`,

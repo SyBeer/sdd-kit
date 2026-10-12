@@ -381,4 +381,4 @@ function createCopier(dir, o = {}) {
 }
 
 module.exports = { MAX_BYTES, gitEnv, slug, repoState, makeCopy, pushCopy, copyStatus, makeVersion, listVersions,
-  copyMode, copyOnce, createCopier, versionDiff, restoreVersion };
+  copyMode, copyOnce, createCopier, versionDiff, restoreVersion, git, tipOf };

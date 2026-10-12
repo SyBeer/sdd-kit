@@ -22,7 +22,8 @@ const terminal = require('./terminal');
 const chat = require('./chat');
 const update = require('./update');
 const secrets = require('./secrets');
-const repoCopy = require('./repo-copy');  // kopia wymagan w repozytorium (0.41.0, docs/specs/repo-copy.md)
+const repoCopy = require('./repo-copy');
+const build = require('./build');  // Buduj (0.44.0, docs/specs/build.md)  // kopia wymagan w repozytorium (0.41.0, docs/specs/repo-copy.md)
 
 const PORT = parseInt(process.argv[3] || process.env.PORT || '8012', 10);
 const UI = path.join(__dirname, 'index.html');  // tablica, korzysta z /board-ops.js
@@ -446,6 +447,86 @@ function chatRoute(req, res, url) {
   });
 }
 
+// ---------------------------------------------------------------- Buduj (0.44.0, docs/specs/build.md)
+// Jedno budowanie na modul; stan w pamieci (restart serwera = koniec przebiegu, galaz i commity zostaja).
+const builds = new Map(), buildClients = new Set();
+let buildPreparing = false;
+function buildOf(key) {
+  let b = builds.get(key);
+  if (b) return b;
+  b = new build.BuildSession();
+  b.on('event', ev => buildClients.forEach(c => { if (c.key === key) termSend(c.res, { ev, state: b.state() }); }));
+  builds.set(key, b);
+  return b;
+}
+// ctx.req = folder <modul>/requirements
+const reqDirOf = ctx => ctx.req;
+const promptFile = ctx => path.join(reqDirOf(ctx), 'build-prompt.md');
+function buildPrompt(ctx) {
+  try { return { text: fs.readFileSync(promptFile(ctx), 'utf8').replace(/\n$/, ''), custom: true }; }
+  catch (e) { return { text: build.DEFAULT_PROMPT, custom: false }; }
+}
+function buildTasks(ctx) {
+  try { return build.tasksFrom(fs.readFileSync(path.join(reqDirOf(ctx), '03-spec', 'PRD.md'), 'utf8')); } catch (e) { return []; }
+}
+function buildRoute(ctx, req, res, url) {
+  if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+  if (ctx.demo) return json(res, 403, { error: READ_ONLY });
+  if (!ctx.req) return json(res, 409, { error: 'Nie wybrano modułu.' });
+  const modDir = path.dirname(reqDirOf(ctx)), key = modDir, b = buildOf(key);
+  if (url === '/api/build' && req.method === 'GET') {
+    return repoCopy.repoState(modDir).then(st => json(res, 200, { state: b.state(), tasks: buildTasks(ctx), git: st.git,
+      prompt: { custom: buildPrompt(ctx).custom } }));
+  }
+  if (url === '/build-events') {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+    termSend(res, { replay: true, log: b.log(), state: b.state() });
+    const c = { res, key };
+    buildClients.add(c);
+    return req.on('close', () => buildClients.delete(c));
+  }
+  if (url === '/api/build/prompt' && req.method === 'GET') return json(res, 200, buildPrompt(ctx));
+  if (url === '/api/build/prompt' && req.method === 'PUT') {
+    return readBody(req, 64 * 1024, buf => {
+      let body = {};
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+      try {
+        if (body.reset === true) fs.rmSync(promptFile(ctx), { force: true });
+        else {
+          const t = String(body.text || '').replace(/\r\n?/g, '\n').trim();
+          if (!t) return json(res, 400, { error: 'Prompt jest pusty - użyj „Przywróć domyślny”.' });
+          fs.writeFileSync(promptFile(ctx), t + '\n');
+        }
+      } catch (e) { return json(res, 500, { error: e.message }); }
+      return json(res, 200, buildPrompt(ctx));
+    });
+  }
+  if (url === '/api/build/stop' && req.method === 'POST') { b.stop(); return json(res, 200, { ok: true, state: b.state() }); }
+  if (url === '/api/build/start' && req.method === 'POST') {
+    return readBody(req, 16 * 1024, buf => {
+      let body = {};
+      try { body = JSON.parse(String(buf || '{}')) || {}; } catch (e) { return json(res, 400, { error: 'zly JSON' }); }
+      if (b.state().running || buildPreparing) return json(res, 409, { error: 'Budowanie już trwa - zatrzymaj je albo poczekaj na raport.' });
+      const task = body.task && body.task.id ? { id: String(body.task.id), title: String(body.task.title || '') } : null;
+      const title = task ? task.title : String(body.title || '').trim();
+      if (!task && !title) return json(res, 400, { error: 'Napisz, co budujemy, albo wybierz wymaganie.' });
+      const branch = build.branchFor(task ? task.id : '', title);
+      buildPreparing = true;
+      build.prepareWorktree(modDir, branch).then(w => {
+        if (!w.ok) return json(res, 409, { error: w.error });
+        return repoCopy.repoState(modDir).then(st => {
+          const zadanie = task ? task.id + ' ' + task.title : title;
+          const prompt = build.fillPrompt(buildPrompt(ctx).text, { zadanie, galaz: branch, folder: w.folder,
+            wymagania: (st.rel ? st.rel + '/' : '') + 'requirements' });
+          b.start({ cwd: w.folder, prompt, task: task || { id: '', title }, branch, folder: w.folder });
+          json(res, 200, { state: b.state(), created: w.created, warning: w.warning || '' });
+        });
+      }).catch(e => json(res, 500, { error: String(e && e.message || e) })).then(() => { buildPreparing = false; });
+    });
+  }
+  return json(res, 404, { error: 'Nie ma takiego adresu.' });
+}
+
 // ---------------------------------------------------------------- nowa wersja (0.27.0, docs/specs/update.md)
 const checker = update.createChecker({ url: process.env.SDD_RELEASES_URL, disabled: process.env.SDD_UPDATE_CHECK === '0' });
 let updating = false;
@@ -500,6 +581,7 @@ const server = http.createServer((req, res) => {
     return termRoute(req, res, url);
   }
   if (url === '/api/copy' || url.startsWith('/api/copy/')) return copyRoute(ctx, req, res, url);
+  if (url === '/api/build' || url.startsWith('/api/build/') || url === '/build-events') return buildRoute(ctx, req, res, url);
   if (url === '/api/chat' || url.startsWith('/api/chat/') || url === '/chat-events') {
     if (ctx.demo) return json(res, 403, { error: READ_ONLY });
     return chatRoute(req, res, url);
@@ -509,7 +591,7 @@ const server = http.createServer((req, res) => {
   if (ctx.demo === 'start' && (url === '/' || url === '/board')) return sendHtml(res, UI);
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
-  if (url === '/module' || url === '/guide' || url === '/config') return sendHtml(res, INFO_UI);
+  if (url === '/module' || url === '/guide' || url === '/config' || url === '/build') return sendHtml(res, INFO_UI);
 
   // Nowa wersja z GitHuba (0.27.0, docs/specs/update.md)
   if (url === '/api/update' && req.method === 'GET') {

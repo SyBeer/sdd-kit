@@ -43,8 +43,8 @@ polaczenia).
 Laczenie wszystkich strumieni w jeden, HTTP/2, wspoldzielenie polaczenia miedzy kartami (SharedWorker).
 
 ## Kryteria akceptacji
-- **AC-QS1** `topbarHtml(page, '', t)` zawiera przycisk `.ic.save` (aria-label "Zapisz wersję") bezposrednio przed
-  linkiem `.cfg`; dla `base` niepustego (demo) przycisku nie ma.
+- **AC-QS1** `topbarHtml(page, '', t)` zawiera przycisk `.ic.save` (aria-label "Zapisz wersję") przed
+  linkiem `.cfg` (od 0.44.0 miedzy nimi mlotek "Buduj"); dla `base` niepustego (demo) przycisku nie ma.
 - **AC-QS2** Okienko zapisu: `SddUI.savePopHtml(b)` ma pole `#qs-name`, przycisk `#qs-save` "Zapisz wersję", link
   `<b>/config#kopia` "Zobacz poprzednie wersje" (2026-10-10, bylo "Wszystkie wersje"); bez slow commit/tag/snapshot.
 - **AC-QS3** `SddUI.saveResult(res)`: sukces -> "Zapisano: <nazwa>" (+ "na serwerze" gdy `version.sent`), blad ->

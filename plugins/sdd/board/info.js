@@ -279,6 +279,13 @@ const SECTIONS = [
     'Przycisk Claude w górnym pasku otwiera Claude Code w oknie z prawej, w folderze modułu (macOS / Linux, potrzebny Python 3). Sesja działa dalej przy przejściu między zakładkami; kończy ją przycisk Zakończ albo zatrzymanie serwera.',
     'Okno Claude ma dwa widoki (ikony w nagłówku okna): czat - rozmowa w dymkach w stylu BIZ, w czacie tylko odczyt i zapis plików modułu; terminal - pełny Claude Code w stylu INŻ. Rozmowa jest jedna: zmiana widoku wznawia ją w drugim.',
     'Skille ładują się przy starcie sesji Claude Code. Po aktualizacji pluginu otwarta sesja dalej używa starych - wtedy przy wersji w górnym pasku pojawia się „· sesja Claude nieaktualna”, a podpowiedź mówi, którą sesję zamknąć i otworzyć na nowo.'] },
+  // Budowanie (0.44.0, docs/specs/build.md)
+  { title: 'Budowanie', items: [
+    '**Po co** – z gotowego speca (wymagania R-xxx z kryteriami AC) Claude buduje kod sam, metodą SDD + TDD, bez pytań w trakcie.',
+    '**Jak** – młotek w nagłówku: wybierz wymaganie z PRD albo opisz zadanie i kliknij „Buduj na nowej gałęzi”. Panel zakłada gałąź feature/… w osobnym folderze obok repozytorium (<repo>-build/…) z dzisiejszymi wymaganiami, a Twoja kopia robocza zostaje bez zmian.',
+    '**Bez pytań, w granicach** – Claude może edytować pliki w tym folderze, uruchamiać testy i budowanie, robić commity. Nie może pushować, zmieniać gałęzi, scalać, kasować rekursywnie ani pobierać z sieci – zablokowane komendy pokazuje przebieg i raport.',
+    '**Postęp i raport** – strona Budowanie (link w okienku młotka): przebieg na żywo, Zatrzymaj, na końcu raport: commity, które AC pokrywa który test, przyjęte założenia. Przejrzenie, scalenie i push robisz sam.',
+    '**Prompt** – Konfiguracja → Budowanie: bazowa instrukcja w requirements/build-prompt.md (wspólna dla zespołu), z polami {zadanie} {galaz} {folder} {wymagania}; „Przywróć domyślny” wraca do wersji z sdd-kit.'] },
   // Kopia i wersje (0.41.0, docs/specs/repo-copy.md)
   { title: 'Kopia i wersje', items: [
     '**Po co** – praca nad wymaganiami jest kopiowana do gita sama, bez pamiętania o zapisywaniu w repozytorium. Utrata komputera albo folderu nie zabiera wymagań, a zespół widzi pracę w toku.',

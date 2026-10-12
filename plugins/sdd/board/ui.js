@@ -202,6 +202,7 @@
       back +
       '<button type="button" class="ic theme-btn" data-next="' + next[0] + '" title="' + next[1] + '" aria-label="' + next[1] + '">' + next[2] + '</button>' +
       (b ? '' : '<button type="button" class="ic save" title="Zapisz wersję" aria-label="Zapisz wersję" aria-expanded="false" aria-haspopup="dialog">' + SAVE_SVG + '</button>') +
+      (b ? '' : '<button type="button" class="ic build" title="Buduj – Claude buduje zadanie z PRD sam, na gałęzi feature" aria-label="Buduj" aria-expanded="false" aria-haspopup="dialog">' + BUILD_SVG + '</button>') +
       (cfg ? '<a class="ic cfg" href="' + cfg + '" title="Konfiguracja" aria-label="Konfiguracja"' + (page === 'config' ? ' aria-current="page"' : '') + '>⚙︎</a>' : '') +
       claude + '</div>';
   }
@@ -351,6 +352,96 @@
       '<button type="button" class="btn" data-vrestore-no>Anuluj</button></div></div>';
   }
 
+  // ---------------------------------------------------------------- Buduj (0.44.0, docs/specs/build.md AC-BD5)
+  // mlotek (wybor wlasciciela 2026-10-12: sam mlotek, bez nawiasow kodu)
+  const BUILD_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">' +
+    '<g transform="translate(12 12) rotate(18) scale(1.02) translate(-12.3 -12.4)"><path d="M5.2 8C5.7 5.1 8.1 3.8 11 3.8h5.4v3.8H11C9 7.6 7 7.5 5.2 8z"/>' +
+    '<path d="M16.4 3.2h3v5h-3"/><path d="M10.9 7.6v13q1.1 1.4 2.2 0v-13"/></g></svg>';
+  // jak build.js branchFor: slug, najwyzej 50 znakow, skracane do pelnego slowa
+  function branchFor(id, title) {
+    let s = String([id, title].filter(Boolean).join(' ')).toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (s.length > 42) s = s.slice(0, 43).replace(/-[^-]*$/, '') || s.slice(0, 42);
+    return 'feature/' + (s || 'zadanie');
+  }
+  const BSTATUS = { running: 'buduje', done: 'gotowe', stopped: 'zatrzymane', error: 'błąd' };
+  function buildPopHtml(info, b) {
+    info = info || {}; b = b || '';
+    const st = info.state || {}, tasks = info.tasks || [];
+    let body;
+    if (!info.git) body = '<p class="qs-hint">Budowanie wymaga repozytorium git w module – kod powstaje na osobnej gałęzi.</p>';
+    else if (st.running) {
+      const t = st.task || {};
+      body = '<p class="qs-hint">Claude buduje: <b>' + esc([t.id, t.title].filter(Boolean).join(' ')) + '</b><br>gałąź <code>' + esc(st.branch || '') + '</code></p>' +
+        '<div class="qs-row"><a href="' + esc(b + '/build') + '" class="btn">Postęp budowania</a><button type="button" class="btn" id="bd-stop">Zatrzymaj</button></div>';
+    } else {
+      const first = tasks[0];
+      body = '<p class="qs-hint">Claude zbuduje zadanie autonomicznie (SDD + TDD), w osobnym folderze na nowej gałęzi – Twoja kopia robocza zostaje bez zmian.</p>' +
+        '<select class="fld" id="bd-task" aria-label="Co budujemy">' + tasks.map(function (t, i) {
+          return '<option value="' + i + '">' + esc(t.id + ' ' + t.title + (t.status ? ' · ' + cut(t.status) : '')) + '</option>';
+        }).join('') + '<option value="own"' + (tasks.length ? '' : ' selected') + '>Własne zadanie…</option></select>' +
+        '<input type="text" class="fld" id="bd-own" placeholder="co budujemy, np. popraw ekran logowania" autocomplete="off"' + (tasks.length ? ' hidden' : '') + '>' +
+        '<p class="qs-hint">gałąź <code id="bd-branch">' + esc(first ? branchFor(first.id, first.title) : 'feature/…') + '</code></p>' +
+        '<div class="qs-row"><button type="button" class="btn p" id="bd-go">Buduj na nowej gałęzi</button></div>' +
+        (BSTATUS[st.status] && st.status !== 'running' ? '<p class="qs-hint">Ostatnie budowanie: ' + BSTATUS[st.status] + ' · <a href="' + esc(b + '/build') + '">raport</a></p>' : '');
+    }
+    return '<div class="qs-pop bd-pop" role="dialog" aria-label="Buduj"><div class="mh">Buduj</div>' + body + '<p class="qs-msg" id="bd-msg" aria-live="polite"></p></div>';
+  }
+  function buildPop(btn, b) {
+    if (!btn || typeof document === 'undefined') return;
+    let pop = null, info = null;
+    const get = function () { return fetch(b + '/api/build').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+    const post = function (u, body) {
+      return fetch(b + u, { method: 'POST', headers: { 'X-SDD': '1', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+    };
+    function mark(x) { btn.classList.toggle('busy', !!(x && x.state && x.state.running)); }
+    get().then(mark);
+    function close() { if (pop) { pop.remove(); pop = null; } btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('mousedown', outside, true); }
+    function outside(e) { if (pop && !pop.contains(e.target) && !btn.contains(e.target)) close(); }
+    function task() {
+      const sel = pop.querySelector('#bd-task'), own = pop.querySelector('#bd-own');
+      if (!sel) return null;
+      if (sel.value === 'own') return { title: own.value.trim() };
+      const t = (info.tasks || [])[+sel.value];
+      return t ? { task: { id: t.id, title: t.title } } : null;
+    }
+    function preview() {
+      const t = task(), el = pop.querySelector('#bd-branch'), own = pop.querySelector('#bd-own');
+      own.hidden = pop.querySelector('#bd-task').value !== 'own';
+      el.textContent = t && (t.task || t.title) ? branchFor(t.task ? t.task.id : '', t.task ? t.task.title : t.title) : 'feature/…';
+    }
+    function render() {
+      if (pop) pop.remove();
+      btn.parentNode.insertAdjacentHTML('beforeend', buildPopHtml(info || {}, b));
+      pop = btn.parentNode.lastElementChild;
+      const sel = pop.querySelector('#bd-task');
+      if (sel) { sel.onchange = function () { preview(); if (sel.value === 'own') pop.querySelector('#bd-own').focus(); }; pop.querySelector('#bd-own').oninput = preview; }
+      pop.onkeydown = function (e) { if (e.key === 'Escape') { close(); btn.focus(); } };
+      pop.onclick = function (e) {
+        const t = e.target.closest('button'); if (!t) return;
+        const msg = pop.querySelector('#bd-msg');
+        if (t.id === 'bd-go') {
+          const body = task();
+          if (!body || !(body.task || body.title)) { msg.className = 'qs-msg err'; msg.textContent = 'Napisz, co budujemy.'; return; }
+          t.disabled = true; t.textContent = 'Zakładam gałąź…';
+          post('/api/build/start', body).then(function () { location.href = b + '/build'; })
+            .catch(function (err) { t.disabled = false; t.textContent = 'Buduj na nowej gałęzi'; msg.className = 'qs-msg err'; msg.textContent = err.message; });
+        } else if (t.id === 'bd-stop') {
+          t.disabled = true;
+          post('/api/build/stop').then(function () { return get(); }).then(function (x) { info = x || info; mark(info); render(); })
+            .catch(function (err) { t.disabled = false; msg.className = 'qs-msg err'; msg.textContent = err.message; });
+        }
+      };
+    }
+    btn.onclick = function () {
+      if (pop) { close(); return; }
+      btn.setAttribute('aria-expanded', 'true');
+      document.addEventListener('mousedown', outside, true);
+      get().then(function (x) { info = x || { git: false, tasks: [], state: {} }; mark(info); if (btn.getAttribute('aria-expanded') === 'true') render(); });
+    };
+  }
+
   // Polaczenie na zywo (0.42.0, AC-LC1): w schowanej karcie zamkniete - przegladarka ma tylko 6 polaczen na serwer,
   // a serwer po polaczeniu i tak wysyla pelny stan. env (testy): { EventSource, document }.
   function liveSource(url, h, env) {
@@ -490,7 +581,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -529,6 +620,7 @@
     slots.forEach(function (el) { const to = bar.querySelector('.slot-' + el.getAttribute('data-slot')); if (to) to.replaceWith(el); });
     const tb = bar.querySelector('.theme-btn');
     savePop(bar.querySelector('.save'), b);
+    buildPop(bar.querySelector('.build'), b);
     if (tb) tb.onclick = function () { save(pickTheme(tb.getAttribute('data-next'), false)); apply(); mark(bar, load()); };
     // zmiana w innej karcie (panel <-> tablica)
     window.addEventListener('storage', function (e) {
