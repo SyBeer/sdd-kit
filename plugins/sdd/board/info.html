@@ -128,6 +128,11 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .bl-text{padding:6px 10px;border:1px solid var(--line-soft);border-radius:3px;background:var(--bg)}
 .bl-text p{margin:0 0 4px}
 .bl-den{color:var(--hot-ink);font:11.5px var(--mono);overflow-wrap:anywhere}
+.bl-den code{font:inherit;background:none;border:0;padding:0}
+.bl-err{color:var(--muted);font:11.5px var(--mono)}
+.bdenied{margin:8px 0 0;font-size:12.5px}
+.bdenied ul{margin:4px 0 0;padding-left:18px}
+.bdenied code{overflow-wrap:anywhere}
 .bl-sys{color:var(--faint);font:11px var(--mono)}
 /* skok z paska stanu (AC-U23): karta pod naglowkiem; zapas na dole liczy jumpTo() */
 #wersja,#kopia{scroll-margin-top:calc(var(--chrome-h,62px) + 16px)}
@@ -650,6 +655,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       '<dl class="kv">'+kv('Zadanie',esc([t.id,t.title].filter(Boolean).join(' ')))+kv('Stan','<span class="tag '+st[0]+'">'+st[1]+'</span>')+
       kv('Gałąź','<code>'+esc(s.branch||'')+'</code>')+kv('Folder','<code>'+esc(s.folder||'')+'</code>')+
       kv('Start',esc(s.startedAt?new Date(s.startedAt).toLocaleString('pl-PL'):''))+(s.endedAt?kv('Koniec',esc(new Date(s.endedAt).toLocaleString('pl-PL'))):'')+'</dl>'+
+      ((s.denied||[]).length?'<div class="bdenied"><b>Zablokowane komendy ('+s.denied.length+')</b> – spoza listy dozwolonych; Claude szuka innej drogi albo opisuje brak w raporcie:<ul>'+
+        s.denied.map(function(c){ return '<li><code>'+esc(c)+'</code></li>'; }).join('')+'</ul></div>':'')+
       (s.running?'<div class="rowc"><button class="btn" type="button" id="bdstop">Zatrzymaj</button></div>':'')+
       (!s.running?'<p class="hint">Kod jest na gałęzi <code>'+esc(s.branch||'')+'</code> w folderze obok repozytorium. Przejrzyj zmiany i scal je sam – panel nie pushuje i nie scala.</p>':'');
     var rep=$('#breport'); rep.hidden=s.running||!s.report; if(!rep.hidden) rep.querySelector('.bb').innerHTML=SddUI.chatMd(s.report);
@@ -660,7 +667,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       if(ev.kind==='init'||ev.kind==='done') return;
       flush();
       if(ev.kind==='text') out.push('<div class="bl-text">'+SddUI.chatMd(ev.text)+'</div>');
-      else if(ev.kind==='denied') out.push('<div class="bl-den">✕ zablokowane: '+esc(ev.text)+'</div>');
+      else if(ev.kind==='denied') out.push('<div class="bl-den">✕ zablokowane: '+(ev.command?'<code>'+esc(ev.command)+'</code>':esc(ev.tool||ev.text||''))+'</div>');
+      else if(ev.kind==='toolerr') out.push('<div class="bl-err" title="'+esc(ev.text||'')+'">błąd narzędzia ('+esc(ev.tool||'?')+') – Claude poprawia</div>');
       else if(ev.kind==='error') out.push('<div class="bl-den">! '+esc(ev.text)+'</div>');
       else if(ev.kind==='start') out.push('<div class="bl-sys">start · '+esc(ev.branch||'')+'</div>');
       else if(ev.kind==='exit') out.push('<div class="bl-sys">koniec · '+esc((BST[ev.status]||[0,''])[1])+'</div>');

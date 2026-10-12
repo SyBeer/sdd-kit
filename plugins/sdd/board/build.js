@@ -97,16 +97,44 @@ async function prepareWorktree(dir, branch) {
   return { ok: true, created: true, folder, branch, root: st.root, warning };
 }
 
+// Zdarzenie przebiegu (0.44.1, AC-BD7): wynik narzedzia laczony z wywolaniem po tool_use_id - odmowa uprawnien
+// pokazuje komende, zwykly blad narzedzia (np. Edit: tekst 2 razy w pliku) jest osobnym rodzajem, nie "zablokowane"
+const DENIED_RE = /Permission to use \S+ (?:has been )?denied|don't ask mode/i;
+function parseBuildEvent(line, tools) {
+  const base = parseEvent(line);
+  if (base === null) return null;
+  const e = JSON.parse(line);
+  const c = e && e.message && Array.isArray(e.message.content) ? e.message.content : [];
+  if (e.type === 'assistant') c.forEach(b => {
+    if (!b || b.type !== 'tool_use' || !b.id) return;
+    const i = b.input || {};
+    tools.set(b.id, { name: String(b.name || ''), command: String(i.command || i.file_path || i.path || i.notebook_path || i.pattern || '').slice(0, 300) });
+  });
+  if (e.type !== 'user') return base;
+  const out = base.filter(x => x.kind !== 'denied');
+  c.forEach(b => {
+    if (!b || b.type !== 'tool_result' || !b.is_error) return;
+    const t = Array.isArray(b.content) ? b.content.map(x => x && x.text || '').join(' ') : String(b.content || '');
+    const u = tools.get(b.tool_use_id) || { name: '', command: '' };
+    if (DENIED_RE.test(t)) out.push({ kind: 'denied', tool: u.name, command: u.command });
+    else out.push({ kind: 'toolerr', tool: u.name, text: t.replace(/<\/?tool_use_error>/g, '').trim().split('\n')[0].slice(0, 160) });
+  });
+  return out;
+}
+
 // Przebieg budowania (AC-BD3): prompt na stdin, zdarzenia z parseEvent, raport = ostatni tekst Claude
 const LOG_MAX = 1500;
 class BuildSession extends EventEmitter {
-  constructor() { super(); this.proc = null; this.entries = []; this.info = { status: 'idle' }; this.stopping = false; }
+  constructor() { super(); this.proc = null; this.entries = []; this.info = { status: 'idle', denied: [] }; this.stopping = false; this.lastText = null; }
   state() { return Object.assign({ running: !!this.proc }, this.info); }
   log() { return this.entries.slice(); }
   add(ev) {
+    // ten sam tekst drugi raz z rzedu (strumien potrafi powtorzyc wiadomosc) - raz (AC-BD8)
+    if (ev.kind === 'text') { if (ev.text === this.lastText) return; this.lastText = ev.text; }
     this.entries.push(ev);
     if (this.entries.length > LOG_MAX) this.entries.splice(0, this.entries.length - LOG_MAX);
     if (ev.kind === 'text') this.info.report = ev.text;
+    if (ev.kind === 'denied' && ev.command && !this.info.denied.includes(ev.command)) this.info.denied.push(ev.command);
     this.emit('event', ev);
   }
   // o: {cwd, prompt, task, branch, folder, env} albo {..., argv} (testy)
@@ -123,9 +151,10 @@ class BuildSession extends EventEmitter {
       const a = terminal.claudeArgv(o.env || process.env, { args: buildArgs() });
       p = spawn(a[0], a.slice(1), Object.assign({}, spawnOpts, { detached: true }));
     }
-    this.proc = p; this.entries = []; this.stopping = false;
+    this.proc = p; this.entries = []; this.stopping = false; this.lastText = null;
+    const tools = new Map();
     this.info = { status: 'running', task: o.task || null, branch: o.branch || '', folder: o.folder || o.cwd, startedAt: new Date().toISOString(),
-      endedAt: null, exitCode: null, report: '', ok: null };
+      endedAt: null, exitCode: null, report: '', ok: null, denied: [] };
     this.add({ kind: 'start', task: o.task || null, branch: o.branch || '' });
     let buf = '', err = '';
     p.stdout.setEncoding('utf8');
@@ -134,7 +163,7 @@ class BuildSession extends EventEmitter {
       let i;
       while ((i = buf.indexOf('\n')) >= 0) {
         const line = buf.slice(0, i); buf = buf.slice(i + 1);
-        (parseEvent(line) || []).forEach(ev => { if (ev.kind === 'done') this.info.ok = ev.ok; this.add(ev); });
+        (parseBuildEvent(line, tools) || []).forEach(ev => { if (ev.kind === 'done') this.info.ok = ev.ok; this.add(ev); });
       }
     });
     p.stderr.on('data', c => { err = (err + c).slice(-2000); });
@@ -162,4 +191,4 @@ class BuildSession extends EventEmitter {
   }
 }
 
-module.exports = { BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, buildArgs, prepareWorktree, BuildSession };
+module.exports = { parseBuildEvent, BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, buildArgs, prepareWorktree, BuildSession };

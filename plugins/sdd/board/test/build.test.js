@@ -126,4 +126,55 @@ test('AC-BD3: BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0
   assert.strictEqual(s2.state().status, 'stopped');
 });
 
+// format jak w prawdziwym przebiegu fv-manager R-021 (stream-json Claude Code)
+const J = o => JSON.stringify(o);
+const USE = (id, name, input) => J({ type: 'assistant', message: { id: 'm' + id, content: [{ type: 'tool_use', id, name, input }] } });
+const RES = (id, text) => J({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+const DENY = 'Permission to use Bash has been denied because Claude Code is running in don\'t ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial';
+const CMD = 'ls src src/services tests templates && wc -l src/main.py && cat pytest.ini && ls -d .venv ../../fv-manager/.venv 2>/dev/null; head -60 CHANGELOG.md';
+
+test('AC-BD7: parseBuildEvent - blokada z komenda, blad narzedzia osobno', () => {
+  const tools = new Map();
+  assert.deepStrictEqual(bd.parseBuildEvent(USE('t1', 'Bash', { command: CMD }), tools), [{ kind: 'tool', name: 'Bash', target: CMD.slice(0, 120) }]);
+  assert.deepStrictEqual(bd.parseBuildEvent(RES('t1', DENY), tools), [{ kind: 'denied', tool: 'Bash', command: CMD }]);
+  bd.parseBuildEvent(USE('t2', 'Edit', { file_path: '/x/src/main.py', old_string: 'a', new_string: 'b' }), tools);
+  const err = '<tool_use_error>Found 2 matches of the string to replace, but replace_all is false. To replace all occurrences, set replace_all to true.\nString: "pv_stats"</tool_use_error>';
+  const e = bd.parseBuildEvent(RES('t2', err), tools);
+  assert.strictEqual(e.length, 1);
+  assert.strictEqual(e[0].kind, 'toolerr');
+  assert.strictEqual(e[0].tool, 'Edit');
+  assert.ok(e[0].text.startsWith('Found 2 matches of the string to replace'));
+  assert.ok(e[0].text.length <= 160 && !/tool_use_error|\n/.test(e[0].text));
+  // odmowa zapisu pliku poza folderem - komenda = plik
+  bd.parseBuildEvent(USE('t3', 'Write', { file_path: '/etc/hosts', content: 'x' }), tools);
+  assert.deepStrictEqual(bd.parseBuildEvent(RES('t3', 'Permission to use Write has been denied because Claude Code is running in don\'t ask mode.'), tools),
+    [{ kind: 'denied', tool: 'Write', command: '/etc/hosts' }]);
+  // nieznane id - blokada bez komendy, bez wyjatku
+  assert.deepStrictEqual(bd.parseBuildEvent(RES('zz', DENY), tools), [{ kind: 'denied', tool: '', command: '' }]);
+  // reszta jak w czacie
+  assert.deepStrictEqual(bd.parseBuildEvent(J({ type: 'assistant', message: { content: [{ type: 'text', text: 'Testy sa czerwone.' }] } }), tools), [{ kind: 'text', text: 'Testy sa czerwone.' }]);
+  assert.strictEqual(bd.parseBuildEvent('nie json', tools), null);
+});
+
+const FAKE2 = `const out=o=>console.log(JSON.stringify(o));process.stdin.resume();process.stdin.on('end',()=>{
+out({type:'assistant',message:{content:[{type:'tool_use',id:'a',name:'Bash',input:{command:'curl x'}}]}});
+out({type:'user',message:{content:[{type:'tool_result',tool_use_id:'a',is_error:true,content:"Permission to use Bash has been denied because Claude Code is running in don't ask mode."}]}});
+out({type:'assistant',message:{content:[{type:'tool_use',id:'b',name:'Bash',input:{command:'curl x'}}]}});
+out({type:'user',message:{content:[{type:'tool_result',tool_use_id:'b',is_error:true,content:"Permission to use Bash has been denied because Claude Code is running in don't ask mode."}]}});
+out({type:'assistant',message:{content:[{type:'text',text:'Testy czerwone.'}]}});
+out({type:'assistant',message:{content:[{type:'text',text:'Testy czerwone.'}]}});
+out({type:'assistant',message:{content:[{type:'text',text:'Gotowe.'}]}});
+out({type:'result',subtype:'success'});});`;
+
+test('AC-BD8: BuildSession - tekst bez powtorzen, lista zablokowanych komend', async () => {
+  const fake = path.join(TMP, 'fake2.js'); fs.writeFileSync(fake, FAKE2);
+  const s = new bd.BuildSession();
+  const done = new Promise(r => s.once('exit', r));
+  s.start({ cwd: TMP, prompt: 'x', argv: [process.execPath, fake] });
+  await done;
+  assert.deepStrictEqual(s.log().filter(e => e.kind === 'text').map(e => e.text), ['Testy czerwone.', 'Gotowe.']);
+  assert.deepStrictEqual(s.state().denied, ['curl x']);
+  assert.strictEqual(s.log().filter(e => e.kind === 'denied').length, 2, 'w przebiegu kazda proba');
+});
+
 test.after(() => { fs.rmSync(TMP, { recursive: true, force: true }); });

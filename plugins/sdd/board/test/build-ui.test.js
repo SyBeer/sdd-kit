@@ -48,3 +48,14 @@ test('AC-BD5: Konfiguracja - karta Budowanie z promptem; strona /build', () => {
   assert.match(info, /SddUI\.liveSource\(BASE\+'\/build-events'/);
   assert.match(info, /\/api\/build\/stop/);
 });
+
+test('AC-BD9: /build - blokada z komenda, blad narzedzia szary, lista zablokowanych', () => {
+  const at = info.indexOf('function drawBuild('), d = info.slice(at, info.indexOf('// KOPIA I WERSJE (0.41.0', at));
+  assert.ok(d.length > 200, 'fragment drawBuild');
+  assert.match(d, /ev\.kind==='denied'[^\n]*zablokowane: [^\n]*ev\.command/);
+  assert.match(d, /ev\.kind==='toolerr'[^\n]*błąd narzędzia[^\n]*Claude poprawia/);
+  assert.match(d, /class="bl-err"/);
+  assert.match(d, /Zablokowane komendy/);
+  assert.match(d, /s\.denied/);
+  assert.match(info, /\.bl-err\{[^}]*var\(--muted\)/);
+});

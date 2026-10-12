@@ -89,6 +89,24 @@ Metryka: zadanie z PRD zbudowane od klikniecia do raportu bez dotykania terminal
   lamania linii; mlotek przerysowany (wygladal jak siekiera). AC-BD6 (prawdziwe budowanie na fv-manager) - do
   sprawdzenia przez wlasciciela.
 
+## Zmiana 0.44.1 (pierwsze prawdziwe budowanie, fv-manager R-021, 2026-10-12)
+Budowanie przeszlo (TDD, 232 testy, 2 commity z R-021 i T-22, wlasne `.venv`), ale przebieg w panelu mylil:
+pierwsze "zablokowane" nie mowilo, ktora komenda (dlugi komunikat Claude Code uciety w polowie); drugie
+"zablokowane" bylo zwyklym bledem narzedzia Edit (tekst do podmiany 2 razy w pliku), ktory Claude sam poprawil;
+jedno zdanie Claude pokazalo sie dwa razy.
+- **AC-BD7** `parseBuildEvent(line, tools)`: laczy wynik narzedzia z jego wywolaniem (`tool_use_id`). Odmowa uprawnien
+  (`Permission to use … denied` / tryb bez pytan) -> `{ kind: 'denied', tool, command }` (komenda Bash albo plik, do
+  300 znakow); inny blad narzedzia -> `{ kind: 'toolerr', tool, text }` (pierwsza linia, bez znacznikow
+  `<tool_use_error>`, do 160 znakow); reszta jak `parseEvent` czatu.
+- **AC-BD8** `BuildSession`: ten sam tekst Claude drugi raz z rzedu nie trafia do przebiegu; `state().denied` - lista
+  zablokowanych komend bez powtorzen.
+- **AC-BD9** Strona `/build`: "✕ zablokowane: <komenda>" (czerwone), "błąd narzędzia (Edit) – Claude poprawia" (szare,
+  pelny tekst w podpowiedzi); w naglowku "Zablokowane komendy" z lista, gdy niepusta - wiadomo, co dodac do dozwolonych.
+
+Weryfikacja 0.44.1 (2026-10-12): testy AC-BD7..BD9 (najpierw czerwone), pelny zestaw 355 OK; testowy sdd-board (8014)
+z udawanym Claude odtwarzajacym zdarzenia z R-021: "✕ zablokowane: <komenda>", "błąd narzędzia (Edit) – Claude
+poprawia", zdanie o czerwonych testach raz, "Zablokowane komendy (1)" w naglowku.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.

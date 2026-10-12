@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.44.1] - 2026-10-12
+- Przebieg budowania czytelniejszy (docs/specs/build.md AC-BD7..BD9, po pierwszym prawdziwym budowaniu R-021):
+  blokada pokazuje komende ("✕ zablokowane: ls src … && head -60 CHANGELOG.md") zamiast dlugiego, ucietego
+  komunikatu Claude Code; zwykly blad narzedzia (np. Edit: tekst 2 razy w pliku) jest szary - "błąd narzędzia (Edit) –
+  Claude poprawia" - a nie "zablokowane"; powtorzony tekst Claude pokazany raz; w naglowku strony "Budowanie" lista
+  "Zablokowane komendy" (co dodac do dozwolonych).
+
 ## [0.44.0] - 2026-10-12
 - "Buduj" (docs/specs/build.md AC-BD1..BD5): ikona mlotka w naglowku obok dyskietki - wybierasz wymaganie z PRD (albo
   wlasne zadanie), panel zaklada galaz `feature/<numer>-<tytul>` w osobnym folderze `<repo>-build/...` (git worktree)
