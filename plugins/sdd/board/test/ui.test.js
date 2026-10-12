@@ -238,3 +238,23 @@ test('AC-U22: versionBadge - komendy omijaja alias claude, na Windows bez "comma
   assert.ok(win.steps.filter(s => s.cmd).every(s => /^claude plugin /.test(s.cmd)));
   assert.doesNotMatch(win.title, /command claude/);
 });
+
+test('AC-U23: skok do #wersja / #kopia - zapas liczony do karty, karta pod naglowkiem', () => {
+  const h = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  assert.doesNotMatch(h, /100vh/, 'bez zapasu na cala wysokosc okna');
+  assert.match(h, /#wersja,#kopia\{scroll-margin-top:calc\(var\(--chrome-h,62px\) \+ 16px\)\}/);
+  assert.match(h, /function jumpTo\(box\)\{/);
+  assert.match(h, /location\.hash==='#wersja'[^\n]*jumpTo\(/);
+  assert.match(h, /location\.hash==='#kopia'[^\n]*jumpTo\(/);
+  // obliczenie: zapas = okno - (naglowek + 16) - (od gory karty do konca strony), tylko gdy dodatni
+  const vm = require('vm'), fn = h.match(/function jumpPad\(below,vh,chrome\)\{[^}]*\}/);
+  assert.ok(fn, 'jumpPad');
+  const jumpPad = vm.runInNewContext('(' + fn[0] + ')');
+  assert.strictEqual(jumpPad(300, 800, 62), 422);
+  assert.strictEqual(jumpPad(900, 800, 62), 0);
+});
+
+test('AC-U24: pole komendy - tekst wypelnia pole, Kopiuj przy prawej krawedzi', () => {
+  const h = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  assert.match(h, /\.cmdf code\{flex:1 1 auto;min-width:0;/);
+});

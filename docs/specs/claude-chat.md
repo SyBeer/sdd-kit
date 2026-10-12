@@ -24,12 +24,7 @@ Metryka: wywiad `/sdd:interview live` prowadzony w czacie od poczatku do konca b
 - Styl: panel dopisuje instrukcje `--append-system-prompt` - czat: styl BIZ, terminal z panelu: styl INZ (niezaleznie od
   `interview_style` w SDD.yaml; to pole dotyczy Claude Code uruchomionego poza panelem).
 - Jedna rozmowa na modul: przelaczenie widoku konczy dzialajacy tryb i wznawia rozmowe w drugim (`--continue`).
-- Dyktowanie (osobny modul `dictate.js`, wylaczalne i usuwalne - rozdzial "Wycofanie dyktowania"): przycisk 🎙
-  ustawia kursor w polu wiadomosci, serwer uruchamia dyktowanie systemu:
-  - Windows: Win+H (Pisanie glosowe) przez PowerShell (`keybd_event`),
-  - macOS: menu przegladarki Edycja/Edit -> "Rozpocznij dyktowanie…"/"Start Dictation…" przez System Events
-    (wymaga zgody Dostepnosc dla programu, ktory uruchamia serwer).
-  Blad (brak zgody, brak menu, Constrained Language) -> jednorazowa wskazowka, co wlaczyc.
+- Dyktowanie (0.38.0-0.42.x) - usuniete w 0.43.0, patrz "Wycofanie dyktowania".
 
 ## Zakres
 - Naglowek okna Claude: przelacznik dwoch ikon (czat / `</>` terminal) z kropka przy aktywnej, znacznik stylu
@@ -60,11 +55,7 @@ Metryka: wywiad `/sdd:interview live` prowadzony w czacie od poczatku do konca b
 - **AC-CH4** Okno Claude: przelacznik widoku, znacznik stylu, widok czatu (dymki, zwijane dzialania, pole, Enter/Shift+Enter),
   zapamietany widok; terminal jak dotad.
 - **AC-CH5** Skill `interview`: instrukcja z panelu (styl BIZ / INZ) ma pierwszenstwo przed `interview_style`.
-- **AC-CH6** Dyktowanie: `dictate.js` - `dictateCommand(platform)` (Windows: PowerShell z Win+H; macOS: osascript z menu
-  PL/EN; inne - brak), `POST /api/chat/dictate` (Twoj modul, Host lokalny), `GET /api/chat` -> `dictate: true|false`;
-  `SDD_DICTATE=0` wylacza; przycisk 🎙 tylko gdy `dictate`; blad -> wskazowka.
-- **AC-CH7** Wycofanie dyktowania opisane i sprawdzone testem: kod dyktowania tylko w `dictate.js` i w blokach oznaczonych
-  `DYKTOWANIE (0.38.0)` w `server.js` i `ui.js`.
+- **AC-CH6**, **AC-CH7** (dyktowanie) - usuniete w 0.43.0.
 - **AC-CH8** (reczne) Czat na fv-manager: `/sdd:interview live` w stylu BIZ, zapis plikow, odrzucenie polecenia spoza listy,
   przelaczenie na terminal i z powrotem z ta sama rozmowa; dyktowanie na macOS.
 
@@ -90,13 +81,8 @@ Metryka: wywiad `/sdd:interview live` prowadzony w czacie od poczatku do konca b
 
 ## Zmiana 0.39.1 (zgloszenie usera: "na mac nie uruchomil mi sie mikrofon" - dyktowanie macOS wylaczone, serwer z HQAI
 uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem, skrot option+space)
-- **AC-CH11** Wlasny skrot programu do dyktowania: `parseKeys` (modyfikatory option/alt, control/ctrl, command/cmd/win, shift
-  + litera, cyfra, space, f1-f12, return, tab, esc); macOS `key code` / `keystroke … using {…}` przez System Events, Windows
-  `keybd_event`; pusty skrot = dyktowanie systemu jak w 0.38.0.
-- **AC-CH12** Brak zgody Dostepnosc -> wskazowka z dokladna sciezka aplikacji `.app`, ktora uruchomila serwer
-  (`responsibleApp` z lancucha przodkow), do wklejenia przez Cmd+Shift+G.
-- **AC-CH13** Konfiguracja: karta "Dyktowanie w czacie" (ten komputer) - pole skrotu i zapis do `~/.sdd-kit/config.json`
-  (`POST /api/chat/dictate-keys`, `dictateKeys`); tylko w blokach DYKTOWANIE (takze w `info.html`).
+- **AC-CH11**, **AC-CH12**, **AC-CH13** (skrot programu do dyktowania, wskazowka zgody, karta w Konfiguracji) -
+  usuniete w 0.43.0.
 
 ## Zmiana 0.39.2
 - **AC-CH15** Gdy ostatnia wiadomosc Claude pyta o kontynuacje (`asksContinue`: "Kontynuujemy czy konczymy…"), nad polem
@@ -116,12 +102,16 @@ uruchamia Homebrew Python.app bez zgody Dostepnosc; user dyktuje Superwhisperem,
   Sprawdzone 2026-10-08 z udawanym Claude: tabela 3 kolumny z pogrubieniem i `kod`, znacznik niewidoczny, w polu
   "Tak, zatwierdzam" zaznaczone, Enter wyslal, kolejna wiadomosc bez propozycji.
 
-## Wycofanie dyktowania
-1. Usun `plugins/sdd/board/dictate.js` i jego test `board/test/dictate.test.js`.
-2. W `server.js`, `ui.js` i `info.html` usun bloki miedzy `// DYKTOWANIE (0.38.0) start` a `// DYKTOWANIE (0.38.0) koniec`.
-3. Usun AC-CH6/AC-CH7 z tego pliku i linie o dyktowaniu z CHANGELOG nastepnej wersji.
-Bez usuwania kodu: zmienna srodowiskowa `SDD_DICTATE=0` przy starcie sdd-board chowa przycisk i blokuje `/api/chat/dictate`.
+## Wycofanie dyktowania (wykonane 2026-10-12, 0.43.0 - user: "usun z SDD-KIT nagrywanie/dyktowanie")
+Usuniete: `dictate.js` i `test/dictate.test.js`; bloki `DYKTOWANIE (0.38.0)` w `server.js`, `ui.js`, `info.html`;
+przycisk 🎙 i jego style (`.cd-mic`, `.cd-hint2`); `/api/chat/dictate`, `/api/chat/dictate-keys`; pole `dictate`
+w `GET /api/chat` i `dictate`/`dictateKeys` w `GET /api/config`; karta "Dyktowanie w czacie"; wzmianka w "Jak to dziala".
+`SDD_DICTATE` nic juz nie robi. Zapisany `dictateKeys` w `~/.sdd-kit/config.json` jest ignorowany (nie kasujemy cudzej
+konfiguracji). Dyktowac mozna dalej programem systemu albo np. Superwhisperem - poza panelem, wprost w pole wiadomosci.
+- **AC-CH18** Po dyktowaniu nie ma sladu: brak `dictate.js`; w `server.js`, `ui.js`, `ui.css`, `info.html`, `info.js`
+  brak `dictat`, `dyktow`, `cd-mic`, `🎙`; `GET /api/chat` i `GET /api/config` bez pola `dictate`; `POST /api/chat/dictate`
+  -> 404.
 
 ## Testy (TDD, przed kodem)
-`board/test/chat.test.js` (AC-CH1..AC-CH5), `board/test/dictate.test.js` (AC-CH6, AC-CH7),
+`board/test/chat.test.js` (AC-CH1..AC-CH5, AC-CH18 serwer), `board/test/no-dictate.test.js` (AC-CH18),
 `board/test/chat-reply.test.js` (AC-CH16, AC-CH17).

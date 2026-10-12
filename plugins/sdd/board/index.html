@@ -61,6 +61,10 @@ body.demo .qbar button{display:none}
 /* 3. pasek narzedzi (34 px) */
 .tbar{height:34px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--panel);border-bottom:1px solid var(--line);white-space:nowrap;overflow-x:auto;scrollbar-width:none}
 .tbar::-webkit-scrollbar{display:none}
+/* polecenia dla Claude (0.43.0, docs/specs/board-commands.md): po prawej stronie paska */
+#claudecmd{margin-left:auto;flex:none;height:24px;max-width:220px;padding:0 6px;border:1px solid var(--input-line);border-radius:3px;background:var(--input);color:var(--ink);font:600 12px var(--sans);cursor:pointer}
+#claudecmd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+body.demo #claudecmd{display:none}
 .tbar .vsep{width:1px;height:16px;background:var(--line);margin:0 6px;flex:none}
 .undo{display:inline-flex;gap:4px}
 .zoom{display:inline-flex;align-items:center;gap:2px}
@@ -345,6 +349,7 @@ html.printing{padding-right:0!important}
   <span class="vsep pdfsep" aria-hidden="true"></span>
   <button class="b" id="pdf" title="Eksport całej tablicy do PDF - jedna strona">PDF</button>
   <span class="vseg" id="view" role="group" aria-label="Widok tablicy" hidden><span class="vlbl">widok</span><span class="vbtns"><button type="button" data-view="dzis" title="Tylko to, co aplikacja robi dziś">dziś</button><button type="button" data-view="docelowo" title="Zakres do zbudowania - reszta przygaszona">docelowo</button><button type="button" data-view="oba" title="Dziś i docelowo razem">oba</button></span></span>
+  <select id="claudecmd" title="Polecenie dla Claude – wstawię je w okno Claude, wyślesz Enterem" aria-label="Polecenie dla Claude"><option value="">Claude: porządek…</option></select>
 </div>
 <div class="msg" id="msg" role="status"></div>
 <div class="switched" id="switched" role="alert" hidden><div><b>Uwaga: serwer pokazuje teraz inną tablicę</b> – <span id="sw-to"></span>.<br>Wcześniej: <span id="sw-from"></span>.
@@ -977,6 +982,23 @@ html.printing{padding-right:0!important}
   // Przycisk PDF otwiera nowe okno z ta sama tablica w trybie eksportu (?pdf=1) - tam jasny motyw, 100%, uklad wydruku,
   // strona = cala tablica i okno drukowania; okno z praca zostaje nietkniete (AC-BP3)
   var PDF_MODE=/[?&]pdf=1(&|$)/.test(location.search), printed=false;
+  // Polecenia dla Claude (AC-BC2): lista po prawej stronie paska; wybor -> polecenie w oknie Claude (Enter wysyla).
+  // Odtworzenie tablicy z plikow - najpierw wersja, zeby dalo sie wrocic.
+  (function(){
+    var sel=$('#claudecmd'); if(!sel) return; if(PDF_MODE){ sel.remove(); return; }
+    SddUI.boardCmds().forEach(function(c){ var o=document.createElement('option'); o.value=c.id; o.textContent=c.label; o.title=c.title; sel.appendChild(o); });
+    sel.onchange=function(){
+      var c=SddUI.boardCmds().filter(function(x){ return x.id===sel.value; })[0]; sel.value=''; sel.blur(); if(!c) return;
+      var go=function(){ if(!SddUI.claudeAsk(c.cmd)) say('Okno Claude jest niedostępne – wpisz w Claude Code: '+c.cmd); };
+      if(c.id!=='rebuild'){ go(); return; }
+      var d=new Date(), hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      fetch(BASE+'/api/copy/version',{method:'POST',headers:{'X-SDD':'1','Content-Type':'application/json'},body:JSON.stringify({name:'przed odtworzeniem tablicy '+hm})})
+        .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){
+          say(r.ok?'Zapisano wersję „przed odtworzeniem tablicy '+hm+'” – wrócisz do niej w Konfiguracji.':'Nie zapisano wersji przed odtworzeniem: '+(j.error||r.status)+'.'); }); })
+        .catch(function(){ say('Nie zapisano wersji przed odtworzeniem tablicy.'); })
+        .then(go);
+    };
+  })();
   function pdfLayout(){
     var root=document.documentElement;
     root.setAttribute('data-theme','light'); setZoom(1,true); printHead(); root.classList.add('printing');

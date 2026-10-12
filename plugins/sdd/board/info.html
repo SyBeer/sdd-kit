@@ -120,6 +120,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .tag.ok{background:var(--st-done)}.tag.warn{background:var(--warn)}.tag.idle{background:var(--line);color:var(--ink)}
 .chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.chk input{width:16px;height:16px;accent-color:var(--ok)}
 #kopia code{font:11.5px var(--mono);overflow-wrap:anywhere}
+/* skok z paska stanu (AC-U23): karta pod naglowkiem; zapas na dole liczy jumpTo() */
+#wersja,#kopia{scroll-margin-top:calc(var(--chrome-h,62px) + 16px)}
 /* Pokaz zmiany / Przywroc (0.42.0) */
 #verlist li{flex-wrap:wrap}
 #vermsg:empty{display:none}
@@ -213,7 +215,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .zc{font:600 10px/1 var(--mono);letter-spacing:.06em;border:1px solid var(--line);border-radius:2px;padding:3px 4px;color:var(--muted);display:inline-block!important;margin-top:6px!important}
 .val{font:600 13px var(--mono)}
 .cmdf{display:flex;align-items:stretch;height:28px;border:1px solid var(--input-line);border-radius:3px;background:var(--input);overflow:hidden;max-width:100%}
-.cmdf code{display:flex;align-items:center;border:0;border-radius:0;background:none;padding:0 9px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdf code{flex:1 1 auto;min-width:0;display:flex;align-items:center;border:0;border-radius:0;background:none;padding:0 9px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cmdf code::before{content:"› ";color:var(--accent);white-space:pre}
 .cmdf button{flex:none;border:0;border-left:1px solid var(--input-line);background:var(--ink);color:var(--bg);font:600 12px/1 var(--sans);padding:0 10px;cursor:pointer}
 .savebar{position:sticky;bottom:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);border-radius:0 0 4px 4px}
@@ -275,6 +277,17 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
   var PAGE=(location.pathname.match(/\/(module|guide|config)\/?$/)||[])[1]||'guide';
   document.getElementById('topbar').setAttribute('data-page',PAGE);
   document.body.className=PAGE;
+  // skok do karty z paska stanu (AC-U23): zapas na dole dokladnie taki, zeby karta stanela pod naglowkiem - nie wiecej,
+  // wiec przewiniecie do konca strony konczy sie na karcie, a nie na pustym tle
+  function jumpPad(below,vh,chrome){ return Math.max(0, vh-(chrome+16)-below); }
+  function jumpTo(box){
+    var main=document.querySelector('main'); if(!main||!box) return;
+    main.style.paddingBottom='';
+    var chrome=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--chrome-h'))||62;
+    var pad=jumpPad(main.getBoundingClientRect().bottom-box.getBoundingClientRect().top, window.innerHeight, chrome);
+    if(pad) main.style.paddingBottom=(16+pad)+'px';
+    box.scrollIntoView({block:'start'});
+  }
 </script>
 <main id="app"><p class="muted">Wczytuję…</p></main>
 <script>
@@ -563,14 +576,6 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     // SERWER (tylko podglad); wersja z ostrzezeniami i "Przyklad gotowego modulu" przeniesione z naglowka (handoff 1.2)
     var s=c.server||{};
     function sv(k,v,note){return '<div class="sv"><span class="sk">'+k+'</span><span class="sval">'+v+(note?'<small>'+note+'</small>':'')+'</span></div>'}
-    // DYKTOWANIE (0.38.0) start
-    // przycisk 🎙 w czacie: dyktowanie systemu albo skrot Twojego programu (0.39.1, AC-CH13), zapis w ~/.sdd-kit/config.json
-    if(c.dictate) h+='<section class="box" id="dyktowanie"><div class="bh"><h2>Dyktowanie w czacie</h2><span class="path">ten komputer · ~/.sdd-kit/config.json</span></div>'+
-      frow('Skrót programu','puste = dyktowanie systemu (macOS: Edycja → Rozpocznij dyktowanie, Windows: Win+H); np. option+space dla Superwhisper',
-        '<div class="rowc"><input type="text" class="fld mono w280" id="f-dictate" autocomplete="off" placeholder="option+space" value="'+esc(c.dictateKeys||'')+'">'+
-        '<button class="btn" type="button" id="savedictate">Zapisz skrót</button></div><p class="knote" id="dictatemsg"></p>'+
-        '<p class="knote">Przycisk 🎙 naciska ten skrót za Ciebie - serwer sdd-board potrzebuje zgody „Dostępność” w macOS.</p>')+'</section>';
-    // DYKTOWANIE (0.38.0) koniec
     h+='<section class="box srv" id="wersja"><div class="bh"><h2>Serwer</h2><span class="path">tylko podgląd</span></div>'+
       sv('Wersja sdd-kit','<a id="srvver" href="https://github.com/SyBeer/sdd-kit/releases/tag/v'+esc(s.version||'')+'" target="_blank" rel="noopener" title="Opis zmian tej wersji na GitHubie">'+esc(s.version||'-')+'</a><span class="srvupd" id="srvupd" hidden></span><div class="vfix" id="vfix" hidden></div>')+
       sv('Port',esc(s.port),'inny port: sdd-board &lt;plik tablicy&gt; &lt;port&gt;')+
@@ -580,15 +585,6 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       (c.kitDir?sv('Aplikacja',esc(c.kitDir)):'')+
       (BASE?'':sv('Przykład','<a href="/demo" target="_blank" rel="noopener">Przykład gotowego modułu ↗</a>'))+'</section>';
     $('#app').innerHTML=h;
-    // DYKTOWANIE (0.38.0) start
-    var dk=$('#savedictate');
-    if(dk) dk.onclick=function(e){
-      e.stopPropagation();
-      api('/api/chat/dictate-keys',{method:'POST',body:JSON.stringify({keys:$('#f-dictate').value})})
-        .then(function(r){ $('#dictatemsg').className='ok'; $('#dictatemsg').textContent=r.dictateKeys?'Zapisano: 🎙 naciśnie '+r.dictateKeys+'.':'Zapisano: 🎙 uruchomi dyktowanie systemu.'; })
-        .catch(function(err){ $('#dictatemsg').className='err'; $('#dictatemsg').textContent=err.message; });
-    };
-    // DYKTOWANIE (0.38.0) koniec
     if(c.sdd) drawOwners();
     if(c.sdd) copyLoad(c);
     msg.rmask=null; msg.adderr=''; msg.sdderr=''; msg.rooterr=''; msg.rootprev=''; msg.root='';
@@ -635,7 +631,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
           '<p class="err" id="vererr"></p><p class="ok" id="vermsg"></p>'))+
       '</div>';
     box.querySelector('.bb').outerHTML=h;
-    if(location.hash==='#kopia'&&!copyScrolled){ copyScrolled=true; box.scrollIntoView({block:'start'}); }
+    if(location.hash==='#kopia'&&!copyScrolled){ copyScrolled=true; jumpTo(box); }
     function stop(e){ e.stopPropagation(); }
     box.oninput=function(e){ stop(e); if(e.target.id==='f-ver') copyTyping=!!e.target.value.trim(); };
     box.onkeydown=function(e){ stop(e); if(e.key==='Enter'&&e.target.id==='f-ver'){ e.preventDefault(); verSave(); } };
@@ -707,7 +703,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
         fix.onclick=function(e){ var t=e.target.closest('[data-vcopy]'); if(!t) return;
           try{navigator.clipboard.writeText($('#'+t.getAttribute('data-vcopy')).textContent).then(function(){t.textContent='Skopiowano';setTimeout(function(){t.textContent='Kopiuj'},1500)})}catch(err){} };
       }
-      if(location.hash==='#wersja'&&!versionScrolled){ versionScrolled=true; var box=$('#wersja'); if(box) box.scrollIntoView({block:'start'}); }
+      if(location.hash==='#wersja'&&!versionScrolled){ versionScrolled=true; jumpTo($('#wersja')); }
     }).catch(function(){});
     // nowa wersja na GitHubie (0.35.1, AC-UP9): zielona strzalka, "jest nowa wersja X", Aktualizuj = okienko z paska stanu
     if(BASE) return;

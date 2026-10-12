@@ -95,6 +95,15 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
 - AC-U22 (0.41.0, zdarzenie 2026-10-10: u usera `claude` to alias na inne narzedzie - "ccs: nieznany kontekst 'plugin'"):
   komendy w krokach i w dymku zaczynaja sie od `command claude` (omija aliasy i funkcje powloki bash/zsh); serwer w
   GET /api/version podaje `platform` (process.platform); `platform: 'win32'` -> zwykle `claude` (PowerShell/cmd nie znaja `command`).
+- AC-U23 (0.42.1, user: "zrob strone na tyle dluga, zeby po kliknieciu na „plugin nieaktualny” to, co jest do zrobienia,
+  pojawilo sie wyzej"): karta Serwer jest ostatnia w Konfiguracji, wiec przewiniecie konczylo sie z ramka "Co zrobić" na
+  dole ekranu. Przy wejsciu z `#wersja` albo `#kopia` strona dostaje zapas na dole liczony w `jumpTo(karta)` - dokladnie
+  tyle, zeby karta mogla stanac pod naglowkiem (`--chrome-h` + 16 px), nie wiecej: przewiniecie do konca strony konczy
+  sie na karcie, nie na pustym tle (poprawka po uwadze "troche za wysoko podwija sie ta strona" - pierwsza wersja
+  dawala zapas na cala wysokosc okna). Zapas liczony ponownie, gdy karta urosnie (ramka "Co zrobić", lista wersji).
+  Karta ma `scroll-margin-top` pod naglowkiem. Bez kotwicy strona bez zapasu.
+- AC-U24 (0.42.1, user: "te przyciski sa w zlym miejscu" - zrzut ramki "Co zrobić"): w polu komendy (`.cmdf`) tekst
+  komendy wypelnia pole (`flex:1`), a "Kopiuj" stoi przy prawej krawedzi pola, nie zaraz za tekstem.
 - AC-U21 (reczne): plugin starszy niz kit -> klik "plugin nieaktualny" w pasku otwiera Konfiguracje na karcie Serwer z krokami;
   Kopiuj kopiuje komende; wszystko aktualne -> klik wersji otwiera Release Notes na GitHubie.
 - AC-U18 (0.28.11, user: "dodaj ikone do aplikacji SDD-kit, zeby w przegladarce latwo bylo ja wyluskac"): ikona -

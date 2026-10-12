@@ -20,9 +20,6 @@ const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModul
 const info = require('./info');
 const terminal = require('./terminal');
 const chat = require('./chat');
-// DYKTOWANIE (0.38.0) start
-const dictate = require('./dictate');
-// DYKTOWANIE (0.38.0) koniec
 const update = require('./update');
 const secrets = require('./secrets');
 const repoCopy = require('./repo-copy');  // kopia wymagan w repozytorium (0.41.0, docs/specs/repo-copy.md)
@@ -260,9 +257,6 @@ function configView(ctx) {
     modules: (Array.isArray(cfg.modules) ? cfg.modules : []).filter(d => typeof d === 'string')
       .map(d => ({ dir: d, name: path.basename(d), exists: fs.existsSync(path.join(d, 'requirements', 'SDD.yaml')) })),
     lastModule: demo ? null : (cfg.lastModule || null),
-    // DYKTOWANIE (0.38.0) start
-    dictateKeys: demo ? '' : String(cfg.dictateKeys || ''), dictate: !demo && dictate.enabled(process.env, process.platform),
-    // DYKTOWANIE (0.38.0) koniec
     sdd,
     // Klucz Redmine: tylko skad jest, nigdy wartosc (AC-S3)
     redmineKey: demo ? 'none' : secrets.redmineKey().source,
@@ -414,9 +408,6 @@ function chatOf(key) {
 function chatState() {
   const t = termState();
   return Object.assign(chatOf(termKey()).state(), { module: t.module, canResume: t.canResume, termRunning: t.running,
-    // DYKTOWANIE (0.38.0) start
-    dictate: dictate.enabled(process.env, process.platform),
-    // DYKTOWANIE (0.38.0) koniec
   });
 }
 function chatSwitch() {
@@ -451,19 +442,6 @@ function chatRoute(req, res, url) {
       return json(res, 200, { ok: true });
     }
     if (url === '/api/chat/stop') { c.stop(); return json(res, 200, { ok: true }); }
-    // DYKTOWANIE (0.38.0) start
-    if (url === '/api/chat/dictate') {
-      if (!dictate.enabled(process.env, process.platform)) return json(res, 404, { error: 'Dyktowanie wyłączone.' });
-      // wlasny skrot programu do dyktowania (0.39.1, AC-CH11) z ~/.sdd-kit/config.json, np. Superwhisper option+space
-      return dictate.run(process.platform, { keys: readConfig(CONFIG).dictateKeys }).then(r => json(res, r.ok ? 200 : 500, r)).catch(e => json(res, 500, { ok: false, error: e.message }));
-    }
-    if (url === '/api/chat/dictate-keys') {
-      const keys = String(body.keys || '').trim();
-      if (keys && !dictate.parseKeys(keys)) return json(res, 400, { error: 'Nie rozumiem skrótu „' + keys + '”. Przykłady: option+space, ctrl+alt+d, f5.' });
-      try { writeConfig(CONFIG, { dictateKeys: keys || undefined }); } catch (e) { return json(res, 500, { error: e.message }); }
-      return json(res, 200, { ok: true, dictateKeys: keys });
-    }
-    // DYKTOWANIE (0.38.0) koniec
     json(res, 404, { error: 'Nie ma takiego adresu.' });
   });
 }

@@ -113,7 +113,8 @@ test('AC-CH3: serwer - /api/chat, start, send, zdarzenia, ochrona, czat konczy t
     assert.strictEqual((await call(port, 'POST', '/demo/api/chat/start', {})).code, 403);
     let st = JSON.parse((await call(port, 'GET', '/api/chat')).body);
     assert.strictEqual(st.running, false);
-    assert.strictEqual(typeof st.dictate, 'boolean');
+    assert.ok(!('dictate' in st), 'AC-CH18: bez pola dictate');
+    assert.strictEqual((await call(port, 'POST', '/api/chat/dictate', {})).code, 404, 'AC-CH18: bez dyktowania');
     assert.strictEqual((await call(port, 'POST', '/api/chat/start', {})).code, 200);
     assert.strictEqual((await call(port, 'POST', '/api/chat/send', { text: 'Dzien dobry' })).code, 200);
     await new Promise(r => setTimeout(r, 600));

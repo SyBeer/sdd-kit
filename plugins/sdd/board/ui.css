@@ -259,11 +259,9 @@ html.claude-on .cdock{display:flex}
 .cdock .cd-box:focus-within{outline:2px solid var(--accent);outline-offset:-1px}
 .cdock .cd-input{flex:1;min-width:0;border:0;outline:0;resize:none;background:none;font:13.5px/1.45 var(--sans);color:var(--ink);max-height:160px}
 .cdock .cd-input:disabled{opacity:.5}
-.cdock .cd-send,.cdock .cd-mic{flex:none;width:30px;height:30px;border-radius:8px;cursor:pointer;display:grid;place-items:center;font-size:15px}
+.cdock .cd-send{flex:none;width:30px;height:30px;border-radius:8px;cursor:pointer;display:grid;place-items:center;font-size:15px}
 .cdock .cd-send{border:0;background:var(--ink);color:var(--bg)}
-.cdock .cd-mic{border:1px solid var(--line);background:none;color:var(--ink)}
-.cdock .cd-mic:hover{border-color:var(--ink)}
-.cdock .cd-mic:disabled,.cdock .cd-send:disabled{opacity:.4;cursor:default}
+.cdock .cd-send:disabled{opacity:.4;cursor:default}
 .cdock .cd-hint{margin-top:6px;display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--faint)}
 /* Czas rozmowy (0.39.0): zegar w naglowku okna i gotowe odpowiedzi o czas */
 .cdock .cd-clock{white-space:nowrap;flex:none}

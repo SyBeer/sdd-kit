@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.43.0] - 2026-10-12
+- Usuniete dyktowanie z panelu (docs/specs/claude-chat.md "Wycofanie dyktowania", AC-CH18): przycisk 🎙 w czacie,
+  karta "Dyktowanie w czacie" w Konfiguracji, `/api/chat/dictate`, `/api/chat/dictate-keys`, `dictate.js`,
+  `SDD_DICTATE`. Zapisany skrot w `~/.sdd-kit/config.json` jest ignorowany. Dyktowac mozna dalej poza panelem
+  (dyktowanie systemu, Superwhisper) - wprost w pole wiadomosci.
+- Tablica: po prawej stronie paska lista "Claude: porządek…" (etykiety z nazwa polecenia, np. "[sync]") - Przenieś karteczki do plików (`/sdd:board sync`),
+  Uporządkuj tablicę (`/sdd:board tidy`, nowe), Odtwórz tablicę z plików (`rebuild`), Procesy z działającej aplikacji
+  (`processes`) (docs/specs/board-commands.md AC-BC1..BC4). Polecenie trafia tam, gdzie trwa rozmowa: czat - w pole
+  wiadomosci (Enter wysyla), terminal - wpisane bez Enter; Claude nie dziala - start czatu. Przed "Odtwórz…" panel
+  zapisuje wersje "przed odtworzeniem tablicy". Ukryta w demo i w oknie PDF.
+- `/sdd:board tidy`: duplikaty, karteczki w zlym procesie, kolejnosc w pasie, dziury w kolumnach, puste procesy,
+  zamkniete pytania - najpierw propozycja, zmiany po "tak"; tresci nie zmienia, karteczek usera nie usuwa bez zgody.
+  `/sdd:board rebuild` pokazuje przed nadpisaniem, co zniknie, i czeka na "tak".
+- Klik "plugin nieaktualny" (i inne ostrzezenia wersji) stawia karte Serwer z ramka "Co zrobić" na gorze ekranu, takze
+  gdy jest ostatnia na stronie - zapas na dole liczony dokladnie do karty (przewiniecie do konca konczy sie na karcie,
+  nie na pustym tle); to samo dla skoku do "Kopia i wersje" (docs/specs/ui-switch.md AC-U23).
+- Pola komend z przyciskiem "Kopiuj": komenda wypelnia pole, "Kopiuj" stoi przy prawej krawedzi (AC-U24).
+
 ## [0.42.0] - 2026-10-10
 - "Pokaż zmiany" mowi jezykiem wymagan: "Co się zmieniło w wymaganiach" nad szczegolami linii
   (docs/specs/version-summary.md AC-VS1..VS5, nowy `board/req-changes.js`, bez AI). Tablica po id karteczek: dodane,

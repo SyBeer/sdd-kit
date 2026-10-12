@@ -206,6 +206,19 @@
       claude + '</div>';
   }
 
+  // ---------------------------------------------------------------- polecenia dla Claude na pasku Tablicy (0.43.0, docs/specs/board-commands.md)
+  function boardCmds() {
+    return [
+      { id: 'sync', label: 'Przenieś karteczki do plików [sync]', cmd: '/sdd:board sync', title: 'Odpowiedzi i karteczki z tablicy trafiają do pytań, decyzji, założeń i reguł w plikach wymagań. Claude pyta przed zapisem.' },
+      { id: 'tidy', label: 'Uporządkuj tablicę [tidy]', cmd: '/sdd:board tidy', title: 'Duplikaty, karteczki w złym procesie albo kolumnie, dziury, zamknięte pytania. Claude najpierw pokazuje propozycję, zmienia po Twojej zgodzie.' },
+      { id: 'rebuild', label: 'Odtwórz tablicę z plików [rebuild]', cmd: '/sdd:board rebuild', title: 'Układa tablicę od nowa z plików wymagań. Panel najpierw zapisuje wersję, Claude pokazuje, co zniknie, i pyta.' },
+      { id: 'processes', label: 'Procesy z działającej aplikacji [processes]', cmd: '/sdd:board processes', title: 'Rozpisuje na tablicy procesy z kodu działającej aplikacji – punkt wyjścia do warsztatu „jak to działa dziś”.' },
+    ];
+  }
+  // Wstawia polecenie w okno Claude (czat, zaznaczone - Enter wysyla); false = brak okna (demo, okno PDF, node)
+  let askNow = null;
+  function claudeAsk(text) { if (!askNow) return false; askNow(String(text || '')); return true; }
+
   // ---------------------------------------------------------------- Zapisz wersje przy zebatce (0.42.0, docs/specs/quick-save.md)
   const SAVE_SVG = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5 2.5v3.5h5V2.5"/><rect x="4.5" y="9" width="7" height="4.5"/></svg>';
@@ -477,7 +490,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -638,7 +651,7 @@
       '<div class="cd-box">' +
       '<textarea class="cd-input" rows="2" placeholder="Napisz wiadomość…" aria-label="Wiadomość do Claude"></textarea>' +
       '<button type="button" class="cd-send" title="Wyślij (Enter)" aria-label="Wyślij">↑</button></div>' +
-      '<div class="cd-hint"><span>Enter wysyła · Shift+Enter nowa linia</span><span class="cd-hint2"></span></div></div></div>';
+      '<div class="cd-hint"><span>Enter wysyła · Shift+Enter nowa linia</span></div></div></div>';
     document.body.appendChild(dock);
     const q = function (s) { return dock.querySelector(s); };
     // Klawisze w terminalu nie uruchamiaja skrotow strony (Escape, Cmd+Z, Cmd+D, Cmd+Enter).
@@ -779,6 +792,23 @@
       window.dispatchEvent(new Event('resize'));
     }
     btn.onclick = function () { open(!root.classList.contains('claude-on')); };
+    // Polecenie z paska Tablicy (AC-BC3): trafia tam, gdzie juz trwa rozmowa - nigdy jej nie przerywa.
+    // Czat dziala albo nic nie dziala -> czat (start i czekanie); dziala tylko terminal -> wpisane w terminal bez Enter.
+    let askText = '', askStart = false;
+    askNow = function (text) {
+      const json = function (p) { return p.then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); };
+      Promise.all([json(fetch('/api/chat')), json(fetch('/api/term'))]).then(function (st) {
+        if (!st[0].running && st[1].running) {
+          if (isChat()) { prefs.view = 'code'; saveDock(prefs); markView(); chatClose(); }
+          open(true);
+          api('/api/term/input', { data: text }).catch(function (e) { msg(e.message); });
+          return;
+        }
+        askText = text; askStart = true;
+        if (!isChat()) { prefs.view = 'chat'; saveDock(prefs); markView(); if (es) { es.close(); es = null; } }
+        open(true);
+      });
+    };
     q('.cd-x').onclick = function () { open(false); btn.focus(); };
     function start(resume) {
       setup().then(function () {
@@ -835,7 +865,8 @@
       else if (!run) msg('Claude Code uruchomi się w folderze modułu' + (dir ? ' ' + dir : '') + '.');
       else msg('');
       q('.cd-input').disabled = !run;
-      chatExtras(cstate);
+      if (askText && !run && askStart && !cstate.busy) { askStart = false; chatStart(!!cstate.canResume); }
+      askFill();
       chatRender();
     }
     function chatRender() {
@@ -907,6 +938,10 @@
       q('.cd-input').value = 'Mam ' + b.textContent + '.'; chatSend();
     };
     q('.cd-clock').onclick = function () { quickOff = false; q('.cd-quick:not(.cd-cont)').hidden = false; };
+    function askFill() {
+      if (!askText || !cstate.running) return;
+      const t = q('.cd-input'); t.value = askText; askText = ''; t.classList.add('hinted'); t.focus(); t.select();
+    }
     function chatStart(resume) {
       api('/api/chat/start', { resume: resume }).then(function (s) { chatShow(s); q('.cd-input').focus(); }).catch(function (e) { msg(e.message); });
     }
@@ -927,27 +962,6 @@
     q('.cd-input').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); chatSend(); }
     });
-    // Dodatki zalezne od serwera - wylaczalne bloki (docs/specs/claude-chat.md)
-    function chatExtras(st) {
-      // DYKTOWANIE (0.38.0) start
-      // przycisk 🎙: kursor w polu wiadomosci, serwer uruchamia dyktowanie systemu (dictate.js); wycofanie - docs/specs/claude-chat.md
-      let mic = q('.cd-mic');
-      if (!st.dictate) { if (mic) mic.remove(); return; }
-      if (!mic) {
-        mic = document.createElement('button'); mic.type = 'button'; mic.className = 'cd-mic';
-        mic.title = 'Dyktuj - dyktowanie systemu albo skrót Twojego programu (Konfiguracja → Dyktowanie w czacie)'; mic.setAttribute('aria-label', 'Dyktuj');
-        mic.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
-        q('.cd-send').before(mic);
-        q('.cd-input').placeholder = 'Napisz albo podyktuj wiadomość…';
-        mic.onclick = function () {
-          const t = q('.cd-input'); t.focus();
-          api('/api/chat/dictate', {}).then(function () { q('.cd-hint2').textContent = 'dyktowanie włączone - mów, potem popraw i wyślij'; })
-            .catch(function (e) { msg(e.message); });
-        };
-      }
-      mic.disabled = !st.running;
-      // DYKTOWANIE (0.38.0) koniec
-    }
     markView();
     // Szerokosc: uchwyt po lewej krawedzi
     q('.cd-grip').addEventListener('pointerdown', function (e) {
