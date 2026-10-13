@@ -31,7 +31,7 @@ const DEFAULT_PROMPT = [
   'Nikt nie odpowiada na pytania w trakcie - pracujesz sam do końca i kończysz raportem. Metoda: SDD + TDD.',
   'Workflow z CLAUDE.md (WORKFLOW.md) stosujesz w fazach A–C: spec już jest (czytasz go, nie piszesz od nowa), build z TDD, commit. Fazy D–G (build+SBOM, wydanie, tag, push, weryfikacja) nie należą do budowania - robi się je po przeglądzie, w zwykłej sesji z potwierdzeniem właściciela.',
   '',
-  '0. Najpierw instrukcje budowania: sprawdź, czy workflow z CLAUDE.md i CLAUDE.md projektu mówią, jak przygotować środowisko i jakie są komendy testów i buildu tego projektu. Są - stosuj je. Brak, ale wynikają jednoznacznie z repo (np. pytest.ini, package.json) - buduj dalej, a w raporcie daj gotowy tekst do dopisania do CLAUDE.md projektu. Brak i nie da się ich ustalić - zatrzymaj się przed kodem, a w raporcie zaproponuj instrukcje i zadaj pytania.',
+  '0. Najpierw instrukcje budowania: sprawdź, czy workflow z CLAUDE.md i CLAUDE.md projektu mówią, jak przygotować środowisko i jakie są komendy testów i buildu tego projektu. Są - stosuj je. Brak, ale wynikają jednoznacznie z repo (np. pytest.ini, package.json) - buduj dalej, a w raporcie daj gotowy tekst do dopisania do CLAUDE.md projektu. Brak i nie da się ich ustalić - zatrzymaj się przed kodem, a w raporcie zaproponuj instrukcje i zadaj pytania. Sprawdź też git log --grep z numerem wymagania - jeśli jest już zrobione, zatrzymaj się przed kodem i opisz to w raporcie.',
   '1. Spec: przeczytaj {wymagania}/03-spec/PRD.md (to wymaganie i jego kryteria AC), reguły BR i decyzje D, na które się powołuje, oraz CLAUDE.md projektu. Spec jest źródłem prawdy.',
   '2. Środowisko: jeśli brakuje zależności (np. .venv, node_modules), przygotuj je komendami projektu.',
   '3. TDD: najpierw testy wyprowadzone z kryteriów AC - uruchom, mają nie przechodzić. Potem kod, aż przejdą. Potem refaktor. Na końcu cały zestaw testów projektu na zielono. Nie mockuj prawdziwych API.',
@@ -97,6 +97,32 @@ async function prepareWorktree(dir, branch) {
     if (r.code) warning = 'Wymagania z ostatniego commita - nie udało się dołożyć dzisiejszych zmian.';
   } else warning = 'Wymagania z ostatniego commita - brak kopii dzisiejszych zmian.';
   return { ok: true, created: true, folder, branch, root: st.root, warning };
+}
+
+// Czy wymaganie jest juz zrobione (0.45.0, AC-BD12): commity biezacej galezi z numerem w opisie (cale slowo),
+// najwczesniejszy tag z pierwszym takim commitem (wersja wydania) i inne galezie feature/<numer>-...
+async function alreadyDone(dir, id) {
+  const st = await rc.repoState(dir);
+  const out = { commits: [], tag: null, branch: st.branch || null, branches: [] };
+  id = String(id || '').trim();
+  if (!st.git || !/^[A-Z]{1,3}-\d+$/.test(id)) return out;
+  const log = await rc.git(st.root, ['-c', 'core.quotePath=false', 'log', '-E', '--grep', '(^|[^A-Za-z0-9])' + id + '([^0-9]|$)',
+    '--format=%x00%h%x09%aI%x09%s', '--name-only', 'HEAD']);
+  // tylko commity, ktore zmieniaja cos poza requirements/ modulu - sam spec z numerem to nie zrobione wymaganie
+  const req = (st.rel ? st.rel + '/' : '') + 'requirements/';
+  out.commits = log.code ? [] : log.out.split('\0').filter(Boolean).map(b => {
+    const lines = b.split('\n'), [hash, date, subject] = lines[0].split('\t');
+    return { hash, date, subject, code: lines.slice(1).filter(Boolean).some(f => !f.startsWith(req)) };
+  }).filter(c => c.code).map(c => ({ hash: c.hash, date: c.date, subject: c.subject }));
+  if (out.commits.length) {
+    const first = out.commits[out.commits.length - 1].hash;
+    const t = await rc.git(st.root, ['tag', '--contains', first, '--sort=creatordate']);
+    out.tag = t.code ? null : (t.out.split('\n').filter(Boolean)[0] || null);
+  }
+  const pre = 'feature/' + slug(id);
+  const br = await rc.git(st.root, ['for-each-ref', '--format=%(refname:short)', 'refs/heads/feature/']);
+  out.branches = br.out.split('\n').filter(b => b === pre || b.startsWith(pre + '-'));
+  return out;
 }
 
 // Zdarzenie przebiegu (0.44.1, AC-BD7): wynik narzedzia laczony z wywolaniem po tool_use_id - odmowa uprawnien
@@ -193,4 +219,4 @@ class BuildSession extends EventEmitter {
   }
 }
 
-module.exports = { parseBuildEvent, BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, buildArgs, prepareWorktree, BuildSession };
+module.exports = { alreadyDone, parseBuildEvent, BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, buildArgs, prepareWorktree, BuildSession };

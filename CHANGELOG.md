@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.45.0] - 2026-10-13
+- Ostrzezenie przed budowaniem czegos, co juz jest (docs/specs/build.md AC-BD12..BD15; powod: R-021 w fv-manager
+  zbudowane dwa razy - galaz z panelu wg starego speca, rownolegla sesja wydala 3.6.0 wg D-036). Po wyborze wymagania
+  okienko mlotka sprawdza commity z tym numerem na biezacej galezi (tylko z kodem - sam spec w `requirements/` sie nie
+  liczy), wersje wydania i inne galezie `feature/<numer>-…`: "R-021 jest już na gałęzi main: … (wersja v3.6.0).
+  Budować mimo to?", przycisk "Buduj mimo to". Serwer bez potwierdzenia odmawia (409). Krok 0 promptu: Claude sprawdza
+  `git log --grep` z numerem i zatrzymuje sie, gdy wymaganie jest juz zrobione.
+
 ## [0.44.2] - 2026-10-13
 - Prompt budowania mowi, ktore fazy workflow z CLAUDE.md stosuje Claude: A–C (spec - czyta, build z TDD, commit);
   D–G (build+SBOM, wydanie, tag, push, weryfikacja) nie naleza do budowania - po przegladzie, w zwyklej sesji

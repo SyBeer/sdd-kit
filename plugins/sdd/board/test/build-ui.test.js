@@ -59,3 +59,24 @@ test('AC-BD9: /build - blokada z komenda, blad narzedzia szary, lista zablokowan
   assert.match(d, /s\.denied/);
   assert.match(info, /\.bl-err\{[^}]*var\(--muted\)/);
 });
+
+test('AC-BD14: alreadyHtml - ostrzezenie o zrobionym wymaganiu i istniejacej galezi; okienko sprawdza i wysyla force', () => {
+  const h = ui.alreadyHtml({ commits: [{ hash: 'fdcd855', subject: 'feat(dashboard): magazyn <R-021>', date: '2026-10-12T23:58:41+02:00' }], tag: 'v3.6.0', branch: 'main', branches: ['feature/r-021-stara'] }, 'R-021');
+  const t = text(h);
+  assert.match(t, /R-021 jest już na gałęzi main/);
+  assert.match(h, /feat\(dashboard\): magazyn &lt;R-021&gt;/);
+  assert.match(t, /wersja v3\.6\.0/);
+  assert.match(t, /Jest już gałąź feature\/r-021-stara/);
+  assert.match(t, /Budować mimo to\?/);
+  assert.strictEqual(ui.alreadyHtml({ commits: [], tag: null, branch: 'main', branches: [] }, 'R-021'), '');
+  // ta sama galaz co budowana = kontynuacja, bez ostrzezenia o galezi
+  assert.strictEqual(ui.alreadyHtml({ commits: [], tag: null, branch: 'main', branches: ['feature/r-021-x'] }, 'R-021', 'feature/r-021-x'), '');
+  assert.match(text(ui.alreadyHtml({ commits: [], tag: null, branch: 'main', branches: ['feature/r-021-x', 'feature/r-021-y'] }, 'R-021', 'feature/r-021-x')), /Jest już gałąź feature\/r-021-y \(/);
+  assert.match(text(ui.alreadyHtml({ commits: [{ hash: 'a', subject: 's', date: '' }], tag: null, branch: 'main', branches: [] }, 'R-1')), /jeszcze niewydane/);
+  const s = fs.readFileSync(path.join(__dirname, '..', 'ui.js'), 'utf8');
+  const pop = s.slice(s.indexOf('function buildPop('), s.indexOf('// Polaczenie na zywo (0.42.0'));
+  assert.match(pop, /\/api\/build\/check\?id=/);
+  assert.match(pop, /Buduj mimo to/);
+  assert.match(pop, /force:\s*true/);
+  assert.match(pop, /id="bd-warn"|#bd-warn/);
+});

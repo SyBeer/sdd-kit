@@ -121,6 +121,27 @@ Wlasciciel dolaczyl WORKFLOW.md importem `@~/.claude/WORKFLOW.md` w globalnym CL
   ustalic -> stop przed kodem, w raporcie propozycja instrukcji i pytania (dopytanie przez raport - budowanie jest bez
   rozmowy).
 
+## Zmiana 0.45.0 (2026-10-13: R-021 zbudowane dwa razy - galaz z panelu 23:47, rownolegla sesja zbudowala i wydala
+R-021 jako 3.6.0 o 23:58 wg nowszej decyzji D-036; galaz z panelu liczyla wg starego speca, scalenie odrzucone)
+- **AC-BD12** `alreadyDone(dir, id)` (prawdziwy git): commity biezacej galezi z numerem wymagania w opisie (cale slowo:
+  R-021, nie R-0210), ktore zmieniaja cos poza `requirements/` modulu (sam spec, np. `docs(requirements): R-021`, to nie
+  zrobione wymaganie - wylapane na prawdziwym fv-manager) - skrot, opis, data; najwczesniejszy tag zawierajacy pierwszy taki commit (wersja wydania);
+  istniejace galezie `feature/<numer>-...`. Bez numeru (wlasne zadanie) - pusto.
+- **AC-BD13** Serwer: `GET /api/build/check?id=R-021`; `POST /api/build/start` z zadaniem juz zrobionym albo z istniejaca
+  galezia tego numeru bez `force: true` -> 409 `{ error, already }`; z `force: true` -> start. Ta sama galaz co
+  istniejaca (kontynuacja) -> bez ostrzezenia o galezi.
+- **AC-BD14** Okienko mlotka: po wyborze wymagania panel sprawdza (`/api/build/check`); jest juz zrobione -> ostrzezenie
+  "R-021 jest już na gałęzi main: <opis> (wersja v3.6.0)" / "Jest już gałąź feature/r-021-… (inne budowanie)" i przycisk
+  "Buduj mimo to" (wysyla `force`). `SddUI.alreadyHtml(check, id)` - tresc ostrzezenia.
+- **AC-BD15** Krok 0 promptu: Claude sprawdza `git log --grep` z numerem wymagania; jest juz zrobione -> zatrzymaj sie
+  przed kodem i opisz w raporcie (druga linia obrony, gdy panel nie wiedzial).
+
+Weryfikacja 0.45.0 (2026-10-13): testy AC-BD12..BD15 (najpierw czerwone), pelny zestaw 360 OK. Na prawdziwym
+fv-manager (tylko odczyt): R-021 -> "jest już na gałęzi main: feat(dashboard)… (wersja v3.6.0)"; R-099 -> brak.
+Wylapane i poprawione: commit `docs(requirements): … R-021` (sam spec) liczyl sie jako zrobione - teraz tylko commity
+poza `requirements/`; okienko ostrzegalo o galezi, ktora samo by budowalo (kontynuacja) - teraz jak serwer. Testowy
+sdd-board (8014): R-004 z commitem i tagiem v1.2.0 -> ostrzezenie i "Buduj mimo to"; R-001 -> bez ostrzezenia.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.

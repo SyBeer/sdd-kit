@@ -364,6 +364,18 @@
     if (s.length > 42) s = s.slice(0, 43).replace(/-[^-]*$/, '') || s.slice(0, 42);
     return 'feature/' + (s || 'zadanie');
   }
+  // Ostrzezenie: wymaganie juz zrobione albo inna galaz tego numeru (0.45.0, AC-BD14)
+  // branch: galaz, ktora bedzie budowana - ta sama = kontynuacja, bez ostrzezenia (jak serwer, AC-BD13)
+  function alreadyHtml(a, id, branch) {
+    a = a || {};
+    const c = a.commits || [], br = (a.branches || []).filter(function (x) { return x !== branch; });
+    if (!c.length && !br.length) return '';
+    let h = '';
+    if (c.length) h += '<p><b>' + esc(id) + ' jest już na gałęzi ' + esc(a.branch || 'bieżącej') + ':</b> ' + esc(c[0].subject) +
+      (a.tag ? ' (wersja ' + esc(a.tag) + ')' : ' (jeszcze niewydane)') + (c.length > 1 ? ' i ' + (c.length - 1) + ' wcześniejsze' : '') + '.</p>';
+    if (br.length) h += '<p>Jest już gałąź ' + br.map(esc).join(', ') + ' (inne budowanie).</p>';
+    return '<div class="bd-warn">' + h + '<p>Budować mimo to?</p></div>';
+  }
   const BSTATUS = { running: 'buduje', done: 'gotowe', stopped: 'zatrzymane', error: 'błąd' };
   function buildPopHtml(info, b) {
     info = info || {}; b = b || '';
@@ -382,6 +394,7 @@
         }).join('') + '<option value="own"' + (tasks.length ? '' : ' selected') + '>Własne zadanie…</option></select>' +
         '<input type="text" class="fld" id="bd-own" placeholder="co budujemy, np. popraw ekran logowania" autocomplete="off"' + (tasks.length ? ' hidden' : '') + '>' +
         '<p class="qs-hint">gałąź <code id="bd-branch">' + esc(first ? branchFor(first.id, first.title) : 'feature/…') + '</code></p>' +
+        '<div id="bd-warn"></div>' +
         '<div class="qs-row"><button type="button" class="btn p" id="bd-go">Buduj na nowej gałęzi</button></div>' +
         (BSTATUS[st.status] && st.status !== 'running' ? '<p class="qs-hint">Ostatnie budowanie: ' + BSTATUS[st.status] + ' · <a href="' + esc(b + '/build') + '">raport</a></p>' : '');
     }
@@ -406,17 +419,28 @@
       const t = (info.tasks || [])[+sel.value];
       return t ? { task: { id: t.id, title: t.title } } : null;
     }
+    let force = false, checkSeq = 0;
     function preview() {
       const t = task(), el = pop.querySelector('#bd-branch'), own = pop.querySelector('#bd-own');
       own.hidden = pop.querySelector('#bd-task').value !== 'own';
       el.textContent = t && (t.task || t.title) ? branchFor(t.task ? t.task.id : '', t.task ? t.task.title : t.title) : 'feature/…';
+      // juz zrobione? (AC-BD14) - ostrzezenie i "Buduj mimo to"
+      const warn = pop.querySelector('#bd-warn'), go = pop.querySelector('#bd-go'), seq = ++checkSeq;
+      force = false; warn.innerHTML = ''; go.textContent = 'Buduj na nowej gałęzi';
+      if (!t || !t.task) return;
+      fetch(b + '/api/build/check?id=' + encodeURIComponent(t.task.id)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        .then(function (a) {
+          if (!pop || seq !== checkSeq || !a) return;
+          const h = alreadyHtml(a, t.task.id, branchFor(t.task.id, t.task.title));
+          if (h) { warn.innerHTML = h; go.textContent = 'Buduj mimo to'; force = true; }
+        });
     }
     function render() {
       if (pop) pop.remove();
       btn.parentNode.insertAdjacentHTML('beforeend', buildPopHtml(info || {}, b));
       pop = btn.parentNode.lastElementChild;
       const sel = pop.querySelector('#bd-task');
-      if (sel) { sel.onchange = function () { preview(); if (sel.value === 'own') pop.querySelector('#bd-own').focus(); }; pop.querySelector('#bd-own').oninput = preview; }
+      if (sel) { sel.onchange = function () { preview(); if (sel.value === 'own') pop.querySelector('#bd-own').focus(); }; pop.querySelector('#bd-own').oninput = preview; preview(); }
       pop.onkeydown = function (e) { if (e.key === 'Escape') { close(); btn.focus(); } };
       pop.onclick = function (e) {
         const t = e.target.closest('button'); if (!t) return;
@@ -425,7 +449,7 @@
           const body = task();
           if (!body || !(body.task || body.title)) { msg.className = 'qs-msg err'; msg.textContent = 'Napisz, co budujemy.'; return; }
           t.disabled = true; t.textContent = 'Zakładam gałąź…';
-          post('/api/build/start', body).then(function () { location.href = b + '/build'; })
+          post('/api/build/start', force ? Object.assign({}, body, { force: true }) : body).then(function () { location.href = b + '/build'; })
             .catch(function (err) { t.disabled = false; t.textContent = 'Buduj na nowej gałęzi'; msg.className = 'qs-msg err'; msg.textContent = err.message; });
         } else if (t.id === 'bd-stop') {
           t.disabled = true;
@@ -581,7 +605,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml };
+  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

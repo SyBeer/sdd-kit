@@ -501,6 +501,10 @@ function buildRoute(ctx, req, res, url) {
       return json(res, 200, buildPrompt(ctx));
     });
   }
+  if (url === '/api/build/check' && req.method === 'GET') {
+    const id = new URL(req.url, 'http://localhost').searchParams.get('id') || '';
+    return build.alreadyDone(modDir, id).then(a => json(res, 200, a), e => json(res, 500, { error: String(e && e.message || e) }));
+  }
   if (url === '/api/build/stop' && req.method === 'POST') { b.stop(); return json(res, 200, { ok: true, state: b.state() }); }
   if (url === '/api/build/start' && req.method === 'POST') {
     return readBody(req, 16 * 1024, buf => {
@@ -512,7 +516,17 @@ function buildRoute(ctx, req, res, url) {
       if (!task && !title) return json(res, 400, { error: 'Napisz, co budujemy, albo wybierz wymaganie.' });
       const branch = build.branchFor(task ? task.id : '', title);
       buildPreparing = true;
-      build.prepareWorktree(modDir, branch).then(w => {
+      // Juz zrobione albo inne budowanie tego numeru (0.45.0, AC-BD13) - tylko z force; ta sama galaz = kontynuacja
+      (task && body.force !== true ? build.alreadyDone(modDir, task.id) : Promise.resolve(null)).then(a => {
+        if (a) a.branches = a.branches.filter(x => x !== branch);
+        if (a && (a.commits.length || a.branches.length)) {
+          const why = a.commits.length ? task.id + ' jest już na gałęzi ' + (a.branch || 'bieżącej') + (a.tag ? ' (wersja ' + a.tag + ')' : '') : 'jest już gałąź ' + a.branches.join(', ');
+          json(res, 409, { error: why + ' - budować mimo to?', already: a });
+          return null;
+        }
+        return build.prepareWorktree(modDir, branch);
+      }).then(w => {
+        if (w === null) return;
         if (!w.ok) return json(res, 409, { error: w.error });
         return repoCopy.repoState(modDir).then(st => {
           const zadanie = task ? task.id + ' ' + task.title : title;

@@ -108,6 +108,17 @@ test('AC-BD4: /api/build - zadania, start w folderze feature, raport w SSE, 409 
     const done = (await call(port, 'GET', '/api/build')).json().state;
     assert.strictEqual(done.status, 'done');
     assert.match(done.report, /^RAPORT /);
+    // AC-BD13: R-001 juz zrobione na main -> 409 z already, force -> start (tu: galaz istnieje = kontynuacja)
+    fs.writeFileSync(path.join(mod, 'x.py'), '1\n'); g(mod, 'add', 'x.py'); g(mod, 'commit', '-qm', 'feat: import (R-001)');
+    const ch = (await call(port, 'GET', '/api/build/check?id=R-001')).json();
+    assert.deepStrictEqual(ch.commits.map(c => c.subject), ['feat: import (R-001)']);
+    const dup = await call(port, 'POST', '/api/build/start', { task: { id: 'R-001', title: 'Import CSV' } });
+    assert.strictEqual(dup.code, 409, dup.body);
+    assert.match(dup.json().error, /R-001/);
+    assert.strictEqual(dup.json().already.commits.length, 1);
+    const forced = await call(port, 'POST', '/api/build/start', { task: { id: 'R-001', title: 'Import CSV' }, force: true });
+    assert.strictEqual(forced.code, 200, forced.body);
+    await events(port, d => /"status":"done"/.test(d));
     // reset promptu -> domyslny; drugi start w trakcie -> 409; stop
     assert.strictEqual((await call(port, 'PUT', '/api/build/prompt', { reset: true })).code, 200);
     assert.ok(!fs.existsSync(pf));

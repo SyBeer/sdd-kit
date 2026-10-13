@@ -111,6 +111,36 @@ test('AC-BD2: prepareWorktree - galaz w folderze obok, repo usera bez zmian, wym
   assert.match((await bd.prepareWorktree(plain, 'feature/x')).error, /git/i);
 });
 
+test('AC-BD12: alreadyDone - commity z numerem, wersja wydania, inne galezie feature', async () => {
+  const dir = repo();
+  fs.writeFileSync(path.join(dir, 'a.py'), '1\n'); g(dir, 'add', '-A'); g(dir, 'commit', '-q', '-m', 'feat(dashboard): magazyn (R-021, R-002)');
+  g(dir, 'tag', '-a', 'v3.6.0', '-m', 'v3.6.0');
+  fs.writeFileSync(path.join(dir, 'b.py'), '1\n'); g(dir, 'add', '-A'); g(dir, 'commit', '-q', '-m', 'fix: R-0210 inne');
+  g(dir, 'branch', 'feature/r-021-stara-proba');
+  // sam spec z numerem - to nie zrobione wymaganie
+  fs.writeFileSync(path.join(dir, 'requirements', '03-spec', 'PRD.md'), 'R-021 nowe\n'); g(dir, 'add', '-A'); g(dir, 'commit', '-q', '-m', 'docs(requirements): spec R-021');
+  fs.writeFileSync(path.join(dir, 'requirements', '03-spec', 'PRD.md'), 'R-077\n'); g(dir, 'add', '-A'); g(dir, 'commit', '-q', '-m', 'docs(requirements): R-077');
+  assert.deepStrictEqual((await bd.alreadyDone(dir, 'R-077')).commits, [], 'tylko requirements/');
+  const a = await bd.alreadyDone(dir, 'R-021');
+  assert.deepStrictEqual(a.commits.map(c => c.subject), ['feat(dashboard): magazyn (R-021, R-002)']);
+  assert.match(a.commits[0].hash, /^[0-9a-f]{7,}$/);
+  assert.ok(a.commits[0].date);
+  assert.strictEqual(a.tag, 'v3.6.0');
+  assert.strictEqual(a.branch, 'main');
+  assert.deepStrictEqual(a.branches, ['feature/r-021-stara-proba']);
+  const b = await bd.alreadyDone(dir, 'R-0210');
+  assert.deepStrictEqual(b.commits.map(c => c.subject), ['fix: R-0210 inne']);
+  assert.strictEqual(b.tag, null, 'jeszcze nie wydane');
+  assert.deepStrictEqual(await bd.alreadyDone(dir, 'R-099'), { commits: [], tag: null, branch: 'main', branches: [] });
+  assert.deepStrictEqual((await bd.alreadyDone(dir, '')).commits, []);
+});
+
+test('AC-BD15: DEFAULT_PROMPT - krok 0 sprawdza, czy wymaganie nie jest juz zrobione', () => {
+  const k0 = bd.DEFAULT_PROMPT.split('\n').find(l => /^0\. /.test(l)) || '';
+  assert.match(k0, /git log --grep/);
+  assert.match(k0, /już zrobione/);
+});
+
 const FAKE = `let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>{
 const out=o=>console.log(JSON.stringify(o));
 out({type:'system',subtype:'init',session_id:'fake'});
