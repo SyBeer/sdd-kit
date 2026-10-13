@@ -107,6 +107,20 @@ Weryfikacja 0.44.1 (2026-10-12): testy AC-BD7..BD9 (najpierw czerwone), pelny ze
 z udawanym Claude odtwarzajacym zdarzenia z R-021: "✕ zablokowane: <komenda>", "błąd narzędzia (Edit) – Claude
 poprawia", zdanie o czerwonych testach raz, "Zablokowane komendy (1)" w naglowku.
 
+## Zmiana 0.44.2 (2026-10-13: budowanie R-021 nie uzylo ~/.claude/WORKFLOW.md - CLAUDE.md tylko o nim wspominal)
+Wlasciciel dolaczyl WORKFLOW.md importem `@~/.claude/WORKFLOW.md` w globalnym CLAUDE.md z warunkiem "zanim napiszesz kod
+- stosujesz workflow, takze z wlasna instrukcja zadania". Workflow ma fazy wydania i pushu, ktorych budowanie nie robi.
+- **AC-BD10** `DEFAULT_PROMPT` mowi, ktore fazy workflow z CLAUDE.md stosuje budowanie (A-C: spec juz jest - czytasz,
+  build z TDD, commit) i ze fazy D-G (build+SBOM, wydanie, tag, push, weryfikacja) nie naleza do budowania - robi sie
+  je po przegladzie, w zwyklej sesji z potwierdzeniem wlasciciela (uwaga wlasciciela: "robi czlowiek" brzmialo jak
+  praca reczna).
+- **AC-BD11** (wlasciciel: "sprawdzic, czy sa instrukcje do budowania w workflow; jak nie ma - dopytac lub zaproponowac
+  ich stworzenie") Krok 0 promptu: Claude sprawdza instrukcje budowania projektu (srodowisko, komendy testow i buildu)
+  w workflow z CLAUDE.md i w CLAUDE.md projektu. Sa -> buduje. Brak, ale jednoznaczne z repo (np. pytest.ini,
+  package.json) -> buduje i w raporcie podaje gotowy tekst do dopisania do CLAUDE.md projektu. Brak i nie da sie ich
+  ustalic -> stop przed kodem, w raporcie propozycja instrukcji i pytania (dopytanie przez raport - budowanie jest bez
+  rozmowy).
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.

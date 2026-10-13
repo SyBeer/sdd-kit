@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.44.2] - 2026-10-13
+- Prompt budowania mowi, ktore fazy workflow z CLAUDE.md stosuje Claude: A–C (spec - czyta, build z TDD, commit);
+  D–G (build+SBOM, wydanie, tag, push, weryfikacja) nie naleza do budowania - po przegladzie, w zwyklej sesji
+  z potwierdzeniem wlasciciela (docs/specs/build.md AC-BD10).
+- Krok 0 budowania: Claude sprawdza instrukcje budowania projektu (srodowisko, komendy testow i buildu) w workflow
+  i CLAUDE.md projektu; brak, ale jasne z repo -> buduje i podaje w raporcie tekst do dopisania; brak i niejasne ->
+  zatrzymuje sie przed kodem z propozycja instrukcji i pytaniami (AC-BD11). Wlasny prompt
+  w `requirements/build-prompt.md` nie zmienia sie - dopisz to zdanie recznie albo "Przywróć domyślny".
+
 ## [0.44.1] - 2026-10-12
 - Przebieg budowania czytelniejszy (docs/specs/build.md AC-BD7..BD9, po pierwszym prawdziwym budowaniu R-021):
   blokada pokazuje komende ("✕ zablokowane: ls src … && head -60 CHANGELOG.md") zamiast dlugiego, ucietego

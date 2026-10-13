@@ -29,7 +29,9 @@ const BUILD_DENIED = ['Bash(git push:*)', 'Bash(git reset:*)', 'Bash(git checkou
 const DEFAULT_PROMPT = [
   'Budujesz autonomicznie: {zadanie}. Gałąź: {galaz}, folder: {folder}.',
   'Nikt nie odpowiada na pytania w trakcie - pracujesz sam do końca i kończysz raportem. Metoda: SDD + TDD.',
+  'Workflow z CLAUDE.md (WORKFLOW.md) stosujesz w fazach A–C: spec już jest (czytasz go, nie piszesz od nowa), build z TDD, commit. Fazy D–G (build+SBOM, wydanie, tag, push, weryfikacja) nie należą do budowania - robi się je po przeglądzie, w zwykłej sesji z potwierdzeniem właściciela.',
   '',
+  '0. Najpierw instrukcje budowania: sprawdź, czy workflow z CLAUDE.md i CLAUDE.md projektu mówią, jak przygotować środowisko i jakie są komendy testów i buildu tego projektu. Są - stosuj je. Brak, ale wynikają jednoznacznie z repo (np. pytest.ini, package.json) - buduj dalej, a w raporcie daj gotowy tekst do dopisania do CLAUDE.md projektu. Brak i nie da się ich ustalić - zatrzymaj się przed kodem, a w raporcie zaproponuj instrukcje i zadaj pytania.',
   '1. Spec: przeczytaj {wymagania}/03-spec/PRD.md (to wymaganie i jego kryteria AC), reguły BR i decyzje D, na które się powołuje, oraz CLAUDE.md projektu. Spec jest źródłem prawdy.',
   '2. Środowisko: jeśli brakuje zależności (np. .venv, node_modules), przygotuj je komendami projektu.',
   '3. TDD: najpierw testy wyprowadzone z kryteriów AC - uruchom, mają nie przechodzić. Potem kod, aż przejdą. Potem refaktor. Na końcu cały zestaw testów projektu na zielono. Nie mockuj prawdziwych API.',

@@ -60,6 +60,23 @@ test('AC-BD1: branchFor, fillPrompt, DEFAULT_PROMPT, buildArgs, tasksFrom', () =
   assert.deepStrictEqual(bd.tasksFrom(''), []);
 });
 
+test('AC-BD10: DEFAULT_PROMPT - fazy workflow z CLAUDE.md: A-C budowanie, D-G czlowiek', () => {
+  const p = bd.DEFAULT_PROMPT;
+  assert.match(p, /workflow z CLAUDE\.md/i);
+  assert.match(p, /fazach A–C/);
+  assert.match(p, /D–G[^\n]*nie należą do budowania[^\n]*zwykłej sesji z potwierdzeniem właściciela/);
+  assert.doesNotMatch(p, /robi człowiek/);
+});
+
+test('AC-BD11: DEFAULT_PROMPT - krok 0: instrukcje budowania projektu, brak -> propozycja w raporcie albo stop', () => {
+  const p = bd.DEFAULT_PROMPT;
+  const k0 = p.split('\n').find(l => /^0\. /.test(l)) || '';
+  assert.ok(k0, 'krok 0');
+  ['instrukcje budowania', 'CLAUDE.md projektu', 'komendy testów', 'pytest.ini', 'gotowy tekst', 'zatrzymaj się', 'pytania'].forEach(w =>
+    assert.ok(k0.includes(w), w));
+  assert.ok(p.indexOf('0. ') < p.indexOf('1. Spec'), 'przed spec');
+});
+
 test('AC-BD2: prepareWorktree - galaz w folderze obok, repo usera bez zmian, wymagania z dysku, kontynuacja', async () => {
   const dir = repo();
   // niezacommitowane wymagania i nowy plik
