@@ -30,7 +30,7 @@ Typy: `ev` zdarzenie (cos sie stalo), `cmd` komenda (ktos cos robi), `act` kto (
 Samo przenumerowanie kolumn (wstawienie albo zamkniecie kolumny w pasie) nie zmienia `updated`. Panel pokazuje je jako RRRR-MM-DD HH:MM.
 `answer`, `answeredBy`, `answeredAt` (tylko `hot`): odpowiedz biznesu wpisana na tablicy, kto odpowiedzial (rola), kiedy.
 Tablica tylko zbiera odpowiedzi - do plikow wpisuje je agent przy `sync` (krok 3 ponizej).
-`target`: `true` - karteczka docelowa: z wymagan, ktorych aplikacja jeszcze nie ma (0.36.0, docs/specs/board-target.md).
+`target`: `true` - karteczka docelowa: z wymagan, ktorych aplikacja jeszcze nie ma.
 Brak pola = stan dzisiejszy. Proces, ktorego wszystkie karteczki sa docelowe, tablica pokazuje jako proces docelowy;
 przelacznik "dziś / docelowo / oba" chowa albo przygasza jedne albo drugie. Wdrozone -> zdejmij `target`.
 `col` to kolejnosc w pasie od lewej (0,1,2...). Karteczki z tym samym `col` stoja jedna pod druga (np. zdarzenie i jego hotspot).
@@ -83,71 +83,11 @@ tablicy" sam, gdy polecenie przyszlo z paska Tablicy).
 Pytania: kazde otwarte, zadane i sprzeczne Q staje sie karteczka `hot` (`ref` = Q-xxx, tresc = pytanie,
 `file` = `01-interview/QUESTIONS.md`, `synced` = teraz). Odpowiedziane i zaparkowane - nie.
 
-## Porzadek na tablicy (`/sdd:board tidy`)
-Sprzata sama tablice (0.43.0, docs/specs/board-commands.md). Zapis tylko `board.json`. Nie tworzysz R, BR, D ani Q
-w plikach - to robi `sync`.
-1. Czytaj `board.json` i `QUESTIONS.md` (stan pytan). Szukaj:
-   - duplikatow: ta sama tresc (bez wielkosci liter i spacji) albo ten sam `ref` w procesie;
-   - karteczek w zlym procesie: tresc wyraznie o innym procesie (nazwa procesu, encja, aktor);
-   - kolejnosci w pasie niezgodnej z przebiegiem: `act` -> `cmd` -> `pol` -> `ev` -> `rm`;
-   - dziur i nakladania w kolumnach (dwie karteczki w tej samej kolumnie pasa bez powodu, puste kolumny w srodku);
-   - pustych procesow (bez karteczek; domyslny "Nowy proces");
-   - pytan `hot`, ktore w `QUESTIONS.md` sa juz odpowiedziane albo zaparkowane (do zdjecia - tablica ma przycisk
-     "Zdejmij zamknięte");
-   - karteczek bez procesu (`lane` spoza `lanes`).
-2. **Najpierw propozycja, bez zapisu**: lista zmian po 1 zdaniu, pogrupowana (duplikaty, przeniesienia, kolumny,
-   procesy, pytania), ponumerowana. Zapytaj: "Robie? (mozesz: tak / tak, bez 3 / nie)". Czekasz na "tak".
-3. Zasady zmian:
-   - nie zmieniasz tresci karteczek - tylko miejsce (`lane`, `col`); poprawke tresci proponujesz jako pytanie;
-   - karteczek usera (`by: "człowiek"` albo `source` "warsztat, dopisane w przegladarce") nie usuwasz bez zgody na te
-     konkretna karteczke (wymien ja z numerem w propozycji); duplikat usera z karteczka agenta - usuwasz karteczke agenta;
-   - przy duplikatach zostaje ta z `ref` / `synced` / `answer`; reszta pol (zrodlo) dopisana do niej, jesli wnosi cos;
-   - `space` (odstepy) zostawiasz, chyba ze stoja na koncu pasa;
-   - przeniesionym karteczkom `updated` = teraz (`date -Iseconds`); `synced`, `ref`, `file` bez zmian.
-4. Po zapisie: linia w `CHANGELOG.md` (ile przeniesionych, usunietych, procesow) i podsumowanie 3-5 linijek; jesli
-   cos czeka na zapis do plikow - zaproponuj `/sdd:board sync`.
-
-## Procesy z dzialajacej aplikacji (`/sdd:board processes`)
-Rozpisuje procesy istniejacej aplikacji (as-built) na karteczki - punkt wyjscia do warsztatu "jak to dziala dzis".
-Zapis tylko do `board.json` (odtwarzalne, bez pytania). Nie tworzysz R, BR, D ani Q w plikach - to robi `sync`.
-1. Czytaj: aktualny `board.json`, `00-intake/INDEX.md` (zrodla `as-built`, zwlaszcza odczyt kodu `[App]`),
-   `DECISIONS.md`, `RULES.md`, `QUESTIONS.md`, sekcje "Poza zakresem" i kandydatow w PRD.
-2. Czytaj aplikacje: punkty wejscia (trasy, ekrany, formularze, komendy CLI), logike obliczen i walidacji, integracje,
-   README. Kod czytasz fragmentami (grep po trasach i funkcjach), nie calymi plikami.
-3. Pasy = procesy tak, jak je widzi uzytkownik (cel: "Miesieczny odczyt", "Rozliczenie miesiaca"), nie pliki ani
-   endpointy. Zwykle 5-9 pasow. Pasy i karteczki usera zostaja; pusty pas domyslny ("Nowy proces") mozna usunac;
-   `Do wyjaśnienia` na koncu `lanes`.
-4. W pasie od lewej wg przebiegu: `act` (kto) -> `cmd` (co robi) -> `pol` (regula/walidacja) -> `ev` (co sie stalo)
-   -> `rm` (co oglada). Kazda karteczka w swojej kolumnie. Tresc jezykiem biznesu ("Wpisz cene paliwa recznie"),
-   nie nazwa trasy; regula w formie "Jezeli ..., to ...".
-5. `source` = `[App] <plik>:<linia>` albo `[App]/[Dok] <plik z INDEX.md>, sekcja`. Gdy jest decyzja `[Biz]`
-   (D-xxx), dopisz ja na poczatku - wygrywa z kodem.
-   Stan "w plikach" (✓ na tablicy) zalezy od tego, czy element juz jest w plikach wymagan - sprawdz to dla kazdej karteczki:
-   - **juz w plikach** (regula BR-xxx w RULES.md, wymaganie R w PRD, decyzja D, zalozenie A, istniejace Q, rola
-     z ACTORS.md, stan z ENTITIES.md): `ref` = jego numer (rola i stan nie maja numeru - bez `ref`), `file` = plik,
-     w ktorym jest, `synced` = teraz. Panel pokaze ✓ i sam sprawdzi, czy `ref` naprawde jest w `file`;
-   - **tylko z kodu** (`[App]` bez odpowiednika w plikach), "(docelowo; dzis ...)" i nowe pytania z punktu 7:
-     bez `synced` i bez `file`. Panel pokaze "tylko na tablicy", do plikow przeniesie je `/sdd:board sync`.
-   `file` znaczy zawsze "tu to jest" - nigdy "tu to trafi". Nowemu Q nie dawaj `synced`: numeru nie ma jeszcze
-   w QUESTIONS.md, wiec panel pokazalby "!".
-6. Decyzja mowi co innego niz kod -> karteczka opisuje stan docelowy z dopiskiem "(docelowo; dzis ...)".
-   Funkcje oznaczone w PRD jako poza zakresem (makiety itp.) pomijasz.
-6a. **Docelowe** (0.36.0): wymagania R z PRD (i ich BR, D), ktorych nie ma w kodzie - nowy krok w istniejacym procesie
-   albo caly nowy proces - stawiasz jako karteczki z `target: true`, zrodlo `[Biz] PRD R-xxx` (albo `[Biz] RULES BR-xxx`),
-   `ref` = numer z pliku, `file` = plik, `synced` = teraz (sa juz w plikach). Nowy krok - w pasie procesu, w kolumnie,
-   w ktorej ma wypasc; nowy proces - osobny pas (wszystkie jego karteczki docelowe), wstawiony wg przebiegu.
-   Tylko R zatwierdzone albo robocze z sekcji zakresu - nie z "Poza zakresem". Wymaganie czesciowo zbudowane:
-   karteczka dzisiejsza + docelowa z brakujaca czescia.
-7. Rozjazd kod vs dokumentacja, funkcja opisana, a nieobecna w kodzie, zachowanie bez zrodla `[Biz]` budzace
-   watpliwosc -> `hot` przy karteczce, ktorej dotyczy (zasady miejsca ponizej), `ref` = kolejne wolne Q-xxx
-   z QUESTIONS.md. Pytanie o przeszlosc ("kiedy ostatnio..., jak to zrobiles?"). Najwyzej kilka - reszta przy `sync`.
-8. Nie dubluj: karteczka o tym samym `ref` albo tej samej tresci w pasie juz jest -> pomijasz.
-   `id` unikalne, `by: "agent"`, `created` = `updated` = teraz (`date -Iseconds`). Tytul/podtytul tablicy:
-   nazwa aplikacji + wersja + "as-built", jesli byly domyslne.
-9. Linia w `CHANGELOG.md` (liczba procesow, karteczek, numery Q) i odpowiedz: lista pasow po 1 zdaniu,
-   ile karteczek jest juz w plikach (✓), a ile tylko na tablicy (do `sync`), ile docelowych (`target`) i w jakich
-   procesach, co oznaczyles "(docelowo; dzis ...)", jakie `hot`,
-   jedno pytanie o przeszlosc.
+## Rzadsze polecenia
+- `/sdd:board tidy` - porzadek na samej tablicy (duplikaty, karteczki w zlym procesie, kolumny, zamkniete pytania).
+  Przeczytaj `references/tidy.md` i postepuj wg niego.
+- `/sdd:board processes` - procesy dzialajacej aplikacji (as-built i docelowe) rozpisane na karteczki.
+  Przeczytaj `references/processes.md` i postepuj wg niego.
 
 ## Gdzie stawiac pytanie (`hot`)
 1. Powiazane ID pytania to R/BR/D/A z kolumn "Skad" i "Wplyw" w QUESTIONS.md.

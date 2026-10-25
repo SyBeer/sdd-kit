@@ -5,7 +5,8 @@ description: Kontrola jakosci wymagan - sprawdza zrodla, kryteria, testowalnosc,
 
 # /sdd:validate
 
-Etap 5. Piszesz sam, raport jest odtwarzalny.
+Etap 5. Piszesz sam, bez pytania: raport jest odtwarzalny - ten sam stan plikow daje ten sam raport, wiec zapis
+niczego nie przesadza (kolejny przebieg go odtworzy), a wymagan nie zmieniasz.
 
 ## Checklista (kazdy punkt: PASS / WARN / BLOCK z lista pozycji)
 1. BLOCK: R bez zrodla lub ze zrodlem `[AI]` bez A
@@ -49,7 +50,7 @@ Etap 5. Piszesz sam, raport jest odtwarzalny.
     wskazuje zwykle `R` formularza; bez zadnego `R`: WARN przy obu rodzajach.
     Rodzaj modulu z `kind` w SDD.yaml; brak pola = `monolith`. Pozycje: `S-xxx` bez kontraktu.
     Brak `SYSTEMS.md` na poziomie `full`: kontrole 17-20 jako jeden wiersz INFO "brak rejestru systemow" (nie BLOCK -
-    projekty sprzed 0.31.0 nie staja). Poziom `light`: 17-20 pomijasz.
+    starsze projekty bez rejestru nie staja). Poziom `light`: 17-20 pomijasz.
     Numeracja kontroli jest stala (panel czyta wiersz 9 po numerze) - nowe kontrole dopisujesz na koncu.
 
 Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent/*/spec.md` i dolacz wynik.
@@ -57,14 +58,9 @@ Jesli w projekcie dostepny jest skill `spec-checker`, odpal go na `03-spec/agent
 ## Raport
 `04-validation/validate-YYYY-MM-DD.md`: tabela wynikow, lista blokerow z odnosnikami, lista ostrzezen, wskaznik:
 gotowosc = (R zatwierdzone bez BLOCK i bez WARN 7-8) / (wszystkie R w zakresie) w %.
-Wiersz kontroli 9 w tabeli wynikow: `| 9 | Pojecia w PRD spoza GLOSSARY | WARN | „Pojecie” (R-xxx), „Pojecie” |` -
-pierwsza komorka to numer `9`, przy WARN kazde pojecie w cudzyslowie „…”. Panel czyta ten wiersz: WARN w aktualnym
-raporcie cofa etap Domain na "w toku" z lista tych pojec (krok `/sdd:domain`), bo slownik ich nie zna.
-Na koncu: 3 najwazniejsze rzeczy do zrobienia, zeby podniesc gotowosc.
-Pod linia z gotowoscia wpisz odcisk wymagan, liczony na koncu przebiegu (po wszystkich poprawkach):
-`node "${CLAUDE_PLUGIN_ROOT}/board/fingerprint.js" requirements` -> linia `Odcisk wymagan: sha256:<hex>`.
-Panel porownuje go z biezacym stanem plikow: kazda zmiana wymagan po walidacji oznacza raport jako nieaktualny
-i cofa aktualny krok na /sdd:validate. Bez tej linii panel ocenia raport tylko po kolejnosci wpisow w CHANGELOG.
+Na koniec: 3 najwazniejsze rzeczy do zrobienia, zeby podniesc gotowosc.
+Panel czyta z raportu wiersz kontroli 9 i odcisk wymagan - przed zapisem raportu przeczytaj
+`references/report-format.md` i zapisz oba dokladnie w tym formacie.
 
 ## Na koniec
 CHANGELOG + wypisz gotowosc i liczbe blokerow. Nie powtarzaj calego raportu na ekranie.

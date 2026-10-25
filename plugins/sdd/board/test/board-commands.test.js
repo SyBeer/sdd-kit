@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const ui = require('../ui.js');
 const B = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(B, f), 'utf8');
@@ -55,7 +56,7 @@ test('AC-BC3: claudeAsk - widok czat, tekst zaznaczony w polu, start gdy nie dzi
 });
 
 test('AC-BC4: skill - /sdd:board tidy, zasady, rebuild pyta przed nadpisaniem', () => {
-  const k = fs.readFileSync(path.join(B, '..', 'skills', 'board', 'SKILL.md'), 'utf8');
+  const k = skillText('board');
   assert.match(k.split('\n---')[0], /description:[^\n]*(tidy|uporzadkuj tablice)/i);
   const t = k.slice(k.indexOf('`/sdd:board tidy`'));
   assert.ok(k.includes('## Porzadek na tablicy (`/sdd:board tidy`)'), 'sekcja');

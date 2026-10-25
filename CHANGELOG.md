@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.46.2] - 2026-10-25
+- Krotsze skille, to samo zachowanie (docs/specs/skill-bodies.md AC-SB1..SB9; przeglad /doctor skilli pod nowe modele,
+  ktore wykonuja polecenia doslownie). Rzadkie sekcje w `references/`, ladowane tylko, gdy sa potrzebne: styl BIZ
+  wywiadu, Redmine i status zadan w handover, `/sdd:board tidy` i `processes`, wymaganie kontraktu w spec, format
+  raportu validate. Szesc SKILL.md: 592 -> 414 linii.
+- interview: regula "odpowiedz jasna - zapis od razu / niejasna - parafraza jako pytanie" jedna tabela w kroku 3
+  (BIZ i INZ obok siebie; wczesniej krok 3 "Czekaj na tak" klocil sie ze stylem BIZ), jeden przyklad z fv-manager
+  zamiast czterech, zasady pytan jako cel zamiast zakazow, bez znacznikow wersji w tresci.
+- board: numeracja processes bez "6a"; spec: "zaproponuj" zamiast "ZAPROPONUJ"; init: trzy pytania i trzy punkty listy,
+  "Nie rob" z powodem; validate: co znaczy "raport jest odtwarzalny".
+- Skille nie odwoluja sie juz do `docs/specs/` - tego folderu nie ma w paczce pluginu.
+- Zmiana skilli: otwarte sesje Claude Code po aktualizacji trzeba zrestartowac.
+
 ## [0.46.1] - 2026-10-25
 - "Sesja Claude nieaktualna" tylko wtedy, gdy zmieniły się skille albo hooki, a nie przy każdej nowej wersji
   (docs/specs/session-version.md AC-SV13..SV17; pytanie usera: "dlaczego przy każdej aktualizacji sesja Claude musi

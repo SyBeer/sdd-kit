@@ -6,6 +6,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const http = require('http');
 const { spawn } = require('child_process');
 const ui = require('../ui');
@@ -338,7 +339,7 @@ test('AC-RM20: przewodnik i skill handover - wtyczka UAT w Redmine', () => {
   const t = info.guide().sections.find(x => x.title === 'Integracja z Redmine').items.join('\n');
   ['uat_tests', 'Gotowy do UAT', 'Test UAT', 'github.com/SyBeer/redmine-UAT-plugin', 'nie część sdd-kit']
     .forEach(w => assert.ok(t.includes(w), 'brak: ' + w));
-  const sk = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'handover', 'SKILL.md'), 'utf8');
+  const sk = skillText('handover');
   assert.match(sk, /wtyczka UAT/);
   assert.match(sk, /Nie zaczynaj linii w kryteriach od\s+punktu listy/);
 });

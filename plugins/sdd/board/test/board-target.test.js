@@ -3,12 +3,13 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const ops = require('../board-ops.js');
 const info = require('../info.js');
 
 const B = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(B, 'index.html'), 'utf8');
-const skill = fs.readFileSync(path.join(B, '..', 'skills', 'board', 'SKILL.md'), 'utf8');
+const skill = skillText('board');
 
 const board = () => ({ lanes: ['Dzis', 'Nowy', 'Mieszany', 'Pusty'], notes: [
   { id: 'a', type: 'cmd', text: 'x', lane: 'Dzis', col: 0 },

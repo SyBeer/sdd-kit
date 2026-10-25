@@ -4,6 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const http = require('http');
 const net = require('net');
 const { spawn } = require('child_process');
@@ -153,7 +154,7 @@ test('AC-CH4: okno Claude - przelacznik czat / terminal, znacznik stylu, widok c
 });
 
 test('AC-CH5: skill interview - instrukcja z panelu ma pierwszenstwo przed interview_style', () => {
-  const s = fs.readFileSync(path.join(B, '..', 'skills', 'interview', 'SKILL.md'), 'utf8');
+  const s = skillText('interview');
   assert.match(s, /okno czatu panelu[^\n]*BIZ[^\n]*terminal panelu[^\n]*INZ|panel sdd-board[^\n]*pierwszenstwo/);
 });
 

@@ -6,6 +6,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const http = require('http');
 const { spawn } = require('child_process');
 const rm = require('../redmine');
@@ -424,7 +425,7 @@ test('AC-RM7: konfiguracja - backlog redmine, adres i projekt przez yamlSet', ()
 });
 
 test('AC-RM8: skill handover opisuje Redmine', () => {
-  const sk = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'handover', 'SKILL.md'), 'utf8');
+  const sk = skillText('handover');
   assert.match(sk, /`redmine`/);
   ['redmine.js', 'check', '--dry-run', 'push', 'REDMINE_API_KEY', 'TRACEABILITY'].forEach(w => assert.ok(sk.includes(w), 'brak: ' + w));
   assert.match(sk, /nie pro[sś] o wklejenie klucza/i);

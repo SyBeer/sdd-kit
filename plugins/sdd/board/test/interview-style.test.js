@@ -4,6 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const info = require('../info.js');
 const { fingerprint } = require('../fingerprint');
 
@@ -48,7 +49,7 @@ test('AC-IS4: szablon SDD.yaml - interview_style: biz z komentarzem', () => {
 });
 
 test('AC-IS5: skill interview - sekcja Styl rozmowy (BIZ domyslnie, argument, przelaczanie, zasady, przyklad)', () => {
-  const s = read(path.join(SK, 'interview', 'SKILL.md'));
+  const s = skillText('interview');
   assert.match(s, /## Styl rozmowy \(BIZ \/ INZ\)/);
   ['interview_style', 'domyslnie `biz`', '`/sdd:interview live inz`', 'przejdz na BIZ', 'przejdz na INZ',
     'Autor raz na poczatku', 'w jakim stopniu instalacja już się zwróciła'].forEach(t => assert.ok(s.includes(t), t));
@@ -58,7 +59,7 @@ test('AC-IS5: skill interview - sekcja Styl rozmowy (BIZ domyslnie, argument, pr
 });
 
 test('AC-IS6: skill board - tura warsztatu w stylu z SDD.yaml', () => {
-  const s = read(path.join(SK, 'board', 'SKILL.md'));
+  const s = skillText('board');
   assert.match(s, /interview_style[^\n]*\/sdd:interview[^\n]*Styl rozmowy/);
 });
 

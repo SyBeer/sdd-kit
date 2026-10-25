@@ -5,8 +5,9 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const B = path.join(__dirname, '..');
-const skill = fs.readFileSync(path.join(B, '..', 'skills', 'interview', 'SKILL.md'), 'utf8');
+const skill = skillText('interview');
 const ui = require('../ui.js');
 
 test('AC-IS12: BIZ - na poczatku pytanie o czas, bez liczby pytan i pracy', () => {

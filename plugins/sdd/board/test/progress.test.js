@@ -6,6 +6,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const { readProgress } = require('../progress');
 
 const TEMPLATES = path.join(__dirname, '..', '..', 'templates', 'requirements');
@@ -510,7 +511,7 @@ test('AC-75: raport nieaktualny po zmianie slownika - wiersz 9 sie nie liczy', (
 });
 
 test('AC-76: skill validate opisuje format wiersza 9', () => {
-  const v = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'validate', 'SKILL.md'), 'utf8');
+  const v = skillText('validate');
   assert.match(v, /wiersz kontroli 9/i);
   assert.match(v, /„/);
 });

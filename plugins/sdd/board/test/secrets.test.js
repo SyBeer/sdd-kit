@@ -5,6 +5,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const http = require('http');
 const { spawn } = require('child_process');
 const sec = require('../secrets');
@@ -88,7 +89,7 @@ test('AC-S3: serwer - zapis klucza do .env, nigdy wartosc w odpowiedzi', async (
 });
 
 test('AC-S5: zasada "nie czytaj .env" w skillu i szablonie, .gitignore kitu', () => {
-  const skill = fs.readFileSync(path.join(BOARD_DIR, '..', 'skills', 'handover', 'SKILL.md'), 'utf8');
+  const skill = skillText('handover');
   const claude = fs.readFileSync(path.join(BOARD_DIR, '..', 'templates', 'CLAUDE.md'), 'utf8');
   [skill, claude].forEach(t => assert.match(t, /~\/\.sdd-kit\/\.env/));
   assert.match(claude, /nie otwieraj/i);

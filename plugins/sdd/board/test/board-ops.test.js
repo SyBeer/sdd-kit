@@ -4,6 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const ops = require('../board-ops');
+const { skillText } = require('./skill-text');
 
 const sample = () => ({
   title: 'T', lanes: ['Zamowienie', 'Faktura'],
@@ -348,7 +349,7 @@ test('AC-B50: copyNote - kopia pod oryginalem albo we wskazanym miejscu, bez ref
 // ---- Zmiana 0.28.1: stan "w plikach" po /sdd:board processes (AC-B52, AC-B53)
 test('AC-B52: skill board processes - synced i file tylko dla elementow juz w plikach', () => {
   const fs = require('fs'), path = require('path');
-  const sk = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'board', 'SKILL.md'), 'utf8');
+  const sk = skillText('board');
   const sec = sk.split('## Procesy z dzialajacej aplikacji')[1].split('\n## ')[0];
   assert.match(sec, /juz w plikach[\s\S]{0,400}?`synced` = teraz/);
   assert.match(sec, /bez `synced` i bez `file`/);

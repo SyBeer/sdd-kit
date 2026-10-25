@@ -6,6 +6,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const { readProgress } = require('../progress');
 const { moduleSummary, guide } = require('../info');
 const { fingerprint } = require('../fingerprint');
@@ -37,11 +38,11 @@ test('AC-SY1: szablon SYSTEMS.md z kolumnami i mapa systemow', () => {
   assert.match(t, /^## Mapa systemow/m);
   assert.match(t, /nasz/);
   assert.match(t, /reczny/);
-  assert.match(read('skills/init/SKILL.md'), /templates\/requirements\//);  // init kopiuje caly katalog
+  assert.match(skillText('init'), /templates\/requirements\//);  // init kopiuje caly katalog
 });
 
 test('AC-SY2..AC-SY4: skill domain - krok SYSTEMS, spojnosc mastera, zmiany za zgoda', () => {
-  const s = read('skills/domain/SKILL.md');
+  const s = skillText('domain');
   assert.match(s, /\*\*SYSTEMS\.md\*\*/);
   assert.match(s, /`Master dla`/);
   assert.match(s, /flowchart LR/);
@@ -53,7 +54,7 @@ test('AC-SY2..AC-SY4: skill domain - krok SYSTEMS, spojnosc mastera, zmiany za z
 
 // ---- Interview
 test('AC-SY5, AC-SY6: interview - luka integracji, przy awarii poza akceptacja as-built', () => {
-  const s = read('skills/interview/SKILL.md');
+  const s = skillText('interview');
   assert.match(s, /\*\*Luka integracji\*\*/);
   assert.match(s, /Piec regul/);
   assert.match(s, /`Przy awarii`[^\n]*(nie obejmuje|NIE obejmuje|zawsze osobne)/i);
@@ -61,7 +62,7 @@ test('AC-SY5, AC-SY6: interview - luka integracji, przy awarii poza akceptacja a
 
 // ---- Validate
 test('AC-SY7..AC-SY10: validate - kontrole 17-19, brak pliku = INFO, numery 1-16 bez zmian', () => {
-  const v = read('skills/validate/SKILL.md');
+  const v = skillText('validate');
   assert.match(v, /^17\. BLOCK:[^\n]*dw(a|och) (systemy|systemow)[^\n]*master/im);
   assert.match(v, /^18\. WARN:[^\n]*`Przy awarii`[^\n]*`Wlasciciel`/m);
   assert.match(v, /^19\. WARN:[^\n]*`Krytyczna = tak`[^\n]*Proces systemowy/m);
@@ -107,7 +108,7 @@ test('AC-SY13: zmiana SYSTEMS.md zmienia odcisk wymagan', () => {
 
 // ---- Handover, dokumentacja
 test('AC-SY14: handover - zadanie integracyjne z wierszem SYSTEMS i AC przy awarii', () => {
-  const s = read('skills/handover/SKILL.md');
+  const s = skillText('handover');
   assert.match(s, /SYSTEMS\.md/);
   assert.match(s, /[Pp]rzy awarii[^\n]*osobne (AC|kryterium)/);
 });
@@ -125,8 +126,8 @@ test('AC-SY16: CLAUDE.md - S-xxx w identyfikatorach', () => {
 });
 
 test('AC-SY18: intake porownuje z SYSTEMS, spec --agent wskazuje SYSTEMS w plan.md', () => {
-  assert.match(read('skills/intake/SKILL.md'), /`02-domain\/SYSTEMS\.md`/);
-  assert.match(read('skills/spec/SKILL.md'), /plan\.md[^\n]*SYSTEMS/);
+  assert.match(skillText('intake'), /`02-domain\/SYSTEMS\.md`/);
+  assert.match(skillText('spec'), /plan\.md[^\n]*SYSTEMS/);
 });
 
 // ---- Demo
@@ -154,7 +155,7 @@ test('AC-SY19: szablon SDD.yaml ma kind: monolith z komentarzem', () => {
 });
 
 test('AC-SY20: init pyta o rodzaj modulu pytaniem rozstrzygajacym, podpowiedz tylko jako sugestia', () => {
-  const s = read('skills/init/SKILL.md');
+  const s = skillText('init');
   assert.match(s, /wdrazana osobno/);
   assert.match(s, /`kind: monolith`|`kind`/);
   assert.match(s, /podpowiedz[^\n]*`\[AI\]`[^\n]*wybiera czlowiek/i);
@@ -213,7 +214,7 @@ test('AC-SY24: SYSTEMS.md - kolumna Wymagania i rola konsument; panel pokazuje R
 });
 
 test('AC-SY25: spec - rodzaj wymagania kontrakt z obowiazkowymi AC, bez schematu technicznego', () => {
-  const s = read('skills/spec/SKILL.md');
+  const s = skillText('spec');
   assert.match(s, /`Rodzaj: kontrakt - wejscie\|wyjscie`/);
   assert.match(s, /`System: S-xxx`/);
   assert.match(s, /dopuszczalne opoznienie/);
@@ -223,7 +224,7 @@ test('AC-SY25: spec - rodzaj wymagania kontrakt z obowiazkowymi AC, bez schematu
 });
 
 test('AC-SY26: validate - kontrola 20 WARN przy monolith, BLOCK przy service; 1-19 bez zmian', () => {
-  const v = read('skills/validate/SKILL.md');
+  const v = skillText('validate');
   assert.match(v, /^20\. WARN \(`monolith`\) \/ BLOCK \(`service`\):/m);
   assert.match(v, /bez zadnego `R` kontraktu wyjscia[^\n]*BLOCK/);
   assert.match(v, /`reczny` z wpisem recznym[^\n]*nie potrzebuje kontraktu/);
@@ -233,13 +234,13 @@ test('AC-SY26: validate - kontrola 20 WARN przy monolith, BLOCK przy service; 1-
 });
 
 test('AC-SY27: interview - przy service pytania o konsumentow i obietnice', () => {
-  const s = read('skills/interview/SKILL.md');
+  const s = skillText('interview');
   assert.match(s, /`kind: service`[^\n]*konsument/);
   assert.match(s, /zmian(ie|a) wersji/);
 });
 
 test('AC-SY28: handover - test kontraktowy w TRACEABILITY; status done odmawia przy service bez testu', () => {
-  const s = read('skills/handover/SKILL.md');
+  const s = skillText('handover');
   assert.match(s, /R \| AC \| Rodzaj \| task \| test/);
   assert.match(s, /test kontraktowy/);
   const req = freshProject();

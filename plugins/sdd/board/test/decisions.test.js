@@ -5,6 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { skillText } = require('./skill-text');
 const { readProgress } = require('../progress');
 const { guide } = require('../info');
 
@@ -25,7 +26,7 @@ test('AC-DE2: szablon DECISIONS - Zrodlo obowiazkowo [Biz]', () => {
 });
 
 test('AC-DE3: validate - kontrola 16 BLOCK dla D bez [Biz], numery 1-15 bez zmian', () => {
-  const v = read('skills/validate/SKILL.md');
+  const v = skillText('validate');
   assert.match(v, /^16\. BLOCK: D[^\n]*\[Biz\]/m);
   assert.match(v, /`\[B\]`/);  // stare oznaczenie liczy sie jak [Biz]
   assert.match(v, /^9\. WARN: pojecie uzyte w PRD/m);
@@ -33,14 +34,14 @@ test('AC-DE3: validate - kontrola 16 BLOCK dla D bez [Biz], numery 1-15 bez zmia
 });
 
 test('AC-DE4: interview - D tylko z odpowiedzi biznesu, potwierdzenie hurtowe i akceptacja as-built', () => {
-  const s = read('skills/interview/SKILL.md');
+  const s = skillText('interview');
   assert.match(s, /`D`[^\n]*tylko[^\n]*biznes/);
   assert.match(s, /[Pp]otwierdzenie hurtowe/);
   assert.match(s, /[Aa]kceptacja as-built/);
 });
 
 test('AC-DE5: intake - zamyka Q daje D tylko przy zrodle [Biz]', () => {
-  const s = read('skills/intake/SKILL.md');
+  const s = skillText('intake');
   const row = s.split('\n').find(l => l.startsWith('| `zamyka Q`'));
   assert.ok(row);
   assert.match(row, /`D-xxx` tylko[^|]*`\[Biz\]`/);
@@ -48,7 +49,7 @@ test('AC-DE5: intake - zamyka Q daje D tylko przy zrodle [Biz]', () => {
 });
 
 test('AC-DE6: domain - nie tworzy D, fakt z kodu jako A niepotwierdzone', () => {
-  const s = read('skills/domain/SKILL.md');
+  const s = skillText('domain');
   assert.match(s, /[Nn]ie tworzysz `D-xxx`/);
   assert.match(s, /`A` `niepotwierdzone`/);
 });

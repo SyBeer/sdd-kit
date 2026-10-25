@@ -17,22 +17,15 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
 ## Tryb domyslny: PRD
 1. Przeczytaj `02-domain/*`, `01-interview/*`, `00-intake/INDEX.md`.
 2. Sekcje 1-4 PRD: cel, aktorzy (odwolanie), zakres, poza zakresem. "Poza zakresem" wypelnij z tego, co biznes wprost odrzucil lub zaparkowal.
-3. Wymagania R-xxx. Dla kazdego ZAPROPONUJ (3-5 linijek) i czekaj na "tak":
+3. Wymagania R-xxx. Dla kazdego zaproponuj (3-5 linijek) i czekaj na "tak":
    - tytul, opis w jezyku ze slownika
    - zrodlo z hierarchia `[Biz]/[App]/[Dok]/[AI]`; jesli tylko `[Dok]`/`[AI]`, dodaj A `niepotwierdzone`
    - reguly BR, zalozenia A
    - kryteria AC-xxx-n Given/When/Then; kazde testowalne (konkretny stan, zdarzenie, wynik obserwowalny)
    - status `robocze`, wlasciciel (rola)
    Mozesz proponowac paczkami po 3-5 R, user zatwierdza paczke.
-   **Wymaganie rodzaju kontrakt** (docs/specs/systems.md czesc B) - dla integracji `zewnetrzny` i wymiany plikow
-   z `02-domain/SYSTEMS.md` (`reczny` z wpisem recznym: w `Wymagania` wpisz zwykle `R` formularza, bez kontraktu),
-   a przy `kind: service` w SDD.yaml takze dla kazdego wejscia (kto nas wola) i wyjscia (komu dajemy dane):
-   linie `Rodzaj: kontrakt - wejscie|wyjscie` i `System: S-xxx`, numer R wpisz w kolumne `Wymagania` w SYSTEMS.md.
-   Obowiazkowe AC jezykiem biznesu: jakie dane (pojecia ze slownika), kierunek,
-   czestotliwosc albo dopuszczalne opoznienie, zachowanie przy awarii; przy `service` dodatkowo
-   zmiana wersji (co wolno zmienic bez uprzedzenia konsumenta, co wymaga uzgodnienia). Bez schematu technicznego: OpenAPI/AsyncAPI, pola, endpointy powstaja
-   w budowie i wskazuja R - nie wchodza do PRD. Kontrakt miedzy dwoma serwisami: zrodlo `[Biz]` (D wlascicieli
-   obu stron), nie odczyt z kodu.
+   Integracja z `02-domain/SYSTEMS.md` (`zewnetrzny`, wymiana plikow) albo - przy `kind: service` - wejscie lub wyjscie
+   serwisu: to wymaganie rodzaju kontrakt. Przed propozycja takiego R przeczytaj `references/contract.md`.
 4. R stojace na A `obalone`, na elemencie modelu `zakwestionowane` albo na Q z etykieta
    blokujaca: NIE tworz, wpisz do sekcji 7 PRD. Element `zakwestionowane` to podstawa
    podmyta przez zrodlo wyzsze w hierarchii - wymaganie na niej byloby zbudowane na piasku.

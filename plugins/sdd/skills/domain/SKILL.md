@@ -20,7 +20,7 @@ albo swiadomie do "Poza zakresem" w PRD.
 1. **GLOSSARY.md**: kazde pojecie biznesowe z surowca. Jedno pojecie = jedna definicja. Jesli biznes uzywa dwoch slow na to samo, jedno jest haslem, drugie synonimem. Jesli jedno slowo oznacza dwie rzeczy, rozbij na dwa hasla z dopiskiem. Zrodlo (z nazwa pliku) i przyklad obowiazkowe. Status `robocze`.
 2. **ACTORS.md**: role, nie osoby. "Co robi" i "czego nie wolno" z surowca. Brak "czego nie wolno" = pytanie (luka).
 3. **ENTITIES.md**: obiekty biznesowe, pola kluczowe, stany, przejscia z rola, diagram `stateDiagram-v2`. Przejscie bez roli = pytanie.
-4. **SYSTEMS.md** (docs/specs/systems.md): systemy z surowca, z ktorymi aplikacja wymienia dane - zewnetrzne
+4. **SYSTEMS.md**: systemy z surowca, z ktorymi aplikacja wymienia dane - zewnetrzne
    i reczne (Excel, mail), jesli niesie dane, ktorych master jest poza aplikacja. Wiersz na system `S-xxx`; `nasz` dokladnie jeden.
    `Master dla` wskazuje encje albo pola z ENTITIES/GLOSSARY. Brak wlasciciela, kierunku, czestotliwosci albo
    `Przy awarii` = pytanie (luka integracji), nie zgadujesz. Wiedza z kodu = `[App]` + `A` `niepotwierdzone`.
