@@ -119,6 +119,7 @@
   // AC-U16 (0.25.0): wersja jest linkiem do Release Notes tej wersji na GitHubie.
   const RELEASES = 'https://github.com/SyBeer/sdd-kit/releases/tag/v';
   // AC-U20 (0.41.0): przy ostrzezeniu klik prowadzi do krokow w Konfiguracji (karta Serwer, #wersja), nie na GitHub.
+  // AC-VP1 (0.46.0): zawsze do karty Serwer, takze bez ostrzezen.
   function versionBadge(v, b) {
     if (!v || !v.running) return null;
     const server = !!v.disk && v.disk !== v.running;
@@ -139,22 +140,27 @@
       '\nZamknij te sesje i otwórz nową - skille ładują się przy starcie sesji.');
     else if (sessions.length) tips.push(sessions.length + ' otwart' + (sessions.length === 1 ? 'a sesja' : 'e sesje') +
       ' Claude Code na wersji ' + sessions[0].version + '.');
+    // Kroki (0.46.0, docs/specs/version-page.md): action = przycisk Aktualizuj w karcie Serwer, cmd = komenda do skopiowania
     const steps = [];
-    if (plugin) steps.push(
-      { text: 'Odśwież listę wersji pluginu (w terminalu):', cmd: cc + ' plugin marketplace update sdd-kit' },
-      { text: 'Zaktualizuj plugin z ' + v.plugin + ' do ' + v.disk + ':', cmd: cc + ' plugin update sdd@sdd-kit' },
-      { text: 'Zrestartuj sesję Claude Code - zamknij ją i otwórz nową; skille ładują się przy starcie sesji.' });
+    if (plugin) steps.push({ text: 'Zaktualizuj plugin w Claude Code z ' + v.plugin + ' do ' + v.disk + '.', action: 'plugin',
+      manual: [cc + ' plugin marketplace update sdd-kit', cc + ' plugin update sdd@sdd-kit'] });
     if (server) steps.push({ text: 'Zrestartuj serwer sdd-board (' + v.running + ' → ' + v.disk +
-      '): zatrzymaj go (Ctrl+C) i uruchom ponownie, albo restart w HQAI. Potem odśwież tę stronę.' });
-    if (old.length && !plugin) steps.push({ text: 'Zamknij sesje Claude Code na starszej wersji skilli i otwórz nową: ' +
-      old.map(s => (s.cwd || '?') + ' (' + s.version + ')').join(', ') + '.' });
+      '): zatrzymaj go (Ctrl+C w oknie, w którym działa, albo restart w HQAI) i uruchom ponownie, potem odśwież tę stronę:',
+      cmd: v.restart || 'sdd-board' });
+    if (plugin || old.length) {
+      steps.push({ text: 'Zamknij ' + (old.length > 1 ? 'każdą sesję' : 'sesję') + ' Claude Code na starszej wersji skilli - wpisz w niej:', cmd: '/exit' });
+      const go = cwd => (cwd ? 'cd "' + cwd + '"' + (v.platform === 'win32' ? '; ' : ' && ') : '') + cc + ' --continue';
+      if (old.length) old.forEach(s => steps.push({ text: 'Otwórz ją ponownie z tą samą rozmową (' + (s.cwd || '?') + ', ' + s.version + '):', cmd: go(s.cwd) }));
+      else steps.push({ text: 'Otwórz sesję ponownie z tą samą rozmową (w folderze projektu):', cmd: go('') });
+    }
     const stale = server || plugin || old.length > 0;
-    const cfg = stale ? cfgHref(b || '') : null;
+    // AC-VP1: klik zawsze do karty Serwer; demo-start (bez Konfiguracji) - Release Notes na GitHubie
+    const cfg = cfgHref(b || '');
     return { stale,
       text: 'v' + v.running + (server ? ' · serwer nieaktualny' : '') + (plugin ? ' · plugin nieaktualny' : '') +
         (old.length ? ' · sesja Claude nieaktualna' : ''),
       title: (tips.length ? tips.join('\n') : 'sdd-kit ' + v.running) +
-        (cfg ? '\nKliknij: co zrobić krok po kroku' : '\nKliknij: opis zmian tej wersji na GitHubie'),
+        (cfg ? (stale ? '\nKliknij: co zrobić krok po kroku' : '\nKliknij: wersja i serwer') : '\nKliknij: opis zmian tej wersji na GitHubie'),
       href: cfg ? cfg + '#wersja' : RELEASES + v.running, local: !!cfg, steps: cfg ? steps : [] };
   }
 

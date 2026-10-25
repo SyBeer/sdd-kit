@@ -126,7 +126,11 @@ test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
     for (const u of ['/api/version', '/demo/api/version']) {
       const r = await call(port, 'GET', u);
       assert.strictEqual(r.code, 200, u);
-      assert.deepStrictEqual(JSON.parse(r.body), { running: want, disk: want, plugin: '', sessions: [], platform: process.platform });
+      const j = JSON.parse(r.body);
+      // restart (0.46.0, AC-VP6): komenda restartu serwera; w demo pusta
+      assert.strictEqual(u.startsWith('/demo') ? j.restart === '' : /server\.js/.test(j.restart), true, u);
+      delete j.restart;
+      assert.deepStrictEqual(j, { running: want, disk: want, plugin: '', sessions: [], platform: process.platform });
     }
   } finally { proc.kill(); }
 });

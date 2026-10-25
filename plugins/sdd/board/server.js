@@ -544,6 +544,8 @@ function buildRoute(ctx, req, res, url) {
 // ---------------------------------------------------------------- nowa wersja (0.27.0, docs/specs/update.md)
 const checker = update.createChecker({ url: process.env.SDD_RELEASES_URL, disabled: process.env.SDD_UPDATE_CHECK === '0' });
 let updating = false;
+// Komenda restartu tego serwera (0.46.0, AC-VP6): to samo polecenie, sciezki bezwzgledne; "node" z PATH (sciezka Homebrew zmienia sie z wersja)
+const RESTART = ['node', '"' + __filename + '"', '"' + boardArg + '"', String(PORT)].join(' ');
 const KIT_ROOT = process.env.SDD_KIT_DIR || path.resolve(__dirname, '..', '..', '..');  // folder kitu, z ktorego dziala panel
 function updatePlanNow() {
   const src = update.marketSource(update.knownFile());
@@ -615,17 +617,22 @@ const server = http.createServer((req, res) => {
   if (url === '/api/update' && req.method === 'POST') {
     if (ctx.demo) return json(res, 403, { error: READ_ONLY });
     if (updating) return json(res, 409, { error: 'Aktualizacja już trwa.' });
-    const { plan } = updatePlanNow();
-    if (plan.error) return json(res, 409, { error: plan.error });
-    updating = true;
-    return update.runPlan(plan.steps, process.env).then(r => {
-      updating = false;
-      json(res, 200, Object.assign(r, { disk: diskVersion(), plugin: pluginVersion(), running: VERSION }));
+    return readBody(req, 4096, buf => {
+      let only = false;
+      try { only = !!(buf && JSON.parse(buf.toString('utf8') || '{}').plugin); } catch (e) {}
+      // {"plugin": true} (0.46.0, AC-VP5): kit na dysku juz nowy - tylko plugin w Claude Code, bez git pull
+      const plan = only ? { steps: update.pluginSteps() } : updatePlanNow().plan;
+      if (plan.error) return json(res, 409, { error: plan.error });
+      updating = true;
+      update.runPlan(plan.steps, process.env).then(r => {
+        updating = false;
+        json(res, 200, Object.assign(r, { disk: diskVersion(), plugin: pluginVersion(), running: VERSION }));
+      });
     });
   }
   if (url === '/api/version' && req.method === 'GET') {
     const plugin = pluginVersion();
-    return json(res, 200, { running: VERSION, disk: diskVersion(), plugin,
+    return json(res, 200, { running: VERSION, disk: diskVersion(), plugin, restart: ctx.demo ? '' : RESTART,
       sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion() }), platform: process.platform });
   }
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));

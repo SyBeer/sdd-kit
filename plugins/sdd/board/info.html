@@ -260,6 +260,13 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 .vfix ol{margin:6px 0 0;padding-left:20px}
 .vfix li{margin:6px 0}
 .vfix li .cmdf{margin-top:4px}
+.vrun{flex-basis:100%;margin:4px 0 0;font-size:12px;color:var(--muted)}
+.vrun[hidden]{display:none}
+.vrun.err{color:var(--hot-ink)}
+.vrun pre{margin:4px 0 0;white-space:pre-wrap;font:11px var(--mono)}
+.vman{margin-top:4px;font-size:12px;color:var(--muted)}
+.vman .cmdf{margin-top:4px}
+.vfix li .cmdf{margin-top:4px}
 .srvupd .updi{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#2f9e5b;color:#fff;font:700 11px/1 var(--sans);font-style:normal}
 .srvupd a{font-weight:400;color:var(--muted)}
 .srvupd .btn{height:26px}
@@ -773,32 +780,56 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     }
   }
   // Wersja w karcie Serwer: ostrzezenia jak w naglowku (serwer / plugin / sesja Claude nieaktualne)
+  // 0.46.0 (docs/specs/version-page.md): to, co panel umie sam (plugin, nowa wersja) - przycisk Aktualizuj w miejscu;
+  // restart serwera i sesji Claude - komendy z Kopiuj.
   var versionScrolled=false;
+  function cmdRow(id,cmd){ return '<div class="cmdf"><code id="'+id+'">'+esc(cmd)+'</code><button type="button" data-vcopy="'+id+'">Kopiuj</button></div>'; }
+  // POST /api/update w miejscu; body {plugin:true} = tylko plugin w Claude Code. out - element na komunikat i log.
+  function runUpdate(btn,body,out){
+    btn.disabled=true; out.hidden=false; out.className='vrun'; out.textContent='Aktualizuję… (to może potrwać do minuty)';
+    fetch(BASE+'/api/update',{method:'POST',headers:{'X-SDD':'1','Content-Type':'application/json'},body:body})
+      .then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){
+        if(j.ok){ versionNote(); return; }
+        out.className='vrun err'; btn.disabled=false;
+        out.innerHTML='Aktualizacja przerwana:<pre>'+esc((j.log||[]).map(function(x){return '$ '+x.cmd+'\n'+x.output}).join('\n\n'))+'</pre>';
+      })
+      .catch(function(e){ out.className='vrun err'; out.textContent=e.message; btn.disabled=false; });
+  }
   function versionNote(){
     fetch(BASE+'/api/version').then(function(r){return r.ok?r.json():null}).then(function(v){
       var x=SddUI.versionBadge(v,BASE), el=$('#srvver'); if(!x||!el) return;
       // tu link wersji zawsze na Release Notes - kroki stoja obok (AC-U20)
       el.textContent=x.text; el.title=x.title.replace(/\nKliknij:.*$/,''); el.classList.toggle('stale',x.stale);
       var fix=$('#vfix');
-      if(fix&&x.steps.length){
-        fix.innerHTML='<b>Co zrobić</b><ol>'+x.steps.map(function(st,i){
-          return '<li><span>'+esc(st.text)+'</span>'+(st.cmd?'<div class="cmdf"><code id="vcmd'+i+'">'+esc(st.cmd)+'</code><button type="button" data-vcopy="vcmd'+i+'">Kopiuj</button></div>':'')+'</li>';
-        }).join('')+'</ol>';
-        fix.hidden=false;
-        fix.onclick=function(e){ var t=e.target.closest('[data-vcopy]'); if(!t) return;
+      if(fix){
+        fix.innerHTML=x.steps.length?'<b>Co zrobić</b><ol>'+x.steps.map(function(st,i){
+          return '<li><span>'+esc(st.text)+'</span>'+
+            (st.action?' <button class="btn" type="button" data-vact="'+esc(st.action)+'">Aktualizuj</button><p class="vrun" hidden></p>'+
+              (st.manual?'<details class="vman"><summary>albo w terminalu</summary>'+st.manual.map(function(c,k){return cmdRow('vman'+i+'_'+k,c)}).join('')+'</details>':''):'')+
+            (st.cmd?cmdRow('vcmd'+i,st.cmd):'')+'</li>';
+        }).join('')+'</ol>':'';
+        fix.hidden=!x.steps.length;
+        fix.onclick=function(e){
+          var a=e.target.closest('[data-vact]');
+          if(a&&a.getAttribute('data-vact')==='plugin') return runUpdate(a,JSON.stringify({plugin:true}),a.parentNode.querySelector('.vrun'));
+          var t=e.target.closest('[data-vcopy]'); if(!t) return;
           try{navigator.clipboard.writeText($('#'+t.getAttribute('data-vcopy')).textContent).then(function(){t.textContent='Skopiowano';setTimeout(function(){t.textContent='Kopiuj'},1500)})}catch(err){} };
       }
       if(location.hash==='#wersja'&&!versionScrolled){ versionScrolled=true; jumpTo($('#wersja')); }
     }).catch(function(){});
-    // nowa wersja na GitHubie (0.35.1, AC-UP9): zielona strzalka, "jest nowa wersja X", Aktualizuj = okienko z paska stanu
+    // nowa wersja na GitHubie (0.35.1, AC-UP9): zielona strzalka, "jest nowa wersja X"; od 0.46.0 Aktualizuj w miejscu
     if(BASE) return;
     fetch(BASE+'/api/update').then(function(r){return r.ok?r.json():null}).then(function(u){
-      var box=$('#srvupd'); if(!u||!u.newer||!box) return;
+      var box=$('#srvupd'); if(!box) return;
+      if(!u||!u.newer){ box.hidden=true; return; }
       box.innerHTML='<i class="updi" aria-hidden="true">↓</i><span>jest nowa wersja '+esc(u.latest)+'</span>'+
         (u.url?'<a href="'+esc(u.url)+'" target="_blank" rel="noopener">co nowego ↗</a>':'')+
-        '<button class="btn" type="button" id="srvupdgo">Aktualizuj…</button>';
+        (u.canUpdate?'<button class="btn" type="button" id="srvupdgo">Aktualizuj</button><p class="vrun" hidden></p>'
+          :'<p class="vrun">'+esc(u.reason||'')+'</p>');
       box.hidden=false;
-      $('#srvupdgo').onclick=function(e){ e.stopPropagation(); if(!SddUI.openUpdate()) location.reload(); };
+      var go=$('#srvupdgo');
+      if(go) go.onclick=function(e){ e.stopPropagation(); runUpdate(go,'{}',box.querySelector('.vrun')); };
     }).catch(function(){});
   }
   function drawOwners(){

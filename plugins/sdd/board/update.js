@@ -52,8 +52,12 @@ function gitState(dir) {
 
 // Kroki aktualizacji albo powod, dla ktorego z panelu sie nie da (AC-UP3).
 // src - skad Claude Code bierze kit; git - stan src.path; kit - folder, z ktorego dziala panel, i jego stan.
+// Same kroki pluginu w Claude Code (0.46.0, AC-VP5) - kit na dysku juz w nowej wersji.
+function pluginSteps() {
+  return [['claude', 'plugin', 'marketplace', 'update', MARKET], ['claude', 'plugin', 'update', 'sdd@' + MARKET]];
+}
 function updatePlan(src, git, kit) {
-  const claude = [['claude', 'plugin', 'marketplace', 'update', MARKET], ['claude', 'plugin', 'update', 'sdd@' + MARKET]];
+  const claude = pluginSteps();
   if (!src) return { error: 'sdd-kit nie jest zainstalowany jako dodatek Claude Code - uruchom instalator (README).' };
   const pulls = [];
   if (src.type === 'directory') {
@@ -150,4 +154,4 @@ function createChecker(o) {
   };
 }
 
-module.exports = { newer, marketSource, knownFile, gitState, updatePlan, runPlan, createChecker, RELEASES };
+module.exports = { newer, marketSource, knownFile, gitState, updatePlan, pluginSteps, runPlan, createChecker, RELEASES };

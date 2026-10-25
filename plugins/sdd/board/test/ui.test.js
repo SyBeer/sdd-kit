@@ -177,7 +177,8 @@ test('AC-U15: versionBadge - plugin w Claude Code nieaktualny', () => {
 });
 
 test('AC-U16: versionBadge - link do Release Notes na GitHubie', () => {
-  const ok = ui.versionBadge({ running: '0.24.0', disk: '0.24.0' });
+  // od 0.46.0 (AC-VP1) GitHub tylko w demo-starcie; poza nim klik prowadzi do karty Serwer
+  const ok = ui.versionBadge({ running: '0.24.0', disk: '0.24.0' }, '/demo/start');
   assert.strictEqual(ok.href, 'https://github.com/SyBeer/sdd-kit/releases/tag/v0.24.0');
   assert.match(ok.title, /Kliknij: opis zmian tej wersji na GitHubie$/);
   // ostrzezenie: w demo dalej GitHub; poza demo kroki w Konfiguracji (AC-U20)
@@ -216,9 +217,9 @@ test('AC-U20: versionBadge - ostrzezenie prowadzi do krokow w Konfiguracji', () 
   const p = ui.versionBadge({ running: '0.41.0', disk: '0.41.0', plugin: '0.40.1' }, '');
   assert.strictEqual(p.href, '/config#wersja'); assert.strictEqual(p.local, true);
   assert.match(p.title, /Kliknij: co zrobić krok po kroku$/);
-  const cmds = p.steps.filter(s => s.cmd).map(s => s.cmd);
-  assert.deepStrictEqual(cmds, ['command claude plugin marketplace update sdd-kit', 'command claude plugin update sdd@sdd-kit']);
-  assert.ok(p.steps.some(s => /restart|nową sesję|nowa sesje/i.test(s.text)));
+  // od 0.46.0 (AC-VP2) komendy pluginu w `manual` kroku z przyciskiem Aktualizuj
+  assert.deepStrictEqual(p.steps[0].manual, ['command claude plugin marketplace update sdd-kit', 'command claude plugin update sdd@sdd-kit']);
+  assert.ok(p.steps.some(s => /sesj/i.test(s.text)));
   const s = ui.versionBadge({ running: '0.40.0', disk: '0.41.0' }, '');
   assert.strictEqual(s.href, '/config#wersja'); assert.ok(s.steps.some(x => /sdd-board/.test(x.text)));
   const ses = ui.versionBadge({ running: '0.41.0', disk: '0.41.0', sessions: [{ cwd: '/x', version: '0.40.0', stale: true }] }, '');
@@ -226,16 +227,18 @@ test('AC-U20: versionBadge - ostrzezenie prowadzi do krokow w Konfiguracji', () 
   const demo = ui.versionBadge({ running: '0.40.0', disk: '0.41.0' }, '/demo/start');
   assert.strictEqual(demo.href, 'https://github.com/SyBeer/sdd-kit/releases/tag/v0.40.0'); assert.strictEqual(demo.local, false);
   const ok = ui.versionBadge({ running: '0.41.0', disk: '0.41.0', plugin: '0.41.0' }, '');
-  assert.strictEqual(ok.href, 'https://github.com/SyBeer/sdd-kit/releases/tag/v0.41.0');
-  assert.strictEqual(ok.local, false); assert.deepStrictEqual(ok.steps, []);
+  assert.strictEqual(ok.href, '/config#wersja');  // AC-VP1 (0.46.0)
+  assert.strictEqual(ok.local, true); assert.deepStrictEqual(ok.steps, []);
 });
 
 test('AC-U22: versionBadge - komendy omijaja alias claude, na Windows bez "command"', () => {
   const mac = ui.versionBadge({ running: '0.41.0', disk: '0.41.0', plugin: '0.40.1', platform: 'darwin' }, '');
-  assert.ok(mac.steps.filter(s => s.cmd).every(s => /^command claude plugin /.test(s.cmd)));
+  assert.ok(mac.steps[0].manual.every(c => /^command claude plugin /.test(c)));
+  assert.ok(mac.steps.filter(s => /claude/.test(s.cmd || '')).every(s => /command claude/.test(s.cmd)));
   assert.match(mac.title, /command claude plugin update sdd@sdd-kit/);
   const win = ui.versionBadge({ running: '0.41.0', disk: '0.41.0', plugin: '0.40.1', platform: 'win32' }, '');
-  assert.ok(win.steps.filter(s => s.cmd).every(s => /^claude plugin /.test(s.cmd)));
+  assert.ok(win.steps[0].manual.every(c => /^claude plugin /.test(c)));
+  assert.ok(win.steps.every(s => !/command claude/.test(s.cmd || '')));
   assert.doesNotMatch(win.title, /command claude/);
 });
 

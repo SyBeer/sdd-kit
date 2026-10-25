@@ -62,3 +62,4 @@ znajomosci komend `git` i `claude plugin`.
   numerem wersji w pasku stanu (zamiast "↑ X" w naglowku); klik otwiera to samo okienko (Co nowego, Aktualizuj / Pozniej).
   Konfiguracja, karta Serwer: przy wersji ta sama strzalka, "jest nowa wersja X", "co nowego ↗" i "Aktualizuj…"
   (otwiera okienko z paska stanu). Tylko Twoj modul (nie demo).
+  Od 0.46.0 (docs/specs/version-page.md AC-VP7) "Aktualizuj" w karcie Serwer dziala w miejscu, bez okienka z paska.

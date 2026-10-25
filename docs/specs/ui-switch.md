@@ -90,6 +90,7 @@ i sam wybiera motyw, niezaleznie od ustawienia systemu (np. ciemna sala przy war
   plugin nieaktualny -> `claude plugin marketplace update sdd-kit`, `claude plugin update sdd@sdd-kit`, restart sesji;
   serwer nieaktualny -> restart sdd-board; stara sesja Claude -> zamknij i otworz nowa. Demo (`cfgHref` null) -> GitHub jak AC-U16.
   Bez ostrzezen - AC-U16 bez zmian (`local` false, `steps` puste). Link lokalny otwiera sie w tej samej karcie.
+  Od 0.46.0 klik zawsze prowadzi do karty Serwer, a kroki maja przycisk Aktualizuj i komendy restartu - docs/specs/version-page.md.
   Konfiguracja: karta Serwer ma `id="wersja"`; przy ostrzezeniu pod wersja ramka "Co zrobić" z numerowanymi krokami,
   komendy w polu z przyciskiem Kopiuj; wejscie z `#wersja` przewija do karty.
 - AC-U22 (0.41.0, zdarzenie 2026-10-10: u usera `claude` to alias na inne narzedzie - "ccs: nieznany kontekst 'plugin'"):

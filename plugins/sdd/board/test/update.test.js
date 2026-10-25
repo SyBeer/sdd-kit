@@ -185,9 +185,8 @@ test('AC-UP9: nowa wersja - zielona strzalka w dol przy numerze wersji w pasku s
   assert.match(js, />↓<\/button>/);
   assert.doesNotMatch(js, /'↑ ' \+ st\.latest/);
   assert.match(css, /\.statusbar \.upd-btn\{[^}]*border-radius:50%[^}]*background:#2f9e5b/);
-  // Konfiguracja (karta Serwer): ta sama strzalka + "jest nowa wersja X" + Aktualizuj otwiera to samo okienko
-  assert.match(js, /api\.openUpdate = /);
+  // Konfiguracja (karta Serwer): ta sama strzalka + "jest nowa wersja X"; od 0.46.0 (AC-VP7) Aktualizuj w miejscu
   assert.match(info, /jest nowa wersja '\+esc\(u\.latest\)/);
-  assert.match(info, /SddUI\.openUpdate\(\)/);
+  assert.match(info, /runUpdate\(go,'\{\}'/);
   assert.match(info, /fetch\(BASE\+'\/api\/update'\)/);
 });

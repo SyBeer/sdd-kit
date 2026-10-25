@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.0] - 2026-10-25
+- Wersja w pasku stanu zawsze prowadzi do Konfiguracji → Serwer, także bez ostrzeżeń (docs/specs/version-page.md
+  AC-VP1; zgłoszenie usera: klik raz prowadził do kroków, raz na GitHub). Opis zmian wersji dalej pod numerem w karcie.
+- "Plugin nieaktualny": przycisk "Aktualizuj" w karcie Serwer uruchamia `claude plugin marketplace update` i
+  `claude plugin update` (`POST /api/update {"plugin":true}`, bez `git pull`); komendy do terminala pod "albo w
+  terminalu" (AC-VP2, AC-VP5). Nowa wersja z GitHuba: "Aktualizuj" działa w miejscu, bez okienka z paska (AC-VP7).
+- Gotowe komendy z "Kopiuj" do tego, czego panel nie zrobi sam: restart serwera (dokładne polecenie z
+  `/api/version` → `restart`), `/exit` i `cd "<folder>" && claude --continue` dla każdej nieaktualnej sesji
+  Claude Code (AC-VP3, AC-VP4, AC-VP6).
+
 ## [0.45.0] - 2026-10-13
 - Ostrzezenie przed budowaniem czegos, co juz jest (docs/specs/build.md AC-BD12..BD15; powod: R-021 w fv-manager
   zbudowane dwa razy - galaz z panelu wg starego speca, rownolegla sesja wydala 3.6.0 wg D-036). Po wyborze wymagania
