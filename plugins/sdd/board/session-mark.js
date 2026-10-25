@@ -7,6 +7,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -15,6 +16,25 @@ const sessionsDir = (env = process.env) => env.SDD_SESSIONS_DIR || path.join(os.
 function ownVersion() {
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.claude-plugin', 'plugin.json'), 'utf8')).version || ''; }
   catch (e) { return ''; }
+}
+
+// Odcisk skilli (0.46.1, AC-SV13): sesja laduje przy starcie tylko skills/ i hooks/ - zmiana w board/ (panel) nie wymaga
+// restartu sesji. Pliki posortowane, sciezka z '/', konce linii '\n' (ten sam odcisk na Windows); brak folderow - ''.
+function skillsPrint(root) {
+  const files = [];
+  const walk = (rel) => {
+    let names;
+    try { names = fs.readdirSync(path.join(root, rel), { withFileTypes: true }); } catch (e) { return; }
+    names.forEach(d => { const r = rel + '/' + d.name; if (d.isDirectory()) walk(r); else if (d.isFile()) files.push(r); });
+  };
+  walk('skills'); walk('hooks');
+  if (!files.length) return '';
+  const h = crypto.createHash('sha256');
+  files.sort().forEach(f => {
+    h.update(f + '\0');
+    try { h.update(fs.readFileSync(path.join(root, f), 'utf8').replace(/\r\n/g, '\n') + '\0'); } catch (e) { /* znikl w trakcie */ }
+  });
+  return h.digest('hex').slice(0, 12);
 }
 
 // PID procesu Claude Code (0.36.1, AC-SV9..AC-SV12): na Windows zamkniecie okna nie uruchamia SessionEnd, znacznik
@@ -68,7 +88,8 @@ function mark(cmd, input, dir = sessionsDir(), opts = {}) {
     fs.mkdirSync(dir, { recursive: true });
     let pid = null;
     try { pid = claudePid((opts.chain || ancestors)()); } catch (e) { pid = null; }
-    const m = { version: ownVersion(), cwd: String(h.cwd || ''), started: new Date().toISOString(), transcript: String(h.transcript_path || '') };
+    const m = { version: ownVersion(), skills: skillsPrint(path.join(__dirname, '..')), cwd: String(h.cwd || ''),
+      started: new Date().toISOString(), transcript: String(h.transcript_path || '') };
     if (Number.isInteger(pid) && pid > 0) m.pid = pid;
     fs.writeFileSync(file, JSON.stringify(m));
   } else if (cmd === 'end') {
@@ -91,8 +112,10 @@ function copyAtEnd(cwd) {
 
 // Zywe sesje: znacznik z PID - proces Claude Code dziala (AC-SV11; martwy -> znacznik usuniety);
 // starszy znacznik bez PID (AC-SV4): transkrypt zmieniony w ciagu 12 h, bez transkryptu - znacznik z ostatnich 12 h.
-// Znaczniki starsze niz 7 dni albo z nazwa spoza wzoru usuwane przy odczycie. stale = inna wersja niz plugin.
-function listSessions({ dir = sessionsDir(), plugin = '', now = Date.now() } = {}) {
+// Znaczniki starsze niz 7 dni albo z nazwa spoza wzoru usuwane przy odczycie. stale = inne skille niz w pluginie
+// (0.46.1, AC-SV15), a dla znacznika bez odcisku - inna wersja niz plugin.
+function listSessions({ dir = sessionsDir(), plugin = '', skills = '', now = Date.now() } = {}) {
+  const isStale = m => (skills && m.skills) ? m.skills !== skills : !!plugin && !!m.version && m.version !== plugin;
   let names = [];
   try { names = fs.readdirSync(dir).filter(n => n.endsWith('.json')); } catch (e) { return []; }
   const out = [];
@@ -105,14 +128,14 @@ function listSessions({ dir = sessionsDir(), plugin = '', now = Date.now() } = {
       if (Number.isInteger(m.pid) && m.pid > 0) {
         if (!alive(m.pid)) { fs.rmSync(file, { force: true }); return; }
         out.push({ version: String(m.version || ''), cwd: String(m.cwd || ''), started: String(m.started || ''),
-          stale: !!plugin && !!m.version && m.version !== plugin });
+          stale: isStale(m) });
         return;
       }
       let seen = age;
       if (m.transcript) { try { seen = now - fs.statSync(m.transcript).mtimeMs; } catch (e) { seen = age; } }
       if (seen > 12 * H) return;
       out.push({ version: String(m.version || ''), cwd: String(m.cwd || ''), started: String(m.started || ''),
-        stale: !!plugin && !!m.version && m.version !== plugin });
+        stale: isStale(m) });
     } catch (e) { /* uszkodzony znacznik - pomijamy */ }
   });
   return out;
@@ -132,4 +155,4 @@ if (require.main === module) {
   } catch (e) { process.exit(0); }
 }
 
-module.exports = { mark, listSessions, sessionsDir, claudePid, parseChain, ancestors };
+module.exports = { mark, listSessions, skillsPrint, sessionsDir, claudePid, parseChain, ancestors };

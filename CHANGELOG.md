@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.46.1] - 2026-10-25
+- "Sesja Claude nieaktualna" tylko wtedy, gdy zmieniły się skille albo hooki, a nie przy każdej nowej wersji
+  (docs/specs/session-version.md AC-SV13..SV17; pytanie usera: "dlaczego przy każdej aktualizacji sesja Claude musi
+  być restartowana?"). Sesja zapisuje przy starcie odcisk `skills/` + `hooks/`; panel porównuje go z zainstalowanym
+  pluginem. Aktualizacja samego panelu (`board/`) nie każe już restartować sesji - krok pluginu mówi "Skille bez
+  zmian - sesji Claude nie trzeba restartować". Sesje otwarte przed 0.46.1 nie mają odcisku: przy następnej zmianie
+  wersji ostrzeżenie pojawi się dla nich jeszcze raz.
+
 ## [0.46.0] - 2026-10-25
 - Wersja w pasku stanu zawsze prowadzi do Konfiguracji → Serwer, także bez ostrzeżeń (docs/specs/version-page.md
   AC-VP1; zgłoszenie usera: klik raz prowadził do kroków, raz na GitHub). Opis zmian wersji dalej pod numerem w karcie.

@@ -142,15 +142,20 @@
       ' Claude Code na wersji ' + sessions[0].version + '.');
     // Kroki (0.46.0, docs/specs/version-page.md): action = przycisk Aktualizuj w karcie Serwer, cmd = komenda do skopiowania
     const steps = [];
-    if (plugin) steps.push({ text: 'Zaktualizuj plugin w Claude Code z ' + v.plugin + ' do ' + v.disk + '.', action: 'plugin',
+    // AC-SV17 (0.46.1): aktualizacja nie zmienia skilli ani hookow -> otwarte sesje moga zostac
+    const keep = plugin && v.skillsChanged === false;
+    if (plugin) steps.push({ text: 'Zaktualizuj plugin w Claude Code z ' + v.plugin + ' do ' + v.disk + '.' +
+      (keep ? ' Skille bez zmian - sesji Claude nie trzeba restartować.' : ''), action: 'plugin',
       manual: [cc + ' plugin marketplace update sdd-kit', cc + ' plugin update sdd@sdd-kit'] });
     if (server) steps.push({ text: 'Zrestartuj serwer sdd-board (' + v.running + ' → ' + v.disk +
       '): zatrzymaj go (Ctrl+C w oknie, w którym działa, albo restart w HQAI) i uruchom ponownie, potem odśwież tę stronę:',
       cmd: v.restart || 'sdd-board' });
-    if (plugin || old.length) {
-      steps.push({ text: 'Zamknij ' + (old.length > 1 ? 'każdą sesję' : 'sesję') + ' Claude Code na starszej wersji skilli - wpisz w niej:', cmd: '/exit' });
+    // po aktualizacji zmieniajacej skille nieaktualna bedzie kazda otwarta sesja
+    const restart = old.length ? old : (plugin && !keep ? sessions : []);
+    if (old.length || (plugin && !keep)) {
+      steps.push({ text: 'Zamknij ' + (restart.length > 1 ? 'każdą sesję' : 'sesję') + ' Claude Code na starszej wersji skilli - wpisz w niej:', cmd: '/exit' });
       const go = cwd => (cwd ? 'cd "' + cwd + '"' + (v.platform === 'win32' ? '; ' : ' && ') : '') + cc + ' --continue';
-      if (old.length) old.forEach(s => steps.push({ text: 'Otwórz ją ponownie z tą samą rozmową (' + (s.cwd || '?') + ', ' + s.version + '):', cmd: go(s.cwd) }));
+      if (restart.length) restart.forEach(s => steps.push({ text: 'Otwórz ją ponownie z tą samą rozmową (' + (s.cwd || '?') + ', ' + s.version + '):', cmd: go(s.cwd) }));
       else steps.push({ text: 'Otwórz sesję ponownie z tą samą rozmową (w folderze projektu):', cmd: go('') });
     }
     const stale = server || plugin || old.length > 0;

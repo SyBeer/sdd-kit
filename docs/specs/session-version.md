@@ -81,3 +81,22 @@ zabezpieczyc ten proces tak, zeby zbieral pare Session ID i PID". Na Windows zam
 - **AC-SV12** `start` zapisuje `pid` Claude Code w znaczniku (gdy znaleziony); dalej bez wyjscia i zawsze kod 0.
 Znaczniki zapisane przed 0.36.1 nie maja PID - znikaja po 12 h bez zmian transkryptu albo recznie (folder
 `~/.sdd-kit/sessions`, na Windows `%USERPROFILE%\.sdd-kit\sessions`).
+
+## Zmiana 0.46.1 - odcisk skilli zamiast numeru wersji
+Pytanie usera (2026-10-25): "dlaczego teraz przy kazdej aktualizacji sesja claude musi tez byc restartowana?".
+Sesja laduje skille i hooki przy starcie, ale panel porownywal sam numer wersji - wydanie zmieniajace tylko panel
+(`board/`) tez oznaczalo wszystkie sesje jako nieaktualne i kazalo je restartowac, choc restart nic nie zmienia.
+Cel: "sesja Claude nieaktualna" i komendy `/exit` / `claude --continue` tylko wtedy, gdy zmienily sie skille albo hooki.
+- **AC-SV13** `skillsPrint(root)`: sha256 (12 znakow) z posortowanych plikow `skills/` i `hooks/` pod `root`
+  (sciezka wzgledna z `/` + tresc z koncami linii `\n`); zmiana w `board/` nie zmienia odcisku, zmiana w SKILL.md
+  albo hooks.json - zmienia; ten sam wynik przy CRLF; brak folderow - ''.
+- **AC-SV14** `start` zapisuje w znaczniku `skills` = odcisk swojej kopii pluginu.
+- **AC-SV15** `listSessions({ plugin, skills })`: znacznik z `skills` i podany `skills` - `stale` = odciski rozne
+  (wersja bez znaczenia); w pozostalych przypadkach regula wersji jak dotad (znaczniki sprzed 0.46.1).
+- **AC-SV16** `/api/version`: `skills` = odcisk zainstalowanego pluginu (`installPath` z installed_plugins.json),
+  `skillsChanged` = odcisk kitu na dysku rozny od zainstalowanego (aktualizacja pluginu zmieni skille).
+- **AC-SV17** `versionBadge`: plugin nieaktualny i `skillsChanged === false` - bez krokow restartu sesji, krok pluginu
+  mowi "skille bez zmian - sesji Claude nie trzeba restartować"; `skillsChanged` true albo brak pola - kroki restartu
+  jak w 0.46.0.
+Przejscie: sesje otwarte przed 0.46.1 nie maja odcisku - przy najblizszej zmianie numeru wersji ostrzezenie pojawi sie
+jeszcze raz wg starej reguly.

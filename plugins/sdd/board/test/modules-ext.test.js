@@ -130,6 +130,9 @@ test('AC-U11: GET /api/version - wersja przy starcie i na dysku', async () => {
       // restart (0.46.0, AC-VP6): komenda restartu serwera; w demo pusta
       assert.strictEqual(u.startsWith('/demo') ? j.restart === '' : /server\.js/.test(j.restart), true, u);
       delete j.restart;
+      // odcisk skilli (0.46.1, AC-SV16)
+      assert.match(j.skills, /^[0-9a-f]{12}$/); assert.strictEqual(typeof j.skillsChanged, 'boolean');
+      delete j.skills; delete j.skillsChanged;
       assert.deepStrictEqual(j, { running: want, disk: want, plugin: '', sessions: [], platform: process.platform });
     }
   } finally { proc.kill(); }

@@ -15,8 +15,8 @@ const path = require('path');
 const { readProgress, questionIndex } = require('./progress');
 const { listModules, allModules, createModule, saveIntake, removeIntake, intakeFile } = require('./modules');
 const { stampNotes, syncMap } = require('./board-ops');
-const { listSessions } = require('./session-mark');  // wersja skilli w sesjach Claude Code (0.32.0)
-const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion } = require('./root');
+const { listSessions, skillsPrint } = require('./session-mark');  // wersja skilli w sesjach Claude Code (0.32.0)
+const { KIT_DIR, configPath, inside, readConfig, writeConfig, saveRoot, addModule, checkRoot, resolveRoot, listDirs, pluginVersion, pluginPath } = require('./root');
 const info = require('./info');
 const terminal = require('./terminal');
 const chat = require('./chat');
@@ -632,8 +632,12 @@ const server = http.createServer((req, res) => {
   }
   if (url === '/api/version' && req.method === 'GET') {
     const plugin = pluginVersion();
+    // odcisk skilli (0.46.1, AC-SV16): sesja nieaktualna tylko przy innych skillach; skillsChanged - aktualizacja je zmieni
+    const disk = skillsPrint(path.join(__dirname, '..')), ip = pluginPath();
+    const skills = (ip && skillsPrint(ip)) || disk;
     return json(res, 200, { running: VERSION, disk: diskVersion(), plugin, restart: ctx.demo ? '' : RESTART,
-      sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion() }), platform: process.platform });
+      skills, skillsChanged: !!disk && skills !== disk,
+      sessions: ctx.demo ? [] : listSessions({ plugin: plugin || diskVersion(), skills }), platform: process.platform });
   }
   if (url === '/api/progress' && req.method === 'GET') return json(res, 200, progressPayload(ctx));
   if (url === '/progress-events') return sse(req, res, ctx.progressClients, progressPayload(ctx));
