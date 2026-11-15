@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.46.3] - 2026-11-15
+- Terminal Claude nie reaguje na klawisze przy kilku kartach SDD-kit (docs/specs/claude-dock.md AC-T17..AC-T19;
+  zgloszenie usera: "terminal w SDD-KIT nie dziala dobrze"). Przyczyna: kazda karta z otwartym oknem Claude trzymala
+  stale polaczenie `/term-events`, takze w tle; razem ze strumieniami strony 3 karty zajmowaly 6 polaczen - limit
+  przegladarki na jeden adres - i wpisywane klawisze czekaly w kolejce.
+- Strumienie okna Claude (`/term-events`, `/chat-events`) ida przez `liveSource` jak strumienie strony: karta w tle
+  zwalnia polaczenie, po powrocie ekran terminala i rozmowa czatu odtwarzaja sie same (AC-T17). `liveSource().close()`
+  zamyka zrodlo na stale i obsluguje nazwane zdarzenia SSE (AC-T18).
+- Klawisze nie gina po cichu: gdy wpisywanie czeka dluzej niz 3 s, okno pisze "Wpisywanie czeka na polaczenie
+  z serwerem…" z podpowiedzia o innych kartach; blad wysylki tez widac w oknie (AC-T19).
+
 ## [0.46.2] - 2026-10-25
 - Krotsze skille, to samo zachowanie (docs/specs/skill-bodies.md AC-SB1..SB9; przeglad /doctor skilli pod nowe modele,
   ktore wykonuja polecenia doslownie). Rzadkie sekcje w `references/`, ladowane tylko, gdy sa potrzebne: styl BIZ

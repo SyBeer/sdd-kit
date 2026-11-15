@@ -484,12 +484,14 @@
     const ES = env.EventSource || (typeof EventSource !== 'undefined' ? EventSource : null);
     const doc = env.document || (typeof document !== 'undefined' ? document : null);
     h = h || {};
-    let es = null;
+    let es = null, ended = false;
     function open() {
-      if (es || !ES) return;
+      if (es || !ES || ended) return;
       es = new ES(url);
       es.onopen = function (e) { if (h.open) h.open(e); };
       es.onmessage = function (e) { if (h.message) h.message(e); };
+      // nazwane zdarzenia SSE (np. exit terminala) - AC-T18
+      Object.keys(h.events || {}).forEach(function (k) { es.addEventListener(k, h.events[k]); });
       es.onerror = function (e) {
         if (h.error) h.error(e);
         // retry (tablica): wlasne ponowienie zamiast wbudowanego w EventSource
@@ -500,7 +502,31 @@
     function shut() { if (es) { es.close(); es = null; } }
     if (doc && doc.addEventListener) doc.addEventListener('visibilitychange', function () { if (doc.hidden) shut(); else open(); });
     if (!(doc && doc.hidden)) open();
-    return { close: shut };
+    // close() na stale: powrot karty nie wskrzesza zamknietego zrodla (AC-T18)
+    return { close: function () { ended = true; shut(); } };
+  }
+
+  // Kolejka klawiszy terminala (AC-T19): jedno zadanie naraz, reszta jedna paczka w kolejnosci. Zadanie wiszace
+  // dluzej niz 3 s (np. pula polaczen przegladarki zajeta przez inne karty) -> state('slow'); dotarlo po komunikacie
+  // -> state('ok'); blad -> state('error', e). Zadania nie przerywamy: moglo juz dotrzec, powtorka zdublowalaby klawisze.
+  function inputQueue(send, h, env) {
+    h = h || {}; env = env || {};
+    const later = env.setTimeout || setTimeout, cancel = env.clearTimeout || clearTimeout;
+    let pending = '', busy = false, shown = false;
+    const tell = function (s, e) { if (h.state) h.state(s, e); };
+    function flush() {
+      if (busy || !pending) return;
+      const data = pending; pending = ''; busy = true;
+      const t = later(function () { shown = true; tell('slow'); }, 3000);
+      let p;
+      try { p = Promise.resolve(send(data)); } catch (e) { p = Promise.reject(e); }
+      p.then(function () {
+        if (shown) { shown = false; tell('ok'); }
+      }, function (e) {
+        shown = true; tell('error', e);
+      }).then(function () { cancel(t); busy = false; flush(); });
+    }
+    return { push: function (d) { pending += d; flush(); } };
   }
 
   // ---------------------------------------------------------------- czat (0.38.0, docs/specs/claude-chat.md)
@@ -616,7 +642,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml };
+  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka
@@ -754,7 +780,7 @@
   function claudeDock(btn) {
     if (!btn) return;
     const root = document.documentElement, prefs = dockPrefs();
-    let term = null, fit = null, es = null, state = {}, pending = '', sending = false, rtimer = null;
+    let term = null, fit = null, es = null, state = {}, rtimer = null;
     const dock = document.createElement('aside');
     dock.className = 'cdock'; dock.setAttribute('aria-label', 'Claude Code');
     dock.innerHTML = '<div class="cd-grip" title="Przeciągnij, żeby zmienić szerokość"></div>' +
@@ -855,22 +881,25 @@
       if (!term || !state.running || !root.classList.contains('claude-on')) return;
       claimed = Date.now(); refit();
     }
-    function flush() {
-      if (sending || !pending) return;
-      const data = pending; pending = ''; sending = true;
-      api('/api/term/input', { data: data }).catch(function () {}).then(function () { sending = false; flush(); });
-    }
+    // Klawisze do serwera (AC-T19): wiszace zadanie albo blad widac w oknie, nie gina po cichu.
+    const input = inputQueue(function (d) { return api('/api/term/input', { data: d }); }, { state: function (s, e) {
+      if (s === 'slow') msg('Wpisywanie czeka na połączenie z serwerem… Masz otwartych kilka kart SDD-kit? Zamknij zbędne - przeglądarka ma limit połączeń do jednego adresu.');
+      else if (s === 'error') msg('Klawisze nie dotarły do Claude: ' + e.message);
+      else show();
+    } });
+    // Strumien terminala przez liveSource (AC-T17): karta w tle zwalnia polaczenie, po powrocie odtworzenie ekranu.
     function connect() {
       if (es) return;
-      es = new EventSource('/term-events');
-      es.onmessage = function (e) {
-        const j = JSON.parse(e.data);
-        if (j.replay) { term.reset(); show(j.state); }
-        if (j.d) term.write(Uint8Array.from(atob(j.d), function (c) { return c.charCodeAt(0); }));
-        if (j.replay && state.running) sendResize(true);
-      };
-      es.addEventListener('exit', function () { refresh(); });
-      es.onopen = function () { refresh(); };
+      es = liveSource('/term-events', {
+        message: function (e) {
+          const j = JSON.parse(e.data);
+          if (j.replay) { term.reset(); show(j.state); }
+          if (j.d) term.write(Uint8Array.from(atob(j.d), function (c) { return c.charCodeAt(0); }));
+          if (j.replay && state.running) sendResize(true);
+        },
+        open: function () { refresh(); },
+        events: { exit: function () { refresh(); } }
+      });
     }
     function setup() {
       return loadXterm().then(function () {
@@ -895,7 +924,7 @@
         term.onData(function (d) {
           if (!state.running) return;
           if (Date.now() - claimed > 2000) claim();  // pisanie w tej karcie = ta karta ustawia rozmiar
-          pending += d; flush();
+          input.push(d);
         });
         if (term.textarea) term.textarea.addEventListener('focus', claim);
         // Rozmiar okna Claude zmienia sie tez bez zmiany okna przegladarki (komunikat nad terminalem, uchwyt) - AC-T10
@@ -973,12 +1002,12 @@
       fetch('/api/chat').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(chatShow).catch(function () {
         msg('Serwer sdd-board nie obsługuje jeszcze czatu (działa na starszym kodzie). Zrestartuj serwer i odśwież stronę.');
       });
-      ces = new EventSource('/chat-events');
-      ces.onmessage = function (e) {
+      // strumien czatu przez liveSource (AC-T17): w tle zamkniety, po powrocie replay calej rozmowy
+      ces = liveSource('/chat-events', { message: function (e) {
         const j = JSON.parse(e.data);
         if (j.replay) clog = j.log || []; else if (j.ev) clog.push(j.ev);
         if (j.state) chatShow(j.state); else chatRender();
-      };
+      } });
     }
     function chatShow(s) {
       cstate = s || cstate;

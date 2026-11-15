@@ -87,6 +87,19 @@ z `claude` uruchomionym przez serwer kitu.
   ponowne podlaczenie). Sesja poprzedniego modulu dziala dalej w tle i wraca po powrocie do niego - rozmowa nie
   przepada. `GET /api/term` -> `others`: foldery innych modulow z dzialajaca sesja; okno pisze "Claude dziala tez w: …".
   Zakoncz konczy sesje biezacego modulu; koniec serwera - wszystkie.
+- AC-T17 (0.46.3, zgloszenie usera: "terminal w SDD-KIT nie reaguje na klawisze"; przyczyna: 3 karty Panelu w Safari,
+  w kazdej otwarte okno Claude ze stalym `/term-events`, razem ze strumieniami strony 6 polaczen = limit przegladarki
+  na host, wiec `POST /api/term/input` czekal w kolejce): strumienie okna Claude (`/term-events`, `/chat-events`) ida
+  przez `SddUI.liveSource` jak strumienie strony (AC-LC1) - karta w tle zamyka polaczenie, po powrocie laczy sie
+  ponownie i dostaje odtworzenie ekranu (`replay`). Schowana karta nie otwiera strumienia przy starcie. `ui.js` nie ma
+  `new EventSource` poza `liveSource`.
+- AC-T18 (0.46.3): `liveSource(...).close()` konczy zrodlo na stale - powrot karty nie otwiera go ponownie (zamkniete
+  okno Claude albo przelaczenie czat / terminal nie wskrzesza starego strumienia). `liveSource` przyjmuje `events`
+  (nazwane zdarzenia SSE, np. `exit` terminala).
+- AC-T19 (0.46.3): klawisze terminala nie gina po cichu. Kolejka wejscia (`inputQueue`): jedno zadanie naraz, reszta
+  laczona w jedna paczke w kolejnosci; zadanie dluzsze niz 3 s -> komunikat w oknie "Wpisywanie czeka na polaczenie
+  z serwerem…" z podpowiedzia o innych kartach; po dotarciu komunikat znika; blad wysylki -> komunikat z bledem,
+  kolejka dziala dalej. Zadanie nie jest przerywane (przerwane moglo juz dotrzec - powtorka zdublowalaby klawisze).
 - AC-T9 (reczne): na Tablicy i w Panelu przycisk Claude otwiera okno, Uruchom startuje Claude Code w folderze modulu,
   /sdd:… dziala; przejscie na druga zakladke zostawia otwarte okno i te sama sesje; Escape w terminalu nie zamyka
   panelu karteczki; tablica i panel karteczki widoczne obok okna; okno czarne w jasnym i ciemnym motywie; 375 px bez
