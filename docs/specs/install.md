@@ -51,3 +51,11 @@ bezpieczenstwa systemu na stale.
 - AC-I5: `install.cmd` ma konce linii CRLF w repo i w paczce ZIP z GitHuba; zawiera `-ExecutionPolicy Bypass` i `pause`; zwraca kod wyjscia instalatora.
 - AC-I6: `install.sh` bez `SDD_REPO` przy pobieraniu uzywa `SyBeer/sdd-kit`; `bash -n install.sh` bez bledow.
 - AC-I7 (reczne, Windows): user uruchamia jedna komende z punktu 1 i ma `/sdd:...` w Claude Code oraz `sdd-board`.
+
+## Zmiana 0.48.1 (2026-11-17): instalator bez sieci podaje komende do powtorzenia - wymagania sdd-kit-wymagania R-035 AC-035-3
+Przeglad TRACEABILITY (luka K2): przy braku sieci instalator konczyl sie bledem bez komendy do powtorzenia ("Recznie: ..."
+tylko w dwoch miejscach install.ps1). AC-035-3: instalator bez sieci konczy sie bledem z komenda do powtorzenia.
+- **AC-I9** (AC-035-3) Kazdy krok, ktory potrzebuje sieci (pobranie kitu `git clone`/`pull`, rejestracja zrodla,
+  instalacja dodatku), przy bledzie konczy sie kodem 1 i linia "Sprawdz polaczenie z internetem i uruchom ponownie:
+  <komenda>" - ta sama, ktora uruchomiono (plik albo `curl ... | bash` / `irm ... | iex`). install.sh - prawdziwe
+  uruchomienie z atrapa gita bez sieci; install.ps1 - z atrapami w pwsh (jak AC-I4).

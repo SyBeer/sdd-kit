@@ -25,6 +25,10 @@ function Ok  ($m) { Write-Host "  [OK]  $m" -ForegroundColor Green }
 function Bad ($m) { Write-Host "  [!!]  $m" -ForegroundColor Yellow }
 function Has ($c) { $null -ne (Get-Command $c -ErrorAction SilentlyContinue) }
 function IsKit ($d) { $d -and (Test-Path (Join-Path $d "plugins/$Plugin/.claude-plugin/plugin.json")) }
+# Komenda do powtorzenia po bledzie sieci (AC-I9): ta sama, ktora uruchomiono - plik albo irm ... | iex
+$Rerun = if ($PSCommandPath) { "powershell -ExecutionPolicy Bypass -File `"$PSCommandPath`"" + $(if ($Update) { " -Update" } else { "" }) }
+  else { "powershell -ExecutionPolicy Bypass -c `"irm https://raw.githubusercontent.com/$Repo/main/install.ps1 | iex`"" }
+function Retry { Write-Host "      Sprawdz polaczenie z internetem i uruchom ponownie: $Rerun"; exit 1 }
 
 # Folder kitu: obok skryptu (uruchomienie z folderu), inaczej ~\.sdd-kit, inaczej brak (irm | iex).
 $KitDir = ""
@@ -75,16 +79,16 @@ if ($KitDir -and -not $Update) {
 if ($ch -eq "2") {
   if (-not (Has git)) { Bad "Do pobrania potrzebny jest Git. https://git-scm.com/download/win"; exit 1 }
   if (Test-Path (Join-Path $HomeKit ".git")) {
-    git -C $HomeKit pull -q; if ($LASTEXITCODE -ne 0) { Bad "git pull nie powiodl sie."; exit 1 }; Ok "Kit odswiezony z GitHuba."
+    git -C $HomeKit pull -q; if ($LASTEXITCODE -ne 0) { Bad "git pull nie powiodl sie."; Retry }; Ok "Kit odswiezony z GitHuba."
   } elseif (Test-Path $HomeKit) {
     # folder juz jest (np. bin\ z wczesniejszej instalacji z ZIP-a) - clone odmowilby, wiec init + pull
     git -C $HomeKit init -q; git -C $HomeKit config core.autocrlf false
     git -C $HomeKit remote add origin "https://github.com/$Repo.git" 2>$null
     git -C $HomeKit pull -q origin main
-    if ($LASTEXITCODE -ne 0) { Bad "Nie udalo sie pobrac https://github.com/$Repo"; exit 1 }; Ok "Kit pobrany do $HomeKit"
+    if ($LASTEXITCODE -ne 0) { Bad "Nie udalo sie pobrac https://github.com/$Repo"; Retry }; Ok "Kit pobrany do $HomeKit"
   } else {
     git clone -q -c core.autocrlf=false "https://github.com/$Repo.git" $HomeKit
-    if ($LASTEXITCODE -ne 0) { Bad "Nie udalo sie pobrac https://github.com/$Repo"; exit 1 }; Ok "Kit pobrany do $HomeKit"
+    if ($LASTEXITCODE -ne 0) { Bad "Nie udalo sie pobrac https://github.com/$Repo"; Retry }; Ok "Kit pobrany do $HomeKit"
   }
   $KitDir = $HomeKit; $Source = $Repo
 } else { $Source = $KitDir }
@@ -99,7 +103,7 @@ if ($mk -match [regex]::Escape($Market)) {
   if ($LASTEXITCODE -eq 0) { Ok "Zrodlo '$Market' odswiezone." } else { Ok "Zrodlo '$Market' juz zarejestrowane." }
 } else {
   $o = Cl plugin marketplace add $Source
-  if ($LASTEXITCODE -ne 0) { Bad "Rejestracja zrodla nie powiodla sie:"; Show $o; Write-Host "      Recznie: claude plugin marketplace add `"$Source`""; exit 1 }
+  if ($LASTEXITCODE -ne 0) { Bad "Rejestracja zrodla nie powiodla sie:"; Show $o; Write-Host "      Recznie: claude plugin marketplace add `"$Source`""; Retry }
   Ok "Zrodlo '$Market' zarejestrowane."
 }
 $inst = Cl plugin list
@@ -108,7 +112,7 @@ if ($inst -match "$Plugin@$Market") {
   else { Ok "Dodatek juz zainstalowany." }
 } else {
   $o = Cl plugin install "$Plugin@$Market" --scope user
-  if ($LASTEXITCODE -ne 0) { Bad "Instalacja nie powiodla sie:"; Show $o; Write-Host "      Recznie: claude plugin install $Plugin@$Market --scope user"; exit 1 }
+  if ($LASTEXITCODE -ne 0) { Bad "Instalacja nie powiodla sie:"; Show $o; Write-Host "      Recznie: claude plugin install $Plugin@$Market --scope user"; Retry }
   Ok "Dodatek zainstalowany dla Twojego uzytkownika."
 }
 

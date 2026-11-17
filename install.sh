@@ -23,6 +23,10 @@ ok()  { printf '  [OK]  %s\n' "$*"; }
 bad() { printf '  [!!]  %s\n' "$*"; }
 ask() { printf '%s ' "$*"; if [ -t 0 ]; then read -r REPLY; else read -r REPLY </dev/tty; fi; }
 FAIL=0
+# Komenda do powtorzenia po bledzie sieci (AC-I9): ta sama, ktora uruchomiono - plik albo curl ... | bash
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then RERUN="bash \"${BASH_SOURCE[0]}\"${*:+ $*}"
+else RERUN="curl -fsSL https://raw.githubusercontent.com/${SDD_REPO:-SyBeer/sdd-kit}/main/install.sh | bash"; fi
+retry() { say "      Sprawdz polaczenie z internetem i uruchom ponownie: $RERUN"; exit 1; }
 
 # ---------------------------------------------------------------- 0. gdzie jest kit
 KIT_DIR=""
@@ -80,9 +84,9 @@ if [ "$CH" = "2" ]; then
   if [ -z "$SDD_REPO" ]; then ask "Adres repo w formie uzytkownik/nazwa (np. zelu/sdd-kit):"; SDD_REPO="$REPLY"; fi
   [ -z "$SDD_REPO" ] && { bad "Brak adresu repo. Przerywam."; exit 1; }
   if [ -d "$HOME_KIT/.git" ]; then
-    (cd "$HOME_KIT" && git pull -q) && ok "Kit odswiezony z GitHuba." || { bad "git pull nie powiodl sie."; exit 1; }
+    (cd "$HOME_KIT" && git pull -q) && ok "Kit odswiezony z GitHuba." || { bad "git pull nie powiodl sie."; retry; }
   else
-    git clone -q "https://github.com/$SDD_REPO.git" "$HOME_KIT" && ok "Kit pobrany do $HOME_KIT" || { bad "Nie udalo sie pobrac https://github.com/$SDD_REPO"; exit 1; }
+    git clone -q "https://github.com/$SDD_REPO.git" "$HOME_KIT" && ok "Kit pobrany do $HOME_KIT" || { bad "Nie udalo sie pobrac https://github.com/$SDD_REPO"; retry; }
   fi
   KIT_DIR="$HOME_KIT"; SOURCE="$SDD_REPO"
 else
@@ -100,7 +104,7 @@ if claude plugin marketplace list 2>/dev/null | grep -q "$MARKET"; then
   if claude plugin marketplace update "$MARKET" >/dev/null 2>&1; then ok "Zrodlo '$MARKET' odswiezone."; else ok "Zrodlo '$MARKET' juz zarejestrowane."; fi
 else
   if claude plugin marketplace add "$SOURCE" >/tmp/sdd-market.log 2>&1; then ok "Zrodlo '$MARKET' zarejestrowane."; else
-    bad "Rejestracja zrodla nie powiodla sie:"; sed 's/^/      /' /tmp/sdd-market.log; exit 1; fi
+    bad "Rejestracja zrodla nie powiodla sie:"; sed 's/^/      /' /tmp/sdd-market.log; retry; fi
 fi
 
 if claude plugin list 2>/dev/null | grep -qi "$PLUGIN@$MARKET\|^ *$PLUGIN "; then
@@ -109,7 +113,7 @@ if claude plugin list 2>/dev/null | grep -qi "$PLUGIN@$MARKET\|^ *$PLUGIN "; the
   else ok "Dodatek juz zainstalowany."; fi
 else
   if claude plugin install "$PLUGIN@$MARKET" --scope user >/tmp/sdd-install.log 2>&1; then ok "Dodatek zainstalowany dla Twojego uzytkownika."; else
-    bad "Instalacja nie powiodla sie:"; sed 's/^/      /' /tmp/sdd-install.log; exit 1; fi
+    bad "Instalacja nie powiodla sie:"; sed 's/^/      /' /tmp/sdd-install.log; retry; fi
 fi
 
 # ---------------------------------------------------------------- 4. weryfikacja

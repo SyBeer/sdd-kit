@@ -36,6 +36,7 @@ exit 0
 const FAKE_GIT = `#!/bin/bash
 echo "git $*" >> "$CLAUDE_LOG"
 if [ "$1" = "--version" ]; then echo "git version 2.0"; exit 0; fi
+if [ -n "$NO_NET" ] && { [ "$1" = "clone" ] || [ "$3" = "pull" ]; }; then echo "fatal: unable to access 'https://github.com/': Could not resolve host: github.com" >&2; exit 128; fi
 if [ "$1" = "clone" ]; then dest="\${@: -1}"; mkdir -p "$dest"; cp -R "$KIT_SRC/plugins" "$KIT_SRC/START-TUTAJ.md" "$dest/"; exit 0; fi
 if [ "$1" = "-C" ] && [ "$3" = "pull" ]; then cp -R "$KIT_SRC/plugins" "$KIT_SRC/START-TUTAJ.md" "$2/"; exit 0; fi
 exit 0
@@ -123,4 +124,23 @@ test('AC-I6: install.sh - repo domyslne SyBeer/sdd-kit, skladnia bash', () => {
   const sh = fs.readFileSync(path.join(KIT, 'install.sh'), 'utf8');
   assert.match(sh, /SDD_REPO="\$\{SDD_REPO:-SyBeer\/sdd-kit\}"/);
   execFileSync('bash', ['-n', path.join(KIT, 'install.sh')]);
+});
+
+test('AC-I9 (AC-035-3): install.sh bez sieci - kod 1 i komenda do powtorzenia', { skip: process.platform === 'win32' }, () => {
+  const sb = sandbox(Object.assign({}, process.env, { NO_NET: '1' }));
+  sb.env.SDD_REPO = 'SyBeer/sdd-kit';
+  // jako tekst (curl ... | bash): bez folderu kitu -> pobranie z GitHuba
+  const r = spawnSync('bash', ['-s'], { input: fs.readFileSync(path.join(KIT, 'install.sh')), env: sb.env, encoding: 'utf8', timeout: 60000 });
+  assert.strictEqual(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout, /Sprawdz polaczenie z internetem i uruchom ponownie:/);
+  assert.match(r.stdout, /curl -fsSL https:\/\/raw\.githubusercontent\.com\/SyBeer\/sdd-kit\/main\/install\.sh \| bash/);
+});
+
+test('AC-I9 (AC-035-3): install.ps1 - kazdy krok sieciowy z komenda do powtorzenia', () => {
+  const ps = fs.readFileSync(PS1, 'utf8');
+  const fails = ps.split('\n').filter(l => /Nie udalo sie pobrac|git pull nie powiodl|Rejestracja zrodla nie powiodla|Instalacja nie powiodla/.test(l));
+  assert.ok(fails.length >= 4, 'kroki sieciowe: ' + fails.length);
+  fails.forEach(l => assert.match(l, /Retry/, l.trim()));
+  assert.match(ps, /function Retry[^\n]*\{[^\n]*Sprawdz polaczenie z internetem i uruchom ponownie:/);
+  assert.match(ps, /irm https:\/\/raw\.githubusercontent\.com\/\$Repo\/main\/install\.ps1 \| iex/);
 });
