@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.48.1] - 2026-11-17
+Kolejne poprawki z przegladu pokrycia wymagan (sdd-kit-wymagania TRACEABILITY, luki K2):
+- Instalator (install.sh, install.ps1): blad sieci przy pobraniu kitu, rejestracji zrodla albo instalacji dodatku
+  konczy sie linia "Sprawdz polaczenie z internetem i uruchom ponownie: <komenda>" - ta sama, ktora uruchomiono
+  (docs/specs/install.md AC-I9; AC-035-3).
+- Redmine: `check` pobiera tez statusy i pokazuje, ktore ustawi agent (start, done; brak -> ostrzezenie). Konfiguracja
+  -> Redmine: przycisk "Sprawdź połączenie", a po zapisie zmienionego adresu albo projektu panel sprawdza sam - projekt,
+  typy zadan, pola, statusy (docs/specs/redmine.md AC-RM24..RM25; AC-033-2).
+- Skill handover, Linear/Jira: zadania po jednym, numer od razu w TRACEABILITY.md; awaria w trakcie -> stop bez
+  ponawiania, pokazany blad i lista niezalozonych (docs/specs/skill-bodies.md AC-SB11; AC-036-2).
+
 ## [0.48.0] - 2026-11-17
 Poprawki z przegladu pokrycia wymagan testami (sdd-kit-wymagania TRACEABILITY, luki K2 - kod nie pilnowal kryterium):
 - Redmine: zerwane polaczenie albo brak odpowiedzi w polowie wysylki zwraca juz zalozone zadania (dotad `[]`, ponowny
