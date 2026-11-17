@@ -142,6 +142,10 @@ test('AC-BD15: DEFAULT_PROMPT - krok 0 sprawdza, czy wymaganie nie jest juz zrob
 });
 
 const step = n => bd.DEFAULT_PROMPT.split('\n').find(l => l.startsWith(n + '. ')) || '';
+// kroki po nazwie, nie po numerze - nowy krok nie psuje testow
+const stepNo = re => { const l = bd.DEFAULT_PROMPT.split('\n').find(x => re.test(x)) || ''; return l ? Number(l.split('.')[0]) : -1; };
+const named = re => step(stepNo(re));
+const TDD = () => named(/^\d+\. TDD:/), REPORT = () => named(/^\d+\. Raport/);
 
 test('AC-BD16: DEFAULT_PROMPT - krok 1 czyta pliki dla agenta (constitution, plan, tasks funkcji)', () => {
   const k1 = step(1);
@@ -149,18 +153,38 @@ test('AC-BD16: DEFAULT_PROMPT - krok 1 czyta pliki dla agenta (constitution, pla
 });
 
 test('AC-BD17: DEFAULT_PROMPT - nazwa testu zawiera ID kryterium, raport podaje przypisanie', () => {
-  assert.match(step(3), /nazwa[^\n]*testu[^\n]*AC-xxx-n/i);
-  assert.match(step(8), /AC[^\n]*test/);
+  assert.match(TDD(), /nazwa[^\n]*testu[^\n]*AC-xxx-n/i);
+  assert.match(REPORT(), /AC[^\n]*test/);
 });
 
 test('AC-BD18: DEFAULT_PROMPT - zadanie bez R-xxx (wlasny opis) oznaczone w raporcie jako poza PRD', () => {
   const p = bd.DEFAULT_PROMPT;
   assert.match(p, /bez numeru R-xxx[^\n]*poza PRD/);
-  assert.match(step(8), /poza PRD/);
+  assert.match(REPORT(), /poza PRD/);
 });
 
 test('AC-BD19: DEFAULT_PROMPT - zachowanie przy awarii integracji ma osobny test', () => {
-  assert.match(step(3), /Przy awarii[^\n]*osobny test/);
+  assert.match(TDD(), /Przy awarii[^\n]*osobny test/);
+});
+
+test('AC-BD20: DEFAULT_PROMPT - plan po specu, przed pierwszym testem; raport pokazuje plan', () => {
+  const nPlan = stepNo(/^\d+\. Plan:/), nSpec = stepNo(/^\d+\. Spec:/), nTdd = stepNo(/^\d+\. TDD:/);
+  assert.ok(nPlan > nSpec && nPlan < nTdd, `plan (${nPlan}) miedzy specem (${nSpec}) a TDD (${nTdd})`);
+  const k = step(nPlan);
+  ['przed pierwszym testem', 'każde AC', 'nazwa testu', 'plik', 'kolejność'].forEach(w => assert.ok(k.includes(w), w));
+  assert.match(REPORT(), /plan[^\n]*zmiany planu/i);
+});
+
+test('AC-BD21: DEFAULT_PROMPT - test przed kodem pada na warunku kryterium, nie na bledzie skladni/importu/srodowiska', () => {
+  assert.match(TDD(), /pada[^\n]*niespełnionym warunku[^\n]*nie na błędzie składni, importu czy środowiska/);
+});
+
+test('AC-BD22: DEFAULT_PROMPT - raport pokazuje pierwsze uruchomienie testow: czerwone i powod', () => {
+  assert.match(REPORT(), /pierwszego uruchomienia[^\n]*czerwon[^\n]*powód porażki/);
+});
+
+test('AC-BD23: DEFAULT_PROMPT - AC bez testu wypisane, wymaganie niezrobione', () => {
+  assert.match(REPORT(), /AC bez testu[^\n]*niezrobione/);
 });
 
 const FAKE = `let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>{

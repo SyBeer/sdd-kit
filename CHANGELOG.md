@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.5] - 2026-11-17
+- Instrukcja budowania (domyslny prompt "Buduj"): plan przed kodem, czerwony test z wlasciwego powodu, dowod "red"
+  i pokrycie AC w raporcie (docs/specs/build.md AC-BD20..AC-BD23; wymagania sdd-kit-wymagania R-021 AC-021-9,
+  AC-021-12..14). Nowy krok 2 "Plan": kazde AC -> nazwa testu -> plik, kolejnosc, pliki do zmiany - przed pierwszym
+  testem. Krok TDD: test przed kodem pada na warunku kryterium, nie na bledzie skladni, importu czy srodowiska.
+  Raport: plan i jego zmiany, wynik pierwszego uruchomienia testow (czerwone i powod), AC bez testu = wymaganie
+  niezrobione. Kroki od "Srodowisko" przesuniete o jeden.
+- Modul z wlasnym `requirements/build-prompt.md` tej zmiany nie dostaje - "Przywróć domyślny" w Konfiguracji ->
+  Budowanie wraca do nowej wersji.
+
 ## [0.46.4] - 2026-11-17
 - Instrukcja budowania (domyslny prompt "Buduj") czyta pliki dla agenta i nazywa testy numerem kryterium
   (docs/specs/build.md AC-BD16..AC-BD19; wymagania sdd-kit-tool R-021 AC-021-5..8, przeglad z wlascicielem procesu).

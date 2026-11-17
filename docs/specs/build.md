@@ -156,10 +156,24 @@ sciezki dla wlasnego opisu (D-016 sdd-kit-tool: budowanie poza PRD zostaje, z os
 - **AC-BD19** (AC-021-8) Krok 3 promptu: wymaganie z integracja (SYSTEMS.md, plan.md funkcji) - zachowanie z kolumny
   "Przy awarii" ma osobny test.
 
+## Zmiana 0.46.5 (2026-11-17: luki instrukcji budowania - wymagania sdd-kit-wymagania R-021, AC-021-9, -12..14)
+Przeglad "plan -> spec -> testy -> kod": prompt nie kazal spisac planu przed kodem, nie sprawdzal, czy test pada
+z wlasciwego powodu, raport nie pokazywal czerwonych testow sprzed kodu i nie traktowal AC bez testu jako niezrobionego
+(sdd-kit-wymagania 01-interview/session-2026-11-17.md; R-021 ponownie zatwierdzone przez wlasciciela procesu).
+AC-021-10 (zasady pracy osoby budujacej) i AC-021-11 (DESIGN.md) - osobna zmiana.
+- **AC-BD20** (AC-021-9) Krok planu miedzy speciem a TDD: po przeczytaniu speca, przed pierwszym testem, Claude
+  spisuje plan: kazde AC -> nazwa testu -> plik, kolejnosc pracy, pliki do zmiany. Raport pokazuje plan i jego zmiany.
+- **AC-BD21** (AC-021-12) Krok TDD: test uruchomiony przed kodem ma padac na niespelnionym warunku kryterium, nie na
+  bledzie skladni, importu czy srodowiska - inaczej najpierw poprawic test.
+- **AC-BD22** (AC-021-13) Raport: wynik pierwszego uruchomienia testow kryteriow (przed kodem) - kazdy test czerwony
+  i powod porazki.
+- **AC-BD23** (AC-021-14) Raport: AC budowanego wymagania bez testu z jego ID - wypisane, a wymaganie oznaczone jako
+  niezrobione.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD19, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD23, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
 `board/test/build-ui.test.js` (AC-BD5).
