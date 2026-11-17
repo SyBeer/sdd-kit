@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.48.0] - 2026-11-17
+Poprawki z przegladu pokrycia wymagan testami (sdd-kit-wymagania TRACEABILITY, luki K2 - kod nie pilnowal kryterium):
+- Redmine: zerwane polaczenie albo brak odpowiedzi w polowie wysylki zwraca juz zalozone zadania (dotad `[]`, ponowny
+  handover dublowal zadania); kazde zapytanie ma limit czasu 30 s (docs/specs/redmine.md AC-RM23; AC-033-4).
+- Tablica: wersje "przed przywróceniem tablicy" przed `/sdd:board rebuild` zapisuje skill po "tak", tuz przed
+  nadpisaniem - z paska Tablicy i z czatu tak samo; blad zapisu zatrzymuje odtworzenie (dotad ruszalo mimo bledu,
+  z czatu bez wersji). Nowe: `node board/repo-copy.js version <folder> "<nazwa>"` (docs/specs/board-commands.md AC-BC6;
+  AC-025-2).
+- Budowanie: wyjscie serwera konczy trwajace budowanie (dotad agent pracowal dalej bez widocznego przebiegu)
+  (docs/specs/build.md AC-BD29; AC-037-3, AC-021-4).
+- Kaskada w skillach (interview, intake, spec) i w szablonie CLAUDE.md ustawia `Status: do przegladu` w dotknietych R,
+  nie tylko wpis w sekcji 6 PRD - panel liczy do przegladu po statusie (docs/specs/skill-bodies.md AC-SB10; AC-014-4).
+  Istniejace moduly maja stary CLAUDE.md - zasade dopisz recznie albo skopiuj sekcje 6 z szablonu.
+
 ## [0.47.2] - 2026-11-17
 - Redmine: agent ustawia tylko statusy pracy - `start` ("W realizacji") i `done` ("Code review")
   (docs/specs/redmine.md AC-RM22; wymagania sdd-kit-wymagania R-019 AC-019-2, D-011). `redmine.js status <id> <nazwa>`
