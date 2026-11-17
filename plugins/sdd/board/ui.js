@@ -375,6 +375,19 @@
     if (s.length > 42) s = s.slice(0, 43).replace(/-[^-]*$/, '') || s.slice(0, 42);
     return 'feature/' + (s || 'zadanie');
   }
+  // Wynik sprawdzenia projektu Redmine w Konfiguracji (0.48.1, AC-RM25; AC-033-2): projekt, typy zadan, pola, statusy
+  function redmineCheckHtml(r) {
+    r = r || {};
+    if (r.error) return '<p class="err">' + esc(r.error) + '</p>';
+    const names = a => (a || []).map(function (x) { return esc(x.name); }).join(', ') || '–';
+    return '<dl class="kv">' +
+      '<dt>Projekt</dt><dd>' + esc((r.project && r.project.name) || '') + '</dd>' +
+      '<dt>Typy zadań</dt><dd>' + names(r.trackers) + (r.tracker ? ' · zadania jako <b>' + esc(r.tracker.name) + '</b>' : '') + '</dd>' +
+      '<dt>Pola</dt><dd>' + names(r.customFields) + '</dd>' +
+      '<dt>Statusy</dt><dd>' + names(r.statuses) + '<br>agent: start – <b>' + esc(r.statusStart || 'nie znaleziono') +
+        '</b>, done – <b>' + esc(r.statusDone || 'nie znaleziono') + '</b></dd></dl>' +
+      (r.warning ? '<p class="knote">' + esc(r.warning) + '</p>' : '');
+  }
   // Ostrzezenie: wymaganie juz zrobione albo inna galaz tego numeru (0.45.0, AC-BD14)
   // branch: galaz, ktora bedzie budowana - ta sama = kontynuacja, bez ostrzezenia (jak serwer, AC-BD13)
   function alreadyHtml(a, id, branch) {
@@ -664,7 +677,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml, gateReasons, gateHtml };
+  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml, gateReasons, gateHtml, redmineCheckHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

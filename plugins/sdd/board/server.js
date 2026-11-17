@@ -648,6 +648,18 @@ const server = http.createServer((req, res) => {
   if (url === '/events') return sse(req, res, ctx.boardClients, boardView(ctx));
   if (url === '/api/guide' && req.method === 'GET') return json(res, 200, info.guide());
   if (url === '/api/config' && req.method === 'GET') return json(res, 200, configView(ctx));
+  // Sprawdzenie projektu Redmine z panelu: typy zadan, pola, statusy (0.48.1, docs/specs/redmine.md AC-RM25; AC-033-2)
+  if (url === '/api/redmine/check' && req.method === 'GET') {
+    if (ctx.demo) return json(res, 403, { error: READ_ONLY });
+    if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+    const rm = require('./redmine');
+    let cfg;
+    try { cfg = rm.readConfig(fs.readFileSync(sddFile(ctx), 'utf8').replace(/\r\n?/g, '\n')); }
+    catch (e) { return json(res, 409, { error: e.message }); }
+    const key = secrets.redmineKey().value;
+    if (!key) return json(res, 409, { error: 'Brak klucza API Redmine - ustaw go wyżej (Klucz API Redmine) i sprawdź ponownie.' });
+    return rm.check(rm.client(cfg, key), cfg).then(r => json(res, 200, r), e => json(res, 502, { error: e.message }));
+  }
   if (url === '/api/module' && req.method === 'GET') {
     if (!ctx.req || !fs.existsSync(ctx.req)) return json(res, 409, { error: 'Nie wybrano modułu.' });
     const m = info.moduleSummary(ctx.req);

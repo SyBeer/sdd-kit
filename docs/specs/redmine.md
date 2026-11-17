@@ -160,3 +160,17 @@ dostawala numerow, a ponowny handover zakladal zadania drugi raz. `fetch` nie mi
 - AC-RM23 (AC-033-4): polaczenie zerwane albo brak odpowiedzi przy dowolnym zadaniu `push` -> kod 1, na wyjsciu
   zadania juz zalozone (klucz i numer), w bledzie numer zadania, przy ktorym przerwano. Kazde zapytanie ma limit czasu
   (domyslnie 30 s, `SDD_REDMINE_TIMEOUT_MS`); po nim blad "Redmine nie odpowiada".
+
+# Zmiana 0.48.1 (2026-11-17): sprawdzenie projektu pobiera statusy, panel sprawdza przy wyborze projektu - wymagania sdd-kit-wymagania R-033 AC-033-2
+Przeglad TRACEABILITY (luka K2): `check` pobieral typy zadan i pola, ale nie statusy (te dopiero `status`), a panel
+przy wyborze projektu w Konfiguracji tylko zapisywal SDD.yaml - nic nie pobieral z Redmine. AC-033-2: przy wyborze
+projektu kit pobiera z Redmine typy zadan, pola i statusy.
+
+## Kryteria akceptacji
+- AC-RM24 (AC-033-2): `check` zwraca tez `statuses` (`id`, `name`, `closed`) oraz `statusStart` / `statusDone` -
+  status, ktory ustawi `status start` / `status done` (z SDD.yaml albo rozpoznany; brak -> `null` i ostrzezenie
+  w `warning`).
+- AC-RM25 (AC-033-2): `GET /api/redmine/check` (tylko z panelu, nie w demo) robi to samo dla biezacego modulu: wynik
+  `check` albo blad po polsku (brak klucza -> jak go ustawic, 401/404, brak polaczenia). Konfiguracja: przycisk
+  "Sprawdź połączenie" w ramce Redmine; po zapisie zmienionego adresu albo projektu panel sprawdza sam. Wynik w ramce:
+  projekt, typy zadan, pola, statusy (start i done), ostrzezenie albo blad - `ui.redmineCheckHtml`.

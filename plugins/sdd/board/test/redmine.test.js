@@ -473,3 +473,67 @@ test('AC-RM8: skill handover opisuje Redmine', () => {
   assert.match(sk, /W realizacji|start/);
   assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'templates', 'CLAUDE.md'), 'utf8'), /\/sdd:handover status/);
 });
+
+test('AC-RM24 (AC-033-2): check pobiera statusy i pokazuje, ktore ustawi start i done', async () => {
+  const s = await fakeRedmine();
+  try {
+    let r = await run(['check', '--req', moduleWith(s.url)], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    const j = JSON.parse(r.out);
+    assert.deepStrictEqual(j.statuses.map(x => [x.name, x.closed]),
+      [['Nowy', false], ['W realizacji', false], ['Code review', false], ['Gotowy do UAT', false], ['Zamknięty', true]]);
+    assert.strictEqual(j.statusStart, 'W realizacji');
+    assert.strictEqual(j.statusDone, 'Code review');
+    r = await run(['check', '--req', moduleWith(s.url, 'redmine_status_done: "Nie ma"\n')], { REDMINE_API_KEY: KEY });
+    const j2 = JSON.parse(r.out);
+    assert.strictEqual(j2.statusDone, null);
+    assert.match(j2.warning, /redmine_status_done/);
+  } finally { s.close(); }
+});
+
+test('AC-RM25 (AC-033-2): GET /api/redmine/check - panel sprawdza projekt; brak klucza po polsku; demo 403', async () => {
+  const s = await fakeRedmine();
+  const req = moduleWith(s.url);
+  const port = await new Promise(res => { const x = http.createServer().listen(0, '127.0.0.1', () => { const p = x.address().port; x.close(() => res(p)); }); });
+  const cfg = path.join(path.dirname(req), 'config.json'); fs.writeFileSync(cfg, '{}');
+  const start = env => spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), path.join(req, '01-interview', 'board.json'), String(port)],
+    { cwd: path.dirname(req), env: Object.assign({}, process.env, { SDD_CONFIG: cfg, SDD_MODULES_ROOT: '', SDD_UPDATE_CHECK: '0', SDD_COPY: '0',
+      SDD_REDMINE_KEYCHAIN: '0', SDD_ENV_FILE: path.join(os.tmpdir(), 'sdd-brak-' + process.pid, '.env') }, env) });
+  const get = u => new Promise((res, rej) => http.get({ host: '127.0.0.1', port, path: u, headers: { Host: 'localhost:' + port } }, r => {
+    let d = ''; r.on('data', c => { d += c; }); r.on('end', () => { let j; try { j = JSON.parse(d); } catch (e) { j = { raw: d.slice(0, 80) }; } res({ code: r.statusCode, json: j }); }); }).on('error', rej));
+  const ready = p => new Promise((res, rej) => { let o = ''; p.stdout.on('data', c => { o += c; if (/Panel:/.test(o)) res(); }); p.on('exit', c => rej(new Error('serwer ' + c + o))); });
+  let p = start({ REDMINE_API_KEY: KEY });
+  try {
+    await ready(p);
+    const r = await get('/api/redmine/check');
+    assert.strictEqual(r.code, 200, JSON.stringify(r.json));
+    assert.strictEqual(r.json.project.name, 'Faktury');
+    assert.deepStrictEqual(r.json.trackers.map(t => t.name), ['Bug', 'Feature']);
+    assert.ok(Array.isArray(r.json.customFields));
+    assert.strictEqual(r.json.statusStart, 'W realizacji');
+    assert.ok(!JSON.stringify(r.json).includes(KEY), 'klucz nie wychodzi');
+    assert.strictEqual((await get('/demo/api/redmine/check')).code, 403);
+    p.removeAllListeners('exit'); p.kill(); await new Promise(x => p.once('exit', x));
+    p = start({ REDMINE_API_KEY: '' });
+    await ready(p);
+    const e = await get('/api/redmine/check');
+    assert.strictEqual(e.code, 409);
+    assert.match(e.json.error, /Klucz API Redmine/);
+  } finally { p.kill(); s.close(); }
+});
+
+test('AC-RM25 (AC-033-2): Konfiguracja - przycisk Sprawdź połączenie, sprawdzenie po zapisie, redmineCheckHtml', () => {
+  const ui = require('../ui.js');
+  const h = ui.redmineCheckHtml({ project: { name: 'Faktury' }, trackers: [{ name: 'Bug' }, { name: 'Feature' }], tracker: { name: 'Feature' },
+    customFields: [{ name: 'Kryteria akceptacji' }], statuses: [{ name: 'Nowy' }, { name: 'W realizacji' }, { name: 'Code review' }],
+    statusStart: 'W realizacji', statusDone: 'Code review', warning: 'Uwaga <x>' });
+  const t = h.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  ['Faktury', 'Bug', 'Feature', 'Kryteria akceptacji', 'Nowy', 'W realizacji', 'Code review'].forEach(w => assert.ok(t.includes(w), w));
+  assert.match(h, /Uwaga &lt;x&gt;/);
+  assert.match(ui.redmineCheckHtml({ error: 'Brak polaczenia <z>' }), /Brak polaczenia &lt;z&gt;/);
+  const html = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  assert.match(html, /id="rmcheck"/);
+  assert.match(html, /\/api\/redmine\/check/);
+  assert.match(html, /redmineCheckHtml/);
+  assert.match(html, /body\.redmine_url\|\|body\.redmine_project|body\.redmine_project\|\|body\.redmine_url/, 'sprawdzenie po zapisie zmienionego adresu albo projektu');
+});

@@ -566,6 +566,8 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
             '<p class="knote">Klucz widać tylko podczas wklejania. Trafia do <code>~/.sdd-kit/.env</code> na tym komputerze – czyta go tylko sdd-kit, Claude go nie otwiera, nie trafia do repo.</p>'+
             '<p class="err" id="keyerr">'+esc(msg.keyerr||'')+'</p>'+(msg.keyok?'<p class="ok">'+esc(msg.keyok)+'</p>':''),
             '<small class="kst" id="kst"></small>')+
+          // typy zadan, pola i statusy z Redmine (0.48.1, AC-RM25; AC-033-2) - przyciskiem i sam po zapisie adresu/projektu
+          (demo?'':frow('Połączenie','typy zadań, pola i statusy z Redmine','<button class="btn" type="button" id="rmcheck">Sprawdź połączenie</button><div id="rmres">'+(msg.rmres||'')+'</div>'))+
         '</div>'+
         frow('Role i co zatwierdzają','rola, nie osoba; roli użytej już w plikach nie da się tu usunąć','<div class="roles" id="owners"></div>'+
           (demo?'':'<div class="addr"><input type="text" class="fld" id="f-role" placeholder="nazwa roli, np. księgowość" autocomplete="off"><button class="btn" type="button" id="addrole">+ Dodaj rolę</button></div>'))+
@@ -903,6 +905,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       else if(t.id==='savesdd') saveSdd(t);
       else if(t.id==='checkroot') checkRoot();
       else if(t.id==='setroot') setRoot(t);
+      else if(t.id==='rmcheck') rmCheck();
       else if(t.hasAttribute('data-rm')){ msg.rmask=t.getAttribute('data-rm'); renderConfig(cfg); }
       else if(t.hasAttribute('data-rmno')) renderConfig(cfg);
       else if(t.hasAttribute('data-rmok')) api('/api/modules?dir='+encodeURIComponent(t.getAttribute('data-rmok')),{method:'DELETE'}).then(renderConfig).catch(function(err){msg.adderr=err.message;renderConfig(cfg)});
@@ -920,10 +923,17 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
       .then(function(c){
         editing=false; msg.sddok='Zapisane: '+done.join(', ')+'.'; if(done.length===1&&!hasSdd) msg.keyok='Klucz zapisany.';
         renderConfig(c);
+        if(body.redmine_url||body.redmine_project) rmCheck();  // wybor projektu -> pobranie typow, pol, statusow (AC-RM25)
         // "zapisano w SDD.yaml" przez 2,5 s, potem "bez zmian"
         clearTimeout(savedTimer); savedTimer=setTimeout(function(){ msg.sddok=''; if(!editing&&$('#sst')) dirty(); },2500);
       })
       .catch(function(err){ btn.disabled=false; $('#sdderr').textContent=(done.length?'Zapisane: '+done.join(', ')+'. ':'')+err.message; dirty(); });
+  }
+  function rmCheck(){
+    var box=$('#rmres'), b=$('#rmcheck'); if(!box) return;
+    box.innerHTML='<p class="knote">Łączę z Redmine…</p>'; if(b) b.disabled=true;
+    var show=function(r){ msg.rmres=SddUI.redmineCheckHtml(r); var x=$('#rmres'); if(x) x.innerHTML=msg.rmres; var y=$('#rmcheck'); if(y) y.disabled=false; };
+    api('/api/redmine/check').then(show).catch(function(err){ show({error:err.message}); });
   }
   function checkRoot(){
     var p=$('#f-root').value.trim(); $('#rooterr').textContent=''; $('#rootprev').innerHTML='';

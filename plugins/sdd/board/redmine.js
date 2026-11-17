@@ -198,13 +198,19 @@ async function pushTasks(call, cfg, tasks, files, info, done) {
 // Status zadania przez agenta (AC-RM15): start / done z SDD.yaml albo rozpoznane, nigdy zamykajacy.
 const START = /w realizacji|w toku|in progress|realizacja/i;
 const DONE = /code review|do przegl|review|resolved|rozwi[aą]zan/i;
-async function setStatus(call, cfg, id, want, note) {
+async function statusesOf(call) {
   const r = await call('GET', '/issue_statuses.json');
   if (r.status !== 200 || !r.data) throw new Error('Nie moge pobrac listy statusow: Redmine ' + r.status);
-  const all = r.data.issue_statuses || [];
-  // status pracy agenta: start / done z SDD.yaml albo rozpoznany (AC-RM15)
-  const work = w => { const name = w === 'start' ? cfg.statusStart : cfg.statusDone;
-    return name ? all.find(s => s.name.toLowerCase() === name.toLowerCase()) : all.find(s => !s.is_closed && (w === 'start' ? START : DONE).test(s.name)); };
+  return r.data.issue_statuses || [];
+}
+// status pracy agenta: start / done z SDD.yaml albo rozpoznany (AC-RM15)
+function workStatus(all, cfg, w) {
+  const name = w === 'start' ? cfg.statusStart : cfg.statusDone;
+  return name ? all.find(s => s.name.toLowerCase() === name.toLowerCase()) : all.find(s => !s.is_closed && (w === 'start' ? START : DONE).test(s.name));
+}
+async function setStatus(call, cfg, id, want, note) {
+  const all = await statusesOf(call);
+  const work = w => workStatus(all, cfg, w);
   let st;
   if (want === 'start' || want === 'done') {
     st = work(want);
@@ -280,22 +286,7 @@ async function main(argv) {
   const key = dry ? '' : apiKey();
   if (!dry && !key) throw new Error(KEY_HELP);
   const call = client(cfg, key);
-  if (cmd === 'check') {
-    const info = await project(call, cfg);
-    const fields = info.fields || await projectFields(call, info.project.id);
-    delete info.fields;
-    const out = Object.assign(info, { format: cfg.format, customFields: fields });
-    const ac = fields.find(f => /kryteri|acceptance/i.test(f.name));
-    const warn = [];
-    if (!info.acField && ac) warn.push('Projekt ma pole "' + ac.name + '", a redmine_ac_field nie jest ustawione - zadania beda bez kryteriow w tym polu ' +
-      '(Redmine moze wymagac go przy zmianie statusu). Dopisz w SDD.yaml: redmine_ac_field: "' + ac.name + '"');
-    const uat = fields.find(f => /uat/i.test(f.name) && /link|adres|url|[sś]rodowisk/i.test(f.name));
-    if (!info.uatField && uat) warn.push('Projekt ma pole "' + uat.name + '", a redmine_uat_link nie jest ustawione - zadania beda bez linku do ' +
-      'srodowiska UAT (Redmine moze go wymagac w przeplywie). Dopisz w SDD.yaml: redmine_uat_link: "<adres srodowiska UAT>"' +
-      (uat.name === UAT_FIELD ? '' : ' i redmine_uat_field: "' + uat.name + '"'));
-    if (warn.length) out.warning = warn.join(' ');
-    return console.log(JSON.stringify(out, null, 2));
-  }
+  if (cmd === 'check') return console.log(JSON.stringify(await check(call, cfg), null, 2));
   if (cmd === 'status') return console.log(JSON.stringify(await setStatus(call, cfg, id, args[2], note), null, 2));
   if (cmd === 'comment') return console.log(JSON.stringify(await comment(call, cfg, id, note), null, 2));
   try {
@@ -306,6 +297,31 @@ async function main(argv) {
   }
 }
 
+// Sprawdzenie projektu: typy zadan, pola, statusy (AC-RM3, AC-RM24) - wiersz polecen i panel (AC-RM25)
+async function check(call, cfg) {
+    const info = await project(call, cfg);
+    const fields = info.fields || await projectFields(call, info.project.id);
+    delete info.fields;
+    const all = await statusesOf(call);
+    const st = w => { const s = workStatus(all, cfg, w); return s ? s.name : null; };
+    const out = Object.assign(info, { format: cfg.format, customFields: fields,
+      statuses: all.map(s => ({ id: s.id, name: s.name, closed: !!s.is_closed })), statusStart: st('start'), statusDone: st('done') });
+    const ac = fields.find(f => /kryteri|acceptance/i.test(f.name));
+    const warn = [];
+    ['start', 'done'].forEach(w => { if (!out[w === 'start' ? 'statusStart' : 'statusDone']) warn.push('Nie znalazlem statusu dla "' + w + '" (' +
+      ((w === 'start' ? cfg.statusStart : cfg.statusDone) || 'rozpoznawanie po nazwie') + ') - wpisz nazwe w SDD.yaml: redmine_status_' + w + '. Statusy: ' +
+      all.map(s => s.name).join(', ')); });
+    if (!info.acField && ac) warn.push('Projekt ma pole "' + ac.name + '", a redmine_ac_field nie jest ustawione - zadania beda bez kryteriow w tym polu ' +
+      '(Redmine moze wymagac go przy zmianie statusu). Dopisz w SDD.yaml: redmine_ac_field: "' + ac.name + '"');
+    const uat = fields.find(f => /uat/i.test(f.name) && /link|adres|url|[sś]rodowisk/i.test(f.name));
+    if (!info.uatField && uat) warn.push('Projekt ma pole "' + uat.name + '", a redmine_uat_link nie jest ustawione - zadania beda bez linku do ' +
+      'srodowiska UAT (Redmine moze go wymagac w przeplywie). Dopisz w SDD.yaml: redmine_uat_link: "<adres srodowiska UAT>"' +
+      (uat.name === UAT_FIELD ? '' : ' i redmine_uat_field: "' + uat.name + '"'));
+    if (warn.length) out.warning = warn.join(' ');
+    return out;
+}
+
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 
-module.exports = { contractGate, MARK, withMark, setStatus, readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project };
+module.exports = { contractGate, MARK, withMark, setStatus, readConfig, pickTracker, attachmentFiles, issueBody, apiKey, push, project,
+  check, client, KEY_HELP };
