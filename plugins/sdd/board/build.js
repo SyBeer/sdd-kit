@@ -64,6 +64,13 @@ function tasksFrom(prd) {
   const ok = t => /^zatwierdz/i.test(t.status);
   return list.filter(ok).concat(list.filter(t => !ok(t)));
 }
+// Stan walidacji do ostrzezenia przed budowaniem (0.47.0, AC-BD27; wymagania R-020 AC-020-5, D-016, D-017)
+function gateFrom(progress) {
+  const st = k => ((progress && progress.stages) || []).find(s => s.key === k) || {};
+  const v = st('validate'), c = v.counts || {};
+  return { report: (c.reports || 0) > 0, stale: !!v.stale, readiness: c.readiness == null ? null : c.readiness,
+    blocking: (st('interview').questions || []).filter(q => q.blocking).map(q => q.id) };
+}
 function buildArgs() {
   return ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', 'dontAsk',
     '--allowedTools'].concat(BUILD_ALLOWED, ['--disallowedTools'], BUILD_DENIED);
@@ -220,4 +227,4 @@ class BuildSession extends EventEmitter {
   }
 }
 
-module.exports = { alreadyDone, parseBuildEvent, BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, buildArgs, prepareWorktree, BuildSession };
+module.exports = { alreadyDone, parseBuildEvent, BUILD_ALLOWED, BUILD_DENIED, DEFAULT_PROMPT, branchFor, fillPrompt, tasksFrom, gateFrom, buildArgs, prepareWorktree, BuildSession };

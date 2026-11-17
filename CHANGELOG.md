@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.47.0] - 2026-11-17
+- Okienko "Buduj" ostrzega, gdy wymagania nie sa zamkniete - i nie blokuje budowania (docs/specs/build.md
+  AC-BD27..AC-BD28; wymagania sdd-kit-wymagania R-020 AC-020-5, D-016, D-017). Powody: wlasne zadanie (poza PRD),
+  wymaganie niezatwierdzone, brak raportu walidacji, raport nieaktualny (wymagania zmienione po walidacji), gotowosc
+  ponizej 100%, otwarte pytania z etykieta blokujaca. Przycisk zmienia sie na "Buduj mimo to".
+- `GET /api/build` zwraca `gate` (raport walidacji, odcisk, gotowosc, pytania blokujace).
+- Testy budowania realizujace R-020 maja w nazwie numer kryterium (`AC-BDn (AC-020-m): ...`).
+
 ## [0.46.7] - 2026-11-17
 - Testy budowania nazwane oboma numerami: speca kitu i kryterium wymagan, np. `AC-BD16 (AC-021-5): ...`
   (docs/specs/build.md, zmiana 0.46.7) - kazde AC-021-1..14 ma test z jego ID w nazwie, jak zaklada przekazanie

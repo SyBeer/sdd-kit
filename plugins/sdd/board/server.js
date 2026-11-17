@@ -476,7 +476,7 @@ function buildRoute(ctx, req, res, url) {
   const modDir = path.dirname(reqDirOf(ctx)), key = modDir, b = buildOf(key);
   if (url === '/api/build' && req.method === 'GET') {
     return repoCopy.repoState(modDir).then(st => json(res, 200, { state: b.state(), tasks: buildTasks(ctx), git: st.git,
-      prompt: { custom: buildPrompt(ctx).custom } }));
+      prompt: { custom: buildPrompt(ctx).custom }, gate: build.gateFrom(readProgress(reqDirOf(ctx))) }));
   }
   if (url === '/build-events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });

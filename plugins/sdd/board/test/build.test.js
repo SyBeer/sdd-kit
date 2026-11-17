@@ -77,7 +77,7 @@ test('AC-BD11: DEFAULT_PROMPT - krok 0: instrukcje budowania projektu, brak -> p
   assert.ok(p.indexOf('0. ') < p.indexOf('1. Spec'), 'przed spec');
 });
 
-test('AC-BD2: prepareWorktree - galaz w folderze obok, repo usera bez zmian, wymagania z dysku, kontynuacja', async () => {
+test('AC-BD2 (AC-020-1, AC-020-3): prepareWorktree - galaz w folderze obok, repo usera bez zmian, wymagania z dysku, kontynuacja', async () => {
   const dir = repo();
   // niezacommitowane wymagania i nowy plik
   fs.writeFileSync(path.join(dir, 'requirements', '03-spec', 'PRD.md'), 'v2 niezacommitowane\n');
@@ -111,7 +111,7 @@ test('AC-BD2: prepareWorktree - galaz w folderze obok, repo usera bez zmian, wym
   assert.match((await bd.prepareWorktree(plain, 'feature/x')).error, /git/i);
 });
 
-test('AC-BD12: alreadyDone - commity z numerem, wersja wydania, inne galezie feature', async () => {
+test('AC-BD12 (AC-020-4): alreadyDone - commity z numerem, wersja wydania, inne galezie feature', async () => {
   const dir = repo();
   fs.writeFileSync(path.join(dir, 'a.py'), '1\n'); g(dir, 'add', '-A'); g(dir, 'commit', '-q', '-m', 'feat(dashboard): magazyn (R-021, R-002)');
   g(dir, 'tag', '-a', 'v3.6.0', '-m', 'v3.6.0');
@@ -211,7 +211,7 @@ if(/CZEKAJ/.test(s)){ setInterval(()=>{},1000); return; }
 out({type:'assistant',message:{content:[{type:'text',text:'RAPORT: '+process.env.SDD_COPY+' '+s.trim().slice(0,20)}]}});
 out({type:'result',subtype:'success',session_id:'fake'});});`;
 
-test('AC-BD3 (AC-021-3, AC-021-4): BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0', async () => {
+test('AC-BD3 (AC-020-2, AC-021-3, AC-021-4): BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0', async () => {
   const fake = path.join(TMP, 'fake.js'); fs.writeFileSync(fake, FAKE);
   const s = new bd.BuildSession();
   const done = new Promise(r => s.once('exit', r));
@@ -234,7 +234,27 @@ test('AC-BD3 (AC-021-3, AC-021-4): BuildSession - prompt na stdin, przebieg, rap
   assert.strictEqual(s2.state().status, 'stopped');
 });
 
-const REPORT_TXT = 'Raport R-001\n\n## Commity\n- abc1234 feat(import): plik CSV cały albo nic (R-001)\n\n' +
+test('AC-BD27 (AC-020-5): gateFrom - raport walidacji, odcisk, gotowosc, pytania blokujace z prawdziwego modulu', () => {
+  const { readProgress } = require('../progress');
+  const { fingerprint } = require('../fingerprint');
+  const req = path.join(TMP, 'gate', 'requirements');
+  fs.cpSync(path.join(__dirname, '..', '..', 'templates', 'requirements'), req, { recursive: true });
+  // modul bez raportu walidacji
+  assert.deepStrictEqual(bd.gateFrom(readProgress(req)), { report: false, stale: false, readiness: null, blocking: [] });
+  // pytanie z etykieta blokujaca + raport 80% z aktualnym odciskiem
+  fs.appendFileSync(path.join(req, '01-interview', 'QUESTIONS.md'),
+    '| Q-001 | Co z pustym plikiem? | otwarte (blokuje go-live) | właściciel procesu | luka | R-001 | |\n' +
+    '| Q-002 | Jaki format daty? | otwarte | właściciel procesu | luka | R-001 | |\n');
+  const rep = path.join(req, '04-validation', 'validate-2026-11-17.md');
+  fs.writeFileSync(rep, '# Raport\n\nGotowosc: 80% (4/5 R)\nOdcisk wymagan: ' + fingerprint(req) + '\n');
+  assert.deepStrictEqual(bd.gateFrom(readProgress(req)), { report: true, stale: false, readiness: 80, blocking: ['Q-001'] });
+  // zmiana wymagan po walidacji -> raport nieaktualny
+  fs.appendFileSync(path.join(req, '03-spec', 'PRD.md'), '\nzmiana po walidacji\n');
+  assert.strictEqual(bd.gateFrom(readProgress(req)).stale, true);
+  assert.deepStrictEqual(bd.gateFrom({ exists: false }), { report: false, stale: false, readiness: null, blocking: [] });
+});
+
+const REPORT_TXT ='Raport R-001\n\n## Commity\n- abc1234 feat(import): plik CSV cały albo nic (R-001)\n\n' +
   '## Pokrycie\n| AC | test |\n|---|---|\n| AC-001-1 | test_AC_001_1_caly_plik |\n\n## Przyjęte założenia\n- pusty plik = błąd, nie sukces';
 const FAKE3 = `process.stdin.resume();process.stdin.on('end',()=>{const out=o=>console.log(JSON.stringify(o));
 out({type:'assistant',message:{content:[{type:'text',text:'pracuje'}]}});

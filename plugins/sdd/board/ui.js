@@ -387,6 +387,24 @@
     if (br.length) h += '<p>Jest już gałąź ' + br.map(esc).join(', ') + ' (inne budowanie).</p>';
     return '<div class="bd-warn">' + h + '<p>Budować mimo to?</p></div>';
   }
+  // Ostrzezenie przed budowaniem, gdy PRD nie jest zamkniete - bez blokady (0.47.0, AC-BD28; R-020 AC-020-5, D-016, D-017)
+  // gate: { report, stale, readiness, blocking } z GET /api/build; sel: { task: { id, status } } albo { title } (wlasny opis)
+  function gateReasons(gate, sel) {
+    const g = gate || {}, r = [];
+    if (sel && sel.task) {
+      if (!/^zatwierdz/i.test(sel.task.status || '')) r.push(sel.task.id + ' nie jest zatwierdzone (status: ' + (cut(sel.task.status || '') || 'brak') + ')');
+    } else r.push('własne zadanie - poza PRD');
+    if (!g.report) r.push('brak raportu walidacji');
+    else if (g.stale) r.push('raport walidacji jest nieaktualny - wymagania zmieniły się po walidacji');
+    else if (g.readiness !== 100) r.push('gotowość ' + (g.readiness == null ? '?' : g.readiness) + '% - budowanie zakłada 100%');
+    if ((g.blocking || []).length) r.push('otwarte pytania blokujące: ' + g.blocking.join(', '));
+    return r;
+  }
+  function gateHtml(reasons) {
+    if (!reasons || !reasons.length) return '';
+    return '<div class="bd-warn"><p><b>Wymagania nie są zamknięte:</b></p><ul>' + reasons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+      '</ul><p>Możesz budować mimo to.</p></div>';
+  }
   const BSTATUS = { running: 'buduje', done: 'gotowe', stopped: 'zatrzymane', error: 'błąd' };
   function buildPopHtml(info, b) {
     info = info || {}; b = b || '';
@@ -405,7 +423,7 @@
         }).join('') + '<option value="own"' + (tasks.length ? '' : ' selected') + '>Własne zadanie…</option></select>' +
         '<input type="text" class="fld" id="bd-own" placeholder="co budujemy, np. popraw ekran logowania" autocomplete="off"' + (tasks.length ? ' hidden' : '') + '>' +
         '<p class="qs-hint">gałąź <code id="bd-branch">' + esc(first ? branchFor(first.id, first.title) : 'feature/…') + '</code></p>' +
-        '<div id="bd-warn"></div>' +
+        '<div id="bd-gate"></div><div id="bd-warn"></div>' +
         '<div class="qs-row"><button type="button" class="btn p" id="bd-go">Buduj na nowej gałęzi</button></div>' +
         (BSTATUS[st.status] && st.status !== 'running' ? '<p class="qs-hint">Ostatnie budowanie: ' + BSTATUS[st.status] + ' · <a href="' + esc(b + '/build') + '">raport</a></p>' : '');
     }
@@ -438,6 +456,10 @@
       // juz zrobione? (AC-BD14) - ostrzezenie i "Buduj mimo to"
       const warn = pop.querySelector('#bd-warn'), go = pop.querySelector('#bd-go'), seq = ++checkSeq;
       force = false; warn.innerHTML = ''; go.textContent = 'Buduj na nowej gałęzi';
+      // PRD niezamkniete (AC-BD28) - ostrzezenie z powodem, budowanie dalej mozliwe
+      const gh = t && (t.task || t.title) ? gateHtml(gateReasons(info.gate, t)) : '';
+      pop.querySelector('#bd-gate').innerHTML = gh;
+      if (gh) go.textContent = 'Buduj mimo to';
       if (!t || !t.task) return;
       fetch(b + '/api/build/check?id=' + encodeURIComponent(t.task.id)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
         .then(function (a) {
@@ -642,7 +664,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml };
+  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml, gateReasons, gateHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

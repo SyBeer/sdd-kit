@@ -64,7 +64,7 @@ function events(port, until, ms = 10000) {
   });
 }
 
-test('AC-BD4 (AC-021-4): /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
+test('AC-BD4 (AC-020-1, AC-020-2, AC-020-3, AC-020-4, AC-021-4): /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
   const mod = path.join(TMP, 'app');
   fs.cpSync(TEMPLATES, path.join(mod, 'requirements'), { recursive: true });
   fs.writeFileSync(path.join(mod, 'requirements', '03-spec', 'PRD.md'), '# PRD\n\n## 5. Wymagania\n\n### R-001 Import CSV\nOpis: x\nStatus: zatwierdzone\n');
@@ -87,6 +87,8 @@ test('AC-BD4 (AC-021-4): /api/build - zadania, start w folderze feature, raport 
     assert.deepStrictEqual(b0.tasks, [{ id: 'R-001', title: 'Import CSV', status: 'zatwierdzone' }]);
     assert.strictEqual(b0.state.status, 'idle');
     assert.strictEqual(b0.git, true);
+    // AC-BD27 (AC-020-5): stan walidacji dla ostrzezenia - modul z szablonu nie ma raportu
+    assert.deepStrictEqual(b0.gate, { report: false, stale: false, readiness: null, blocking: [] });
     // prompt: domyslny, zapis do pliku modulu, reset
     let p = (await call(port, 'GET', '/api/build/prompt')).json();
     assert.strictEqual(p.custom, false);

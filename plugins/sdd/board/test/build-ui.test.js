@@ -8,7 +8,7 @@ const bd = require('../build.js');
 const info = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
 const text = h => h.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
 
-test('AC-BD5: mlotek w naglowku za dyskietka, przed zebatka; nie w demo', () => {
+test('AC-BD5 (AC-020-3): mlotek w naglowku za dyskietka, przed zebatka; nie w demo', () => {
   const h = ui.topbarHtml('panel', '', 'light');
   assert.match(h, /class="ic save"[\s\S]*?<\/button><button type="button" class="ic build"[^>]*aria-label="Buduj"[^>]*>[\s\S]*?<\/button><a class="ic cfg"/);
   assert.match(h, /class="ic build"[^>]*><svg[^>]*stroke="currentColor"/);
@@ -20,7 +20,7 @@ test('AC-BD5: branchFor w przegladarce = na serwerze (podglad galezi)', () => {
     assert.strictEqual(ui.branchFor(id, t), bd.branchFor(id, t), id + ' ' + t));
 });
 
-test('AC-BD5: buildPopHtml - wybor zadania, wlasny opis, podglad galezi; w trakcie Zatrzymaj; bez gita', () => {
+test('AC-BD5 (AC-020-1, AC-020-3): buildPopHtml - wybor zadania, wlasny opis, podglad galezi; w trakcie Zatrzymaj; bez gita', () => {
   const tasks = [{ id: 'R-001', title: 'Import <CSV>', status: 'zatwierdzone' }, { id: 'R-002', title: 'Raport', status: 'robocze' }];
   const idle = ui.buildPopHtml({ git: true, tasks, state: { status: 'idle' } }, '');
   assert.match(idle, /<select[^>]*id="bd-task"/);
@@ -60,7 +60,7 @@ test('AC-BD9 (AC-021-1, AC-021-3): /build - blokada z komenda, blad narzedzia sz
   assert.match(info, /\.bl-err\{[^}]*var\(--muted\)/);
 });
 
-test('AC-BD14: alreadyHtml - ostrzezenie o zrobionym wymaganiu i istniejacej galezi; okienko sprawdza i wysyla force', () => {
+test('AC-BD14 (AC-020-4): alreadyHtml - ostrzezenie o zrobionym wymaganiu i istniejacej galezi; okienko sprawdza i wysyla force', () => {
   const h = ui.alreadyHtml({ commits: [{ hash: 'fdcd855', subject: 'feat(dashboard): magazyn <R-021>', date: '2026-10-12T23:58:41+02:00' }], tag: 'v3.6.0', branch: 'main', branches: ['feature/r-021-stara'] }, 'R-021');
   const t = text(h);
   assert.match(t, /R-021 jest już na gałęzi main/);
@@ -79,4 +79,29 @@ test('AC-BD14: alreadyHtml - ostrzezenie o zrobionym wymaganiu i istniejacej gal
   assert.match(pop, /Buduj mimo to/);
   assert.match(pop, /force:\s*true/);
   assert.match(pop, /id="bd-warn"|#bd-warn/);
+});
+
+test('AC-BD28 (AC-020-5): gateReasons/gateHtml - ostrzezenie z powodem przed budowaniem, bez blokady', () => {
+  const ok = { report: true, stale: false, readiness: 100, blocking: [] };
+  const R = s => ({ task: { id: 'R-001', title: 'Import', status: s } });
+  assert.deepStrictEqual(ui.gateReasons(ok, R('zatwierdzone (właściciel procesu, 2026-11-17)')), [], 'PRD zamkniete - bez ostrzezenia');
+  const own = ui.gateReasons(ok, { title: 'popraw logowanie' });
+  assert.strictEqual(own.length, 1); assert.match(own[0], /własne zadanie[^]*poza PRD/i);
+  const nz = ui.gateReasons(ok, R('robocze'));
+  assert.strictEqual(nz.length, 1); assert.match(nz[0], /R-001 nie jest zatwierdzone[^]*robocze/);
+  assert.match(ui.gateReasons({ report: false, stale: false, readiness: null, blocking: [] }, R('zatwierdzone')).join(' '), /brak raportu walidacji/i);
+  assert.match(ui.gateReasons({ report: true, stale: true, readiness: 100, blocking: [] }, R('zatwierdzone')).join(' '), /nieaktualny/i);
+  assert.match(ui.gateReasons({ report: true, stale: false, readiness: 80, blocking: [] }, R('zatwierdzone')).join(' '), /gotowość 80%/i);
+  assert.match(ui.gateReasons({ report: true, stale: false, readiness: 100, blocking: ['Q-001', 'Q-007'] }, R('zatwierdzone')).join(' '), /pytania blokujące: Q-001, Q-007/i);
+  assert.strictEqual(ui.gateReasons(null, R('zatwierdzone')).length, 1, 'brak danych = brak raportu');
+  const h = ui.gateHtml(['brak raportu walidacji', 'a<b']);
+  assert.match(text(h), /brak raportu walidacji/);
+  assert.match(h, /a&lt;b/);
+  assert.match(text(h), /Możesz budować mimo to/);
+  assert.strictEqual(ui.gateHtml([]), '');
+  assert.match(ui.buildPopHtml({ git: true, tasks: [], state: { status: 'idle' } }, ''), /id="bd-gate"/);
+  const s = fs.readFileSync(path.join(__dirname, '..', 'ui.js'), 'utf8');
+  const pop = s.slice(s.indexOf('function buildPop('), s.indexOf('// Polaczenie na zywo (0.42.0'));
+  assert.match(pop, /gateReasons\(info\.gate/);
+  assert.match(pop, /#bd-gate/);
 });

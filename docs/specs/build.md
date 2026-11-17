@@ -192,10 +192,24 @@ Budowanie) mialo pokryta tylko liste zablokowanych komend.
   `state().report`; strona `/build` pokazuje go w ramce raportu (`#breport`, `SddUI.chatMd`) z hashem commita,
   tabela AC -> test i zalozeniami.
 
+## Zmiana 0.47.0 (2026-11-17: ostrzezenie przed budowaniem - wymagania sdd-kit-wymagania R-020 AC-020-5, D-016, D-017)
+Wlasciciel: drogi budowania poza PRD zostaja, ale z ostrzezeniem ("zostawic - tylko dodac ostrzezenie jezeli nie ma
+zamknietego PRD", D-016); prog budowania = gotowosc 100% bez otwartych pytan blokujacych, ponizej - ostrzezenie, nie
+blokada ("tak, zawsze 100%", D-017; BR-029). Okienko "Buduj" ostrzegalo tylko o wymaganiu juz zrobionym (AC-BD14).
+Nazwy testow realizujacych R-020: `AC-BDn (AC-020-m): ...` jak przy R-021.
+- **AC-BD27** (AC-020-5) `build.gateFrom(progress)` z `readProgress` modulu: `{ report, stale, readiness, blocking }` -
+  jest raport walidacji, raport nieaktualny (odcisk), gotowosc z raportu, ID otwartych pytan z etykieta blokujaca.
+  `GET /api/build` zwraca to jako `gate`.
+- **AC-BD28** (AC-020-5) `gateReasons(gate, wybor)` - powody ostrzezenia: wlasny opis (poza PRD), R niezatwierdzone
+  (ze statusem), brak raportu walidacji, raport nieaktualny, gotowosc ponizej 100%, otwarte pytania blokujace (ID).
+  Brak powodow -> pusta lista. `gateHtml(powody)` - ramka ostrzezenia z powodami i "Możesz budować mimo to".
+  Okienko "Buduj": ramka `#bd-gate` przy kazdej zmianie wyboru, przycisk "Buduj mimo to"; start bez blokady
+  (serwer nie odrzuca budowania z tych powodow).
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD26, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
-`board/test/build-ui.test.js` (AC-BD5).
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD27, prawdziwy git), `board/test/build-server.test.js` (AC-BD4, AC-BD27),
+`board/test/build-ui.test.js` (AC-BD5, AC-BD28).
