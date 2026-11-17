@@ -303,6 +303,8 @@ dialog .err,.missing .err{color:var(--hot-ink);font-size:12px;font-weight:600;mi
         var on=countOpen[st.key]===l[0];
         inner='<button type="button" class="cbtn" data-stage="'+st.key+'" data-count="'+l[0]+'" aria-expanded="'+on+'"><b>'+esc(v)+'</b> '+esc(l[1])+'</button>';
       }
+      // link do pelnego, najnowszego raportu przy procencie gotowosci (0.49.0, AC-78; R-017)
+      if(st.key==='validate'&&l[0]==='readiness'&&st.counts.last) inner+=' <a class="rlink" href="'+esc(BASE+'/report')+'" title="'+esc('04-validation/'+st.counts.last)+'">pełny raport</a>';
       return '<li'+(warn?' class="warn"':'')+'>'+inner+'</li>';
     }).join('');
   }

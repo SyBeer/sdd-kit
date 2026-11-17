@@ -190,3 +190,40 @@ test('AC-45: zajety port - czytelny komunikat i kod 1', async () => {
   assert.match(out, new RegExp('Port ' + port + ' jest zajęty'));
   assert.doesNotMatch(out, /node:events|EADDRINUSE/);
 });
+
+test('AC-79 (AC-017-2): GET /api/validation/report - najnowszy raport, bez raportu 404, demo odczyt, tylko Host lokalny', async () => {
+  const port = await freePort();
+  const root = userRoot();
+  const v = path.join(root, 'a', 'requirements', '04-validation');
+  const proc = spawnServer([path.join(root, 'a', 'requirements', '01-interview', 'board.json'), String(port)], root);
+  try {
+    await new Promise((res, rej) => { let o = ''; proc.stdout.on('data', c => { o += c; if (/Panel:/.test(o)) res(); }); proc.on('exit', c => rej(new Error('serwer ' + c + o))); });
+    assert.strictEqual((await call(port, 'GET', '/api/validation/report')).code, 404, 'bez raportu');
+    fs.writeFileSync(path.join(v, 'validate-2026-11-16.md'), '# stary\n');
+    fs.writeFileSync(path.join(v, 'validate-2026-11-17.md'), '# Raport walidacji\n\n## Blokery\nBrak.\n\n## Gotowosc\nGotowosc: 100%\n');
+    const r = await call(port, 'GET', '/api/validation/report');
+    assert.strictEqual(r.code, 200);
+    const j = JSON.parse(r.body);
+    assert.strictEqual(j.name, 'validate-2026-11-17.md');
+    assert.match(j.text, /## Blokery[\s\S]*Gotowosc: 100%/);
+    const d = await call(port, 'GET', '/demo/api/validation/report');
+    assert.strictEqual(d.code, 200);
+    assert.match(JSON.parse(d.body).name, /^validate-.*\.md$/);
+    assert.strictEqual((await call(port, 'GET', '/api/validation/report', undefined, { Host: 'evil.example:' + port })).code, 403);
+    const page = await call(port, 'GET', '/report');
+    assert.strictEqual(page.code, 200);
+    assert.match(page.body, /SddUI/);
+  } finally { proc.kill(); }
+});
+
+test('AC-78 (AC-017-1), AC-79 (AC-017-2): karta Validate - link "pełny raport"; strona /report z raportem', () => {
+  const p = fs.readFileSync(path.join(BOARD_DIR, 'progress.html'), 'utf8');
+  const c = p.slice(p.indexOf('function counts(st){'), p.indexOf('function counts(st){') + 1500);
+  assert.match(c, /readiness[^\n]*counts\.last[^\n]*\/report|\/report[^\n]*counts\.last/);
+  assert.match(c, /pełny raport/);
+  const i = fs.readFileSync(path.join(BOARD_DIR, 'info.html'), 'utf8');
+  assert.match(i, /\(module\|guide\|config\|build\|report\)/);
+  assert.match(i, /function renderReport\(/);
+  assert.match(i, /\/api\/validation\/report/);
+  assert.match(i, /04-validation\//);
+});

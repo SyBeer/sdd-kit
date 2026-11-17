@@ -612,3 +612,12 @@ dopisania hasel. Wykrycie pojecia wymaga czytania tekstu ze zrozumieniem - robi 
 - AC-77 (reczne): kopia fv-manager z raportem przebiegu 7 (WARN 9) - panel: Domain "w toku", 2 pojecia spoza slownika.
   Sprawdzone 2026-10-04 (stan z commita 5585fc1): Domain `active`, `missing: 2` (Pojazd nieaktywny, Stan licznika),
   krok `/sdd:domain`; biezacy fv-manager (przebieg 8, PASS) - Domain `done`.
+
+## Zmiana 0.49.0 (2026-11-17): link do pelnego raportu walidacji - wymagania sdd-kit-wymagania R-017 (D-009)
+Panel pokazywal tylko procent gotowosci; raport byl wylacznie w pliku. Wlasciciel: link do pelnego raportu w panelu,
+raport zostaje w pliku na dysku (D-009).
+- AC-78 (AC-017-1) Karta Validate na zakladce Panel: przy liczniku "% gotowości" link "pełny raport" do strony `/report`,
+  gdy w 04-validation/ jest co najmniej jeden raport `validate-*.md`.
+- AC-79 (AC-017-2) `GET /api/validation/report` - najnowszy raport (`{ name, text }`; bez raportu 404); tylko odczyt, takze
+  w demo, tylko Host lokalny. Strona `/report` (info.html) pokazuje caly raport (`SddUI.chatMd`): blokery, ostrzezenia,
+  gotowosc, z nazwa pliku `04-validation/<plik>`.

@@ -610,7 +610,17 @@ const server = http.createServer((req, res) => {
   if (ctx.demo === 'start' && (url === '/' || url === '/board')) return sendHtml(res, UI);
   if (url === '/' || url === '/progress') return sendHtml(res, PROGRESS_UI);
   if (url === '/board' || url === '/index.html') return sendHtml(res, UI);
-  if (url === '/module' || url === '/guide' || url === '/config' || url === '/build') return sendHtml(res, INFO_UI);
+  if (url === '/module' || url === '/guide' || url === '/config' || url === '/build' || url === '/report') return sendHtml(res, INFO_UI);
+  // Najnowszy raport walidacji do strony /report (0.49.0, docs/specs/progress-ui.md AC-79; R-017) - odczyt, takze demo
+  if (url === '/api/validation/report' && req.method === 'GET') {
+    if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
+    const dir = ctx.req ? path.join(ctx.req, '04-validation') : '';
+    let list = [];
+    try { list = fs.readdirSync(dir).filter(f => /^validate-.*\.md$/.test(f)).sort(); } catch (e) { list = []; }
+    if (!list.length) return json(res, 404, { error: 'Brak raportu walidacji w 04-validation/ - uruchom /sdd:validate.' });
+    const name = list[list.length - 1];
+    return json(res, 200, { name, text: fs.readFileSync(path.join(dir, name), 'utf8') });
+  }
 
   // Nowa wersja z GitHuba (0.27.0, docs/specs/update.md)
   if (url === '/api/update' && req.method === 'GET') {

@@ -295,7 +295,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
 </div>
 <script>
   // strona z adresu: /module, /guide, /config (z przedrostkiem /demo albo /demo/start)
-  var PAGE=(location.pathname.match(/\/(module|guide|config|build)\/?$/)||[])[1]||'guide';
+  var PAGE=(location.pathname.match(/\/(module|guide|config|build|report)\/?$/)||[])[1]||'guide';
   document.getElementById('topbar').setAttribute('data-page',PAGE);
   document.body.className=PAGE;
   // skok do karty z paska stanu (AC-U23): zapas na dole dokladnie taki, zeby karta stanela pod naglowkiem - nie wiecej,
@@ -370,6 +370,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
     if(PAGE==='module') return api('/api/module').then(renderModule).catch(fail);
     if(PAGE==='config'){ if(editing||copyTyping||bpTyping) return; return api('/api/config').then(renderConfig).catch(fail); }
     if(PAGE==='build') return renderBuild();
+    if(PAGE==='report') return api('/api/validation/report').then(renderReport).catch(fail);
   }
   function fail(e){ $('#app').innerHTML='<section class="box"><div class="bh"><h2>Nie udało się wczytać</h2></div><div class="bb"><p class="hint">'+esc(e.message)+'</p></div></section>'; }
 
@@ -639,6 +640,13 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px so
         api('/api/build/prompt',{method:'PUT',body:JSON.stringify({reset:true})}).then(function(p){ show(p); m.className='ok'; m.textContent='Przywrócono domyślny prompt.'; })
           .catch(function(err){ m.className='err'; m.textContent=err.message; }); }
     };
+  }
+  // ---------------------------------------------------------------- strona /report: pelny raport walidacji (0.49.0, AC-79; R-017)
+  function renderReport(r){
+    document.title='SDD: raport walidacji';
+    $('#app').innerHTML='<section class="box"><div class="bh"><h2>Raport walidacji</h2></div><div class="bb">'+
+      '<p class="hint">Plik <code>04-validation/'+esc(r.name)+'</code> – raport zostaje na dysku; nowy powstaje przy kolejnym /sdd:validate.</p>'+
+      '<div class="md">'+SddUI.chatMd(r.text||'')+'</div></div></section>';
   }
   // ---------------------------------------------------------------- strona /build: przebieg i raport (0.44.0, AC-BD5)
   var buildOn=false, blog=[], bstate={};

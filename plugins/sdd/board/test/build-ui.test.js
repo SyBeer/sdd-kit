@@ -43,7 +43,7 @@ test('AC-BD5 (AC-020-1, AC-020-3): buildPopHtml - wybor zadania, wlasny opis, po
 
 test('AC-BD5 (AC-022-1, AC-022-2): Konfiguracja - karta Budowanie z promptem; strona /build', () => {
   ['id="budowanie"', 'id="f-bprompt"', 'id="bpsave"', 'id="bpreset"', '/api/build/prompt', '{zadanie}', 'build-prompt.md'].forEach(t => assert.ok(info.includes(t), t));
-  assert.match(info, /\(module\|guide\|config\|build\)/);
+  assert.match(info, /\(module\|guide\|config\|build[|)]/);  // od 0.49.0 takze report (AC-79)
   assert.match(info, /function renderBuild\(/);
   assert.match(info, /SddUI\.liveSource\(BASE\+'\/build-events'/);
   assert.match(info, /\/api\/build\/stop/);
