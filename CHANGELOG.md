@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.49.0] - 2026-11-17
+- Panel: przy "% gotowości" w karcie Validate link "pełny raport" - strona `/report` z calym najnowszym raportem
+  walidacji (blokery, ostrzezenia, gotowosc); raport zostaje w pliku w 04-validation/ (docs/specs/progress-ui.md
+  AC-78..AC-79; wymagania sdd-kit-wymagania R-017, D-009).
+- Start: `sdd-board` uruchomiony poza folderem modulu nie otwiera juz modulu sam (dotad ostatni albo pierwszy z listy),
+  tylko pyta: "Załaduj ostatni: <nazwa>", otworz istniejacy albo "Nowy moduł…". Start w folderze modulu otwiera ten
+  modul jak dotad (docs/specs/progress-ui.md AC-80..AC-82, zastepuje AC-51; R-003, D-010).
+
 ## [0.48.1] - 2026-11-17
 Kolejne poprawki z przegladu pokrycia wymagan (sdd-kit-wymagania TRACEABILITY, luki K2):
 - Instalator (install.sh, install.ps1): blad sieci przy pobraniu kitu, rejestracji zrodla albo instalacji dodatku
