@@ -32,14 +32,14 @@ const DEFAULT_PROMPT = [
   'Workflow z CLAUDE.md (WORKFLOW.md) stosujesz w fazach A–C: spec już jest (czytasz go, nie piszesz od nowa), build z TDD, commit. Fazy D–G (build+SBOM, wydanie, tag, push, weryfikacja) nie należą do budowania - robi się je po przeglądzie, w zwykłej sesji z potwierdzeniem właściciela.',
   '',
   '0. Najpierw instrukcje budowania: sprawdź, czy workflow z CLAUDE.md i CLAUDE.md projektu mówią, jak przygotować środowisko i jakie są komendy testów i buildu tego projektu. Są - stosuj je. Brak, ale wynikają jednoznacznie z repo (np. pytest.ini, package.json) - buduj dalej, a w raporcie daj gotowy tekst do dopisania do CLAUDE.md projektu. Brak i nie da się ich ustalić - zatrzymaj się przed kodem, a w raporcie zaproponuj instrukcje i zadaj pytania. Sprawdź też git log --grep z numerem wymagania - jeśli jest już zrobione, zatrzymaj się przed kodem i opisz to w raporcie.',
-  '1. Spec: przeczytaj {wymagania}/03-spec/PRD.md (to wymaganie i jego kryteria AC), reguły BR i decyzje D, na które się powołuje, oraz CLAUDE.md projektu. Spec jest źródłem prawdy.',
+  '1. Spec: przeczytaj {wymagania}/03-spec/PRD.md (to wymaganie i jego kryteria AC), reguły BR i decyzje D, na które się powołuje, oraz CLAUDE.md projektu. Jest folder {wymagania}/03-spec/agent/ - przeczytaj też constitution.md oraz plan.md i tasks.md funkcji, do której należy to wymaganie (zależności, integracje, zachowanie przy awarii). Zadanie bez numeru R-xxx (własny opis): budujesz z opisu, a w raporcie oznaczasz pracę jako „poza PRD”. Spec jest źródłem prawdy.',
   '2. Środowisko: jeśli brakuje zależności (np. .venv, node_modules), przygotuj je komendami projektu.',
-  '3. TDD: najpierw testy wyprowadzone z kryteriów AC - uruchom, mają nie przechodzić. Potem kod, aż przejdą. Potem refaktor. Na końcu cały zestaw testów projektu na zielono. Nie mockuj prawdziwych API.',
+  '3. TDD: najpierw testy wyprowadzone z kryteriów AC - uruchom, mają nie przechodzić. Potem kod, aż przejdą. Potem refaktor. Na końcu cały zestaw testów projektu na zielono. Nie mockuj prawdziwych API. Nazwa każdego testu zawiera ID kryterium (AC-xxx-n). Wymaganie z integracją (SYSTEMS.md, plan.md funkcji): zachowanie z kolumny „Przy awarii” ma osobny test.',
   '4. Niejasność w specu: wybierz najostrożniejszy wariant, zapisz go jako założenie w raporcie i buduj dalej. Gdy bez decyzji biznesu nie da się iść dalej - zatrzymaj się i opisz to w raporcie.',
   '5. Kod rozjeżdża się ze specem: nie zmieniaj speca sam - opisz rozjazd w raporcie.',
   '6. Commity małe, format typ(zakres): opis, z numerem wymagania w treści. Wpis w CHANGELOG.md, jeśli projekt go ma. Nie pushujesz, nie zmieniasz gałęzi, nie scalasz.',
   '7. Komenda zablokowana: nie obchodź blokady - zapisz w raporcie, czego zabrakło.',
-  '8. Raport na koniec: co zrobione, commity, które AC pokrywa który test, wynik testów, przyjęte założenia, czego nie zrobiono i dlaczego.',
+  '8. Raport na koniec: co zrobione, commity, które AC pokrywa który test (po ID kryterium w nazwie testu), wynik testów, przyjęte założenia, czego nie zrobiono i dlaczego; zadanie bez R-xxx - oznaczenie „poza PRD”.',
 ].join('\n');
 
 // slug jak w kopii, ale bez limitu 40 znakow - skracany nizej do pelnego slowa

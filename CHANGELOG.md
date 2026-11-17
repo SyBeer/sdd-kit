@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.4] - 2026-11-17
+- Instrukcja budowania (domyslny prompt "Buduj") czyta pliki dla agenta i nazywa testy numerem kryterium
+  (docs/specs/build.md AC-BD16..AC-BD19; wymagania sdd-kit-tool R-021 AC-021-5..8, przeglad z wlascicielem procesu).
+  Krok 1: oprocz PRD.md takze `03-spec/agent/constitution.md` oraz `plan.md` i `tasks.md` funkcji wymagania
+  (zaleznosci, integracje, zachowanie przy awarii). Krok 3: nazwa kazdego testu zawiera ID kryterium (`AC-xxx-n`),
+  a zachowanie z kolumny "Przy awarii" integracji ma osobny test. Zadanie bez numeru `R-xxx` (wlasny opis) raport
+  oznacza jako "poza PRD".
+- Modul z wlasnym `requirements/build-prompt.md` tej zmiany nie dostaje - "Przywróć domyślny" w Konfiguracji ->
+  Budowanie wraca do nowej wersji.
+
 ## [0.46.3] - 2026-11-15
 - Terminal Claude nie reaguje na klawisze przy kilku kartach SDD-kit (docs/specs/claude-dock.md AC-T17..AC-T19;
   zgloszenie usera: "terminal w SDD-KIT nie dziala dobrze"). Przyczyna: kazda karta z otwartym oknem Claude trzymala

@@ -141,6 +141,28 @@ test('AC-BD15: DEFAULT_PROMPT - krok 0 sprawdza, czy wymaganie nie jest juz zrob
   assert.match(k0, /już zrobione/);
 });
 
+const step = n => bd.DEFAULT_PROMPT.split('\n').find(l => l.startsWith(n + '. ')) || '';
+
+test('AC-BD16: DEFAULT_PROMPT - krok 1 czyta pliki dla agenta (constitution, plan, tasks funkcji)', () => {
+  const k1 = step(1);
+  ['PRD.md', '03-spec/agent/', 'constitution.md', 'plan.md', 'tasks.md'].forEach(w => assert.ok(k1.includes(w), w));
+});
+
+test('AC-BD17: DEFAULT_PROMPT - nazwa testu zawiera ID kryterium, raport podaje przypisanie', () => {
+  assert.match(step(3), /nazwa[^\n]*testu[^\n]*AC-xxx-n/i);
+  assert.match(step(8), /AC[^\n]*test/);
+});
+
+test('AC-BD18: DEFAULT_PROMPT - zadanie bez R-xxx (wlasny opis) oznaczone w raporcie jako poza PRD', () => {
+  const p = bd.DEFAULT_PROMPT;
+  assert.match(p, /bez numeru R-xxx[^\n]*poza PRD/);
+  assert.match(step(8), /poza PRD/);
+});
+
+test('AC-BD19: DEFAULT_PROMPT - zachowanie przy awarii integracji ma osobny test', () => {
+  assert.match(step(3), /Przy awarii[^\n]*osobny test/);
+});
+
 const FAKE = `let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>{
 const out=o=>console.log(JSON.stringify(o));
 out({type:'system',subtype:'init',session_id:'fake'});

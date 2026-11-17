@@ -142,10 +142,24 @@ Wylapane i poprawione: commit `docs(requirements): … R-021` (sam spec) liczyl 
 poza `requirements/`; okienko ostrzegalo o galezi, ktora samo by budowalo (kontynuacja) - teraz jak serwer. Testowy
 sdd-board (8014): R-004 z commitem i tagiem v1.2.0 -> ostrzezenie i "Buduj mimo to"; R-001 -> bez ostrzezenia.
 
+## Zmiana 0.46.4 (2026-11-17: przeglad instrukcji budowania - wymagania sdd-kit-tool R-021, AC-021-5..8)
+Wlasciciel: poprawki w instrukcji domyslnej kitu, dla wszystkich modulow ("Domyślna w kicie"; sdd-kit-tool
+01-interview/session-2026-11-17.md). Prompt czytal tylko PRD.md - pomijal pliki dla agenta (zaleznosci, integracje,
+zachowanie przy awarii), nie nazywal testow numerem kryterium (przekazanie zaklada nazwe testu = AC-xxx-n) i nie mial
+sciezki dla wlasnego opisu (D-016 sdd-kit-tool: budowanie poza PRD zostaje, z ostrzezeniem).
+- **AC-BD16** (AC-021-5) Krok 1 promptu: oprocz PRD.md Claude czyta `03-spec/agent/constitution.md` oraz `plan.md`
+  i `tasks.md` funkcji, do ktorej nalezy wymaganie (jesli folder istnieje).
+- **AC-BD17** (AC-021-6) Krok 3 promptu: nazwa kazdego testu zawiera ID kryterium (`AC-xxx-n`); krok 8: raport podaje
+  przypisanie AC -> test.
+- **AC-BD18** (AC-021-7) Zadanie bez numeru `R-xxx` (wlasny opis): Claude buduje z opisu, a raport oznacza prace jako
+  "poza PRD".
+- **AC-BD19** (AC-021-8) Krok 3 promptu: wymaganie z integracja (SYSTEMS.md, plan.md funkcji) - zachowanie z kolumny
+  "Przy awarii" ma osobny test.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD19, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
 `board/test/build-ui.test.js` (AC-BD5).
