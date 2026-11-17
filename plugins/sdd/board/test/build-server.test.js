@@ -46,6 +46,7 @@ async function waitFor(fn, ms = 8000) {
 
 const FAKE = `let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>{
 const out=o=>console.log(JSON.stringify(o));
+if(process.env.FAKE_PID_FILE) require('fs').writeFileSync(process.env.FAKE_PID_FILE, String(process.pid));
 out({type:'system',subtype:'init',session_id:'fake'});
 out({type:'assistant',message:{content:[{type:'tool_use',name:'Bash',input:{command:'pytest'}}]}});
 const wait=/CZEKAJ/.test(s);
@@ -138,6 +139,42 @@ test('AC-BD4 (AC-020-1, AC-020-2, AC-020-3, AC-020-4, AC-021-4, AC-022-1, AC-022
     assert.strictEqual((await call(port, 'POST', '/demo/api/build/start', { title: 'x' })).code, 403);
     assert.strictEqual((await call(port, 'PUT', '/demo/api/build/prompt', { text: 'x' })).code, 403);
   } finally { proc.kill(); }
+});
+
+test('AC-BD29 (AC-037-3, AC-021-4): wyjscie serwera konczy trwajace budowanie, galaz i folder zostaja', { skip }, async () => {
+  const mod = path.join(TMP, 'app29');
+  fs.cpSync(TEMPLATES, path.join(mod, 'requirements'), { recursive: true });
+  g(TMP, 'init', '-q', '-b', 'main', mod);
+  g(mod, 'config', 'user.email', 'ala@firma.pl'); g(mod, 'config', 'user.name', 'Ala');
+  g(mod, 'add', '-A'); g(mod, 'commit', '-qm', 'start');
+  fs.writeFileSync(path.join(TMP, 'config29.json'), '{}');
+  const fake = path.join(TMP, 'fake29.js'); fs.writeFileSync(fake, FAKE);
+  const pidFile = path.join(TMP, 'fake29.pid');
+  const port = await freePort();
+  const proc = spawn(process.execPath, [path.join(BOARD_DIR, 'server.js'), path.join(mod, 'requirements', '01-interview', 'board.json'), String(port)],
+    { cwd: mod, env: Object.assign({}, ENV, { SDD_CONFIG: path.join(TMP, 'config29.json'), SDD_MODULES_ROOT: '', SDD_UPDATE_CHECK: '0', FAKE_PID_FILE: pidFile,
+      SDD_CLAUDE_CMD: process.execPath + ' ' + fake, CLAUDE_CONFIG_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sdd-ccfg-')) }) });
+  const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return false; } };
+  let pid = 0;
+  try {
+    await new Promise((res, rej) => {
+      let out = '';
+      proc.stdout.on('data', c => { out += c; if (/Panel:/.test(out)) res(); });
+      proc.on('exit', code => rej(new Error('serwer: ' + code + ' ' + out)));
+    });
+    assert.strictEqual((await call(port, 'PUT', '/api/build/prompt', { text: 'CZEKAJ {zadanie}' })).code, 200);
+    assert.strictEqual((await call(port, 'POST', '/api/build/start', { title: 'Dlugie budowanie' })).code, 200);
+    pid = await waitFor(() => fs.existsSync(pidFile) && +fs.readFileSync(pidFile, 'utf8'));
+    assert.ok(alive(pid), 'budowanie trwa');
+    const st = (await call(port, 'GET', '/api/build')).json().state;
+    proc.removeAllListeners('exit');
+    const exited = new Promise(r => proc.once('exit', r));
+    proc.kill('SIGTERM');
+    await exited;
+    await waitFor(() => !alive(pid), 3000);
+    assert.ok(fs.existsSync(st.folder), 'folder budowania zostaje');
+    assert.strictEqual(g(st.folder, 'symbolic-ref', '--short', 'HEAD'), st.branch, 'galaz zostaje');
+  } finally { proc.kill(); if (pid && alive(pid)) process.kill(pid, 'SIGKILL'); }
 });
 
 test.after(() => { fs.rmSync(TMP, { recursive: true, force: true }); });

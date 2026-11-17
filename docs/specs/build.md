@@ -212,10 +212,16 @@ panel zwraca instrukcje z kitu (AC-022-2) - tylko usuniecie pliku. Nazwy testow 
 - **AC-BD1** uzupelnione: `fillPrompt` wstawia tez `{wymagania}`.
 - **AC-BD4** uzupelnione: po resecie `GET /api/build/prompt` zwraca `DEFAULT_PROMPT` i `custom: false`.
 
+## Zmiana 0.48.0 (2026-11-17: restart serwera konczy budowanie - wymagania sdd-kit-wymagania R-037 AC-037-3, R-021 AC-021-4)
+Przeglad TRACEABILITY (luka K2): budowanie startuje jako osobna grupa procesow (`detached`), a wyjscie serwera
+zatrzymywalo tylko terminale i czaty. Po restarcie panel nie mial przebiegu, a agent mogl dalej pracowac w folderze.
+- **AC-BD29** (AC-037-3, AC-021-4) Wyjscie serwera (SIGTERM, SIGINT, exit) zatrzymuje kazde trwajace budowanie (cala grupe
+  procesow); folder, galaz i commity zostaja.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD27, prawdziwy git), `board/test/build-server.test.js` (AC-BD4, AC-BD27),
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD27, prawdziwy git), `board/test/build-server.test.js` (AC-BD4, AC-BD27, AC-BD29),
 `board/test/build-ui.test.js` (AC-BD5, AC-BD28).

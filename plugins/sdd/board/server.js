@@ -364,7 +364,10 @@ function termState() {
   return Object.assign(term.cur.state(), { others: termOthers(), available: av.ok, reason: av.reason, platform: process.platform,
     windowsBuild: process.platform === 'win32' ? terminal.windowsBuild(require('os').release()) : null, module: mod, canResume });
 }
-['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { terms.forEach(t => t.stop()); chats.forEach(c => c.stop()); if (sig !== 'exit') process.exit(0); }));
+// Wyjscie serwera konczy tez budowanie - osobna grupa procesow, Ctrl+C jej nie dosiega (0.48.0, AC-BD29; AC-037-3)
+['exit', 'SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { terms.forEach(t => t.stop()); chats.forEach(c => c.stop());
+  try { builds.forEach(b => b.stop()); } catch (e) { /* wyjscie przed definicja builds - nie ma budowan */ }
+  if (sig !== 'exit') process.exit(0); }));
 function termRoute(req, res, url) {
   if (!localHost(req)) return json(res, 403, { error: 'Tylko z panelu sdd-board.' });
   if (url === '/api/term' && req.method === 'GET') return json(res, 200, termState());
