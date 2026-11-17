@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.46.7] - 2026-11-17
+- Testy budowania nazwane oboma numerami: speca kitu i kryterium wymagan, np. `AC-BD16 (AC-021-5): ...`
+  (docs/specs/build.md, zmiana 0.46.7) - kazde AC-021-1..14 ma test z jego ID w nazwie, jak zaklada przekazanie
+  i AC-021-6.
+- Nowy test AC-BD26 (AC-021-3): raport agenta z commitami, przypisaniem AC -> test i przyjetymi zalozeniami trafia
+  w calosci do stanu budowania i na strone `/build`. Bez zmian w kodzie panelu.
+
 ## [0.46.6] - 2026-11-17
 - Instrukcja budowania: zasady pracy osoby budujacej zamiast prywatnego WORKFLOW.md i DESIGN.md przy interfejsie
   (docs/specs/build.md AC-BD24..AC-BD25; wymagania sdd-kit-wymagania R-021 AC-021-10..11, D-018). Naglowek

@@ -64,7 +64,7 @@ function events(port, until, ms = 10000) {
   });
 }
 
-test('AC-BD4: /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
+test('AC-BD4 (AC-021-4): /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
   const mod = path.join(TMP, 'app');
   fs.cpSync(TEMPLATES, path.join(mod, 'requirements'), { recursive: true });
   fs.writeFileSync(path.join(mod, 'requirements', '03-spec', 'PRD.md'), '# PRD\n\n## 5. Wymagania\n\n### R-001 Import CSV\nOpis: x\nStatus: zatwierdzone\n');

@@ -183,10 +183,19 @@ swoja"; sprzecznosc - "zatrzymaj i zapytaj z czego skorzystac". Przy interfejsie
 - **AC-BD25** (AC-021-11) Krok Spec: wymaganie dotyczy interfejsu i projekt ma `DESIGN.md` - Claude czyta go przed
   kodem UI i stosuje jego zasady; brak `DESIGN.md` - raport to odnotowuje.
 
+## Zmiana 0.46.7 (2026-11-17: sledzenie testow R-021 - TRACEABILITY sdd-kit-wymagania)
+Testy nazywaly sie tylko numerem speca kitu (AC-BD…), a przekazanie i AC-021-6 zakladaja nazwe testu = AC-xxx-n -
+powiazanie z R-021 dalo sie odczytac tylko z tego pliku. AC-021-3 (raport z commitami i zalozeniami na stronie
+Budowanie) mialo pokryta tylko liste zablokowanych komend.
+- **Nazwy testow**: test realizujacy kryterium wymagan ma w nazwie oba numery: `AC-BDn (AC-021-m): ...`.
+- **AC-BD26** (AC-021-3) Raport agenta z commitami, przypisaniem AC -> test i przyjetymi zalozeniami: caly tekst w
+  `state().report`; strona `/build` pokazuje go w ramce raportu (`#breport`, `SddUI.chatMd`) z hashem commita,
+  tabela AC -> test i zalozeniami.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD25, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD26, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
 `board/test/build-ui.test.js` (AC-BD5).

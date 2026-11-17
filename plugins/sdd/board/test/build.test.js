@@ -33,7 +33,7 @@ const PRD = '# PRD\n\n## 5. Wymagania\n\n### R-001 Wpisanie odczytu miesiąca\nO
   '### R-002 Import odczytów z CSV - cały plik albo nic\nOpis: y\nStatus: robocze\n\n### R-xxx <tytul>\nStatus: wzor\n\n' +
   '### R-003 Raport roczny\nOpis: z\nStatus: zatwierdzone\n';
 
-test('AC-BD1: branchFor, fillPrompt, DEFAULT_PROMPT, buildArgs, tasksFrom', () => {
+test('AC-BD1 (AC-021-1, AC-021-2): branchFor, fillPrompt, DEFAULT_PROMPT, buildArgs, tasksFrom', () => {
   assert.strictEqual(bd.branchFor('R-002', 'Import odczytów z CSV - cały plik albo nic'), 'feature/r-002-import-odczytow-z-csv-caly-plik-albo', 'najwyzej 50 znakow, cale slowa');
   assert.ok(bd.branchFor('R-9', 'x'.repeat(200)).length <= 50);
   assert.strictEqual(bd.branchFor('', 'Popraw ekran logowania'), 'feature/popraw-ekran-logowania');
@@ -147,27 +147,27 @@ const stepNo = re => { const l = bd.DEFAULT_PROMPT.split('\n').find(x => re.test
 const named = re => step(stepNo(re));
 const TDD = () => named(/^\d+\. TDD:/), REPORT = () => named(/^\d+\. Raport/);
 
-test('AC-BD16: DEFAULT_PROMPT - krok 1 czyta pliki dla agenta (constitution, plan, tasks funkcji)', () => {
+test('AC-BD16 (AC-021-5): DEFAULT_PROMPT - krok 1 czyta pliki dla agenta (constitution, plan, tasks funkcji)', () => {
   const k1 = step(1);
   ['PRD.md', '03-spec/agent/', 'constitution.md', 'plan.md', 'tasks.md'].forEach(w => assert.ok(k1.includes(w), w));
 });
 
-test('AC-BD17: DEFAULT_PROMPT - nazwa testu zawiera ID kryterium, raport podaje przypisanie', () => {
+test('AC-BD17 (AC-021-6): DEFAULT_PROMPT - nazwa testu zawiera ID kryterium, raport podaje przypisanie', () => {
   assert.match(TDD(), /nazwa[^\n]*testu[^\n]*AC-xxx-n/i);
   assert.match(REPORT(), /AC[^\n]*test/);
 });
 
-test('AC-BD18: DEFAULT_PROMPT - zadanie bez R-xxx (wlasny opis) oznaczone w raporcie jako poza PRD', () => {
+test('AC-BD18 (AC-021-7): DEFAULT_PROMPT - zadanie bez R-xxx (wlasny opis) oznaczone w raporcie jako poza PRD', () => {
   const p = bd.DEFAULT_PROMPT;
   assert.match(p, /bez numeru R-xxx[^\n]*poza PRD/);
   assert.match(REPORT(), /poza PRD/);
 });
 
-test('AC-BD19: DEFAULT_PROMPT - zachowanie przy awarii integracji ma osobny test', () => {
+test('AC-BD19 (AC-021-8): DEFAULT_PROMPT - zachowanie przy awarii integracji ma osobny test', () => {
   assert.match(TDD(), /Przy awarii[^\n]*osobny test/);
 });
 
-test('AC-BD20: DEFAULT_PROMPT - plan po specu, przed pierwszym testem; raport pokazuje plan', () => {
+test('AC-BD20 (AC-021-9): DEFAULT_PROMPT - plan po specu, przed pierwszym testem; raport pokazuje plan', () => {
   const nPlan = stepNo(/^\d+\. Plan:/), nSpec = stepNo(/^\d+\. Spec:/), nTdd = stepNo(/^\d+\. TDD:/);
   assert.ok(nPlan > nSpec && nPlan < nTdd, `plan (${nPlan}) miedzy specem (${nSpec}) a TDD (${nTdd})`);
   const k = step(nPlan);
@@ -175,19 +175,19 @@ test('AC-BD20: DEFAULT_PROMPT - plan po specu, przed pierwszym testem; raport po
   assert.match(REPORT(), /plan[^\n]*zmiany planu/i);
 });
 
-test('AC-BD21: DEFAULT_PROMPT - test przed kodem pada na warunku kryterium, nie na bledzie skladni/importu/srodowiska', () => {
+test('AC-BD21 (AC-021-12): DEFAULT_PROMPT - test przed kodem pada na warunku kryterium, nie na bledzie skladni/importu/srodowiska', () => {
   assert.match(TDD(), /pada[^\n]*niespełnionym warunku[^\n]*nie na błędzie składni, importu czy środowiska/);
 });
 
-test('AC-BD22: DEFAULT_PROMPT - raport pokazuje pierwsze uruchomienie testow: czerwone i powod', () => {
+test('AC-BD22 (AC-021-13): DEFAULT_PROMPT - raport pokazuje pierwsze uruchomienie testow: czerwone i powod', () => {
   assert.match(REPORT(), /pierwszego uruchomienia[^\n]*czerwon[^\n]*powód porażki/);
 });
 
-test('AC-BD23: DEFAULT_PROMPT - AC bez testu wypisane, wymaganie niezrobione', () => {
+test('AC-BD23 (AC-021-14): DEFAULT_PROMPT - AC bez testu wypisane, wymaganie niezrobione', () => {
   assert.match(REPORT(), /AC bez testu[^\n]*niezrobione/);
 });
 
-test('AC-BD24: DEFAULT_PROMPT - wlasne zasady pracy osoby budujacej, brak -> wbudowane, sprzecznosc -> stop', () => {
+test('AC-BD24 (AC-021-10): DEFAULT_PROMPT - wlasne zasady pracy osoby budujacej, brak -> wbudowane, sprzecznosc -> stop', () => {
   const p = bd.DEFAULT_PROMPT;
   const z = p.split('\n').find(l => /^Zasady pracy:/.test(l)) || '';
   assert.ok(z, 'naglowek "Zasady pracy:"');
@@ -197,7 +197,7 @@ test('AC-BD24: DEFAULT_PROMPT - wlasne zasady pracy osoby budujacej, brak -> wbu
   assert.match(REPORT(), /które zasady pracy zastosowa/);
 });
 
-test('AC-BD25: DEFAULT_PROMPT - wymaganie interfejsu: DESIGN.md przed kodem UI, brak -> w raporcie', () => {
+test('AC-BD25 (AC-021-11): DEFAULT_PROMPT - wymaganie interfejsu: DESIGN.md przed kodem UI, brak -> w raporcie', () => {
   assert.match(named(/^\d+\. Spec:/), /interfejs[^\n]*DESIGN\.md[^\n]*przed kodem UI[^\n]*stosuj[^\n]*brak DESIGN\.md/i);
   assert.match(REPORT(), /brak DESIGN\.md/);
 });
@@ -211,7 +211,7 @@ if(/CZEKAJ/.test(s)){ setInterval(()=>{},1000); return; }
 out({type:'assistant',message:{content:[{type:'text',text:'RAPORT: '+process.env.SDD_COPY+' '+s.trim().slice(0,20)}]}});
 out({type:'result',subtype:'success',session_id:'fake'});});`;
 
-test('AC-BD3: BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0', async () => {
+test('AC-BD3 (AC-021-3, AC-021-4): BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0', async () => {
   const fake = path.join(TMP, 'fake.js'); fs.writeFileSync(fake, FAKE);
   const s = new bd.BuildSession();
   const done = new Promise(r => s.once('exit', r));
@@ -234,6 +234,28 @@ test('AC-BD3: BuildSession - prompt na stdin, przebieg, raport, stop, SDD_COPY=0
   assert.strictEqual(s2.state().status, 'stopped');
 });
 
+const REPORT_TXT = 'Raport R-001\n\n## Commity\n- abc1234 feat(import): plik CSV cały albo nic (R-001)\n\n' +
+  '## Pokrycie\n| AC | test |\n|---|---|\n| AC-001-1 | test_AC_001_1_caly_plik |\n\n## Przyjęte założenia\n- pusty plik = błąd, nie sukces';
+const FAKE3 = `process.stdin.resume();process.stdin.on('end',()=>{const out=o=>console.log(JSON.stringify(o));
+out({type:'assistant',message:{content:[{type:'text',text:'pracuje'}]}});
+out({type:'assistant',message:{content:[{type:'text',text:${JSON.stringify(REPORT_TXT)}}]}});
+out({type:'result',subtype:'success'});});`;
+
+test('AC-BD26 (AC-021-3): raport z commitami, AC -> test i zalozeniami - caly w stanie i na stronie /build', async () => {
+  const fake = path.join(TMP, 'fake3.js'); fs.writeFileSync(fake, FAKE3);
+  const s = new bd.BuildSession();
+  const done = new Promise(r => s.once('exit', r));
+  s.start({ cwd: TMP, prompt: 'x', argv: [process.execPath, fake] });
+  await done;
+  assert.strictEqual(s.state().report, REPORT_TXT, 'caly raport, nie fragment');
+  const ui = require('../ui.js');
+  const h = ui.chatMd(s.state().report);
+  ['abc1234', 'feat(import)', '<table', 'AC-001-1', 'test_AC_001_1_caly_plik', 'Przyjęte założenia', 'pusty plik = błąd'].forEach(w =>
+    assert.ok(h.includes(w), w));
+  const info = fs.readFileSync(path.join(__dirname, '..', 'info.html'), 'utf8');
+  assert.match(info, /#breport[^\n]*\.bb[^\n]*SddUI\.chatMd\(s\.report\)|\$\('#breport'\)[^\n]*SddUI\.chatMd\(s\.report\)/);
+});
+
 // format jak w prawdziwym przebiegu fv-manager R-021 (stream-json Claude Code)
 const J = o => JSON.stringify(o);
 const USE = (id, name, input) => J({ type: 'assistant', message: { id: 'm' + id, content: [{ type: 'tool_use', id, name, input }] } });
@@ -241,7 +263,7 @@ const RES = (id, text) => J({ type: 'user', message: { content: [{ type: 'tool_r
 const DENY = 'Permission to use Bash has been denied because Claude Code is running in don\'t ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial';
 const CMD = 'ls src src/services tests templates && wc -l src/main.py && cat pytest.ini && ls -d .venv ../../fv-manager/.venv 2>/dev/null; head -60 CHANGELOG.md';
 
-test('AC-BD7: parseBuildEvent - blokada z komenda, blad narzedzia osobno', () => {
+test('AC-BD7 (AC-021-1): parseBuildEvent - blokada z komenda, blad narzedzia osobno', () => {
   const tools = new Map();
   assert.deepStrictEqual(bd.parseBuildEvent(USE('t1', 'Bash', { command: CMD }), tools), [{ kind: 'tool', name: 'Bash', target: CMD.slice(0, 120) }]);
   assert.deepStrictEqual(bd.parseBuildEvent(RES('t1', DENY), tools), [{ kind: 'denied', tool: 'Bash', command: CMD }]);
@@ -274,7 +296,7 @@ out({type:'assistant',message:{content:[{type:'text',text:'Testy czerwone.'}]}})
 out({type:'assistant',message:{content:[{type:'text',text:'Gotowe.'}]}});
 out({type:'result',subtype:'success'});});`;
 
-test('AC-BD8: BuildSession - tekst bez powtorzen, lista zablokowanych komend', async () => {
+test('AC-BD8 (AC-021-1): BuildSession - tekst bez powtorzen, lista zablokowanych komend', async () => {
   const fake = path.join(TMP, 'fake2.js'); fs.writeFileSync(fake, FAKE2);
   const s = new bd.BuildSession();
   const done = new Promise(r => s.once('exit', r));
