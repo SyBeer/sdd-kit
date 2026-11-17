@@ -85,8 +85,9 @@ Nie pokazuj diffa, diff jest w Git.
 ## 6. Kaskada wplywu
 
 Wyzwalacze kaskady - kazdy wymaga wypisania listy R, AC i innych A, ktore na danym
-elemencie stoja, i dopisania ich do sekcji "Do przegladu" w PRD. Robisz to od razu,
-nie na koniec:
+elemencie stoja, i dopisania ich do sekcji "Do przegladu" w PRD. Kazde dotkniete `R` dostaje tez
+`Status: do przegladu (<powod>, <data>)` - panel liczy wymagania do przegladu po statusie. Ponowne
+zatwierdzenie tylko za zgoda czlowieka. Robisz to od razu, nie na koniec:
 
 - zmiana statusu `A`,
 - nowa `D`,

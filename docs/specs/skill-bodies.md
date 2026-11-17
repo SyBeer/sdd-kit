@@ -37,3 +37,11 @@ w 0.46.1 (592 linie).
 - **AC-SB8** Suma linii szesciu SKILL.md <= 444 (25% mniej niz 592).
 - **AC-SB9** Testy, ktore sprawdzaja tresc skilli, czytaja SKILL.md razem z `references/` (`test/skill-text.js`) -
   dotychczasowe kryteria (AC-IS*, AC-RM8, AC-BC4, AC-B52, AC-SY*, AC-76 i in.) dalej przechodza.
+
+## Zmiana 0.48.0 (2026-11-17): kaskada ustawia status R - wymagania sdd-kit-wymagania R-014 AC-014-4
+Przeglad TRACEABILITY (luka K2): kaskada tylko dopisywala dotkniete R do sekcji 6 PRD, a pole `Status` zostawalo
+`zatwierdzone`. Panel liczy wymagania do przegladu po `Status` (progress.js), wiec pokazywal 0. AC-014-4: zalezne R
+maja status "do przegladu" i sa wypisane w sekcji 6.
+- **AC-SB10** (AC-014-4) Szablon CLAUDE.md (sekcja Kaskada wplywu), skille interview (zapis odpowiedzi), intake
+  (`podmywa model`) i spec (sekcja 6): kazde dotkniete R dostaje `Status: do przegladu (<powod>, <data>)` i trafia do
+  sekcji 6; ponowne zatwierdzenie - tylko za zgoda czlowieka.

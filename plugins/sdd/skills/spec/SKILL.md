@@ -30,7 +30,7 @@ Etap 4. PRD dla ludzi jest zrodlem prawdy. Pliki dla agenta sa z niego generowan
    blokujaca: NIE tworz, wpisz do sekcji 7 PRD. Element `zakwestionowane` to podstawa
    podmyta przez zrodlo wyzsze w hierarchii - wymaganie na niej byloby zbudowane na piasku.
 5. Sekcja 6 "Do przegladu": przepisz z tego, co wygenerowaly kaskady w interview i z intake
-   (elementy modelu oznaczone `zakwestionowane`).
+   (elementy modelu oznaczone `zakwestionowane`). Kazde R z sekcji 6 ma `Status: do przegladu (<powod>, <data>)`.
 6. Zrodlo kazdego R zapisuj z nazwa pliku z `INDEX.md`: `[Biz] <plik>[, sekcja/wiersz]`.
    Bez nazwy pliku kontrola pokrycia zrodel w /sdd:validate nie ma czego szukac.
 

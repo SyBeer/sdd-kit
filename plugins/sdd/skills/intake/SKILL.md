@@ -64,7 +64,7 @@ zrodlo przez model i dopasujesz je do tego, co juz wiesz, zamiast zauwazyc, ze n
 | `zamyka Q` | zrodlo odpowiada na pytanie otwarte lub zadane | zaproponuj `D-xxx` tylko przy zrodle `[Biz]`; zrodlo `[App]`/`[Dok]`/`[AI]` daje najwyzej nowe `A` `niepotwierdzone` (pytanie zostaje, z ta odpowiedzia do potwierdzenia) albo potwierdzenie `A` przez `[Biz]` (PYTASZ). Jedyna klasa, ktora daje postep, nie prace - szukaj jej swiadomie |
 | `uzupelnia` | model nie ma czegos, co zrodlo ma | "kandydat R" lub "kandydat BR" w uwagach `INDEX.md`. Nie dopisuj do modelu sam - to robi /sdd:domain |
 | `sprzeczne` | konflikt, nowe zrodlo NIE jest wyzej w hierarchii | wiersz `sprzeczne` w `QUESTIONS.md`, "Skad" = `porownanie z modelem` + element modelu + nowe zrodlo |
-| `podmywa model` | konflikt, nowe zrodlo JEST wyzej w hierarchii | element modelu dostaje status `zakwestionowane (Q-xxx)`, powstaje pytanie, ruszasz kaskade do sekcji 6 PRD. Nie poprawiasz modelu sam |
+| `podmywa model` | konflikt, nowe zrodlo JEST wyzej w hierarchii | element modelu dostaje status `zakwestionowane (Q-xxx)`, powstaje pytanie, ruszasz kaskade do sekcji 6 PRD (dotkniete R: `Status: do przegladu (<powod>, <data>)`). Nie poprawiasz modelu sam |
 
 4. **Trafienie w `D-xxx` to osobna, najciezsza klasa.** Biznes juz rozstrzygnal, wiec nie ma
    pytania "ktore prawdziwe". Zakladasz `Q` z "Skad" = `wniosek o ponowne otwarcie D-xxx`

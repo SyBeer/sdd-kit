@@ -117,8 +117,8 @@ Propozycja wpisu (INZ: 3-5 linijek; BIZ: parafraza, pelny wpis tylko na prosbe):
 - powod: jesli nie padl, zaproponuj go jednym zdaniem do potwierdzenia
 
 Powod niepotwierdzony wpisz jako `[AI] wniosek prowadzacego, niepotwierdzony - ...` (regula 2 wroci z nim jako pytanie).
-Zapis: wpis do DECISIONS/ASSUMPTIONS, status Q -> `odpowiedziane`, wypelnij "Zamkniete przez", dopisz dotkniete R
-do sekcji "Do przegladu" w PRD, linia w CHANGELOG.
+Zapis: wpis do DECISIONS/ASSUMPTIONS, status Q -> `odpowiedziane`, wypelnij "Zamkniete przez", dotkniete R:
+`Status: do przegladu (<powod>, <data>)` i wpis w sekcji "Do przegladu" w PRD, linia w CHANGELOG.
 
 Jesli odpowiedz jest niejasna lub otwiera nowe pytanie, dodaj nowe Q z "Skad" = odpowiedz na Q-xxx. To normalne.
 

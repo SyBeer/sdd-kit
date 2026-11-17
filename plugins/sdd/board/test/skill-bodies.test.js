@@ -80,3 +80,12 @@ test('AC-SB8: szesc SKILL.md razem najwyzej 444 linie (25% mniej niz 592)', () =
     .reduce((a, s) => a + body(s).split('\n').length, 0);
   assert.ok(n <= 444, 'linii: ' + n);
 });
+
+test('AC-SB10 (AC-014-4): kaskada ustawia Status R "do przegladu" i wpisuje R do sekcji 6', () => {
+  const { skillText } = require('./skill-text');
+  const tpl = fs.readFileSync(path.join(__dirname, '..', '..', 'templates', 'CLAUDE.md'), 'utf8');
+  const six = tpl.slice(tpl.indexOf('## 6. Kaskada wplywu'), tpl.indexOf('## 6a.'));
+  const re = /Status: do przegladu \(<powod>, <data>\)/;
+  assert.match(six, re, 'szablon CLAUDE.md');
+  for (const s of ['interview', 'intake', 'spec']) assert.match(skillText(s), re, s);
+});
