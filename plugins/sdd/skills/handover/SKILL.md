@@ -15,7 +15,8 @@ Etap 6. Piszesz sam. Bramka: ostatni raport validate bez BLOCK; jesli sa, odmow 
    przy awarii idzie jako osobne kryterium w zadaniu (z kolumny `Przy awarii`, a jesli R ma takie AC - to AC).
 3. Backlog:
    - `file`: `04-validation/backlog-YYYY-MM-DD.md`
-   - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). ID zadania wpisz z powrotem do tabeli.
+   - `linear` / `jira`: uzyj dostepnego narzedzia MCP. Przed utworzeniem zadan pokaz liste i zapytaj o zgode (to zapis do systemu zewnetrznego). Zakladaj po jednym; ID kazdego wpisz od razu do tabeli zadan i `TRACEABILITY.md`.
+     System nie odpowiada albo zwraca blad: zatrzymaj sie bez ponawiania w petli, numery juz zalozonych zostaja w tabeli; pokaz blad i liste niezalozonych.
    - `redmine`: REST API przez skrypt kitu `node "${CLAUDE_PLUGIN_ROOT}/board/redmine.js"`. Przeczytaj
      `references/redmine.md` (konfiguracja, klucz API - czyta go tylko skrypt, plik zadan, `check` -> `push --dry-run` -> `push`)
      i postepuj wg niego.

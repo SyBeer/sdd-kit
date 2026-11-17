@@ -45,3 +45,11 @@ maja status "do przegladu" i sa wypisane w sekcji 6.
 - **AC-SB10** (AC-014-4) Szablon CLAUDE.md (sekcja Kaskada wplywu), skille interview (zapis odpowiedzi), intake
   (`podmywa model`) i spec (sekcja 6): kazde dotkniete R dostaje `Status: do przegladu (<powod>, <data>)` i trafia do
   sekcji 6; ponowne zatwierdzenie - tylko za zgoda czlowieka.
+
+## Zmiana 0.48.1 (2026-11-17): awaria Linear/Jira w trakcie przekazania - wymagania sdd-kit-wymagania R-036 AC-036-2
+Przeglad TRACEABILITY (luka K2): skill handover dla Linear/Jira mial jedna linie (MCP, zgoda) bez instrukcji na awarie
+w trakcie - dla Redmine taka jest (references/redmine.md, krok 5). AC-036-2: system nie odpowiada w trakcie -> kit staje,
+numery juz zalozonych zadan sa w tabeli sledzenia. (S-007 dzis nieuzywany - [Biz] Q-033.)
+- **AC-SB11** (AC-036-2) Skill handover, `linear` / `jira`: zadania po jednym, numer kazdego od razu do tabeli zadan
+  i `TRACEABILITY.md`; blad albo brak odpowiedzi -> stop (bez ponawiania w petli), numery juz zalozonych zostaja
+  w tabeli, pokaz blad i liste niezalozonych.

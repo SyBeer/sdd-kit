@@ -89,3 +89,14 @@ test('AC-SB10 (AC-014-4): kaskada ustawia Status R "do przegladu" i wpisuje R do
   assert.match(six, re, 'szablon CLAUDE.md');
   for (const s of ['interview', 'intake', 'spec']) assert.match(skillText(s), re, s);
 });
+
+test('AC-SB11 (AC-036-2): handover Linear/Jira - po jednym, numery od razu w TRACEABILITY, awaria -> stop', () => {
+  const { skillText } = require('./skill-text');
+  const k = skillText('handover');
+  const l = k.split('\n').filter(x => /`linear` \/ `jira`/.test(x)).join(' ') + ' ' + k.slice(k.indexOf('`linear` / `jira`'), k.indexOf('`redmine`: REST API'));
+  assert.match(l, /po jednym/i);
+  assert.match(l, /od razu[^.]*TRACEABILITY\.md/);
+  assert.match(l, /nie odpowiada[^.]*zatrzymaj/i);
+  assert.match(l, /bez ponawiania/i);
+  assert.match(l, /niezalozonych/i);
+});
