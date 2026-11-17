@@ -37,6 +37,21 @@ function bare() {
 }
 const treeFiles = (dir, ref) => g(dir, 'ls-tree', '-r', '--name-only', ref).split('\n').filter(Boolean).sort();
 
+test('AC-BC6 (AC-025-2): repo-copy.js version - wiersz polecen zapisuje wersje, blad -> kod 1', () => {
+  const { dir, mod } = repo();
+  const cli = a => spawnSync(process.execPath, [path.join(__dirname, '..', 'repo-copy.js')].concat(a), { encoding: 'utf8', env: process.env });
+  const r = cli(['version', mod, 'przed przywróceniem tablicy 10:15']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  const j = JSON.parse(r.stdout);
+  assert.strictEqual(j.ok, true);
+  assert.match(j.tag, /^sdd-wersja\/.+-przed-przywroceniem-tablicy-10-15$/);
+  assert.ok(g(dir, 'tag', '-l', 'sdd-wersja/*').includes(j.tag), 'wersja w repo');
+  const bad = cli(['version', path.join(TMP, 'nie-git'), 'x']);
+  assert.strictEqual(bad.status, 1);
+  assert.strictEqual(JSON.parse(bad.stdout).ok, false);
+  assert.strictEqual(cli(['version', mod]).status, 1, 'bez nazwy - blad');
+});
+
 test('AC-RC1: repoState - korzen, sciezka, login, komputer, galaz kopii; bez gita git:false', async () => {
   const { dir, mod } = repo({ sub: 'moduly/Faktury Łódź' });
   g(dir, 'remote', 'add', 'origin', 'https://gitlab.example/x.git');

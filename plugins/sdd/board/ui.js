@@ -223,7 +223,7 @@
     return [
       { id: 'sync', label: 'Przenieś karteczki do plików [sync]', cmd: '/sdd:board sync', title: 'Odpowiedzi i karteczki z tablicy trafiają do pytań, decyzji, założeń i reguł w plikach wymagań. Claude pyta przed zapisem.' },
       { id: 'tidy', label: 'Uporządkuj tablicę [tidy]', cmd: '/sdd:board tidy', title: 'Duplikaty, karteczki w złym procesie albo kolumnie, dziury, zamknięte pytania. Claude najpierw pokazuje propozycję, zmienia po Twojej zgodzie.' },
-      { id: 'rebuild', label: 'Odtwórz tablicę z plików [rebuild]', cmd: '/sdd:board rebuild', title: 'Układa tablicę od nowa z plików wymagań. Panel najpierw zapisuje wersję, Claude pokazuje, co zniknie, i pyta.' },
+      { id: 'rebuild', label: 'Odtwórz tablicę z plików [rebuild]', cmd: '/sdd:board rebuild', title: 'Układa tablicę od nowa z plików wymagań. Claude pokazuje, co zniknie, i pyta; po „tak” najpierw zapisuje wersję.' },
       { id: 'processes', label: 'Procesy z działającej aplikacji [processes]', cmd: '/sdd:board processes', title: 'Rozpisuje na tablicy procesy z kodu działającej aplikacji – punkt wyjścia do warsztatu „jak to działa dziś”.' },
     ];
   }

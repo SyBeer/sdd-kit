@@ -31,8 +31,19 @@ test('AC-BC2: Tablica - lista po prawej za PDF, ukryta w demo i PDF, wybor -> cl
   assert.match(h, /SddUI\.boardCmds\(\)/);
   assert.match(h, /SddUI\.claudeAsk\(/);
   assert.match(h, /PDF_MODE[^\n]*claudecmd|claudecmd[^\n]*PDF_MODE/);
-  assert.match(h, /przed odtworzeniem tablicy/);
-  assert.match(h, /\/api\/copy\/version/);
+  // AC-BC6: wersje przed odtworzeniem zapisuje skill (jedno miejsce dla paska i czatu) - panel tylko wysyla polecenie
+  const blk = h.slice(h.indexOf("var sel=$('#claudecmd')"), h.indexOf('function pdfLayout('));
+  assert.ok(blk.length > 50, 'blok #claudecmd');
+  assert.doesNotMatch(blk, /\/api\/copy\/version/);
+});
+
+test('AC-BC6 (AC-025-2): skill rebuild - wersja "przed przywróceniem tablicy" przed nadpisaniem, blad -> nie nadpisuje', () => {
+  const k = skillText('board');
+  const t = k.slice(k.indexOf('## Odtworzenie tablicy z plikow'), k.indexOf('## Rzadsze polecenia'));
+  assert.match(t, /repo-copy\.js" version/);
+  assert.match(t, /przed przywróceniem tablicy/);
+  assert.match(t, /nie nadpisuj/i);
+  assert.ok(t.indexOf('repo-copy.js') > t.indexOf('"tak"'), 'wersja po zgodzie, tuz przed nadpisaniem');
 });
 
 test('AC-BC3: claudeAsk - widok czat, tekst zaznaczony w polu, start gdy nie dziala, bez okna false', () => {

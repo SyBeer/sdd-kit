@@ -983,20 +983,14 @@ html.printing{padding-right:0!important}
   // strona = cala tablica i okno drukowania; okno z praca zostaje nietkniete (AC-BP3)
   var PDF_MODE=/[?&]pdf=1(&|$)/.test(location.search), printed=false;
   // Polecenia dla Claude (AC-BC2): lista po prawej stronie paska; wybor -> polecenie w oknie Claude (Enter wysyla).
-  // Odtworzenie tablicy z plikow - najpierw wersja, zeby dalo sie wrocic.
+  // Odtworzenie tablicy: wersje "przed przywróceniem tablicy" zapisuje skill po "tak", tuz przed nadpisaniem (AC-BC6).
   (function(){
     var sel=$('#claudecmd'); if(!sel) return; if(PDF_MODE){ sel.remove(); return; }
     SddUI.boardCmds().forEach(function(c){ var o=document.createElement('option'); o.value=c.id; o.textContent=c.label; o.title=c.title; sel.appendChild(o); });
     sel.onchange=function(){
       var c=SddUI.boardCmds().filter(function(x){ return x.id===sel.value; })[0]; sel.value=''; sel.blur(); if(!c) return;
       var go=function(){ if(!SddUI.claudeAsk(c.cmd)) say('Okno Claude jest niedostępne – wpisz w Claude Code: '+c.cmd); };
-      if(c.id!=='rebuild'){ go(); return; }
-      var d=new Date(), hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-      fetch(BASE+'/api/copy/version',{method:'POST',headers:{'X-SDD':'1','Content-Type':'application/json'},body:JSON.stringify({name:'przed odtworzeniem tablicy '+hm})})
-        .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){
-          say(r.ok?'Zapisano wersję „przed odtworzeniem tablicy '+hm+'” – wrócisz do niej w Konfiguracji.':'Nie zapisano wersji przed odtworzeniem: '+(j.error||r.status)+'.'); }); })
-        .catch(function(){ say('Nie zapisano wersji przed odtworzeniem tablicy.'); })
-        .then(go);
+      go();
     };
   })();
   function pdfLayout(){

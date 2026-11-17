@@ -382,3 +382,16 @@ function createCopier(dir, o = {}) {
 
 module.exports = { MAX_BYTES, gitEnv, slug, repoState, makeCopy, pushCopy, copyStatus, makeVersion, listVersions,
   copyMode, copyOnce, createCopier, versionDiff, restoreVersion, git, tipOf };
+
+// Wiersz polecen (0.48.0, docs/specs/board-commands.md AC-BC6): wersja przed odtworzeniem tablicy z czatu i z panelu.
+// node repo-copy.js version <folder modulu> "<nazwa>" -> JSON { ok, tag, sent, error }; blad -> kod 1
+if (require.main === module) {
+  const [cmd, dir, name] = process.argv.slice(2);
+  const out = r => { console.log(JSON.stringify(r)); process.exitCode = r.ok ? 0 : 1; };
+  if (cmd !== 'version' || !dir || !name) out({ ok: false, error: 'Użycie: node repo-copy.js version <folder modułu> "<nazwa wersji>"' });
+  else {
+    let yaml = '';
+    try { yaml = fs.readFileSync(path.join(dir, 'requirements', 'SDD.yaml'), 'utf8'); } catch (e) { /* brak - tryb local */ }
+    makeVersion(path.resolve(dir), name, { push: copyMode(yaml) === 'remote' }).then(out, e => out({ ok: false, error: String(e && e.message || e) }));
+  }
+}

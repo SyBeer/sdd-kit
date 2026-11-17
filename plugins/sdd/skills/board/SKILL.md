@@ -78,8 +78,10 @@ Zawsze czytaj aktualny `board.json` tuz przed edycja i nie przywracaj starych na
 Zbuduj `board.json` od zera z ACTORS, ENTITIES, RULES, QUESTIONS. Uzywaj, gdy pliki sa dalej niz tablica.
 Zanim nadpiszesz: policz i pokaz, co zniknie - karteczki tylko na tablicy (bez `synced`, zwlaszcza `by: "człowiek"`),
 odpowiedzi `answer` jeszcze nie przeniesione do plikow, procesy usera. 3-5 linijek, zaproponuj najpierw
-`/sdd:board sync`, jesli cos czeka na zapis. Nadpisujesz dopiero po "tak" (panel zapisuje wersje "przed odtworzeniem
-tablicy" sam, gdy polecenie przyszlo z paska Tablicy).
+`/sdd:board sync`, jesli cos czeka na zapis. Nadpisujesz dopiero po "tak". Po "tak", tuz przed nadpisaniem, zapisz
+obecny stan jako wersje: `node "${CLAUDE_PLUGIN_ROOT}/board/repo-copy.js" version . "przed przywróceniem tablicy HH:MM"`
+(folder modulu, biezaca godzina). Wynik `"ok": false` albo kod 1 - nie nadpisuj `board.json`, powiedz dlaczego
+(pole `error`) i ze bez wersji nie da sie wrocic. Wersja wychodzi tylko stad - z paska Tablicy i z czatu tak samo.
 Pytania: kazde otwarte, zadane i sprzeczne Q staje sie karteczka `hot` (`ref` = Q-xxx, tresc = pytanie,
 `file` = `01-interview/QUESTIONS.md`, `synced` = teraz). Odpowiedziane i zaparkowane - nie.
 

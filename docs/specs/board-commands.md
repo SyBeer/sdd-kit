@@ -71,4 +71,14 @@ Metryka: polecenia tablicy uruchamiane z listy, bez wpisywania i bez kopiowania.
 Wysylanie bez Enter, polecenia spoza `/sdd:board`, wlasne polecenia usera w liscie.
 
 ## Testy (TDD, przed kodem)
-`board/test/board-commands.test.js` (AC-BC1..BC4).
+`board/test/board-commands.test.js` (AC-BC1..BC4, AC-BC6).
+
+## Zmiana 0.48.0 (2026-11-17): wersja przed odtworzeniem tablicy - wymagania sdd-kit-wymagania R-025 AC-025-2
+Przeglad TRACEABILITY (luka K2): panel zapisywal wersje przed `rebuild`, ale odtwarzanie ruszalo takze po bledzie zapisu
+(`.catch(...).then(go)`), a `/sdd:board rebuild` wpisane w czacie nie zapisywalo wersji wcale. AC-025-2: obecny stan
+najpierw zapisuje sie jako wersja "przed przywróceniem ...".
+- **AC-BC6** (AC-025-2) `repo-copy.js version <folder modulu> "<nazwa>"` (wiersz polecen): zapis wersji jak
+  "Zapisz wersję" (wysylka przy `copy: remote`), wynik JSON, blad -> kod 1. Skill board `rebuild`: po "tak", przed
+  nadpisaniem `board.json`, zapisuje wersje "przed przywróceniem tablicy HH:MM"; blad zapisu -> nie nadpisuje i mowi
+  dlaczego. Jedno miejsce dla paska Tablicy i czatu - panel juz nie zapisuje wersji sam (AC-BC2 zmienione: wybor
+  "Odtwórz" wysyla polecenie jak inne).
