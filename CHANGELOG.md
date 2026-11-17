@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.6] - 2026-11-17
+- Instrukcja budowania: zasady pracy osoby budujacej zamiast prywatnego WORKFLOW.md i DESIGN.md przy interfejsie
+  (docs/specs/build.md AC-BD24..AC-BD25; wymagania sdd-kit-wymagania R-021 AC-021-10..11, D-018). Naglowek
+  "Zasady pracy": wlasne zasady osoby uruchamiajacej (CLAUDE.md lub workflow w jej konfiguracji) - stosowane w fazach
+  A–C; brak - zasady wbudowane (spec przed kodem, TDD, format commitow, bez push); sprzecznosc - stop przed kodem
+  i pytanie w raporcie. Raport podaje, ktore zasady zastosowano. Wymaganie interfejsu: DESIGN.md czytany przed kodem
+  UI, brak - odnotowany w raporcie.
+- Modul z wlasnym `requirements/build-prompt.md` tej zmiany nie dostaje - "Przywróć domyślny" w Konfiguracji ->
+  Budowanie wraca do nowej wersji.
+
 ## [0.46.5] - 2026-11-17
 - Instrukcja budowania (domyslny prompt "Buduj"): plan przed kodem, czerwony test z wlasciwego powodu, dowod "red"
   i pokrycie AC w raporcie (docs/specs/build.md AC-BD20..AC-BD23; wymagania sdd-kit-wymagania R-021 AC-021-9,

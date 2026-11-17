@@ -187,6 +187,21 @@ test('AC-BD23: DEFAULT_PROMPT - AC bez testu wypisane, wymaganie niezrobione', (
   assert.match(REPORT(), /AC bez testu[^\n]*niezrobione/);
 });
 
+test('AC-BD24: DEFAULT_PROMPT - wlasne zasady pracy osoby budujacej, brak -> wbudowane, sprzecznosc -> stop', () => {
+  const p = bd.DEFAULT_PROMPT;
+  const z = p.split('\n').find(l => /^Zasady pracy:/.test(l)) || '';
+  assert.ok(z, 'naglowek "Zasady pracy:"');
+  ['własne zasady pracy', 'CLAUDE.md', 'fazach A–C', 'Brak', 'wbudowane', 'spec przed kodem', 'TDD', 'typ(zakres): opis',
+    'zatrzymaj się przed kodem', 'sprzeczność', 'z których zasad skorzystać'].forEach(w => assert.ok(z.includes(w), w));
+  assert.doesNotMatch(p, /WORKFLOW\.md/, 'bez prywatnego pliku jednej osoby');
+  assert.match(REPORT(), /które zasady pracy zastosowa/);
+});
+
+test('AC-BD25: DEFAULT_PROMPT - wymaganie interfejsu: DESIGN.md przed kodem UI, brak -> w raporcie', () => {
+  assert.match(named(/^\d+\. Spec:/), /interfejs[^\n]*DESIGN\.md[^\n]*przed kodem UI[^\n]*stosuj[^\n]*brak DESIGN\.md/i);
+  assert.match(REPORT(), /brak DESIGN\.md/);
+});
+
 const FAKE = `let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>{
 const out=o=>console.log(JSON.stringify(o));
 out({type:'system',subtype:'init',session_id:'fake'});

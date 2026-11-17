@@ -170,10 +170,23 @@ AC-021-10 (zasady pracy osoby budujacej) i AC-021-11 (DESIGN.md) - osobna zmiana
 - **AC-BD23** (AC-021-14) Raport: AC budowanego wymagania bez testu z jego ID - wypisane, a wymaganie oznaczone jako
   niezrobione.
 
+## Zmiana 0.46.6 (2026-11-17: zasady pracy i DESIGN.md - wymagania sdd-kit-wymagania R-021, AC-021-10..11, D-018)
+Prompt odwolywal sie do "Workflow z CLAUDE.md (WORKFLOW.md)" - prywatnego pliku jednej osoby; u innych osob z zespolu
+wskazywal na plik, ktorego nie ma. Wlasciciel (D-018): "sprawdz czy jest prywatna konfiguracja, jak nie ma zastosuj
+swoja"; sprzecznosc - "zatrzymaj i zapytaj z czego skorzystac". Przy interfejsie prompt pomijal DESIGN.md.
+- **AC-BD24** (AC-021-10) Naglowek promptu "Zasady pracy": Claude sprawdza, czy osoba uruchamiajaca budowanie ma
+  wlasne zasady pracy (CLAUDE.md lub workflow w jej konfiguracji). Sa - stosuje je w fazach A–C (D–G bez zmian, jak
+  AC-BD10). Brak - stosuje zasady wbudowane w prompt (spec przed kodem, TDD, commity `typ(zakres): opis`, bez push,
+  zmiany galezi i scalania). Wlasne zasady przecza promptowi - zatrzymuje sie przed kodem, raport opisuje sprzecznosc
+  i pyta, z ktorych zasad skorzystac. Raport zawsze podaje, ktore zasady zastosowal. Prompt nie nazywa prywatnego
+  pliku (`WORKFLOW.md`).
+- **AC-BD25** (AC-021-11) Krok Spec: wymaganie dotyczy interfejsu i projekt ma `DESIGN.md` - Claude czyta go przed
+  kodem UI i stosuje jego zasady; brak `DESIGN.md` - raport to odnotowuje.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.
 
 ## Testy (TDD, przed kodem)
-`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD23, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
+`board/test/build.test.js` (AC-BD1..BD3, AC-BD10..BD12, AC-BD15..BD25, prawdziwy git), `board/test/build-server.test.js` (AC-BD4),
 `board/test/build-ui.test.js` (AC-BD5).
