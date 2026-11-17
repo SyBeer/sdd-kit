@@ -375,6 +375,19 @@
     if (s.length > 42) s = s.slice(0, 43).replace(/-[^-]*$/, '') || s.slice(0, 42);
     return 'feature/' + (s || 'zadanie');
   }
+  // Start bez modulu (0.49.0, AC-80; R-003, D-010): zaladowac ostatni, otworzyc istniejacy czy zaczac nowy.
+  // p: { lastModule: {name, dir} | null, modules: [{name, dir, external}] }; klik w [data-dir] -> /api/modules/select
+  function startChoiceHtml(p) {
+    p = p || {};
+    const last = p.lastModule, mods = p.modules || [];
+    return '<div class="missing"><h2>Który moduł otworzyć?</h2>' +
+      (last ? '<div class="row"><button class="b p" type="button" data-dir="' + esc(last.dir) + '">Załaduj ostatni: ' + esc(last.name) + '</button></div>' : '') +
+      '<p>Otwórz istniejący:</p><ul class="startmods">' + mods.map(function (m) {
+        return '<li><button class="b" type="button" data-dir="' + esc(m.dir) + '">' + esc(m.name) + '</button>' +
+          (m.external ? ' <span class="muted">poza katalogiem</span>' : '') + '</li>';
+      }).join('') + '</ul>' +
+      '<div class="row"><button class="b" type="button" id="newmod2">Nowy moduł…</button><button class="b" type="button" id="addproj2">Dodaj istniejący projekt…</button></div></div>';
+  }
   // Wynik sprawdzenia projektu Redmine w Konfiguracji (0.48.1, AC-RM25; AC-033-2): projekt, typy zadan, pola, statusy
   function redmineCheckHtml(r) {
     r = r || {};
@@ -677,7 +690,7 @@
     (conn ? conn.parentNode : live).insertAdjacentHTML('beforeend', ' ' + x.html);
   }
 
-  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml, gateReasons, gateHtml, redmineCheckHtml };
+  const api = { inputQueue, topbarHtml, pickTheme, base, tabs, cfgHref, modMenu, cardOpen, countList, metaHtml, tagClass, ABBR, abbr, marks, versionBadge, dockWidth, termOptions, termKey, slug, tabTitle, KEY, chatMd, replyHint, toolSummary, asksTime, asksContinue, parseMinutes, clockText, clockState, copyLive, showCopy, savePopHtml, saveResult, liveSource, diffHtml, restoreAsk, summaryHtml, boardCmds, claudeAsk, branchFor, buildPopHtml, alreadyHtml, gateReasons, gateHtml, redmineCheckHtml, startChoiceHtml };
   if (typeof document === 'undefined') return api;
 
   // ---------------------------------------------------------------- przegladarka

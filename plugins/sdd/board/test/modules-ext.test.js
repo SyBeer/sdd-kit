@@ -48,7 +48,7 @@ test('AC-50: POST /api/modules/add - modul spoza katalogu na liscie, wybrany i z
   saveRoot(cfg, root);
   const { port, proc } = await start(cfg, tmp());
   try {
-    assert.strictEqual((await progress(port)).module.name, 'horizon');
+    assert.strictEqual((await progress(port)).module, null, 'start poza modulem - pytanie (AC-80)');
     const bad = await call(port, 'POST', '/api/modules/add', JSON.stringify({ path: other }));
     assert.strictEqual(bad.code, 400);
     assert.match(bad.body, /sdd:init/);
@@ -68,7 +68,8 @@ test('AC-50: POST /api/modules/add - modul spoza katalogu na liscie, wybrany i z
   } finally { proc.kill(); }
 });
 
-test('AC-51: start bez projektu w folderze - lastModule, a gdy go nie ma - pierwszy z listy', async () => {
+// AC-51 (otwieral lastModule sam) zastapione w 0.49.0 przez AC-80..AC-82 (R-003, D-010)
+test('AC-80 (AC-003-1), AC-81 (AC-003-2): start poza modulem - zaden modul, pytanie z ostatnim; wybor otwiera', async () => {
   const root = tmp(), other = tmp(), cfg = path.join(tmp(), 'config.json');
   createModule(root, { name: 'alfa', level: 'full' }, { git: false });
   createModule(root, { name: 'horizon', level: 'full' }, { git: false });
@@ -76,20 +77,56 @@ test('AC-51: start bez projektu w folderze - lastModule, a gdy go nie ma - pierw
   saveRoot(cfg, root);
   writeConfig(cfg, { modules: [app], lastModule: app });
   let s = await start(cfg, tmp());
-  try { assert.strictEqual((await progress(s.port)).module.dir, app); } finally { s.proc.kill(); }
-  writeConfig(cfg, { lastModule: path.join(root, 'horizon') });
-  s = await start(cfg, tmp());
-  try { assert.strictEqual((await progress(s.port)).module.name, 'horizon'); } finally { s.proc.kill(); }
+  try {
+    const p = await progress(s.port);
+    assert.strictEqual(p.module, null, 'zaden modul nie jest otwarty');
+    assert.deepStrictEqual(p.lastModule, { name: 'fv-manager', dir: app });
+    assert.deepStrictEqual(p.modules.map(m => m.name).sort(), ['alfa', 'fv-manager', 'horizon']);
+    const r = await call(s.port, 'POST', '/api/modules/select', JSON.stringify({ dir: p.lastModule.dir }));
+    assert.strictEqual(r.code, 200, r.body);
+    assert.strictEqual((await progress(s.port)).module.dir, app, '"ostatni" otwiera modul uzywany ostatnio');
+  } finally { s.proc.kill(); }
   writeConfig(cfg, { lastModule: path.join(other, 'usuniety') });
   s = await start(cfg, tmp());
-  try { assert.strictEqual((await progress(s.port)).module.name, 'alfa'); } finally { s.proc.kill(); }
+  try {
+    const p = await progress(s.port);
+    assert.strictEqual(p.module, null);
+    assert.strictEqual(p.lastModule, null, 'zapamietanego modulu juz nie ma');
+  } finally { s.proc.kill(); }
+});
+
+test('AC-82 (AC-003-3): start w folderze modulu otwiera ten modul bez pytania, mimo innego lastModule', async () => {
+  const root = tmp(), cfg = path.join(tmp(), 'config.json');
+  const alfa = createModule(root, { name: 'alfa', level: 'full' }, { git: false });
+  const horizon = createModule(root, { name: 'horizon', level: 'full' }, { git: false });
+  saveRoot(cfg, root);
+  writeConfig(cfg, { lastModule: horizon });
+  const s = await start(cfg, alfa);
+  try { assert.strictEqual((await progress(s.port)).module.dir, alfa); } finally { s.proc.kill(); }
+});
+
+test('AC-80 (AC-003-1): startChoiceHtml - ostatni z nazwa, lista, nowy; progress.html go uzywa', () => {
+  const ui = require('../ui.js');
+  const h = ui.startChoiceHtml({ lastModule: { name: 'fv-manager', dir: '/a/fv' }, modules: [{ name: 'alfa', dir: '/r/alfa' }, { name: 'fv-manager', dir: '/a/fv', external: true }] });
+  const t = h.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  assert.match(t, /Który moduł otworzyć\?/);
+  assert.match(t, /Załaduj ostatni: fv-manager/);
+  assert.match(h, /data-dir="\/a\/fv"/);
+  assert.match(h, /data-dir="\/r\/alfa"/);
+  assert.match(h, /id="newmod2"/);
+  assert.match(h, /id="addproj2"/);
+  assert.doesNotMatch(ui.startChoiceHtml({ lastModule: null, modules: [{ name: 'alfa', dir: '/r/alfa' }] }), /Załaduj ostatni/);
+  assert.match(ui.startChoiceHtml({ lastModule: null, modules: [{ name: '<x>', dir: '/r/x' }] }), /&lt;x&gt;/);
+  const p = fs.readFileSync(path.join(__dirname, '..', 'progress.html'), 'utf8');
+  assert.match(p, /SddUI\.startChoiceHtml\(p\)/);
+  assert.match(p, /\/api\/modules\/select/);
 });
 
 test('AC-B37: widok tablicy podaje _file, zapis go pomija', async () => {
   const root = tmp(), cfg = path.join(tmp(), 'config.json');
   const dir = createModule(root, { name: 'horizon', level: 'full' }, { git: false });
   saveRoot(cfg, root);
-  const { port, proc } = await start(cfg, tmp());
+  const { port, proc } = await start(cfg, dir);  // w folderze modulu - od 0.49.0 poza nim panel pyta (AC-80)
   try {
     const file = path.join(dir, 'requirements', '01-interview', 'board.json');
     const b = JSON.parse((await call(port, 'GET', '/api/board')).body);
@@ -105,7 +142,7 @@ test('AC-B40: widok tablicy podaje _questions, zapis go pomija', async () => {
   const dir = createModule(root, { name: 'horizon', level: 'full' }, { git: false });
   fs.appendFileSync(path.join(dir, 'requirements', '01-interview', 'QUESTIONS.md'), '| Q-001 | Maile? | otwarte | sponsor | BR-030 | | |\n');
   saveRoot(cfg, root);
-  const { port, proc } = await start(cfg, tmp());
+  const { port, proc } = await start(cfg, dir);  // w folderze modulu - od 0.49.0 poza nim panel pyta (AC-80)
   try {
     const b = JSON.parse((await call(port, 'GET', '/api/board')).body);
     assert.strictEqual(b._questions['Q-001'].kind, 'open');

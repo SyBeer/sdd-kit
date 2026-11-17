@@ -421,7 +421,7 @@ w jej repo (`<repo>/requirements/`); osobne repo wymagan (jak horizon-zlecenia) 
   nieistniejace i bez SDD.yaml; dodane maja `external: true`, pole `dir` w kazdym (test w `test/modules.test.js`).
 - AC-50 (serwer): POST `/api/modules/add` z folderem spoza katalogu -> 200, `/api/progress` pokazuje ten modul
   i ma go na liscie `modules` (z `dir`); config.json ma go w `modules` i jako `lastModule`.
-- AC-51 (serwer): restart serwera uruchomionego bez projektu w biezacym folderze otwiera `lastModule`;
+- AC-51 (serwer, zastapione w 0.49.0 przez AC-80..AC-82): restart serwera uruchomionego bez projektu w biezacym folderze otwieral `lastModule`;
   gdy `lastModule` nie istnieje - pierwszy modul z listy.
 - AC-52: `SddUI.modMenu` - `data-dir` przy kazdym module, dopisek "poza katalogiem" przy `external`,
   "Dodaj istniejący projekt…" (id `addproj`) poza demo, w demo brak (test w `test/ui.test.js`).
@@ -621,3 +621,14 @@ raport zostaje w pliku na dysku (D-009).
 - AC-79 (AC-017-2) `GET /api/validation/report` - najnowszy raport (`{ name, text }`; bez raportu 404); tylko odczyt, takze
   w demo, tylko Host lokalny. Strona `/report` (info.html) pokazuje caly raport (`SddUI.chatMd`): blokery, ostrzezenia,
   gotowosc, z nazwa pliku `04-validation/<plik>`.
+
+## Zmiana 0.49.0 (2026-11-17): start bez modulu pyta, ktory otworzyc - wymagania sdd-kit-wymagania R-003 (D-010, BR-047)
+Serwer uruchomiony poza folderem modulu otwieral sam `lastModule` albo pierwszy z listy (AC-51). Wlasciciel (D-010):
+przy starcie poza folderem modulu kit nie otwiera zadnego modulu, tylko pyta: zaladowac ostatni, otworzyc istniejacy
+czy zaczac nowy; start w folderze modulu otwiera ten modul. **AC-51 zastapione przez AC-80..AC-82.**
+- AC-80 (AC-003-1) Start poza folderem modulu, na liscie co najmniej jeden modul: `/api/progress` bez `module`,
+  z `lastModule` (`{ name, dir }` albo `null`, gdy zapamietanego juz nie ma) i lista `modules`. Panel: ekran
+  "Który moduł otworzyć?" (`SddUI.startChoiceHtml`) - "Załaduj ostatni: <nazwa>", lista istniejacych modulow,
+  "Nowy moduł…", "Dodaj istniejący projekt…". Pusta lista - ekran "Brak modułów" jak dotad.
+- AC-81 (AC-003-2) Wybor "ostatni" albo modulu z listy -> `POST /api/modules/select` -> ten modul otwarty i zapamietany.
+- AC-82 (AC-003-3) Start w folderze modulu otwiera ten modul bez pytania, takze gdy `lastModule` wskazuje inny.

@@ -116,6 +116,10 @@ function progressPayload(ctx) {
   p.modules = modulesOf(ctx).map(m => ({ name: m.name, project: m.project, level: m.level, dir: ctx.demo ? '' : m.dir, external: !!m.external }));
   p.modulesRoot = ctx.demo ? null : ROOT;
   p.needsRoot = !ctx.demo && !ROOT && !ctx.req;
+  // pytanie przy starcie bez modulu: "Załaduj ostatni" z nazwa (AC-80); brak zapamietanego na liscie -> null
+  const last = !ctx.demo && !ctx.req ? lastModule() : null;
+  const lm = last && modulesOf(ctx).find(m => path.join(m.dir, 'requirements') === last);
+  p.lastModule = lm ? { name: lm.name, dir: lm.dir } : null;
   p.kitDir = KIT_DIR;
   p.demo = ctx.demo || false;
   p.copy = ctx.copy;
@@ -215,8 +219,8 @@ function copyRoute(ctx, req, res, url) {
   }
   return json(res, 404, { error: 'Nie ma takiej operacji.' });
 }
-// Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji) > ostatni wybrany (jesli dalej jest
-// na liscie) > pierwszy z listy > zaden.
+// Modul startowy: projekt z biezacego folderu (jesli nie lezy w aplikacji); poza folderem modulu - zaden, panel pyta:
+// ostatni, istniejacy czy nowy (0.49.0, docs/specs/progress-ui.md AC-80..AC-82; R-003, D-010).
 function firstModule() {
   const m = modulesOf(user)[0];
   return m ? path.join(m.dir, 'requirements') : null;
@@ -227,7 +231,7 @@ function lastModule() {
   return m ? path.join(m.dir, 'requirements') : null;
 }
 const startInKit = inside(path.dirname(START_REQ), KIT_DIR);
-selectModule(user, !startInKit && fs.existsSync(START_REQ) ? START_REQ : (lastModule() || firstModule()));
+selectModule(user, !startInKit && fs.existsSync(START_REQ) ? START_REQ : null);
 selectModule(demoWynik, DEMO_REQ);
 selectModule(demoStart, null);
 
