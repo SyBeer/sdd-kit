@@ -189,16 +189,22 @@ async function setStatus(call, cfg, id, want, note) {
   const r = await call('GET', '/issue_statuses.json');
   if (r.status !== 200 || !r.data) throw new Error('Nie moge pobrac listy statusow: Redmine ' + r.status);
   const all = r.data.issue_statuses || [];
+  // status pracy agenta: start / done z SDD.yaml albo rozpoznany (AC-RM15)
+  const work = w => { const name = w === 'start' ? cfg.statusStart : cfg.statusDone;
+    return name ? all.find(s => s.name.toLowerCase() === name.toLowerCase()) : all.find(s => !s.is_closed && (w === 'start' ? START : DONE).test(s.name)); };
   let st;
   if (want === 'start' || want === 'done') {
-    const name = want === 'start' ? cfg.statusStart : cfg.statusDone;
-    st = name ? all.find(s => s.name.toLowerCase() === name.toLowerCase()) : all.find(s => !s.is_closed && (want === 'start' ? START : DONE).test(s.name));
-    if (!st) throw new Error('Nie znalazlem statusu "' + (name || want) + '". Wpisz nazwe w SDD.yaml (redmine_status_' + want + '). Statusy: ' + all.map(s => s.name).join(', '));
+    st = work(want);
+    if (!st) throw new Error('Nie znalazlem statusu "' + ((want === 'start' ? cfg.statusStart : cfg.statusDone) || want) + '". Wpisz nazwe w SDD.yaml (redmine_status_' + want + '). Statusy: ' + all.map(s => s.name).join(', '));
   } else {
     st = all.find(s => s.name.toLowerCase() === String(want).toLowerCase());
     if (!st) throw new Error('Nie ma statusu "' + want + '". Statusy: ' + all.map(s => s.name).join(', '));
   }
   if (st.is_closed) throw new Error('Status "' + st.name + '" zamyka zadanie - to robi czlowiek (po UAT), nie agent.');
+  // Agent ustawia tylko start i done; UAT i dalsze ustawia czlowiek (0.47.2, AC-RM22; wymagania R-019 AC-019-2, D-011)
+  const allowed = ['start', 'done'].map(w => ({ w, s: work(w) })).filter(x => x.s);
+  if (!allowed.some(x => x.s.id === st.id)) throw new Error('Status "' + st.name + '" ustawia człowiek, nie agent. Agent ustawia tylko: ' +
+    allowed.map(x => x.w + ' - "' + x.s.name + '"').join(', ') + '.');
   const body = { issue: { status_id: st.id } };
   if (note) body.issue.notes = withMark(note);
   const u = await call('PUT', '/issues/' + id + '.json', body);

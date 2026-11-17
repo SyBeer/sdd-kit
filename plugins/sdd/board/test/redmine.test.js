@@ -193,7 +193,7 @@ test('AC-RM13: pole wlasne Kryteria akceptacji - numer z zadan projektu, wartosc
   } finally { s3.close(); }
 });
 
-test('AC-RM15: status start/done, nazwa, odmowa zamkniecia, kontrola przejscia', async () => {
+test('AC-RM15 (AC-019-1, AC-019-2): status start/done, nazwa, odmowa zamkniecia, kontrola przejscia', async () => {
   const s = await fakeRedmine({ blockStatus: 5 });
   try {
     const req = moduleWith(s.url);
@@ -217,6 +217,24 @@ test('AC-RM15: status start/done, nazwa, odmowa zamkniecia, kontrola przejscia',
     assert.strictEqual(r.code, 1);
     assert.match(r.err, /W realizacji/);
     assert.strictEqual(s.log.filter(x => x.method === 'PUT' && /72/.test(x.url)).length, 1, 'zamkniecie i zla nazwa - bez zapisu');
+  } finally { s.close(); }
+});
+
+test('AC-RM22 (AC-019-2): agent ustawia tylko start i done - status UAT i inne odrzucone bez zapisu', async () => {
+  const s = await fakeRedmine({});
+  try {
+    const req = moduleWith(s.url);
+    for (const name of ['Gotowy do UAT', 'Nowy']) {
+      const r = await run(['status', '73', name, '--req', req], { REDMINE_API_KEY: KEY });
+      assert.strictEqual(r.code, 1, name);
+      assert.match(r.err, /ustawia człowiek|ustawia czlowiek/, name);
+      assert.match(r.err, /W realizacji/); assert.match(r.err, /Code review/);
+    }
+    assert.strictEqual(s.log.filter(x => x.method === 'PUT' && /73/.test(x.url)).length, 0, 'bez zapisu w Redmine');
+    // nazwa statusu pracy agenta dziala jak start/done
+    const r = await run(['status', '73', 'Code review', '--req', req], { REDMINE_API_KEY: KEY });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.strictEqual(JSON.parse(r.out).status, 'Code review');
   } finally { s.close(); }
 });
 

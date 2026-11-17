@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.47.2] - 2026-11-17
+- Redmine: agent ustawia tylko statusy pracy - `start` ("W realizacji") i `done` ("Code review")
+  (docs/specs/redmine.md AC-RM22; wymagania sdd-kit-wymagania R-019 AC-019-2, D-011). `redmine.js status <id> <nazwa>`
+  z innym statusem, np. "Gotowy do UAT", konczy sie bledem "ustawia człowiek" bez zapisu w Redmine. Dotad kod odrzucal
+  tylko statusy zamykajace. Nazwa w `redmine_status_done` w SDD.yaml dziala jak dotad.
+- Testy realizujace R-019 maja w nazwie numer kryterium (`AC-RMn (AC-019-m): ...`).
+
 ## [0.47.1] - 2026-11-17
 - Testy instrukcji budowania pokrywaja R-022 w calosci (docs/specs/build.md, zmiana 0.47.1; wymagania sdd-kit-wymagania
   AC-022-1..2): pole `{wymagania}` w `fillPrompt`, a po "Przywróć domyślny" panel zwraca instrukcje z kitu. Nazwy testow

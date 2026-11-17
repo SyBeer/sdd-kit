@@ -138,3 +138,15 @@ Prosba usera (projekt fv-manager): "dodaj link UAT do SDD.yaml w sdd-kit". Powod
 - AC-RM21: z `redmine_uat_link` i `redmine_uat_field` check zwraca `uatField`, push wpisuje link w nowe (POST) i
   aktualizowane (PUT) zadania; nieznana nazwa pola - blad z prosba o numer (`redmine_uat_field`); bez
   `redmine_uat_link` zadania sa bez pola, a check podpowiada klucz; adres inny niz http/https - blad w readConfig.
+
+# Zmiana 0.47.2 (2026-11-17): agent ustawia tylko start i done - wymagania sdd-kit-wymagania R-019 AC-019-2
+Przeglad TRACEABILITY R-019: "dalszych statusow agent nie ustawia" (AC-019-2, D-011) pilnowal tylko skill handover -
+`redmine.js status <id> "Gotowy do UAT"` przechodzil, bo status UAT nie jest zamykajacy (`is_closed`). Kod odrzucal
+tylko statusy zamykajace.
+
+## Kryteria akceptacji
+- AC-RM22: `status <id> <nazwa>` przyjmuje tylko status pracy agenta: ten sam, co `start` albo `done` (z SDD.yaml
+  albo rozpoznany). Inny status niezamykajacy (np. "Gotowy do UAT", "Nowy") -> blad "ustawia czlowiek" z nazwami
+  dozwolonych, bez zapisu w Redmine. Status zamykajacy - jak dotad ("zamyka"). Nazwa w `redmine_status_done`
+  w SDD.yaml jest decyzja czlowieka - dziala jak dotad.
+- Nazwy testow realizujacych R-019: `AC-RMn (AC-019-m): ...`.
