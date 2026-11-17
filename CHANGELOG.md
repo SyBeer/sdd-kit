@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.47.1] - 2026-11-17
+- Testy instrukcji budowania pokrywaja R-022 w calosci (docs/specs/build.md, zmiana 0.47.1; wymagania sdd-kit-wymagania
+  AC-022-1..2): pole `{wymagania}` w `fillPrompt`, a po "Przywróć domyślny" panel zwraca instrukcje z kitu. Nazwy testow
+  z numerem kryterium (`AC-BDn (AC-022-m): ...`). Bez zmian w kodzie panelu.
+
 ## [0.47.0] - 2026-11-17
 - Okienko "Buduj" ostrzega, gdy wymagania nie sa zamkniete - i nie blokuje budowania (docs/specs/build.md
   AC-BD27..AC-BD28; wymagania sdd-kit-wymagania R-020 AC-020-5, D-016, D-017). Powody: wlasne zadanie (poza PRD),

@@ -206,6 +206,12 @@ Nazwy testow realizujacych R-020: `AC-BDn (AC-020-m): ...` jak przy R-021.
   Okienko "Buduj": ramka `#bd-gate` przy kazdej zmianie wyboru, przycisk "Buduj mimo to"; start bez blokady
   (serwer nie odrzuca budowania z tych powodow).
 
+## Zmiana 0.47.1 (2026-11-17: pokrycie R-022 - TRACEABILITY sdd-kit-wymagania)
+Testy promptu nie sprawdzaly pola `{wymagania}` (AC-022-1 wymienia cztery pola) ani tego, ze po "Przywróć domyślny"
+panel zwraca instrukcje z kitu (AC-022-2) - tylko usuniecie pliku. Nazwy testow R-022: `AC-BDn (AC-022-m): ...`.
+- **AC-BD1** uzupelnione: `fillPrompt` wstawia tez `{wymagania}`.
+- **AC-BD4** uzupelnione: po resecie `GET /api/build/prompt` zwraca `DEFAULT_PROMPT` i `custom: false`.
+
 ## Poza zakresem
 Wlasne komendy w liscie dozwolonych (z Konfiguracji), kilka budowan naraz, scalanie i push z panelu, usuwanie folderow
 budowania, przebieg po restarcie serwera.

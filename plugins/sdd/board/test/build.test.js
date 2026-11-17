@@ -33,12 +33,14 @@ const PRD = '# PRD\n\n## 5. Wymagania\n\n### R-001 Wpisanie odczytu miesiąca\nO
   '### R-002 Import odczytów z CSV - cały plik albo nic\nOpis: y\nStatus: robocze\n\n### R-xxx <tytul>\nStatus: wzor\n\n' +
   '### R-003 Raport roczny\nOpis: z\nStatus: zatwierdzone\n';
 
-test('AC-BD1 (AC-021-1, AC-021-2): branchFor, fillPrompt, DEFAULT_PROMPT, buildArgs, tasksFrom', () => {
+test('AC-BD1 (AC-021-1, AC-021-2, AC-022-1): branchFor, fillPrompt, DEFAULT_PROMPT, buildArgs, tasksFrom', () => {
   assert.strictEqual(bd.branchFor('R-002', 'Import odczytów z CSV - cały plik albo nic'), 'feature/r-002-import-odczytow-z-csv-caly-plik-albo', 'najwyzej 50 znakow, cale slowa');
   assert.ok(bd.branchFor('R-9', 'x'.repeat(200)).length <= 50);
   assert.strictEqual(bd.branchFor('', 'Popraw ekran logowania'), 'feature/popraw-ekran-logowania');
   assert.strictEqual(bd.fillPrompt('A {zadanie} B {galaz} C {folder} {zadanie}', { zadanie: 'R-1 X', galaz: 'feature/r-1', folder: '/f' }),
     'A R-1 X B feature/r-1 C /f R-1 X');
+  // AC-022-1: czwarte pole instrukcji - folder wymagan
+  assert.strictEqual(bd.fillPrompt('{wymagania}/03-spec/PRD.md', { wymagania: '/f/requirements' }), '/f/requirements/03-spec/PRD.md');
   const p = bd.DEFAULT_PROMPT;
   ['{zadanie}', '{galaz}', 'TDD', 'AC', 'założenie', 'raport', 'Nie pushujesz', 'typ(zakres): opis', 'CHANGELOG.md', 'nie mockuj'].forEach(w =>
     assert.ok(p.toLowerCase().includes(w.toLowerCase()), w));

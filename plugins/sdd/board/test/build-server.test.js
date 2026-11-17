@@ -64,7 +64,7 @@ function events(port, until, ms = 10000) {
   });
 }
 
-test('AC-BD4 (AC-020-1, AC-020-2, AC-020-3, AC-020-4, AC-021-4): /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
+test('AC-BD4 (AC-020-1, AC-020-2, AC-020-3, AC-020-4, AC-021-4, AC-022-1, AC-022-2): /api/build - zadania, start w folderze feature, raport w SSE, 409 w trakcie, stop, prompt, demo 403', { skip }, async () => {
   const mod = path.join(TMP, 'app');
   fs.cpSync(TEMPLATES, path.join(mod, 'requirements'), { recursive: true });
   fs.writeFileSync(path.join(mod, 'requirements', '03-spec', 'PRD.md'), '# PRD\n\n## 5. Wymagania\n\n### R-001 Import CSV\nOpis: x\nStatus: zatwierdzone\n');
@@ -124,6 +124,10 @@ test('AC-BD4 (AC-020-1, AC-020-2, AC-020-3, AC-020-4, AC-021-4): /api/build - za
     // reset promptu -> domyslny; drugi start w trakcie -> 409; stop
     assert.strictEqual((await call(port, 'PUT', '/api/build/prompt', { reset: true })).code, 200);
     assert.ok(!fs.existsSync(pf));
+    // AC-022-2: po "Przywróć domyślny" wraca instrukcja z kitu
+    const pd = (await call(port, 'GET', '/api/build/prompt')).json();
+    assert.strictEqual(pd.custom, false);
+    assert.strictEqual(pd.text, require('../build').DEFAULT_PROMPT);
     assert.strictEqual((await call(port, 'PUT', '/api/build/prompt', { text: 'CZEKAJ {zadanie}' })).code, 200);
     assert.strictEqual((await call(port, 'POST', '/api/build/start', { title: 'Popraw ekran' })).code, 200);
     assert.strictEqual((await call(port, 'POST', '/api/build/start', { title: 'Drugie' })).code, 409);

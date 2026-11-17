@@ -41,7 +41,7 @@ test('AC-BD5 (AC-020-1, AC-020-3): buildPopHtml - wybor zadania, wlasny opis, po
   assert.match(text(ui.buildPopHtml({ git: false, tasks: [], state: { status: 'idle' } }, '')), /repozytorium git/);
 });
 
-test('AC-BD5: Konfiguracja - karta Budowanie z promptem; strona /build', () => {
+test('AC-BD5 (AC-022-1, AC-022-2): Konfiguracja - karta Budowanie z promptem; strona /build', () => {
   ['id="budowanie"', 'id="f-bprompt"', 'id="bpsave"', 'id="bpreset"', '/api/build/prompt', '{zadanie}', 'build-prompt.md'].forEach(t => assert.ok(info.includes(t), t));
   assert.match(info, /\(module\|guide\|config\|build\)/);
   assert.match(info, /function renderBuild\(/);
