@@ -150,3 +150,13 @@ tylko statusy zamykajace.
   dozwolonych, bez zapisu w Redmine. Status zamykajacy - jak dotad ("zamyka"). Nazwa w `redmine_status_done`
   w SDD.yaml jest decyzja czlowieka - dziala jak dotad.
 - Nazwy testow realizujacych R-019: `AC-RMn (AC-019-m): ...`.
+
+# Zmiana 0.48.0 (2026-11-17): zerwane polaczenie w polowie wysylki - wymagania sdd-kit-wymagania R-033 AC-033-4
+Przeglad TRACEABILITY (luka K2): blad HTTP od Redmine zwracal w wyniku zadania juz zalozone (AC-RM5), ale zerwane
+polaczenie albo brak odpowiedzi - nie: `call()` rzucal blad bez listy `done`, wynik byl `[]`. Tabela sledzenia nie
+dostawala numerow, a ponowny handover zakladal zadania drugi raz. `fetch` nie mial limitu czasu.
+
+## Kryteria akceptacji
+- AC-RM23 (AC-033-4): polaczenie zerwane albo brak odpowiedzi przy dowolnym zadaniu `push` -> kod 1, na wyjsciu
+  zadania juz zalozone (klucz i numer), w bledzie numer zadania, przy ktorym przerwano. Kazde zapytanie ma limit czasu
+  (domyslnie 30 s, `SDD_REDMINE_TIMEOUT_MS`); po nim blad "Redmine nie odpowiada".

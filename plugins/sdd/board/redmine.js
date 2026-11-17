@@ -109,14 +109,20 @@ function attachmentFiles(req, tasks) {
 // Klucz: zmienna > ~/.sdd-kit/.env > Pek kluczy macOS (secrets.js, AC-S2)
 function apiKey(env) { return redmineKey(env).value; }
 
+// Limit czasu kazdego zapytania (AC-RM23): domyslnie 30 s, test ustawia krotszy
+const TIMEOUT_MS = () => +process.env.SDD_REDMINE_TIMEOUT_MS > 0 ? +process.env.SDD_REDMINE_TIMEOUT_MS : 30000;
 function client(cfg, key) {
   return async function call(method, p, body, type) {
-    let r;
+    let r, text;
+    const ms = TIMEOUT_MS();
     try {
       r = await fetch(cfg.url + p, { method, headers: { 'X-Redmine-API-Key': key, 'Content-Type': type || 'application/json', Accept: 'application/json' },
-        body: body == null ? undefined : type ? body : JSON.stringify(body) });
-    } catch (e) { throw new Error('Brak polaczenia z ' + cfg.url + ' (' + (e.cause && e.cause.code || e.message) + ').'); }
-    const text = await r.text();
+        body: body == null ? undefined : type ? body : JSON.stringify(body), signal: AbortSignal.timeout(ms) });
+      text = await r.text();
+    } catch (e) {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') throw new Error('Redmine nie odpowiada (' + Math.round(ms / 1000) + ' s): ' + cfg.url + '.');
+      throw new Error('Brak polaczenia z ' + cfg.url + ' (' + (e.cause && e.cause.code || e.message) + ').');
+    }
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
     return { status: r.status, data };
@@ -147,6 +153,14 @@ async function push(call, cfg, tasks, dry, req) {
   if (dry) return tasks.map((t, n) => ({ key: t.key, id: t.issue || null, url: t.issue ? cfg.url + '/issues/' + t.issue : null,
     action: 'dry-run', subject: t.subject, attachments: files[n].length }));
   const info = await project(call, cfg);
+  // Kazdy blad w trakcie (tez zerwane polaczenie, brak odpowiedzi) niesie liste juz zalozonych zadan (AC-RM5, AC-RM23)
+  try { await pushTasks(call, cfg, tasks, files, info, done); } catch (e) {
+    if (!e.done) { const k = tasks[done.length] ? 'Zadanie ' + tasks[done.length].key + ': ' : ''; const w = new Error(k + e.message); w.done = done; throw w; }
+    throw e;
+  }
+  return done;
+}
+async function pushTasks(call, cfg, tasks, files, info, done) {
   for (let n = 0; n < tasks.length; n++) {
     const t = tasks[n];
     const body = issueBody(t, info.project.id, info.tracker.id, info.acField && info.acField.id,
@@ -179,7 +193,6 @@ async function push(call, cfg, tasks, dry, req) {
       if (r.status !== 201 && r.status !== 422) { const e = new Error('Relacja ' + prev + ' -> ' + t.key + ': Redmine ' + r.status + ' ' + errs(r.data)); e.done = done; throw e; }
     }
   }
-  return done;
 }
 
 // Status zadania przez agenta (AC-RM15): start / done z SDD.yaml albo rozpoznane, nigdy zamykajacy.

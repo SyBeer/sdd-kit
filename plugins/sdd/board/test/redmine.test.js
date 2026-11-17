@@ -36,6 +36,8 @@ function fakeRedmine(opts) {
         if (req.method === 'GET' && req.url.startsWith('/projects/')) return send(404);
         if (req.method === 'POST' && req.url === '/issues.json') {
           if (opts.failSecond && next === 101) return send(422, { errors: ['Subject cannot be blank'] });
+          if (opts.dropSecond && next === 101) return req.socket.destroy();  // zerwane polaczenie (AC-RM23)
+          if (opts.hangSecond && next === 101) return;                      // brak odpowiedzi (AC-RM23)
           return send(201, { issue: { id: next++, subject: JSON.parse(body).issue.subject } });
         }
         if (req.method === 'PUT' && opts.statusNeedsField && /^\/issues\/74\.json$/.test(req.url)) return send(422, { errors: ['Kryteria akceptacji nie może być puste'] });
@@ -393,6 +395,20 @@ test('AC-RM5: blad przy drugim zadaniu - kod 1, pierwsze zadanie w wyniku', asyn
     assert.match(r.err, /T-02/);
     assert.match(r.err, /Subject cannot be blank/);
   } finally { s.close(); }
+});
+
+test('AC-RM23 (AC-033-4): zerwane polaczenie i brak odpowiedzi w polowie wysylki - zalozone zadania w wyniku', async () => {
+  for (const o of [{ dropSecond: true }, { hangSecond: true }]) {
+    const s = await fakeRedmine(o);
+    try {
+      const req = moduleWith(s.url);
+      const r = await run(['push', tasksFile(req), '--req', req], { REDMINE_API_KEY: KEY, SDD_REDMINE_TIMEOUT_MS: '500' });
+      assert.strictEqual(r.code, 1, JSON.stringify(o));
+      assert.deepStrictEqual(JSON.parse(r.out).map(x => [x.key, x.id]), [['T-01', 100]], 'zalozone zadanie w wyniku: ' + JSON.stringify(o));
+      assert.match(r.err, /T-02/);
+      assert.match(r.err, o.hangSecond ? /nie odpowiada/ : /Brak polaczenia/);
+    } finally { s.close(); }
+  }
 });
 
 test('AC-RM6: klucz nie trafia na wyjscie; brak klucza - jak go ustawic', async () => {
